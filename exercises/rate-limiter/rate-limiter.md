@@ -34,3 +34,11 @@ Hints:
 - You already know how to make a `sleep` function
 - Think about when you need to wait: only after starting `maxPerWindow` tasks
 - The tasks themselves can overlap — you're limiting starts, not active tasks
+
+## Where you'll see this in the real world
+
+- **GitHub API** — 5,000 requests/hour for authenticated users. The `octokit` client has built-in rate limiting that throttles your calls
+- **Stripe API** — 100 requests/second in live mode. Stripe's Node SDK queues requests to stay under the limit
+- **Bottleneck (npm)** — the most popular rate limiting library on npm, used by bots, scrapers, and API wrappers. Your exercise is a simplified version of it
+- **Twitter/X API** — strict per-endpoint limits (e.g., 15 requests/15 minutes for search). Every Twitter bot uses rate limiting
+- **Google Maps API** — 50 requests/second. Geocoding tools batch addresses and pace requests to avoid 429 errors

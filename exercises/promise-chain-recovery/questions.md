@@ -1,5 +1,14 @@
 # Promise Chain Recovery
 
+## Where you'll see this in the real world
+
+- **Express error handling** — Express middleware chains work like promise chains. An error skips normal middleware until it hits an error handler (`app.use((err, req, res, next) => ...)`), which can "recover" and continue
+- **Axios interceptors** — response interceptors can catch errors (like a 401) and recover by refreshing the token and retrying, letting the rest of the chain continue normally
+- **Redux Toolkit (RTK Query)** — `queryFn` chains handle API errors and can recover with fallback data, similar to `.catch` returning a value
+- **RxJS (Angular)** — the `catchError` operator works exactly like `.catch` in a promise chain: it catches errors and can recover by returning a new Observable
+
+---
+
 ## Question
 
 What does the following code output?

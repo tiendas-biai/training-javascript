@@ -27,3 +27,11 @@ Hints:
 - You'll need `new Promise` for this one — you're coordinating multiple promises
 - Think about how to track which promises have resolved and maintain order
 - What should happen with an empty array?
+
+## Where you'll see this in the real world
+
+- **Built into JavaScript** — `Promise.all` is a native method used everywhere. You're building it from scratch to understand how it works
+- **React Server Components** — Next.js uses `Promise.all` to fetch multiple data sources in parallel before rendering a page
+- **GraphQL resolvers** — Apollo Server and GraphQL Yoga resolve multiple fields in parallel using `Promise.all` under the hood
+- **API aggregation** — BFF (Backend for Frontend) layers use `Promise.all` to fetch from multiple microservices and combine results into a single response
+- **Test setup** — Jest and Vitest use it to run async setup hooks in parallel

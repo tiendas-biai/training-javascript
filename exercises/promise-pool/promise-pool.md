@@ -29,3 +29,11 @@ Hints:
 - Think of it as workers picking up the next task from a queue
 - Each "worker" runs tasks sequentially, but multiple workers run in parallel
 - How many workers do you need?
+
+## Where you'll see this in the real world
+
+- **p-limit / p-pool (npm)** — the most popular concurrency libraries on npm. Used by tools like ESLint, Webpack, and npm itself to limit parallel operations
+- **Database connection pools** — PostgreSQL's `pg-pool`, MySQL's connection pool, and Prisma's connection manager all work this way: a fixed number of connections (workers) pick up queries from a queue
+- **Web scrapers** — Puppeteer and Playwright scripts limit concurrent browser pages to avoid running out of memory. Each "worker" is a browser tab processing URLs from a list
+- **Image/file processing** — Sharp (image resizer) and ffmpeg wrappers use pools to limit CPU-intensive operations to the number of available cores
+- **AWS Lambda fan-out** — when processing thousands of S3 objects, you limit concurrent Lambda invocations to avoid throttling
