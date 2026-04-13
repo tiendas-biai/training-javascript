@@ -6,7 +6,18 @@
 //   - Retries on failure (don't cache rejections)
 
 function createAsyncCache(fn) {
-    // your code here
+    const cache = new Map();
+
+    return function(key){
+        if (!cache.has(key)){
+            const value = fn(key);
+            cache.set(key, value);
+            value.catch(()=>{
+                cache.delete(key);
+            })
+        }
+        return cache.get(key);
+    }
 }
 
 module.exports = { createAsyncCache };
