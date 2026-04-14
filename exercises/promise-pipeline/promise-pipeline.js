@@ -5,7 +5,12 @@
 // Returns the final result
 
 async function pipeline(functions, initialValue) {
-    // your code here
+    let output = initialValue;
+    for (let i=0; i<functions.length; i++){
+        let fn = functions[i];
+        output = await fn(output);
+    }
+    return output;
 }
 
 module.exports = { pipeline };
