@@ -6,12 +6,32 @@
 
 class AsyncQueue {
     constructor(concurrency) {
-        // your code here
+        this.queue = [];
+        this.concurrenty = concurrency;
+        this.running = 0;
+    }
+
+    run() {
+        while (this.running < this.concurrenty && this.queue.length > 0) {
+            const {fn, resolve, reject} = this.queue.shift();
+            this.running++
+            fn()
+                .then(resolve)
+                .catch(reject)
+                .finally(() => {
+                    this.running--;
+                    this.run();
+                })
+        }
     }
 
     enqueue(fn) {
-        // your code here
+        return new Promise((resolve, reject) => {
+            this.queue.push({fn, resolve, reject});
+            this.run();
+        })
+
     }
 }
 
-module.exports = { AsyncQueue };
+module.exports = {AsyncQueue};
