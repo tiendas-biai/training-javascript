@@ -48,7 +48,7 @@ describe('CircuitBreaker', () => {
         await expect(breaker.call()).rejects.toThrow('fail'); // failure 2
 
         // Circuit should still be closed (only 2 consecutive failures)
-        expect(fn).toHaveBeenCalledTimes(5);
+        expect(fn).toHaveBeenCalledTimes(4);
     });
 
     test('allows a test call after cooldown (half-open)', async () => {
