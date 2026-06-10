@@ -1,0 +1,162 @@
+[
+  {
+    "id": "types-prim-001",
+    "topic": "Types",
+    "subtopic": "Primitive Types",
+    "difficulty": "easy",
+    "question": "List the 7 primitive types in JavaScript.",
+    "answer": "string, number, bigint, boolean, undefined, symbol, null",
+    "explanation": "Anything that isn't one of these 7 is an object (including arrays and functions). A primitive is not an object and has no methods of its own.",
+    "tags": ["primitives", "fundamentals"]
+  },
+  {
+    "id": "types-prim-002",
+    "topic": "Types",
+    "subtopic": "Primitive Types",
+    "difficulty": "easy",
+    "question": "What does typeof null return, and why does it matter?",
+    "answer": "\"object\"",
+    "explanation": "It's a historical bug from the first JS implementation that was never fixed for backward compatibility. That's why you can't rely on typeof to detect null; use x === null instead.",
+    "tags": ["typeof", "null", "gotcha"]
+  },
+  {
+    "id": "types-prim-003",
+    "topic": "Types",
+    "subtopic": "Primitive Types",
+    "difficulty": "medium",
+    "question": "What does typeof NaN return?",
+    "answer": "\"number\"",
+    "explanation": "NaN (Not-a-Number) is, paradoxically, of type number. To detect it use Number.isNaN(x), never x === NaN (which is always false because NaN is not equal to itself).",
+    "tags": ["typeof", "NaN", "number", "gotcha"]
+  },
+  {
+    "id": "types-prim-004",
+    "topic": "Types",
+    "subtopic": "Primitive Types",
+    "difficulty": "medium",
+    "question": "What does this print?\n\nlet s = \"hello\";\ns[0] = \"H\";\nconsole.log(s);",
+    "answer": "\"hello\"",
+    "explanation": "Strings (and all primitives) are immutable. The index assignment doesn't throw in non-strict mode, it's simply ignored. To 'change' a string you create a new one.",
+    "tags": ["strings", "immutability"]
+  },
+  {
+    "id": "types-prim-005",
+    "topic": "Types",
+    "subtopic": "Primitive Types",
+    "difficulty": "medium",
+    "question": "What does this print?\n\nlet a = 10;\nlet b = a;\nb = 20;\nconsole.log(a);",
+    "answer": "10",
+    "explanation": "Primitives are copied by value. b gets an independent copy, so reassigning b doesn't affect a.",
+    "tags": ["pass-by-value", "primitives"]
+  },
+  {
+    "id": "types-prim-006",
+    "topic": "Types",
+    "subtopic": "Primitive Types",
+    "difficulty": "hard",
+    "question": "If primitives aren't objects and have no methods, why does \"hello\".toUpperCase() work?",
+    "answer": "Because of autoboxing: JS temporarily wraps the primitive in its wrapper object (String) to access the method, then discards the wrapper immediately after.",
+    "explanation": "The same applies to number (Number) and boolean (Boolean). The wrapper is ephemeral: that's why \"hello\".newProp = 1 persists nothing.",
+    "tags": ["autoboxing", "wrapper-objects", "strings"]
+  },
+  {
+    "id": "types-prim-007",
+    "topic": "Types",
+    "subtopic": "Primitive Types",
+    "difficulty": "hard",
+    "question": "What does this print?\n\nconsole.log(typeof Symbol(\"id\"));\nconsole.log(Symbol(\"id\") === Symbol(\"id\"));",
+    "answer": "\"symbol\" and false",
+    "explanation": "typeof a symbol is \"symbol\". Every Symbol() is unique even if it shares a description; the description is only for debugging and doesn't affect identity. That's why they work as guaranteed-unique property keys.",
+    "tags": ["symbol", "typeof", "uniqueness"]
+  },
+  {
+    "id": "types-nonprim-001",
+    "topic": "Types",
+    "subtopic": "Non-Primitive Types",
+    "difficulty": "medium",
+    "question": "What does this print, and why?\n\nconsole.log({} === {});\nconsole.log([] === []);",
+    "answer": "false in both cases",
+    "explanation": "Objects are compared by reference, not by content. Each literal creates a new object in memory, so they're never the same reference even if they look identical.",
+    "tags": ["reference-equality", "objects", "gotcha"]
+  },
+  {
+    "id": "types-nonprim-002",
+    "topic": "Types",
+    "subtopic": "Non-Primitive Types",
+    "difficulty": "medium",
+    "question": "What does typeof [] return, and what's the correct way to check whether something is an array?",
+    "answer": "\"object\"; check it with Array.isArray(x)",
+    "explanation": "typeof doesn't distinguish arrays from plain objects (both return \"object\"). Array.isArray() is reliable even across contexts/iframes, unlike instanceof Array.",
+    "tags": ["arrays", "typeof", "Array.isArray"]
+  },
+  {
+    "id": "types-nonprim-003",
+    "topic": "Types",
+    "subtopic": "Non-Primitive Types",
+    "difficulty": "easy",
+    "question": "What does typeof function(){} return? Aren't functions supposed to be objects?",
+    "answer": "\"function\"",
+    "explanation": "Functions are objects (callable objects), but typeof gives them a special \"function\" value as a convenience. You can still assign properties to them like any object.",
+    "tags": ["functions", "typeof"]
+  },
+  {
+    "id": "types-nonprim-004",
+    "topic": "Types",
+    "subtopic": "Non-Primitive Types",
+    "difficulty": "medium",
+    "question": "What does this print?\n\nfunction mutate(o) { o.x = 1; }\nconst obj = {};\nmutate(obj);\nconsole.log(obj.x);",
+    "answer": "1",
+    "explanation": "Objects are passed by reference (technically, the reference is passed by value). The function gets a copy of the reference pointing to the same object, so mutating it is visible outside. Reassigning o = {} inside would NOT be visible outside.",
+    "tags": ["pass-by-reference", "objects", "mutation"]
+  },
+  {
+    "id": "types-nonprim-005",
+    "topic": "Types",
+    "subtopic": "Non-Primitive Types",
+    "difficulty": "hard",
+    "question": "Does this throw an error?\n\nconst o = { a: 1 };\no.a = 2;\nconsole.log(o.a);",
+    "answer": "No error; it prints 2",
+    "explanation": "const freezes the binding (you can't reassign o = somethingElse), but not the object's contents. To make the contents immutable use Object.freeze(o).",
+    "tags": ["const", "binding-vs-value", "immutability"]
+  },
+  {
+    "id": "types-nonprim-006",
+    "topic": "Types",
+    "subtopic": "Non-Primitive Types",
+    "difficulty": "hard",
+    "question": "What does this print?\n\nconst a = { x: { y: 1 } };\nconst b = { ...a };\nb.x.y = 2;\nconsole.log(a.x.y);",
+    "answer": "2",
+    "explanation": "Spread does a shallow copy: it copies top-level properties, but nested objects are shared by reference. a.x and b.x point to the same object. For full independence you need a deep copy (structuredClone, for example).",
+    "tags": ["shallow-copy", "spread", "deep-copy", "gotcha"]
+  },
+  {
+    "id": "types-nonprim-007",
+    "topic": "Types",
+    "subtopic": "Non-Primitive Types",
+    "difficulty": "medium",
+    "question": "What gets lost when doing a deep copy with JSON.parse(JSON.stringify(obj))?",
+    "answer": "Functions, undefined, and symbols (they're dropped), and Dates become strings. It also fails on circular references.",
+    "explanation": "It's the quick deep-copy trick, but it only works for pure JSON data. structuredClone() handles Dates, Maps, Sets, and circular references, though it doesn't copy functions either.",
+    "tags": ["deep-copy", "JSON", "structuredClone", "gotcha"]
+  },
+  {
+    "id": "types-cmp-001",
+    "topic": "Types",
+    "subtopic": "Primitives vs Non-Primitives",
+    "difficulty": "medium",
+    "question": "What's the difference between primitives and non-primitives (objects)?",
+    "answer": "Primitives (string, number, bigint, boolean, undefined, symbol, null) are immutable, copied by value, and compared by value. Non-primitives (objects, arrays, functions) are mutable, copied/passed by reference, and compared by reference (identity).",
+    "explanation": "Primitives hold their value directly and have no methods of their own (autoboxing wraps them temporarily). Objects live in the heap and the variable holds a reference to them, which is why two objects with identical contents are not ===, and why mutating an object inside a function is visible outside.",
+    "tags": ["primitives", "objects", "value-vs-reference", "fundamentals"]
+  },
+  {
+    "id": "types-prim-008",
+    "topic": "Types",
+    "subtopic": "Primitive Types",
+    "difficulty": "medium",
+    "question": "What are symbols and what are they used for?",
+    "answer": "A symbol is a unique, immutable primitive (introduced in ES2015), most commonly used as a non-colliding object property key. Every Symbol() is unique, even if two share the same description.",
+    "explanation": "Beyond unique keys, well-known symbols like Symbol.iterator and Symbol.asyncIterator let you customize built-in language behavior (e.g. making an object iterable in a for...of loop). Symbol.for(key) uses a global registry so the same key returns the same symbol across the app.",
+    "tags": ["symbol", "primitives", "es2015"]
+  }
+]
