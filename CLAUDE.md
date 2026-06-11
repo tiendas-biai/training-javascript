@@ -106,7 +106,7 @@ Old Leitner data (box/correctStreak shape) is auto-migrated on first load via `m
 
 - Start screen lets you filter by topic / difficulty / type / tag and pick session size: **10 / 20 / All**
 - Session builds a queue of due cards (shuffled). Learning cards cycle back; review cards exit after one answer.
-- After grading, a 1.2-second toast confirms the outcome before advancing.
+- After grading, a 5-second toast confirms the outcome before advancing.
 
 ### Card types
 
@@ -176,6 +176,17 @@ Filter controls:
 - **Attempted select**: All / Attempted / Not attempted (`?attempted=`)
 
 All filter state is reflected in the URL via `replaceState` — shareable/bookmarkable. Chip counts show global totals and don't change when other filters are applied.
+
+### Code rendering (`ui.js`)
+
+Question, answer, and explanation text supports two markdown-like formats:
+
+- **Fenced code blocks** — ` ```js\n...\n``` ` are rendered as highlighted `<pre>` blocks using **Prism.js** (One Dark token colors: purple keywords, orange numbers, blue functions, teal operators, gray punctuation).
+- **Inline code** — `` `backtick` `` spans are rendered as styled `<code>` chips.
+- `renderText(str)` — parses and renders both formats; used for all question/answer/explanation fields.
+- `plainText(str)` — strips code fences to `[code]` for library table previews.
+
+Adding code to a question or explanation just requires standard markdown fences in the JSON string — no special handling needed.
 
 ### Planning docs
 
