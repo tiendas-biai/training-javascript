@@ -14,21 +14,20 @@ export function applyFilters(allCards, filters) {
   });
 }
 
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+export function buildQueue(allCards, progressMap, filters, sessionSize) {
+  const filtered = applyFilters(allCards, filters);
+  const due = getDueCards(filtered, progressMap);
+  return sessionSize === Infinity ? due : due.slice(0, sessionSize);
+}
+
+// cardExits=true removes the card; false keeps it cycling.
+// When staying, 'hard' re-inserts after 2 positions; 'good' goes to end.
+export function advance(queue, cardExits, rating) {
+  if (cardExits) return queue.slice(1);
+  if (rating === 'hard') {
+    const rest = queue.slice(1);
+    const at = Math.min(2, rest.length);
+    return [...rest.slice(0, at), queue[0], ...rest.slice(at)];
   }
-  return a;
-}
-
-export function buildQueue(allCards, progressMap, filters, mode) {
-  let cards = applyFilters(allCards, filters);
-  cards = mode === 'srs' ? getDueCards(cards, progressMap) : shuffle(cards);
-  return cards.slice(0, 15);
-}
-
-export function advance(queue, isCorrect) {
-  return isCorrect ? queue.slice(1) : [...queue.slice(1), queue[0]];
+  return [...queue.slice(1), queue[0]];
 }
