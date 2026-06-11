@@ -63,8 +63,9 @@ app/
 ├── data/
 │   └── data.json        # question bank — single source of truth, edit here
 ├── src/
-│   ├── main.js          # entry point: state machine, wires all modules
-│   ├── srs.js           # Leitner 5-box algorithm: grade(), getDueCards(), computeStats()
+│   ├── main.js          # entry point: registers routes, wires all modules
+│   ├── router.js        # tiny History API router: route(), navigate(), replaceState()
+│   ├── srs.js           # SM-2 algorithm: grade(), graduate(), previewIntervals(), getDueCards(), computeStats()
 │   ├── storage.js       # localStorage wrapper (key: 'srs:all')
 │   ├── session.js       # buildQueue(), advance(), applyFilters(), getCardType()
 │   ├── ui.js            # render functions for every screen/phase
@@ -74,15 +75,44 @@ app/
 └── vite.config.js
 ```
 
-### Session modes
+### Routes
 
-- **Drill** — shuffled filtered set, capped at 15 cards. Missed cards cycle to the back.
-- **SRS** — only cards due today (Leitner `nextDue <= Date.now()`), from the filtered set.
+- `/` — start screen
+- `/card-library` — card library (read-only table of all cards)
+- `/card-library?filter=due&topic=Arrays&attempted=attempted&q=typeof` — library with filters pre-applied
+
+### SM-2 algorithm (`srs.js`)
+
+Single mode — no drill/SRS toggle. Every card follows SM-2:
+
+- **Learning phase** — new cards cycle within the session. Needs 2 consecutive correct answers (Good) to graduate, or 1 Easy.
+  - Hard: re-inserted after 2 positions in the queue, streak resets
+  - Good: goes to end of queue; graduates with 2-day interval on 2nd correct
+  - Easy: graduates immediately with 3-day interval
+- **Review phase** — card exits the queue after one answer. Intervals grow multiplicatively:
+  - Hard: `interval × 1.2`, ease decreases (min 1.3)
+  - Good: `interval × ease`
+  - Easy: `interval × ease × 1.3`, ease increases (max 3.0)
+- **Mastered** = review phase + interval ≥ 7 days
+
+Progress shape stored in `localStorage`:
+```js
+{ id, phase: 'learning'|'review', interval, ease, nextDue, lastReviewed, totalSeen }
+```
+Old Leitner data (box/correctStreak shape) is auto-migrated on first load via `migrateIfNeeded()`.
+
+### Session
+
+- Start screen lets you filter by topic / difficulty / type / tag and pick session size: **10 / 20 / All**
+- Session builds a queue of due cards (shuffled). Learning cards cycle back; review cards exit after one answer.
+- After grading, a 1.2-second toast confirms the outcome before advancing.
 
 ### Card types
 
-- **reveal** — show question → "Show Answer" → answer + explanation → self-grade (Got it / Missed it)
-- **multiple-choice** — shuffled options → pick → auto-grade, highlight correct/wrong → Next
+- **reveal** — show question → "Show Answer" → answer + explanation → Hard / Good / Easy buttons
+- **multiple-choice** — shuffled options → pick → auto-grade highlights correct/wrong → Hard / Good / Easy buttons
+
+Both types show a **phase badge** on the card: `Learning · 1/2` (orange) or `Review · 5d` (purple). Grade buttons show the resulting interval: `Hard · again`, `Good · 2d`, `Easy · 3d`.
 
 ### Question bank (`app/data/data.json`)
 
@@ -121,6 +151,20 @@ Paste new objects into `app/data/data.json`. IDs must be unique. Two shapes:
 ```
 
 Progress is stored separately in `localStorage` (key `srs:all`) and never written into `data.json`. Adding questions never disturbs existing progress.
+
+### Card library (`/card-library`)
+
+Read-only table of all cards. Accessible by clicking any stat tile on the start screen (pre-filters to that group).
+
+Columns: Question (with ID below) | Topic | Difficulty | Status
+
+Filter controls:
+- **Status chips**: All / New / Learning / Due / Mastered
+- **Search box**: free-text filter on question text (`?q=`)
+- **Topic dropdown** (`?topic=`)
+- **Attempted select**: All / Attempted / Not attempted (`?attempted=`)
+
+All filter state is reflected in the URL via `replaceState` — shareable/bookmarkable. Chip counts show global totals and don't change when other filters are applied.
 
 ### Planning docs
 
