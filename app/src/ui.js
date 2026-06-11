@@ -103,9 +103,49 @@ function formatNextDue(ts) {
   return `on ${new Date(ts).toLocaleDateString()}`;
 }
 
+// ── Subject picker ────────────────────────────────────────────────────────────
+
+export function renderSubjectPicker(tiles, { onPick }) {
+  root().innerHTML = `
+    <div class="screen">
+      <header class="app-header">
+        <h1 class="app-title">Dev Drill</h1>
+        <p class="app-subtitle">Pick a subject to study</p>
+      </header>
+      <div class="subject-tiles">
+        ${tiles.map(({ subject, total, dueToday }) => `
+          <button class="subject-tile" data-id="${esc(subject.id)}" style="--subject-color: ${esc(subject.color)}">
+            <span class="subject-icon">${esc(subject.icon)}</span>
+            <span class="subject-label">${esc(subject.label)}</span>
+            <span class="subject-counts">
+              ${total === 0 ? 'No cards yet' : `${total} cards · ${dueToday} due`}
+            </span>
+          </button>`).join('')}
+      </div>
+    </div>`;
+  document.querySelectorAll('.subject-tile').forEach(tile =>
+    tile.addEventListener('click', () => onPick(tile.dataset.id))
+  );
+}
+
+// ── Empty subject ─────────────────────────────────────────────────────────────
+
+export function renderEmptySubject(subject, { onBack }) {
+  root().innerHTML = `
+    <div class="screen">
+      <div class="nothing-due">
+        <div class="nothing-due-icon">📭</div>
+        <h2>${esc(subject.label)}</h2>
+        <p>No cards yet — this subject's question bank is empty.</p>
+        <button id="back-btn" class="btn-primary" style="margin-top:32px">← Subjects</button>
+      </div>
+    </div>`;
+  document.getElementById('back-btn')?.addEventListener('click', onBack);
+}
+
 // ── Start screen ──────────────────────────────────────────────────────────────
 
-export function renderStartScreen(allCards, progressMap, { onStart, onReset, onTileClick }) {
+export function renderStartScreen(subject, allCards, progressMap, { onStart, onReset, onBack, onTileClick }) {
   const topics = [...new Set(allCards.map(c => c.topic))].sort();
   const tags   = [...new Set(allCards.flatMap(c => c.tags ?? []))].sort();
 
@@ -140,8 +180,9 @@ export function renderStartScreen(allCards, progressMap, { onStart, onReset, onT
     root().innerHTML = `
       <div class="screen">
         <header class="app-header">
-          <h1 class="app-title">JS Drill</h1>
-          <p class="app-subtitle">Spaced repetition for JavaScript concepts</p>
+          <button class="exit-btn subjects-back" id="subjects-btn">← Subjects</button>
+          <h1 class="app-title">${esc(subject.label)}</h1>
+          <p class="app-subtitle">Spaced repetition drill</p>
         </header>
 
         <div class="stat-tiles">
@@ -200,8 +241,9 @@ export function renderStartScreen(allCards, progressMap, { onStart, onReset, onT
       if (!startDisabled) onStart({ ...filters }, sessionSize);
     });
     document.getElementById('reset-btn')?.addEventListener('click', () => {
-      if (confirm('Reset all progress? This cannot be undone.')) onReset();
+      if (confirm(`Reset all ${subject.label} progress? This cannot be undone.`)) onReset();
     });
+    document.getElementById('subjects-btn')?.addEventListener('click', onBack);
     if (onTileClick) {
       document.querySelectorAll('.stat-tile-link').forEach(tile =>
         tile.addEventListener('click', () => onTileClick(tile.dataset.filter))
@@ -340,7 +382,7 @@ export function renderSummary({ reviewed, correct }, { onAgain, onHome }) {
 
 // ── Card library ─────────────────────────────────────────────────────────────
 
-export function renderCardList(allCards, progressMap, { onBack, onCardClick }) {
+export function renderCardList(allCards, progressMap, { basePath = '/card-library', onBack, onCardClick }) {
   const topics = [...new Set(allCards.map(c => c.topic))].sort();
   const now = Date.now();
 
@@ -379,7 +421,7 @@ export function renderCardList(allCards, progressMap, { onBack, onCardClick }) {
     if (topicFilter)               p.set('topic',     topicFilter);
     if (search)                    p.set('q',         search);
     const qs = p.toString();
-    replaceState('/card-library' + (qs ? '?' + qs : ''));
+    replaceState(basePath + (qs ? '?' + qs : ''));
   }
 
   function statusBadge(card) {

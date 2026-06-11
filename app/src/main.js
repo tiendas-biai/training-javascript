@@ -1,9 +1,12 @@
-import allCards from '../data/data.json';
 import { loadProgress, saveProgress, clearProgress } from './storage.js';
+import { migrateStorageKeys } from './migrate.js';
+import { getSubject, listSubjects } from './subjects.js';
 import { grade, graduate, getOrCreate, computeStats, previewIntervals, getNextDueTime } from './srs.js';
 import { buildQueue, advance, applyFilters, getCardType } from './session.js';
 import { route, navigate, initRouter } from './router.js';
 import {
+  renderSubjectPicker,
+  renderEmptySubject,
   renderStartScreen,
   renderRevealQuestion,
   renderRevealAnswer,
@@ -16,47 +19,85 @@ import {
   renderCardDetail,
 } from './ui.js';
 
-// ── State ──────────────────────────────────────────────────────────────────────
+// ── State (scoped to the active subject) ───────────────────────────────────────
 
-let progressMap = loadProgress();
+let current = null; // { subject, cards, progressMap }
 let sessionQueue = [];
 let sessionStats = { reviewed: 0, correct: 0 };
 let lastFilters = {};
 let lastSessionSize = 20;
 let learningStreak = {};
 
+async function loadCards(subject) {
+  const mod = await subject.loadData();
+  return mod.default;
+}
+
+// Resolves the subject id from the URL into { subject, cards, progressMap }.
+// Unknown ids redirect to the picker and return null.
+async function enterSubject(id) {
+  const subject = getSubject(id);
+  if (!subject) { navigate('/'); return null; }
+  const cards = await loadCards(subject);
+  current = { subject, cards, progressMap: loadProgress(subject.storageKey) };
+  return current;
+}
+
 // ── Routes ─────────────────────────────────────────────────────────────────────
 
-route('/', () => {
-  progressMap = loadProgress();
-  renderStartScreen(allCards, progressMap, {
+route('/', async () => {
+  const tiles = await Promise.all(listSubjects().map(async (subject) => {
+    const cards = await loadCards(subject);
+    const stats = computeStats(cards, loadProgress(subject.storageKey));
+    return { subject, total: cards.length, dueToday: stats.dueToday };
+  }));
+  renderSubjectPicker(tiles, { onPick: (id) => navigate(`/${id}`) });
+});
+
+route('/:subject', async ({ subject: id }) => {
+  const ctx = await enterSubject(id);
+  if (!ctx) return;
+  if (ctx.cards.length === 0) {
+    renderEmptySubject(ctx.subject, { onBack: () => navigate('/') });
+    return;
+  }
+  renderStartScreen(ctx.subject, ctx.cards, ctx.progressMap, {
     onStart: startSession,
     onReset: handleReset,
-    onTileClick: (filter) => navigate(filter ? `/card-library?filter=${filter}` : '/card-library'),
-  });
-});
-
-route('/card-library', () => {
-  progressMap = loadProgress();
-  renderCardList(allCards, progressMap, {
     onBack: () => navigate('/'),
-    onCardClick: (id) => navigate(`/card/${id}`),
+    onTileClick: (filter) =>
+      navigate(`/${id}/card-library${filter ? `?filter=${filter}` : ''}`),
   });
 });
 
-route('/card/:id', ({ id }) => {
-  progressMap = loadProgress();
-  const card = allCards.find(c => c.id === id);
-  if (!card) { navigate('/card-library'); return; }
-  renderCardDetail(card, progressMap, { onBack: () => history.back() });
+route('/:subject/card-library', async ({ subject: id }) => {
+  const ctx = await enterSubject(id);
+  if (!ctx) return;
+  renderCardList(ctx.cards, ctx.progressMap, {
+    basePath: `/${id}/card-library`,
+    onBack: () => navigate(`/${id}`),
+    onCardClick: (cardId) => navigate(`/${id}/card/${cardId}`),
+  });
 });
 
-// ── Home ───────────────────────────────────────────────────────────────────────
+route('/:subject/card/:id', async ({ subject: subjectId, id }) => {
+  const ctx = await enterSubject(subjectId);
+  if (!ctx) return;
+  const card = ctx.cards.find(c => c.id === id);
+  if (!card) { navigate(`/${subjectId}/card-library`); return; }
+  renderCardDetail(card, ctx.progressMap, { onBack: () => history.back() });
+});
+
+// ── Subject home ───────────────────────────────────────────────────────────────
 
 function handleReset() {
-  clearProgress();
-  progressMap = {};
-  navigate('/');
+  clearProgress(current.subject.storageKey);
+  current.progressMap = {};
+  navigate(`/${current.subject.id}`);
+}
+
+function goHome() {
+  navigate(`/${current.subject.id}`);
 }
 
 // ── Session ────────────────────────────────────────────────────────────────────
@@ -64,7 +105,7 @@ function handleReset() {
 function startSession(filters, sessionSize) {
   lastFilters = filters;
   lastSessionSize = sessionSize;
-  sessionQueue = buildQueue(allCards, progressMap, filters, sessionSize);
+  sessionQueue = buildQueue(current.cards, current.progressMap, filters, sessionSize);
   sessionStats = { reviewed: 0, correct: 0 };
   learningStreak = {};
 
@@ -79,21 +120,21 @@ function showCurrentCard() {
   if (sessionQueue.length === 0) {
     renderSummary(sessionStats, {
       onAgain: () => startSession(lastFilters, lastSessionSize),
-      onHome: () => navigate('/'),
+      onHome: goHome,
     });
     return;
   }
 
   const card = sessionQueue[0];
-  const state = getOrCreate(card.id, progressMap);
+  const state = getOrCreate(card.id, current.progressMap);
   const cardInfo = { phase: state.phase, streak: learningStreak[card.id] ?? 0, interval: state.interval };
 
   if (getCardType(card) === 'multiple-choice') {
     renderMCQQuestion(card, { remaining: sessionQueue.length, cardInfo },
       (pickedOption, shuffled) => onMCQPick(card, pickedOption, shuffled),
-      () => navigate('/'));
+      goHome);
   } else {
-    renderRevealQuestion(card, { remaining: sessionQueue.length, cardInfo }, onShowAnswer, () => navigate('/'));
+    renderRevealQuestion(card, { remaining: sessionQueue.length, cardInfo }, onShowAnswer, goHome);
   }
 }
 
@@ -101,10 +142,10 @@ function showCurrentCard() {
 
 function onShowAnswer() {
   const card = sessionQueue[0];
-  const state = getOrCreate(card.id, progressMap);
+  const state = getOrCreate(card.id, current.progressMap);
   const cardInfo = { phase: state.phase, streak: learningStreak[card.id] ?? 0, interval: state.interval };
   const previews = previewIntervals(state);
-  renderRevealAnswer(card, { remaining: sessionQueue.length, cardInfo, previews }, onGrade, () => navigate('/'));
+  renderRevealAnswer(card, { remaining: sessionQueue.length, cardInfo, previews }, onGrade, goHome);
 }
 
 function onGrade(rating) {
@@ -116,7 +157,7 @@ function onGrade(rating) {
 // ── MCQ flow ───────────────────────────────────────────────────────────────────
 
 function onMCQPick(card, pickedOption, shuffled) {
-  const state = getOrCreate(card.id, progressMap);
+  const state = getOrCreate(card.id, current.progressMap);
   const cardInfo = { phase: state.phase, streak: learningStreak[card.id] ?? 0, interval: state.interval };
   const previews = previewIntervals(state);
   renderMCQAnswered(card, { remaining: sessionQueue.length, cardInfo, previews }, pickedOption, shuffled,
@@ -124,13 +165,13 @@ function onMCQPick(card, pickedOption, shuffled) {
       const msg = processGrade(card, rating);
       renderGradeToast(msg, showCurrentCard);
     },
-    () => navigate('/'));
+    goHome);
 }
 
 // ── Grading logic ──────────────────────────────────────────────────────────────
 
 function processGrade(card, rating) {
-  const state = getOrCreate(card.id, progressMap);
+  const state = getOrCreate(card.id, current.progressMap);
   let newState;
   let cardExits = false;
   let toastMsg;
@@ -164,8 +205,8 @@ function processGrade(card, rating) {
     toastMsg = `See you in ${previews[rating]}`;
   }
 
-  progressMap = { ...progressMap, [card.id]: newState };
-  saveProgress(progressMap);
+  current.progressMap = { ...current.progressMap, [card.id]: newState };
+  saveProgress(current.subject.storageKey, current.progressMap);
   sessionStats.reviewed++;
   if (rating !== 'hard') sessionStats.correct++;
 
@@ -176,12 +217,13 @@ function processGrade(card, rating) {
 // ── Nothing due ────────────────────────────────────────────────────────────────
 
 function showNothingDue() {
-  const filtered = applyFilters(allCards, lastFilters);
-  const stats = computeStats(filtered, progressMap);
-  const nextDueTs = getNextDueTime(progressMap);
-  renderNothingDue({ nextDueTs, mastered: stats.mastered, total: stats.total }, () => navigate('/'));
+  const filtered = applyFilters(current.cards, lastFilters);
+  const stats = computeStats(filtered, current.progressMap);
+  const nextDueTs = getNextDueTime(current.progressMap);
+  renderNothingDue({ nextDueTs, mastered: stats.mastered, total: stats.total }, goHome);
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
 
+migrateStorageKeys();
 initRouter();
