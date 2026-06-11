@@ -2186,5 +2186,1057 @@
     "answer": "Stop the instances outside business hours (e.g. with an automated scheduler), since stopped instances don't incur instance-hours",
     "explanation": "Stopped RDS instances stop billing instance-hours (storage and backups still bill) — nights and weekends cut runtime ~75%. Caveat worth knowing: RDS auto-starts stopped instances after 7 days, so schedulers re-stop them. Delete/recreate loses configuration and takes time daily; Multi-AZ *doubles* instance cost; io2 raises storage cost. Pair with right-sizing for the remaining hours.",
     "tags": ["rds", "scheduling", "non-production", "instance-hours"]
+  },
+  {
+    "id": "aws-sec-mcq-032",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Secure Access",
+    "difficulty": "hard",
+    "question": "A security review flags that a web application with an SSRF vulnerability could be tricked into reading EC2 instance credentials from the instance metadata service. Which configuration mitigates this class of attack?",
+    "options": [
+      "Require IMDSv2 by setting HttpTokens to required in the instances' metadata options",
+      "Remove the IAM role from the instances entirely",
+      "Block the 169.254.169.254 address in the VPC's network ACLs",
+      "Enable detailed monitoring on the instances"
+    ],
+    "answer": "Require IMDSv2 by setting HttpTokens to required in the instances' metadata options",
+    "explanation": "IMDSv2 makes metadata access session-oriented: callers must first obtain a token via a PUT request with a special header — something a typical SSRF forward of a GET request can't do. Enforcing it (HttpTokens=required) shuts down the classic credential-theft path. Removing the role breaks legitimate AWS access; NACLs don't filter the instance's own link-local metadata traffic; monitoring observes rather than prevents.",
+    "tags": ["imdsv2", "ssrf", "ec2", "metadata"]
+  },
+  {
+    "id": "aws-sec-mcq-033",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "easy",
+    "question": "A compliance policy requires the KMS customer managed key encrypting a data lake to have its cryptographic material rotated every year, without re-encrypting existing data or changing key ARNs in applications. How is this done?",
+    "options": [
+      "Enable automatic key rotation on the customer managed key",
+      "Create a new key every year and update every application",
+      "Export the key material annually and re-import a new version",
+      "Delete and recreate the key each January"
+    ],
+    "answer": "Enable automatic key rotation on the customer managed key",
+    "explanation": "Automatic rotation generates fresh backing material on schedule (yearly by default) while the key ID, ARN, policies, and grants stay identical — KMS keeps the old material to decrypt data encrypted under it, so nothing needs re-encryption and applications notice nothing. Manual key creation forces application updates; imported key material actually *excludes* automatic rotation; deletion destroys the ability to decrypt existing data.",
+    "tags": ["kms", "key-rotation", "compliance"]
+  },
+  {
+    "id": "aws-sec-mcq-034",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "hard",
+    "question": "A financial institution's policy requires encryption keys to be stored in a single-tenant hardware security module validated to FIPS 140-2 Level 3, with the institution holding exclusive control of the HSM. Which service meets this requirement?",
+    "options": [
+      "AWS CloudHSM",
+      "AWS KMS with customer managed keys",
+      "AWS Secrets Manager",
+      "AWS Certificate Manager"
+    ],
+    "answer": "AWS CloudHSM",
+    "explanation": "CloudHSM provisions dedicated, single-tenant HSMs in your VPC, validated at FIPS 140-2 Level 3, where AWS has no access to your keys — you manage users and crypto operations directly (and can even use it as a KMS custom key store). Standard KMS is multi-tenant managed infrastructure; the \"single-tenant + Level 3 + exclusive control\" phrasing is the exam's signal for CloudHSM. Secrets Manager stores secrets, not HSMs; ACM manages TLS certificates.",
+    "tags": ["cloudhsm", "kms", "fips", "compliance"]
+  },
+  {
+    "id": "aws-sec-mcq-035",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Threat Detection",
+    "difficulty": "medium",
+    "question": "A security team must continuously scan EC2 instances and ECR container images for software vulnerabilities (CVEs) and unintended network exposure, with findings ranked by severity. Which service does this?",
+    "options": [
+      "Amazon Inspector",
+      "Amazon GuardDuty",
+      "AWS Config",
+      "Amazon Macie"
+    ],
+    "answer": "Amazon Inspector",
+    "explanation": "Inspector is the vulnerability scanner: it continuously assesses EC2 (via the SSM agent), ECR images, and Lambda functions against CVE databases and checks network reachability, producing risk-scored findings. The distinction the exam tests: GuardDuty detects active *threats* from log analysis; Inspector finds *vulnerabilities* before exploitation; Macie classifies sensitive data; Config checks configuration compliance.",
+    "tags": ["inspector", "vulnerabilities", "cve", "ecr"]
+  },
+  {
+    "id": "aws-sec-mcq-036",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Threat Detection",
+    "difficulty": "medium",
+    "question": "A company runs GuardDuty, Inspector, and Macie across 40 accounts. Security wants ONE place that aggregates all findings, runs automated checks against standards like CIS AWS Foundations, and shows a consolidated security score. Which service provides this?",
+    "options": [
+      "AWS Security Hub",
+      "AWS CloudTrail",
+      "Amazon Detective",
+      "AWS Systems Manager"
+    ],
+    "answer": "AWS Security Hub",
+    "explanation": "Security Hub is the aggregation layer: it ingests findings from GuardDuty, Inspector, Macie, Access Analyzer, and partner tools across accounts (organization integration), normalizes them into one format, and continuously evaluates security standards (CIS, AWS Foundational Security Best Practices, PCI DSS) with scores. CloudTrail is raw API logging; Detective is for investigating specific findings more deeply; Systems Manager is operations tooling.",
+    "tags": ["security-hub", "aggregation", "cis", "multi-account"]
+  },
+  {
+    "id": "aws-sec-mcq-037",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "VPC Security",
+    "difficulty": "hard",
+    "question": "A regulated company must inspect and filter ALL traffic leaving its VPCs — including blocking outbound requests to unapproved domains and applying intrusion-prevention signatures — using a managed AWS service. Which fits?",
+    "options": [
+      "AWS Network Firewall deployed at the VPC perimeter",
+      "Security groups with outbound rules",
+      "AWS WAF on an internet-facing ALB",
+      "Amazon GuardDuty"
+    ],
+    "answer": "AWS Network Firewall deployed at the VPC perimeter",
+    "explanation": "Network Firewall is the managed network-layer firewall: stateful rules, FQDN/domain filtering for egress, and Suricata-compatible IDS/IPS signatures, scaling automatically at VPC boundaries. Security groups allow/deny by port and CIDR — no domain names or signatures, and no deny logging. WAF inspects *inbound* HTTP to your web endpoints, not general egress; GuardDuty detects (including DNS exfiltration) but doesn't block.",
+    "tags": ["network-firewall", "egress-filtering", "ids-ips", "vpc"]
+  },
+  {
+    "id": "aws-sec-mcq-038",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Hybrid Connectivity",
+    "difficulty": "medium",
+    "question": "Remote employees need secure access to applications in private subnets from their laptops anywhere in the world, using standard OpenVPN-based clients — without exposing the applications publicly. Which managed service provides this?",
+    "options": [
+      "AWS Client VPN",
+      "AWS Site-to-Site VPN",
+      "AWS Direct Connect",
+      "Amazon Connect"
+    ],
+    "answer": "AWS Client VPN",
+    "explanation": "Client VPN is the managed remote-access VPN: individual users connect with OpenVPN-based clients to a Client VPN endpoint, authenticate (Active Directory, SAML, or certificates), and reach VPC and on-premises resources per authorization rules — elastic, no VPN servers to run. Site-to-Site VPN connects *networks* (office to VPC), not roaming laptops; Direct Connect is a physical circuit; Amazon Connect is a contact-center product (a name-trap distractor).",
+    "tags": ["client-vpn", "remote-access", "hybrid"]
+  },
+  {
+    "id": "aws-sec-mcq-039",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Hybrid Connectivity",
+    "difficulty": "hard",
+    "question": "A company connects its data center to AWS via Direct Connect. A new compliance rule requires ALL traffic over the link to be encrypted in transit. Direct Connect does not encrypt by default. What is the standard solution?",
+    "options": [
+      "Run an AWS Site-to-Site VPN over the Direct Connect connection",
+      "Nothing — Direct Connect is private, which satisfies encryption requirements",
+      "Replace Direct Connect with a faster internet connection",
+      "Enable encryption on the Direct Connect virtual interface checkbox"
+    ],
+    "answer": "Run an AWS Site-to-Site VPN over the Direct Connect connection",
+    "explanation": "Direct Connect provides private, dedicated connectivity — but the bits are not encrypted. Layering an IPsec Site-to-Site VPN over a public virtual interface gives encryption in transit while keeping DX's consistent bandwidth and latency (MACsec is the alternative on supported 10/100 Gbps ports). \"Private\" and \"encrypted\" are different claims — a distinction the exam tests directly. There is no encryption checkbox on a VIF.",
+    "tags": ["direct-connect", "vpn", "encryption-in-transit", "hybrid"]
+  },
+  {
+    "id": "aws-sec-mcq-040",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "App Security",
+    "difficulty": "hard",
+    "question": "A mobile app authenticates users with a Cognito user pool. After login, the app must upload photos DIRECTLY to an S3 bucket — without routing the bytes through a backend server, and without embedding AWS credentials in the app. What enables this?",
+    "options": [
+      "A Cognito identity pool that exchanges the user pool token for temporary, scoped AWS credentials",
+      "An IAM user access key shipped in the app binary, obfuscated",
+      "Making the S3 bucket publicly writable for authenticated app versions",
+      "Cognito user pool groups with S3 permissions attached directly"
+    ],
+    "answer": "A Cognito identity pool that exchanges the user pool token for temporary, scoped AWS credentials",
+    "explanation": "This is the user pools vs identity pools division: user pools *authenticate* (issue JWTs); identity pools *authorize against AWS* — they trade a valid token for temporary STS credentials tied to an IAM role, which can even scope S3 prefixes per user identity. Embedded keys are extractable from any binary; public-write buckets accept uploads from anyone; user pool groups map to roles only via an identity pool anyway.",
+    "tags": ["cognito", "identity-pools", "s3", "mobile"]
+  },
+  {
+    "id": "aws-sec-mcq-041",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "medium",
+    "question": "A web application must let a customer download one specific private S3 object for the next 15 minutes, without changing bucket policies or making anything public. What should the backend generate?",
+    "options": [
+      "An S3 presigned URL with a 15-minute expiry",
+      "A bucket policy granting the customer's IP access",
+      "A new IAM user for the customer",
+      "A public object ACL that a cleanup job removes later"
+    ],
+    "answer": "An S3 presigned URL with a 15-minute expiry",
+    "explanation": "A presigned URL embeds a signature derived from the backend's own credentials, granting exactly one operation on one object until expiry — no policy changes, no public exposure, revoked by time. They work for uploads (PUT) too. Per-customer IP policies and IAM users are heavyweight and error-prone; temporarily-public ACLs are a breach window with a cleanup dependency.",
+    "tags": ["s3", "presigned-urls", "temporary-access"]
+  },
+  {
+    "id": "aws-sec-mcq-042",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "VPC Security",
+    "difficulty": "hard",
+    "question": "After tightening a network ACL to allow only inbound port 443, clients can no longer receive responses from the web servers in that subnet — connections hang. Security groups are correct. What did the team forget?",
+    "options": [
+      "An outbound NACL rule allowing ephemeral ports (1024–65535), since NACLs are stateless and response traffic is evaluated separately",
+      "An inbound rule for port 80",
+      "Enabling stateful mode on the network ACL",
+      "A route table entry for return traffic"
+    ],
+    "answer": "An outbound NACL rule allowing ephemeral ports (1024–65535), since NACLs are stateless and response traffic is evaluated separately",
+    "explanation": "NACLs evaluate every packet in each direction independently — there is no connection tracking and no \"stateful mode\". A client connects *to* port 443 but receives responses on its ephemeral source port, so the subnet's outbound NACL must allow the ephemeral range. This stateless-return-traffic trap is among the most reliable exam questions on VPC networking. Routing isn't direction-specific per flow.",
+    "tags": ["nacl", "ephemeral-ports", "stateless", "troubleshooting"]
+  },
+  {
+    "id": "aws-sec-mcq-043",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "IAM",
+    "difficulty": "medium",
+    "question": "A security policy bans long-lived database passwords for applications connecting to RDS MySQL. Connections should authenticate using short-lived tokens tied to IAM identities instead. Which feature enables this?",
+    "options": [
+      "IAM database authentication, generating 15-minute authentication tokens",
+      "Storing the password in an encrypted configuration file",
+      "Using the RDS master password for all applications",
+      "SSH key pairs configured on the DB instance"
+    ],
+    "answer": "IAM database authentication, generating 15-minute authentication tokens",
+    "explanation": "IAM database authentication (RDS MySQL/MariaDB/PostgreSQL) lets a database user authenticate with a token generated from the caller's IAM credentials — valid 15 minutes, no password stored anywhere, access controlled and revoked through IAM, traffic forced over SSL. Encrypted config files still hold a long-lived secret; shared master passwords are the anti-pattern being banned; RDS instances don't take SSH keys.",
+    "tags": ["iam", "rds", "database-authentication", "tokens"]
+  },
+  {
+    "id": "aws-sec-mcq-044",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "easy",
+    "question": "An audit found several unencrypted EBS volumes created by developers who forgot to tick the encryption option. How can the company guarantee every NEW EBS volume in the Region is encrypted, regardless of how it's created?",
+    "options": [
+      "Enable EBS encryption by default in the account settings for that Region",
+      "Send a reminder email to all developers",
+      "Run a weekly script that deletes unencrypted volumes",
+      "Require all volumes to be created by one admin"
+    ],
+    "answer": "Enable EBS encryption by default in the account settings for that Region",
+    "explanation": "EBS encryption by default is a per-Region account setting: every new volume and snapshot copy is automatically encrypted with the chosen KMS key, no per-creation flags needed — console, CLI, API, and Auto Scaling launches all included. Reminders don't enforce; deletion scripts destroy data after the fact; centralizing creation is an operational bottleneck. (Existing unencrypted volumes still need the snapshot-copy migration.)",
+    "tags": ["ebs", "encryption-by-default", "governance"]
+  },
+  {
+    "id": "aws-sec-mr-008",
+    "type": "multiple-response",
+    "topic": "Secure Architectures",
+    "subtopic": "IAM",
+    "difficulty": "medium",
+    "question": "A developer accidentally committed an IAM user's access keys to a public GitHub repository. Which TWO actions should be taken immediately? (Select TWO)",
+    "options": [
+      "Deactivate or delete the exposed access keys",
+      "Review CloudTrail for any API activity made with the exposed keys",
+      "Delete the GitHub repository and consider the incident closed",
+      "Rotate the account's root user password only",
+      "Wait to see whether AWS sends an abuse notification first"
+    ],
+    "answers": [
+      "Deactivate or delete the exposed access keys",
+      "Review CloudTrail for any API activity made with the exposed keys"
+    ],
+    "explanation": "Bots scan public repos for keys within minutes, so the order is: kill the credential immediately, then audit what it did — CloudTrail shows every call made with the key, revealing whether resources were created (crypto-mining EC2 is the classic), data accessed, or persistence established. Deleting the repo doesn't un-leak anything (forks, caches, scrapers); the root password is a different credential; waiting concedes the head start.",
+    "tags": ["iam", "credential-leak", "incident-response", "cloudtrail"]
+  },
+  {
+    "id": "aws-sec-mr-009",
+    "type": "multiple-response",
+    "topic": "Secure Architectures",
+    "subtopic": "App Security",
+    "difficulty": "medium",
+    "question": "A REST API on Amazon API Gateway must (a) accept requests only from authenticated users of the company's existing Cognito user pool and (b) be protected against common web exploits like SQL injection. Which combination meets both requirements? (Select TWO)",
+    "options": [
+      "Configure a Cognito user pool authorizer on the API's methods",
+      "Associate an AWS WAF web ACL with the API Gateway stage",
+      "Enable CORS on every resource",
+      "Issue long-lived API keys to each user",
+      "Move the API into a private subnet"
+    ],
+    "answers": [
+      "Configure a Cognito user pool authorizer on the API's methods",
+      "Associate an AWS WAF web ACL with the API Gateway stage"
+    ],
+    "explanation": "Two requirements, two controls: the Cognito authorizer validates the user pool's JWT on every request (authentication), and WAF filters exploit patterns like SQL injection before they reach the integration (protection). CORS is a browser policy, not security; API keys identify *clients for usage plans/throttling* — explicitly not an authentication mechanism; API Gateway endpoints don't live in your subnets (though private endpoint types exist, that addresses exposure, not these two requirements).",
+    "tags": ["api-gateway", "cognito", "waf", "authorizers"]
+  },
+  {
+    "id": "aws-sec-mcq-045",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "medium",
+    "question": "An application needs to store a few configuration secrets (an API key and a license string) encrypted at rest, retrieved at runtime by IAM-authorized roles. Automatic rotation is NOT required, and the team wants zero additional cost. Which service fits?",
+    "options": [
+      "AWS Systems Manager Parameter Store with SecureString parameters",
+      "AWS Secrets Manager",
+      "A DynamoDB table with client-side encryption",
+      "Environment variables in plaintext"
+    ],
+    "answer": "AWS Systems Manager Parameter Store with SecureString parameters",
+    "explanation": "Parameter Store standard parameters are free: SecureString values are KMS-encrypted, retrieved via IAM-controlled API calls, and versioned. Secrets Manager charges per secret per month — what it buys is managed rotation and cross-account access, which this scenario explicitly doesn't need. The exam frequently poses exactly this trade: rotation or cross-account → Secrets Manager; simple encrypted config at no cost → Parameter Store.",
+    "tags": ["parameter-store", "secrets-manager", "securestring", "cost"]
+  },
+  {
+    "id": "aws-sec-mcq-046",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Multi-Account",
+    "difficulty": "hard",
+    "question": "A network team manages a central VPC with subnets that several application accounts in the same AWS Organization should deploy resources into — without duplicating VPCs or peering. Which service enables sharing the subnets across accounts?",
+    "options": [
+      "AWS Resource Access Manager (AWS RAM)",
+      "VPC peering from each account",
+      "AWS Direct Connect gateway",
+      "IAM cross-account roles"
+    ],
+    "answer": "AWS Resource Access Manager (AWS RAM)",
+    "explanation": "RAM shares resources — VPC subnets, Transit Gateways, Route 53 Resolver rules, license configurations — with accounts or OUs in the organization. Shared-VPC participants launch resources into the shared subnets while the owner keeps network control: one VPC, centrally managed, no peering mesh or CIDR coordination. Peering connects *separate* VPCs; a DX gateway is for hybrid connectivity; IAM roles grant API access, not subnet placement.",
+    "tags": ["ram", "shared-vpc", "multi-account", "networking"]
+  },
+  {
+    "id": "aws-sec-mr-010",
+    "type": "multiple-response",
+    "topic": "Secure Architectures",
+    "subtopic": "Hybrid Connectivity",
+    "difficulty": "medium",
+    "question": "A solutions architect is setting up an AWS Site-to-Site VPN between a corporate data center and a VPC. Which TWO components must be configured to establish the connection? (Select TWO)",
+    "options": [
+      "A customer gateway representing the on-premises VPN device",
+      "A virtual private gateway (or transit gateway) attached on the AWS side",
+      "An internet gateway in the data center",
+      "A NAT gateway in the corporate network",
+      "AWS Direct Connect cross-connects"
+    ],
+    "answers": [
+      "A customer gateway representing the on-premises VPN device",
+      "A virtual private gateway (or transit gateway) attached on the AWS side"
+    ],
+    "explanation": "A Site-to-Site VPN is defined by its two endpoints: the customer gateway resource (the on-premises router's public IP and ASN) and the virtual private gateway attached to the VPC — or a transit gateway when connecting many VPCs. AWS then provisions two IPsec tunnels to distinct endpoints for HA. Internet/NAT gateways are VPC egress constructs, and cross-connects belong to Direct Connect, a different connectivity product.",
+    "tags": ["site-to-site-vpn", "customer-gateway", "virtual-private-gateway", "hybrid"]
+  },
+  {
+    "id": "aws-res-mcq-029",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "High Availability",
+    "difficulty": "medium",
+    "question": "A licensing-restricted application must run on exactly one EC2 instance (no Auto Scaling group allowed). If the underlying hardware fails, the instance should be brought back automatically — keeping its instance ID, private IP, and Elastic IP. What provides this?",
+    "options": [
+      "EC2 automatic recovery via a CloudWatch alarm on StatusCheckFailed_System with the recover action",
+      "A second instance in another AZ behind an ALB",
+      "An hourly AMI backup with manual relaunch",
+      "EC2 Spot capacity rebalancing"
+    ],
+    "answer": "EC2 automatic recovery via a CloudWatch alarm on StatusCheckFailed_System with the recover action",
+    "explanation": "Instance recovery migrates the instance to healthy hardware while preserving its identity — instance ID, private and Elastic IPs, metadata — perfect for license-bound singletons (newer instance types enable simplified automatic recovery by default). The recover action handles *system* status failures (host issues); a second instance violates the constraint; manual relaunch means downtime and a new identity; capacity rebalancing is a Spot feature.",
+    "tags": ["ec2", "auto-recovery", "cloudwatch", "status-checks"]
+  },
+  {
+    "id": "aws-res-mcq-030",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Auto Scaling",
+    "difficulty": "hard",
+    "question": "When an Auto Scaling group scales in, terminated instances lose in-memory job state and unshipped log files. The team needs a window to drain work and upload logs BEFORE each instance is terminated. Which feature provides this?",
+    "options": [
+      "A termination lifecycle hook that pauses the instance in Terminating:Wait while a script finishes cleanup",
+      "Suspending the Terminate process on the ASG permanently",
+      "A larger health check grace period",
+      "Scale-in protection on every instance forever"
+    ],
+    "answer": "A termination lifecycle hook that pauses the instance in Terminating:Wait while a script finishes cleanup",
+    "explanation": "Lifecycle hooks pause the instance between \"selected for termination\" and \"terminated\": the hook fires a notification (EventBridge/SNS/SQS), your script drains jobs and ships logs, then calls complete-lifecycle-action (or the timeout elapses). Launch hooks exist symmetrically for warm-up. Suspending Terminate or protecting every instance breaks scale-in entirely; grace periods govern health evaluation after *launch*.",
+    "tags": ["auto-scaling", "lifecycle-hooks", "graceful-shutdown"]
+  },
+  {
+    "id": "aws-res-mcq-031",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Load Balancing",
+    "difficulty": "medium",
+    "question": "During deployments, users see errors as instances are removed from an ALB target group while still processing in-flight requests. Which setting lets active requests finish before an instance is fully removed?",
+    "options": [
+      "The target group's deregistration delay (connection draining)",
+      "A longer ALB idle timeout",
+      "Sticky sessions on the target group",
+      "Cross-zone load balancing"
+    ],
+    "answer": "The target group's deregistration delay (connection draining)",
+    "explanation": "When a target deregisters, the ALB immediately stops sending it NEW requests but keeps existing connections alive for the deregistration delay (default 300 s) so in-flight requests complete. Tuning it to the longest expected request eliminates deployment errors. Idle timeout closes inactive connections; stickiness pins users to instances (making removal *worse*); cross-zone is about distribution, not draining.",
+    "tags": ["alb", "deregistration-delay", "connection-draining", "deployments"]
+  },
+  {
+    "id": "aws-res-mcq-032",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Auto Scaling",
+    "difficulty": "medium",
+    "question": "An application takes 4 minutes to initialize after instance launch. The Auto Scaling group keeps terminating brand-new instances as unhealthy before they finish booting, looping forever. Which setting fixes this?",
+    "options": [
+      "Increase the ASG health check grace period beyond the initialization time",
+      "Disable health checks entirely",
+      "Reduce the ALB health check interval",
+      "Set the ASG cooldown to zero"
+    ],
+    "answer": "Increase the ASG health check grace period beyond the initialization time",
+    "explanation": "The grace period tells the ASG how long to ignore health check results after launch, giving slow-booting applications time to come up. Set below the real init time, every instance is judged before it's ready, terminated, and replaced — a continuous churn loop. Disabling checks removes self-healing; a *faster* ALB interval makes the judgment come sooner; cooldown spacing doesn't change health evaluation.",
+    "tags": ["auto-scaling", "health-check-grace-period", "troubleshooting"]
+  },
+  {
+    "id": "aws-res-mcq-033",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Databases",
+    "difficulty": "easy",
+    "question": "A DynamoDB table must be protected so it can be restored to ANY point in the last 35 days after accidental writes or deletes. Which feature should be enabled?",
+    "options": [
+      "Point-in-time recovery (PITR)",
+      "DynamoDB Streams",
+      "Global tables",
+      "DynamoDB Accelerator"
+    ],
+    "answer": "Point-in-time recovery (PITR)",
+    "explanation": "PITR maintains continuous backups, restorable to any second in the preceding 35 days — into a new table, from which data is recovered. On-demand backups complement it for long-term snapshots. Streams capture change events (great for triggers, not a restore mechanism); global tables replicate corruption faithfully across Regions; DAX is a cache. \"Restore to any point in time\" → PITR is direct exam vocabulary.",
+    "tags": ["dynamodb", "pitr", "backups"]
+  },
+  {
+    "id": "aws-res-mcq-034",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Storage",
+    "difficulty": "medium",
+    "question": "A company's shared EFS file system is critical, and DR planning requires a copy in another Region kept current automatically, with failover possible in minutes. Which feature meets this?",
+    "options": [
+      "EFS replication to a file system in the second Region",
+      "Nightly rsync from an EC2 instance to the other Region",
+      "EBS snapshots copied cross-Region",
+      "Mounting the same EFS file system from the second Region"
+    ],
+    "answer": "EFS replication to a file system in the second Region",
+    "explanation": "EFS replication continuously replicates the file system to another Region (or AZ) with an RPO/RTO of minutes — managed, no agents or sync jobs. For failover, replication is stopped and the replica becomes writable. Hand-rolled rsync is operational toil with hours of RPO; EBS snapshots don't apply to EFS; EFS mount targets exist only within the file system's own Region (cross-Region NFS over peering is a latency trap, not DR).",
+    "tags": ["efs", "replication", "disaster-recovery", "multi-region"]
+  },
+  {
+    "id": "aws-res-mcq-035",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "DNS & Failover",
+    "difficulty": "hard",
+    "question": "A team wants DNS to return up to eight healthy IP addresses for their service, letting clients pick among them — with unhealthy endpoints automatically excluded — WITHOUT the cost of a load balancer. Which Route 53 routing policy does this?",
+    "options": [
+      "Multivalue answer routing with health checks",
+      "Simple routing with multiple values in one record",
+      "Failover routing",
+      "Weighted routing at 100/0"
+    ],
+    "answer": "Multivalue answer routing with health checks",
+    "explanation": "Multivalue answer routing returns up to eight records, each individually health-checked — unhealthy IPs drop out of responses, and clients spread across the rest. It's DNS-level pseudo-load-balancing: cheaper than an ELB but without connection awareness, draining, or instant failover (DNS TTL caching applies). Simple records with multiple values can't attach health checks per value; failover is active-passive; weighted 100/0 sends everything to one target.",
+    "tags": ["route53", "multivalue", "health-checks", "dns"]
+  },
+  {
+    "id": "aws-res-mcq-036",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Queues & Messaging",
+    "difficulty": "medium",
+    "question": "After an order is placed, a confirmation job must NOT be processed for at least 10 minutes (to allow cancellations) before workers consume it from SQS. Which feature implements the delay?",
+    "options": [
+      "A delay queue (or per-message timers) postponing delivery up to 15 minutes",
+      "A visibility timeout of 10 minutes",
+      "Long polling with a 10-minute wait",
+      "A FIFO queue, which processes in timed order"
+    ],
+    "answer": "A delay queue (or per-message timers) postponing delivery up to 15 minutes",
+    "explanation": "Delay queues (DelaySeconds on the queue) and per-message timers hide a message from consumers for up to 15 minutes *from when it's sent* — exactly \"don't process before X\". Visibility timeout hides a message *after it's received*, governing retry windows, not initial delay — the exam's favorite confusion pair here. Long polling waits at most 20 seconds; FIFO orders messages but doesn't delay them.",
+    "tags": ["sqs", "delay-queues", "message-timers", "visibility-timeout"]
+  },
+  {
+    "id": "aws-res-mcq-037",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Hybrid Connectivity",
+    "difficulty": "medium",
+    "question": "A company's primary connection to AWS is a Direct Connect link carrying business-critical traffic. The architect must add a cost-effective failover path in case the DX circuit fails. What is the recommended design?",
+    "options": [
+      "An AWS Site-to-Site VPN over the internet as a standby for the Direct Connect connection",
+      "A second identical Direct Connect circuit from the same provider through the same location",
+      "Nothing — Direct Connect has built-in redundancy",
+      "An S3 Transfer Acceleration endpoint"
+    ],
+    "answer": "An AWS Site-to-Site VPN over the internet as a standby for the Direct Connect connection",
+    "explanation": "DX + VPN backup is the documented cost-effective resilience pattern: BGP prefers the DX path while it's healthy, and routing fails over to the IPsec VPN when the circuit drops — lower bandwidth, but connectivity survives. A second DX through the same location/provider shares failure modes (and costs far more — appropriate when bandwidth must survive too, via separate locations); a single DX has no built-in redundancy; Transfer Acceleration is an S3 upload feature.",
+    "tags": ["direct-connect", "vpn", "failover", "hybrid"]
+  },
+  {
+    "id": "aws-res-mr-007",
+    "type": "multiple-response",
+    "topic": "Resilient Architectures",
+    "subtopic": "Deployments",
+    "difficulty": "hard",
+    "question": "A team wants to release a new application version with the ability to shift a small percentage of live traffic to it, observe error rates, then either continue shifting or roll back instantly. Which combination implements this on an ALB-based architecture? (Select TWO)",
+    "options": [
+      "Deploy the new version to a separate target group (green) alongside the current one (blue)",
+      "Use ALB weighted target groups to shift traffic gradually between blue and green",
+      "Replace the instances in the existing target group one by one with the new version",
+      "Lower the ALB health check thresholds during the deployment",
+      "Shift traffic by changing instance sizes in the existing group"
+    ],
+    "answers": [
+      "Deploy the new version to a separate target group (green) alongside the current one (blue)",
+      "Use ALB weighted target groups to shift traffic gradually between blue and green"
+    ],
+    "explanation": "Blue/green with canary shifting needs two independently routable environments: the green target group runs the new version, and the ALB listener rule's weights move traffic 1% → 10% → 100% (or back to 0% instantly on errors — the rollback is a weight change, not a redeploy). In-place instance replacement has no rollback path and mixes versions in one pool; health thresholds and instance sizes don't direct traffic between versions.",
+    "tags": ["blue-green", "canary", "weighted-target-groups", "deployments"]
+  },
+  {
+    "id": "aws-res-mcq-038",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Serverless",
+    "difficulty": "medium",
+    "question": "Messages in an SQS queue must be processed by Lambda, scaling consumers automatically with queue depth, batching messages, and returning failures to the queue — with no polling infrastructure to manage. What connects the queue to the function?",
+    "options": [
+      "An event source mapping from the SQS queue to the Lambda function",
+      "A cron-scheduled Lambda that polls the queue every minute",
+      "An SNS topic between the queue and the function",
+      "An EC2 poller fleet invoking Lambda via the SDK"
+    ],
+    "answer": "An event source mapping from the SQS queue to the Lambda function",
+    "explanation": "The event source mapping is Lambda's managed poller: it long-polls the queue, invokes the function with batches, scales pollers up and down with traffic, and leaves failed batches (or items, with partial batch responses) to reappear for retry per the queue's redrive policy. Scheduled polling adds latency and fixed cadence; SNS inverts the pattern and drops the buffering; an EC2 poller fleet is exactly the infrastructure this feature eliminates.",
+    "tags": ["lambda", "sqs", "event-source-mapping", "serverless"]
+  },
+  {
+    "id": "aws-res-mcq-039",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Containers",
+    "difficulty": "easy",
+    "question": "A small team runs containers and wants AWS to handle servers entirely: no EC2 instances to patch or scale, tasks restarted automatically if they fail, and a service keeping the desired task count running. Which combination provides this?",
+    "options": [
+      "Amazon ECS services on AWS Fargate",
+      "Amazon ECS on self-managed EC2 container instances",
+      "Docker installed on a single large EC2 instance",
+      "AWS Lambda functions only"
+    ],
+    "answer": "Amazon ECS services on AWS Fargate",
+    "explanation": "Fargate is serverless container compute — no instances exist for the team to patch, size, or scale — and an ECS *service* adds the resilience contract: it monitors tasks, replaces failures, maintains desired count across AZs, and integrates load balancer health checks. The EC2 launch type reintroduces fleet management; one big Docker host is a single point of failure; Lambda suits functions, not arbitrary long-running containers.",
+    "tags": ["ecs", "fargate", "containers", "serverless"]
+  },
+  {
+    "id": "aws-res-mcq-040",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Resilience Patterns",
+    "difficulty": "medium",
+    "question": "A company patches its long-lived EC2 fleet in place over SSH, and configuration drift keeps causing mysterious incidents. Which practice eliminates drift by design?",
+    "options": [
+      "Immutable infrastructure — bake a new AMI per change and roll it out by replacing instances (e.g. ASG instance refresh)",
+      "A stricter change-approval process for SSH sessions",
+      "Larger instances so changes are needed less often",
+      "Manual configuration audits every quarter"
+    ],
+    "answer": "Immutable infrastructure — bake a new AMI per change and roll it out by replacing instances (e.g. ASG instance refresh)",
+    "explanation": "Immutable infrastructure forbids modifying running servers: every change produces a new artifact (AMI/launch template version), and deployment means replacing instances — ASG instance refresh rolls the fleet gradually with health checks. Drift becomes impossible (servers are reproducible from the artifact) and rollback is redeploying the previous version. Process and audits manage drift; immutability removes its mechanism. The exam guide lists this under resilient design.",
+    "tags": ["immutable-infrastructure", "ami", "instance-refresh", "drift"]
+  },
+  {
+    "id": "aws-res-mr-008",
+    "type": "multiple-response",
+    "topic": "Resilient Architectures",
+    "subtopic": "Databases",
+    "difficulty": "easy",
+    "question": "A production RDS database was nearly deleted by a mistaken script last month. Which TWO configurations protect against losing the database and its data this way? (Select TWO)",
+    "options": [
+      "Enable deletion protection on the DB instance",
+      "Enable automated backups with an appropriate retention period",
+      "Disable Multi-AZ to simplify the setup",
+      "Grant all engineers rds:DeleteDBInstance for accountability",
+      "Turn off final snapshots to speed up operations"
+    ],
+    "answers": [
+      "Enable deletion protection on the DB instance",
+      "Enable automated backups with an appropriate retention period"
+    ],
+    "explanation": "Defense in depth: deletion protection makes `DeleteDBInstance` fail outright until the flag is deliberately removed (a separate, conscious step), and automated backups guarantee point-in-time recovery if data is ever lost anyway. The distractors actively reduce safety — wider delete permissions, no final snapshot, less redundancy. IAM least privilege on delete actions is the complementary control.",
+    "tags": ["rds", "deletion-protection", "backups"]
+  },
+  {
+    "id": "aws-res-mcq-041",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Loose Coupling",
+    "difficulty": "medium",
+    "question": "A backend service is overwhelmed when API clients send sudden bursts far beyond its capacity. The team wants API Gateway to reject excess requests with HTTP 429 before they reach the backend, with different limits per API consumer. What should they configure?",
+    "options": [
+      "Throttling limits with usage plans and API keys per consumer",
+      "A larger backend so throttling is unnecessary",
+      "Client-side rate limiting guidelines in the documentation",
+      "An SQS queue inside API Gateway"
+    ],
+    "answer": "Throttling limits with usage plans and API keys per consumer",
+    "explanation": "API Gateway throttles with a token-bucket (rate + burst) at account, stage, method, and — via usage plans with API keys — per-consumer levels, returning 429 Too Many Requests when exceeded. The backend only ever sees traffic within the contract, and noisy clients can't starve others. Over-provisioning pays for abuse; documentation isn't enforcement; API Gateway doesn't embed queues (that's a separate integration pattern).",
+    "tags": ["api-gateway", "throttling", "usage-plans", "backpressure"]
+  },
+  {
+    "id": "aws-res-mcq-042",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Databases",
+    "difficulty": "medium",
+    "question": "An Aurora cluster has a writer and two replicas. If the writer instance fails, what happens?",
+    "options": [
+      "Aurora automatically promotes a replica to writer (typically in under 30 seconds), following the configured failover priority tiers",
+      "The cluster is read-only until an administrator restores the writer from a snapshot",
+      "All data since the last backup is lost",
+      "The cluster endpoint must be manually repointed to a replica"
+    ],
+    "answer": "Aurora automatically promotes a replica to writer (typically in under 30 seconds), following the configured failover priority tiers",
+    "explanation": "Aurora replicas share the same distributed storage volume as the writer, so promotion needs no data copying — failover typically completes in under 30 seconds, choosing the candidate by priority tier (0–15, lower first, then largest instance). The cluster endpoint follows the new writer automatically; applications just reconnect. No storage-level data is lost (six copies across three AZs). With *no* replica, Aurora instead recreates the writer, which is slower.",
+    "tags": ["aurora", "failover", "replicas", "priority-tiers"]
+  },
+  {
+    "id": "aws-perf-mcq-026",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Networking",
+    "difficulty": "medium",
+    "question": "A company has 60 VPCs across several accounts plus a Direct Connect link to its data center. Managing full-mesh VPC peering has become unmanageable. Which service consolidates this into a hub-and-spoke network?",
+    "options": [
+      "AWS Transit Gateway",
+      "More VPC peering connections, organized in a spreadsheet",
+      "AWS PrivateLink between every VPC pair",
+      "A shared NAT gateway"
+    ],
+    "answer": "AWS Transit Gateway",
+    "explanation": "Transit Gateway is the regional network hub: VPCs, VPN connections, and Direct Connect gateways attach once, and route tables on the hub control who reaches whom — thousands of attachments, with cross-Region peering available. A 60-VPC full mesh needs ~1,770 peering connections, and peering isn't transitive, which is exactly the wall this team hit. PrivateLink exposes specific *services*, not networks; NAT is internet egress.",
+    "tags": ["transit-gateway", "vpc-peering", "hub-and-spoke", "networking"]
+  },
+  {
+    "id": "aws-perf-mcq-027",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Networking",
+    "difficulty": "easy",
+    "question": "A company transfers large datasets daily between its data center and AWS. The internet VPN's bandwidth fluctuates unpredictably, breaking transfer deadlines. Which option provides consistent, dedicated network performance?",
+    "options": [
+      "AWS Direct Connect",
+      "A second internet VPN tunnel",
+      "S3 Transfer Acceleration",
+      "Larger EC2 instances at the AWS end"
+    ],
+    "answer": "AWS Direct Connect",
+    "explanation": "Direct Connect is a dedicated physical circuit (1/10/100 Gbps, or hosted capacities) between the data center and AWS — bandwidth and latency are consistent because the traffic never crosses the public internet. VPNs ride the internet, so a second tunnel inherits the same variability. Transfer Acceleration helps S3 uploads over the internet but guarantees nothing; receiving-side instance size doesn't fix the pipe.",
+    "tags": ["direct-connect", "hybrid", "bandwidth", "consistency"]
+  },
+  {
+    "id": "aws-perf-mcq-028",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Edge & CDN",
+    "difficulty": "hard",
+    "question": "A site on CloudFront runs A/B tests: based on a cookie, requests must be routed to one of two different origins. The logic must run at the edge with no round trip to a Region. Which feature implements this?",
+    "options": [
+      "Lambda@Edge on the origin request event, rewriting the origin based on the cookie",
+      "CloudFront geographic restrictions",
+      "Route 53 weighted routing",
+      "An S3 redirect rule"
+    ],
+    "answer": "Lambda@Edge on the origin request event, rewriting the origin based on the cookie",
+    "explanation": "Lambda@Edge runs functions at CloudFront locations on viewer/origin request and response events — origin-request functions can inspect cookies and change the origin per request, the canonical A/B mechanism. CloudFront Functions are the lighter, cheaper sibling for sub-millisecond header/URL rewrites on viewer events, but origin selection lives with Lambda@Edge. Geo restrictions block countries; Route 53 weights split by DNS query, blind to cookies; S3 redirects can't read them either.",
+    "tags": ["lambda-edge", "cloudfront", "ab-testing", "edge-computing"]
+  },
+  {
+    "id": "aws-perf-mcq-029",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Analytics",
+    "difficulty": "medium",
+    "question": "A data team runs nightly Apache Spark jobs processing terabytes from S3, wanting cluster management handled by AWS and the ability to use Spot Instances for the worker fleet. Which service fits?",
+    "options": [
+      "Amazon EMR",
+      "AWS Lambda",
+      "Amazon RDS",
+      "Amazon QuickSight"
+    ],
+    "answer": "Amazon EMR",
+    "explanation": "EMR is managed big-data infrastructure: provisioned clusters running Spark, Hadoop, Hive, and Presto, reading straight from S3 (EMRFS), with deep Spot integration for task nodes — transient clusters that exist only for the nightly run are the cost-efficient pattern. Lambda caps at 15 minutes and 10 GB — wrong shape for terabyte Spark jobs; RDS is a relational database; QuickSight visualizes results rather than computing them.",
+    "tags": ["emr", "spark", "big-data", "spot"]
+  },
+  {
+    "id": "aws-perf-mcq-030",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Compute",
+    "difficulty": "medium",
+    "question": "A genomics company runs hundreds of thousands of containerized analysis jobs with varying CPU/memory needs and inter-job dependencies. They want managed job queues, automatic provisioning of right-sized compute, and Spot support — without building a scheduler. Which service?",
+    "options": [
+      "AWS Batch",
+      "AWS Step Functions alone",
+      "Amazon SQS with manual workers",
+      "AWS Lambda"
+    ],
+    "answer": "AWS Batch",
+    "explanation": "Batch is purpose-built batch scheduling: job definitions, priority queues, dependencies, array jobs for massive parallelism, and compute environments that provision optimal EC2/Spot/Fargate capacity per the queue's demands. Step Functions orchestrates workflows (and often *submits* Batch jobs) but isn't a batch scheduler with queues and packing; SQS+workers means building Batch yourself; Lambda's 15-minute/10 GB limits don't fit heavy analysis jobs.",
+    "tags": ["aws-batch", "hpc", "job-queues", "containers"]
+  },
+  {
+    "id": "aws-perf-mcq-031",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Analytics",
+    "difficulty": "easy",
+    "question": "Business analysts need interactive dashboards over data in Athena and Redshift, shareable with hundreds of users, with ML-powered insights — and no BI servers to manage. Which AWS service provides this?",
+    "options": [
+      "Amazon QuickSight",
+      "Amazon CloudWatch dashboards",
+      "AWS Glue DataBrew",
+      "Amazon OpenSearch Dashboards"
+    ],
+    "answer": "Amazon QuickSight",
+    "explanation": "QuickSight is the serverless BI service: native connectors to Athena, Redshift, RDS and S3, the in-memory SPICE engine for fast interactive queries, per-session pricing for readers, embedding, and ML insights like anomaly detection. CloudWatch dashboards visualize *metrics*; DataBrew is data preparation; OpenSearch Dashboards serves log/search analytics on OpenSearch data. The exam guide names QuickSight for visualization explicitly.",
+    "tags": ["quicksight", "bi", "dashboards", "analytics"]
+  },
+  {
+    "id": "aws-perf-mcq-032",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Databases & Caching",
+    "difficulty": "medium",
+    "question": "A social platform must answer queries like \"friends of my friends who like hiking\" across billions of relationships in milliseconds. Relational JOINs have become unusably slow. Which purpose-built database fits?",
+    "options": [
+      "Amazon Neptune",
+      "Amazon Redshift",
+      "Amazon DynamoDB",
+      "Amazon ElastiCache"
+    ],
+    "answer": "Amazon Neptune",
+    "explanation": "Neptune is the managed graph database — property graphs (Gremlin/openCypher) and RDF (SPARQL) — built to traverse relationship networks in milliseconds where the equivalent SQL needs explosive self-JOINs. Social graphs, recommendations, fraud rings, and knowledge graphs are its signature scenarios. Redshift aggregates columns, DynamoDB serves key-value at scale, ElastiCache caches — none traverse relationships natively.",
+    "tags": ["neptune", "graph-database", "purpose-built"]
+  },
+  {
+    "id": "aws-perf-mcq-033",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Storage",
+    "difficulty": "hard",
+    "question": "A database on a c5.large instance uses an io2 volume provisioned with 40,000 IOPS, but CloudWatch shows the volume never exceeds ~20,000 IOPS while the application is I/O starved. The volume metrics show no queue saturation. What is the likely bottleneck?",
+    "options": [
+      "The instance type's own EBS bandwidth/IOPS limit — a larger or storage-optimized instance is needed to drive the provisioned IOPS",
+      "io2 volumes cannot exceed 20,000 IOPS",
+      "The volume needs to be striped with RAID 1",
+      "EBS Multi-Attach must be enabled first"
+    ],
+    "answer": "The instance type's own EBS bandwidth/IOPS limit — a larger or storage-optimized instance is needed to drive the provisioned IOPS",
+    "explanation": "EBS performance is min(volume, instance): every instance type has its own EBS-attached IOPS and throughput ceiling, and a c5.large caps far below 40,000 IOPS — the volume is fine, the instance can't push it. Scaling to a larger size (or an EBS-optimized-by-default family with higher EBS bandwidth) unlocks the provisioned performance. io2 goes to 64,000+; RAID 1 mirrors for redundancy (halving write throughput); Multi-Attach is about multiple instances, not speed.",
+    "tags": ["ebs", "instance-limits", "iops", "troubleshooting"]
+  },
+  {
+    "id": "aws-perf-mcq-034",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Data Transfer",
+    "difficulty": "medium",
+    "question": "A company's backup workflow writes to physical tape libraries, with software that expects an iSCSI virtual tape interface. They want to retire tape hardware and store backups in S3 and Glacier without changing the backup software. Which service fits?",
+    "options": [
+      "AWS Storage Gateway — Tape Gateway",
+      "AWS Storage Gateway — File Gateway",
+      "AWS DataSync",
+      "Amazon EBS snapshots"
+    ],
+    "answer": "AWS Storage Gateway — Tape Gateway",
+    "explanation": "Tape Gateway presents a virtual tape library (VTL) over iSCSI, so existing backup software (Veeam, NetBackup, Commvault) keeps working unchanged — virtual tapes land in S3 and \"ejected\" tapes archive to Glacier tiers. Mapping the Storage Gateway family is exam-core: File Gateway = NFS/SMB to S3, Volume Gateway = iSCSI block volumes, Tape Gateway = VTL. DataSync migrates files; EBS snapshots don't speak to backup software.",
+    "tags": ["storage-gateway", "tape-gateway", "vtl", "backups"]
+  },
+  {
+    "id": "aws-perf-mcq-035",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Data Transfer",
+    "difficulty": "medium",
+    "question": "A research lab must move 600 TB of imagery to S3 within three weeks. Their site's internet uplink is 200 Mbps and cannot be upgraded. What should they use?",
+    "options": [
+      "Multiple AWS Snowball Edge devices shipped to the site",
+      "AWS DataSync over the existing link",
+      "S3 Transfer Acceleration",
+      "Multipart uploads run 24/7"
+    ],
+    "answer": "Multiple AWS Snowball Edge devices shipped to the site",
+    "explanation": "Do the math first — that's the exam skill: 600 TB over 200 Mbps ≈ 280+ days at full saturation; no online method (DataSync, Transfer Acceleration, multipart) beats the arithmetic of the pipe. Snowball Edge devices hold ~80 TB usable each; several in parallel, loaded locally and shipped back, complete the transfer within the deadline. Rule of thumb: when transfer time exceeds about a week of dedicated bandwidth, go offline.",
+    "tags": ["snowball", "data-migration", "offline-transfer", "bandwidth-math"]
+  },
+  {
+    "id": "aws-perf-mcq-036",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Storage",
+    "difficulty": "hard",
+    "question": "An application downloads 10 GB files from S3 over high-bandwidth connections, but single-stream downloads are far slower than the available bandwidth, and a network blip restarts the whole file. What download strategy fixes both problems?",
+    "options": [
+      "Parallel byte-range GET requests, each fetching a different part of the object",
+      "Switching the bucket to S3 One Zone-IA",
+      "Compressing the files into one larger archive",
+      "Downloading through a NAT gateway"
+    ],
+    "answer": "Parallel byte-range GET requests, each fetching a different part of the object",
+    "explanation": "The `Range` header lets each request pull a slice of the object; running slices concurrently aggregates throughput far beyond one TCP stream, and a failed slice retries alone instead of restarting 10 GB. It's the download mirror of multipart upload (SDK transfer managers do both automatically). Storage class doesn't change wire speed; a bigger archive worsens the retry problem; NAT adds cost, not bandwidth.",
+    "tags": ["s3", "byte-range", "parallel-downloads", "throughput"]
+  },
+  {
+    "id": "aws-perf-mcq-037",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Databases & Caching",
+    "difficulty": "medium",
+    "question": "An IoT platform ingests millions of sensor readings per minute, each with a timestamp. Queries are time-windowed aggregations (\"average temperature per device over the last hour\"), and old data should age out to cheaper storage automatically. Which purpose-built database fits?",
+    "options": [
+      "Amazon Timestream",
+      "Amazon RDS PostgreSQL",
+      "Amazon Neptune",
+      "Amazon ElastiCache Redis"
+    ],
+    "answer": "Amazon Timestream",
+    "explanation": "Timestream is the serverless time-series database: built for high-throughput timestamped ingestion, time-windowed SQL analytics (interpolation, smoothing), and automatic tiering from a memory store to a cheaper magnetic store by age. General-purpose RDS tables strain at this write rate and need hand-rolled partitioning/expiry; Neptune is graphs; Redis is a cache. \"Sensor/metrics data + time-window queries\" is the Timestream signature.",
+    "tags": ["timestream", "time-series", "iot", "purpose-built"]
+  },
+  {
+    "id": "aws-perf-mr-004",
+    "type": "multiple-response",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Edge & CDN",
+    "difficulty": "medium",
+    "question": "A web application served from us-east-1 has a growing user base in Asia and Australia complaining about slow page loads — both for static assets and for API calls. Which combination of changes improves their experience? (Select TWO)",
+    "options": [
+      "Serve static assets through Amazon CloudFront",
+      "Deploy the application stack to an Asia-Pacific Region with Route 53 latency-based routing",
+      "Move the S3 assets to larger buckets",
+      "Increase the EC2 instance sizes in us-east-1",
+      "Switch the ALB in us-east-1 to a Network Load Balancer"
+    ],
+    "answers": [
+      "Serve static assets through Amazon CloudFront",
+      "Deploy the application stack to an Asia-Pacific Region with Route 53 latency-based routing"
+    ],
+    "explanation": "Distance is the enemy: CloudFront caches static content at edges near the users (and accelerates dynamic calls somewhat via backbone routing), while a second Regional deployment with latency routing puts the *API itself* close to them — attacking both halves of the complaint. Bucket \"size\" isn't a real dial; bigger instances and a different load balancer in Virginia don't shorten the 200+ ms round trip from Sydney.",
+    "tags": ["cloudfront", "multi-region", "latency-routing", "global-users"]
+  },
+  {
+    "id": "aws-perf-mcq-038",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Databases & Caching",
+    "difficulty": "hard",
+    "question": "An RDS database on gp2 storage performs well most of the day but slows dramatically during sustained heavy I/O periods. CloudWatch shows the volume's BurstBalance metric dropping to zero exactly when slowdowns start. What is happening, and what fixes it?",
+    "options": [
+      "gp2 burst credits are exhausted, dropping IOPS to baseline — move to gp3 or Provisioned IOPS storage sized for the sustained load",
+      "The database needs more RAM — scale the instance class",
+      "Connections are leaking — add RDS Proxy",
+      "The storage is full — increase allocated capacity"
+    ],
+    "answer": "gp2 burst credits are exhausted, dropping IOPS to baseline — move to gp3 or Provisioned IOPS storage sized for the sustained load",
+    "explanation": "gp2 earns burst credits at 3 IOPS/GB and spends them above baseline; sustained heavy I/O drains the bucket and performance collapses to baseline — the BurstBalance-hits-zero correlation is the textbook diagnosis. gp3 decouples performance from size with a flat 3,000 IOPS baseline (configurable higher); Provisioned IOPS suits the heaviest cases. RAM, connection pooling, and capacity are different problems with different metrics.",
+    "tags": ["rds", "gp2", "burst-balance", "storage-performance"]
+  },
+  {
+    "id": "aws-cost-mcq-021",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "S3 Storage Classes",
+    "difficulty": "medium",
+    "question": "Medical images are written once and accessed about once per quarter, but when a doctor opens one it must load in milliseconds. Which storage class minimizes cost for this pattern?",
+    "options": [
+      "S3 Glacier Instant Retrieval",
+      "S3 Glacier Flexible Retrieval",
+      "S3 Standard",
+      "S3 Glacier Deep Archive"
+    ],
+    "answer": "S3 Glacier Instant Retrieval",
+    "explanation": "Glacier Instant Retrieval is the archive class with *millisecond* access — about 68% cheaper storage than Standard-IA for data touched roughly once a quarter, trading a higher per-GB retrieval fee that rare access keeps small. Flexible Retrieval and Deep Archive take minutes to hours — fails the doctor's click; Standard pays full price for data that sits idle 99.9% of the time. \"Rarely accessed but instant when needed\" → Instant Retrieval.",
+    "tags": ["s3", "glacier-instant-retrieval", "storage-classes"]
+  },
+  {
+    "id": "aws-cost-mcq-022",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "S3 Storage Classes",
+    "difficulty": "medium",
+    "question": "A photo service stores thumbnails that are regenerated automatically from originals if ever lost. The thumbnails are accessed infrequently. Which storage class offers the LOWEST cost that still fits this data?",
+    "options": [
+      "S3 One Zone-IA — cheaper because it forgoes multi-AZ resilience, acceptable for re-creatable data",
+      "S3 Standard-IA",
+      "S3 Standard",
+      "S3 Glacier Deep Archive"
+    ],
+    "answer": "S3 One Zone-IA — cheaper because it forgoes multi-AZ resilience, acceptable for re-creatable data",
+    "explanation": "One Zone-IA stores data in a single AZ at ~20% less than Standard-IA. The trade-off — data loss if that AZ is destroyed — is precisely acceptable when the data is derivative and re-creatable (thumbnails, transcodes, replicas of on-prem data). That qualifier is the exam's cue; for primary or irreplaceable data, multi-AZ classes win. Deep Archive's hours-long retrieval doesn't suit serving images at all.",
+    "tags": ["s3", "one-zone-ia", "recreatable-data", "storage-classes"]
+  },
+  {
+    "id": "aws-cost-mcq-023",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Storage",
+    "difficulty": "easy",
+    "question": "An EFS file system holds project files, most untouched for months, yet bills entirely at the Standard rate. Access patterns must not change for users. What reduces the cost?",
+    "options": [
+      "Enable EFS lifecycle management to transition files not accessed for 30 days to EFS Infrequent Access",
+      "Move all files to instance store",
+      "Mount the file system read-only",
+      "Reduce the number of mount targets"
+    ],
+    "answer": "Enable EFS lifecycle management to transition files not accessed for 30 days to EFS Infrequent Access",
+    "explanation": "EFS lifecycle management automatically moves files unaccessed for a configured window into EFS IA (up to ~92% cheaper per GB; an Archive class goes further), and transparently moves them back on access — same paths, same NFS semantics, users notice nothing but a slightly slower first read. Instance store is ephemeral local disk; read-only mounts and mount-target counts don't affect storage rates.",
+    "tags": ["efs", "lifecycle", "infrequent-access", "storage-costs"]
+  },
+  {
+    "id": "aws-cost-mcq-024",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Databases",
+    "difficulty": "medium",
+    "question": "A DynamoDB table stores user sessions that are useless after 24 hours, but old items accumulate and inflate storage costs. Deleting them with scheduled scans consumes write capacity. What is the free, built-in solution?",
+    "options": [
+      "DynamoDB TTL — set an expiry timestamp attribute and let DynamoDB delete expired items at no cost",
+      "A nightly Lambda that scans and deletes old items",
+      "Recreating the table every day",
+      "Switching the table to on-demand mode"
+    ],
+    "answer": "DynamoDB TTL — set an expiry timestamp attribute and let DynamoDB delete expired items at no cost",
+    "explanation": "TTL deletes items whose epoch-timestamp attribute has passed, consuming **no write capacity** and costing nothing — built for sessions, tokens, and event data with natural lifetimes (deletions happen within a background window, typically minutes to ~48 h). The scan-and-delete Lambda pays RCUs for the scan and WCUs per delete — the exact cost being eliminated; daily table recreation drops *all* data; capacity mode changes billing math, not data volume.",
+    "tags": ["dynamodb", "ttl", "sessions", "storage-costs"]
+  },
+  {
+    "id": "aws-cost-mcq-025",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Cost Visibility",
+    "difficulty": "easy",
+    "question": "A company's CloudWatch Logs bill keeps climbing. Investigation shows application log groups retain every log line forever. What is the simplest fix?",
+    "options": [
+      "Set retention policies on the log groups so old events expire automatically",
+      "Stop logging from the applications",
+      "Print logs to stdout without CloudWatch",
+      "Create a second account for logs"
+    ],
+    "answer": "Set retention policies on the log groups so old events expire automatically",
+    "explanation": "CloudWatch Logs groups default to **Never Expire** — a quiet cost accumulator. Setting retention (e.g. 30–90 days per compliance needs) expires old events automatically; for logs needed long-term, export to S3 and lifecycle them into Glacier tiers at a fraction of the price. Turning logging off trades cost for blindness; the other options dodge rather than manage the data.",
+    "tags": ["cloudwatch-logs", "retention", "logging-costs"]
+  },
+  {
+    "id": "aws-cost-mcq-026",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Cost Visibility",
+    "difficulty": "medium",
+    "question": "Finance wants to be alerted automatically when any service's spending deviates abnormally from its historical pattern — like a misconfigured job tripling NAT gateway costs overnight — without setting fixed thresholds per service. Which tool does this?",
+    "options": [
+      "AWS Cost Anomaly Detection",
+      "AWS Budgets with one fixed monthly amount",
+      "The billing console checked weekly",
+      "AWS Trusted Advisor"
+    ],
+    "answer": "AWS Cost Anomaly Detection",
+    "explanation": "Cost Anomaly Detection learns each monitored segment's spending pattern with ML and alerts on deviations — no thresholds to define or maintain, with root-cause hints (service, account, usage type). Budgets are excellent for *known* limits but a tripled NAT bill can hide inside a healthy monthly total until too late; weekly manual checks find anomalies after days; Trusted Advisor flags static optimization opportunities, not spend deviations.",
+    "tags": ["cost-anomaly-detection", "ml", "alerts", "billing"]
+  },
+  {
+    "id": "aws-cost-mcq-027",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Compute Purchasing",
+    "difficulty": "medium",
+    "question": "An organization has 30 AWS accounts under AWS Organizations with consolidated billing. The platform team buys Savings Plans in the management account. A member account starts running matching compute. What happens to the discount?",
+    "options": [
+      "The Savings Plan discount automatically applies to matching usage in ANY account in the organization",
+      "Discounts only ever apply in the purchasing account",
+      "Each account must buy its own Savings Plans",
+      "Discounts apply only if the accounts share a VPC"
+    ],
+    "answer": "The Savings Plan discount automatically applies to matching usage in ANY account in the organization",
+    "explanation": "Under consolidated billing, Savings Plans and RI discounts float across the organization: the commitment first covers the purchasing account's usage, then any member account's matching usage. Volume-tiered pricing (S3, data transfer) also aggregates across accounts. This is why centralizing commitments in one account works — and why discount sharing can be *disabled* per account when chargeback models require it.",
+    "tags": ["savings-plans", "consolidated-billing", "organizations", "discount-sharing"]
+  },
+  {
+    "id": "aws-cost-mcq-028",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Compute Purchasing",
+    "difficulty": "hard",
+    "question": "A company must bring its per-socket Windows Server and SQL Server licenses to AWS. The license terms require visibility and control of the physical sockets and cores the software runs on. Which EC2 option satisfies the licensing terms?",
+    "options": [
+      "Dedicated Hosts — a physical server allocated to you, with socket/core visibility and instance placement affinity",
+      "Dedicated Instances — hardware isolation is equivalent for licensing",
+      "Standard On-Demand instances with license tags",
+      "Spot Instances on isolated hardware"
+    ],
+    "answer": "Dedicated Hosts — a physical server allocated to you, with socket/core visibility and instance placement affinity",
+    "explanation": "BYOL terms tied to physical sockets/cores need Dedicated Hosts: you see the host's sockets and cores, control placement (host affinity), and can use License Manager to track entitlement. The exam's trap is Dedicated *Instances* — also single-tenant hardware, but without socket visibility or placement control, which per-socket licenses require. Tags document licenses; they don't satisfy their terms.",
+    "tags": ["dedicated-hosts", "byol", "licensing", "dedicated-instances"]
+  },
+  {
+    "id": "aws-cost-mcq-029",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Containers",
+    "difficulty": "medium",
+    "question": "A containerized batch-processing service on ECS Fargate tolerates interruptions and reruns failed tasks automatically. Which option cuts its compute cost by up to ~70%?",
+    "options": [
+      "Run the tasks on Fargate Spot capacity",
+      "Move the tasks to larger Fargate sizes to finish faster",
+      "Switch to ECS on On-Demand EC2 instances",
+      "Run the containers on Lambda instead"
+    ],
+    "answer": "Run the tasks on Fargate Spot capacity",
+    "explanation": "Fargate Spot runs tasks on spare capacity at up to ~70% off, with a two-minute interruption warning — the same bargain as EC2 Spot, without managing instances. Interruption-tolerant, retry-capable batch work is its exact profile; capacity providers can mix regular Fargate (for the must-run baseline) with Spot (for the bulk). Bigger tasks bill proportionally more; EC2 reintroduces fleet ops; Lambda has its own limits and pricing model.",
+    "tags": ["fargate-spot", "ecs", "containers", "spot"]
+  },
+  {
+    "id": "aws-cost-mcq-030",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Cost Visibility",
+    "difficulty": "medium",
+    "question": "A storage team managing hundreds of buckets across 25 accounts needs organization-wide visibility into S3 usage: object counts, storage-class distribution, incomplete multipart uploads, and cost-optimization recommendations — in one dashboard. Which tool provides this?",
+    "options": [
+      "Amazon S3 Storage Lens",
+      "S3 server access logs parsed manually",
+      "CloudWatch billing alarms",
+      "S3 Inventory reports per bucket"
+    ],
+    "answer": "Amazon S3 Storage Lens",
+    "explanation": "Storage Lens aggregates S3 metrics across an entire organization into dashboards — storage by class, object counts, incomplete multipart bytes, replication and encryption coverage — with contextual recommendations; advanced metrics add prefix-level depth. Access logs record requests (not inventory), and parsing them across 25 accounts is a project; billing alarms watch totals; per-bucket Inventory reports are the raw material Storage Lens already rolls up.",
+    "tags": ["storage-lens", "s3", "visibility", "organizations"]
+  },
+  {
+    "id": "aws-cost-mr-005",
+    "type": "multiple-response",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "S3 Storage Classes",
+    "difficulty": "easy",
+    "question": "An application writes about 1 TB of log files to S3 daily. Logs are queried frequently for 2 weeks, occasionally for 90 days, and must be deleted after one year. Which TWO lifecycle actions implement this cost-effectively? (Select TWO)",
+    "options": [
+      "Transition objects to a cheaper storage class (e.g. Standard-IA, then a Glacier tier) as access drops off",
+      "Expire (delete) objects one year after creation",
+      "Replicate the logs to a second Region",
+      "Enable S3 Transfer Acceleration on the bucket",
+      "Convert the logs to Parquet on arrival"
+    ],
+    "answers": [
+      "Transition objects to a cheaper storage class (e.g. Standard-IA, then a Glacier tier) as access drops off",
+      "Expire (delete) objects one year after creation"
+    ],
+    "explanation": "Lifecycle rules have exactly these two action types — transitions and expirations — and this access pattern maps cleanly: Standard for the hot 2 weeks, IA at ~14–30 days, a Glacier tier at 90, expire at 365 (which also enforces the retention limit automatically). Replication *doubles* cost; Transfer Acceleration is unrelated; format conversion helps query costs but isn't a lifecycle action.",
+    "tags": ["s3", "lifecycle", "transitions", "expiration"]
+  },
+  {
+    "id": "aws-cost-mr-006",
+    "type": "multiple-response",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Compute Purchasing",
+    "difficulty": "hard",
+    "question": "A workload needs 10 EC2 instances running 24/7 as a steady baseline, plus up to 30 extra instances during unpredictable bursts. The burst work is fault-tolerant. Which combination minimizes cost? (Select TWO)",
+    "options": [
+      "Cover the 10-instance baseline with a Savings Plan or Reserved Instances",
+      "Serve the burst capacity from Spot Instances in an Auto Scaling group",
+      "Buy Reserved Instances for all 40 instances",
+      "Run all 40 instances On-Demand at all times",
+      "Cover the baseline with Spot Instances"
+    ],
+    "answers": [
+      "Cover the 10-instance baseline with a Savings Plan or Reserved Instances",
+      "Serve the burst capacity from Spot Instances in an Auto Scaling group"
+    ],
+    "explanation": "Layered purchasing matches commitment to certainty: the always-on baseline is predictable → commit for ~60–70% savings; the bursts are unpredictable and fault-tolerant → Spot at up to 90% off, scaled by the ASG only when needed. Reserving all 40 pays for 30 mostly-idle commitments; full On-Demand leaves every discount unclaimed; Spot for the *baseline* risks losing capacity the workload must always have.",
+    "tags": ["savings-plans", "spot", "layered-purchasing", "auto-scaling"]
   }
 ]
