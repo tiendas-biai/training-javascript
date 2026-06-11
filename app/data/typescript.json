@@ -1,1 +1,772 @@
-[]
+[
+  {
+    "id": "ts-prim-001",
+    "topic": "Primitive Types",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "In TypeScript, what is the difference between the type annotations `string` and `String`?",
+    "answer": "`string` (lowercase) is the primitive type you should use. `String` (capitalized) refers to the built-in wrapper object type and almost never belongs in annotations.",
+    "explanation": "The type names `String`, `Number`, and `Boolean` are legal but refer to special built-in wrapper object types. The lowercase `string`, `number`, and `boolean` are the primitive types that match runtime values. Always use the lowercase names.",
+    "tags": ["primitives", "annotations"]
+  },
+  {
+    "id": "ts-prim-002",
+    "topic": "Primitive Types",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What are TypeScript's three most commonly used primitive types, and how do their names relate to JavaScript's `typeof` operator?",
+    "answer": "`string`, `number`, and `boolean` — each type name is exactly what `typeof` returns for a value of that type.",
+    "explanation": "```ts\nlet name: string = \"Alice\";   // typeof name === \"string\"\nlet age: number = 42;          // typeof age === \"number\"\nlet active: boolean = true;    // typeof active === \"boolean\"\n```\nTypeScript reuses JavaScript's runtime vocabulary: the annotation names match the strings `typeof` produces, which also makes `typeof` checks work as type guards.",
+    "tags": ["primitives", "typeof"]
+  },
+  {
+    "id": "ts-prim-003",
+    "topic": "Primitive Types",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "Do you need to write a type annotation every time you declare a variable in TypeScript?\n```ts\nlet myName = \"Alice\";\n```",
+    "answer": "No. TypeScript infers the type from the initializer — here `myName` is inferred as `string` with no annotation needed.",
+    "explanation": "Wherever possible TypeScript infers types automatically. Explicit annotations on variables are mostly useful when there is no initializer, or when you want a wider/narrower type than what would be inferred.",
+    "tags": ["primitives", "inference"]
+  },
+  {
+    "id": "ts-prim-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Primitive Types",
+    "subtopic": "any",
+    "difficulty": "easy",
+    "question": "What does typing a value as `any` do in TypeScript?",
+    "options": [
+      "It disables type checking for that value — any property access or assignment is allowed",
+      "It allows the value to hold any type, but property accesses are still checked",
+      "It behaves like `unknown` — you must narrow it before use",
+      "It makes the value read-only until a concrete type is assigned"
+    ],
+    "answer": "It disables type checking for that value — any property access or assignment is allowed",
+    "explanation": "```ts\nlet obj: any = { x: 0 };\nobj.foo();             // OK, no checking\nobj = \"hello\";         // OK\nconst n: number = obj;  // OK — no error!\n```\n`any` opts the value out of the type system entirely, including assignments to other typed variables. That is what makes it different from `unknown`, which forces narrowing before use.",
+    "tags": ["any", "mcq"]
+  },
+  {
+    "id": "ts-prim-004",
+    "topic": "Primitive Types",
+    "subtopic": "any",
+    "difficulty": "medium",
+    "question": "What does the `noImplicitAny` compiler flag do, and why is it recommended?",
+    "answer": "When TypeScript cannot infer a type, it normally defaults to `any` silently. With `noImplicitAny` enabled, those implicit `any`s become compile errors.",
+    "explanation": "Implicit `any` silently disables checking exactly where the compiler has the least information — typically un-annotated function parameters. Turning on `noImplicitAny` forces you to annotate those spots, keeping the type system meaningful across the codebase.",
+    "tags": ["any", "tsconfig"]
+  },
+  {
+    "id": "ts-prim-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Primitive Types",
+    "subtopic": "Literal Types",
+    "difficulty": "medium",
+    "question": "What type does TypeScript infer for `req.method`?\n```ts\nconst req = { method: \"GET\" };\n```",
+    "options": [
+      "string",
+      "\"GET\"",
+      "\"GET\" | string",
+      "any"
+    ],
+    "answer": "string",
+    "explanation": "Object properties are assumed to be mutable, so TypeScript infers the general type `string`, not the literal `\"GET\"` — you might later write `req.method = \"POST\"`. To preserve the literal type, use `as const`:\n```ts\nconst req = { method: \"GET\" } as const; // method: \"GET\"\n```",
+    "tags": ["literal-types", "inference", "mcq"]
+  },
+  {
+    "id": "ts-prim-005",
+    "topic": "Primitive Types",
+    "subtopic": "Literal Types",
+    "difficulty": "medium",
+    "question": "What does an `as const` assertion do?\n```ts\nconst req = { method: \"GET\" } as const;\n```",
+    "answer": "It converts the entire value to the most specific (literal, read-only) types: `req.method` becomes type `\"GET\"` instead of `string`, and all properties become `readonly`.",
+    "explanation": "Without `as const`, object properties are inferred with general types (`string`, `number`) because they could be reassigned. `as const` tells the compiler nothing will change, so literal types are preserved — which is what literal-union parameters like `alignment: \"left\" | \"right\"` need.",
+    "tags": ["literal-types", "as-const"]
+  },
+  {
+    "id": "ts-prim-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Primitive Types",
+    "subtopic": "Literal Types",
+    "difficulty": "hard",
+    "question": "Why does the last line produce a type error?\n```ts\nfunction printText(s: string, alignment: \"left\" | \"right\" | \"center\") {}\n\nlet a = \"left\";\nprintText(\"Hello\", a); // error\n```",
+    "options": [
+      "`a` was inferred as `string`, and `string` is not assignable to the literal union",
+      "Literal union parameters only accept values written inline at the call site",
+      "`let` variables can never be passed where a union type is expected",
+      "The string \"left\" needs an explicit `as \"left\"` cast in all cases"
+    ],
+    "answer": "`a` was inferred as `string`, and `string` is not assignable to the literal union",
+    "explanation": "Because `a` is declared with `let`, it could be reassigned to any string later, so TypeScript widens its type to `string`. A general `string` is not assignable to `\"left\" | \"right\" | \"center\"`. Fixes: declare it with `const` (inferred as `\"left\"`), annotate it with the union type, or use `as const`.",
+    "tags": ["literal-types", "widening", "mcq"]
+  },
+  {
+    "id": "ts-prim-006",
+    "topic": "Primitive Types",
+    "subtopic": "Null & Undefined",
+    "difficulty": "medium",
+    "question": "How does the `strictNullChecks` compiler option change how `null` and `undefined` are handled?",
+    "answer": "With it off, `null`/`undefined` can be assigned to any type and used freely. With it on, you must narrow (check for null/undefined) before using a possibly-null value.",
+    "explanation": "```ts\nfunction doSomething(x: string | null) {\n  if (x === null) {\n    // handle it\n  } else {\n    console.log(x.toUpperCase()); // OK — narrowed to string\n  }\n}\n```\nWith `strictNullChecks` off, forgetting a null check is invisible to the compiler — a major source of bugs. Turning it on is always recommended.",
+    "tags": ["strict-null-checks", "null", "undefined"]
+  },
+  {
+    "id": "ts-prim-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Primitive Types",
+    "subtopic": "Null & Undefined",
+    "difficulty": "medium",
+    "question": "What does the postfix `!` operator do here?\n```ts\nfunction liveDangerously(x?: number | null) {\n  console.log(x!.toFixed());\n}\n```",
+    "options": [
+      "Asserts at compile time that `x` is not null/undefined — without any runtime check",
+      "Throws a runtime error if `x` is null or undefined",
+      "Converts `x` to a boolean and negates it",
+      "Provides a default value when `x` is null or undefined"
+    ],
+    "answer": "Asserts at compile time that `x` is not null/undefined — without any runtime check",
+    "explanation": "The non-null assertion operator `!` only removes `null` and `undefined` from the type — it emits no JavaScript and performs no check. If `x` actually is `null` at runtime, the call still crashes. Only use it when you know something the compiler doesn't.",
+    "tags": ["strict-null-checks", "non-null-assertion", "mcq"]
+  },
+  {
+    "id": "ts-prim-007",
+    "topic": "Primitive Types",
+    "subtopic": "bigint & symbol",
+    "difficulty": "hard",
+    "question": "Show the two ways to create a `bigint` in TypeScript, and explain what makes two `symbol` values created with the same description special.",
+    "answer": "`bigint`: the `BigInt(100)` function or the literal `100n` (ES2020+). `symbol`: every `Symbol(\"name\")` call produces a globally unique value, so two symbols with the same description are never equal.",
+    "explanation": "```ts\nconst oneHundred: bigint = BigInt(100);\nconst anotherHundred: bigint = 100n;\n\nconst firstName = Symbol(\"name\");\nconst secondName = Symbol(\"name\");\n// firstName === secondName is always false\n```\nTypeScript even flags `firstName === secondName` as an error, because the two unique symbol types have no overlap.",
+    "tags": ["bigint", "symbol"]
+  },
+  {
+    "id": "ts-arr-001",
+    "topic": "Arrays & Objects",
+    "subtopic": "Arrays",
+    "difficulty": "easy",
+    "question": "What are the two equivalent ways to write the type of an array of strings in TypeScript?",
+    "answer": "`string[]` and `Array<string>` — they mean exactly the same thing.",
+    "explanation": "```ts\nlet a: string[] = [\"hello\", \"world\"];\nlet b: Array<string> = [\"hello\", \"world\"];\n```\n`T[]` is shorthand for the generic type `Array<T>`. The shorthand is more common, but the generic form makes it clear that `Array` is itself a generic object type like `Box<T>`.",
+    "tags": ["arrays", "generics"]
+  },
+  {
+    "id": "ts-arr-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Arrays & Objects",
+    "subtopic": "Arrays",
+    "difficulty": "medium",
+    "question": "Which line produces a type error?\n```ts\nfunction doStuff(values: ReadonlyArray<string>) {\n  const copy = values.slice();   // A\n  console.log(values[0]);        // B\n  values.push(\"hello!\");         // C\n  const n = values.length;       // D\n}\n```",
+    "options": [
+      "C — `push` does not exist on `ReadonlyArray`",
+      "A — copying a readonly array is not allowed",
+      "B — elements of a readonly array cannot be read by index",
+      "D — `length` is not available on `ReadonlyArray`"
+    ],
+    "answer": "C — `push` does not exist on `ReadonlyArray`",
+    "explanation": "`ReadonlyArray<string>` (also written `readonly string[]`) removes all mutating methods — `push`, `pop`, `splice`, index assignment. Reading (`values[0]`, `length`) and non-mutating methods (`slice`) are fine. It describes intent: the function promises not to change the array it receives.",
+    "tags": ["arrays", "readonly", "mcq"]
+  },
+  {
+    "id": "ts-tuple-001",
+    "topic": "Arrays & Objects",
+    "subtopic": "Tuples",
+    "difficulty": "easy",
+    "question": "What is a tuple type in TypeScript, and how does it differ from an array type?",
+    "answer": "A tuple is an array type that knows exactly how many elements it contains and which type lives at each position, e.g. `[string, number]`.",
+    "explanation": "```ts\ntype StringNumberPair = [string, number];\n\nfunction doSomething(pair: [string, number]) {\n  const a = pair[0]; // string\n  const b = pair[1]; // number\n}\ndoSomething([\"hello\", 42]); // OK\n```\nA `string[]` can have any length and only string elements; a tuple has a fixed length and per-position types. Accessing past the known length is a type error.",
+    "tags": ["tuples"]
+  },
+  {
+    "id": "ts-tuple-002",
+    "topic": "Arrays & Objects",
+    "subtopic": "Tuples",
+    "difficulty": "medium",
+    "question": "How do you write a tuple with an optional element, and a tuple with a rest element?",
+    "answer": "Optional: add `?` to the element type — `[number, number, number?]`. Rest: spread an array type — `[string, number, ...boolean[]]`.",
+    "explanation": "```ts\ntype Either2dOr3d = [number, number, number?]; // length 2 or 3\n\ntype StringNumberBooleans = [string, number, ...boolean[]];\ntype StringBooleansNumber = [string, ...boolean[], number];\n```\nOptional elements can only appear at the end and make the length a union (here `2 | 3`). Rest elements can sit at the start, middle, or end, and let a tuple describe \"these fixed positions, plus any number of extras\".",
+    "tags": ["tuples", "rest-elements"]
+  },
+  {
+    "id": "ts-tuple-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Arrays & Objects",
+    "subtopic": "Tuples",
+    "difficulty": "medium",
+    "question": "What happens here?\n```ts\nfunction doSomething(pair: readonly [string, number]) {\n  pair[0] = \"hello!\";\n}\n```",
+    "options": [
+      "Compile error — index 0 of a readonly tuple cannot be assigned to",
+      "It compiles, but throws a TypeError at runtime",
+      "It compiles and mutates the tuple normally",
+      "Compile error — tuples can never be indexed with a literal number"
+    ],
+    "answer": "Compile error — index 0 of a readonly tuple cannot be assigned to",
+    "explanation": "`readonly [string, number]` makes every position read-only, so any index assignment is a compile-time error. Like `readonly` properties, this is purely a compile-time guarantee — the emitted JavaScript would run, which is exactly why TypeScript stops you before that.",
+    "tags": ["tuples", "readonly", "mcq"]
+  },
+  {
+    "id": "ts-obj-001",
+    "topic": "Arrays & Objects",
+    "subtopic": "Object Properties",
+    "difficulty": "easy",
+    "question": "What does the `?` modifier on an object property mean?\n```ts\ninterface PaintOptions {\n  shape: Shape;\n  xPos?: number;\n  yPos?: number;\n}\n```",
+    "answer": "The property is optional — objects of this type may omit it. When read, its type includes `undefined` (under `strictNullChecks`).",
+    "explanation": "Callers can pass `{ shape }`, `{ shape, xPos: 100 }`, etc. Inside the function, reading `opts.xPos` gives `number | undefined`, so you must handle the undefined case — with a check, a default (`xPos = 0` in destructuring), or `??`.",
+    "tags": ["optional-properties"]
+  },
+  {
+    "id": "ts-obj-002",
+    "topic": "Arrays & Objects",
+    "subtopic": "Object Properties",
+    "difficulty": "medium",
+    "question": "What does the `readonly` modifier on an object property prevent — and what does it *not* prevent?\n```ts\ninterface SomeType {\n  readonly prop: string;\n}\n```",
+    "answer": "It prevents reassigning the property (`obj.prop = \"x\"` is a compile error). It does not make the value deeply immutable — if the property holds an object, that object's own contents can still be mutated.",
+    "explanation": "```ts\nfunction doSomething(obj: SomeType) {\n  console.log(obj.prop); // OK\n  obj.prop = \"hello\";    // Error\n}\n```\n`readonly` is a shallow, compile-time-only constraint on the property slot itself. It signals intent to other developers; it emits no runtime protection.",
+    "tags": ["readonly", "object-properties"]
+  },
+  {
+    "id": "ts-obj-003",
+    "topic": "Arrays & Objects",
+    "subtopic": "Index Signatures",
+    "difficulty": "medium",
+    "question": "What is an index signature, and when do you use one?\n```ts\ninterface StringArray {\n  [index: number]: string;\n}\n```",
+    "answer": "An index signature describes the types of properties whose names you don't know ahead of time: \"any key of this kind maps to a value of that type\". Here, indexing with any `number` yields a `string`.",
+    "explanation": "```ts\nconst myArray: StringArray = getStringArray();\nconst secondItem = myArray[1]; // string\n```\nIndex signature keys can be `string`, `number`, `symbol`, template string patterns, or unions of these. Use them for dictionary-like objects; when the set of keys is known and finite, prefer explicit properties or `Record<K, V>`.",
+    "tags": ["index-signatures"]
+  },
+  {
+    "id": "ts-obj-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Arrays & Objects",
+    "subtopic": "Excess Property Checks",
+    "difficulty": "hard",
+    "question": "Why does this call fail, even though both properties of `SquareConfig` are optional?\n```ts\ninterface SquareConfig {\n  color?: string;\n  width?: number;\n}\n\ncreateSquare({ colour: \"red\", width: 100 }); // error\n```",
+    "options": [
+      "Object literals get excess property checks — unknown keys like `colour` are rejected at the call site",
+      "Optional properties become required when an object literal is passed directly",
+      "`colour` fails because all-optional interfaces accept no properties at all",
+      "String property values are not assignable to optional properties"
+    ],
+    "answer": "Object literals get excess property checks — unknown keys like `colour` are rejected at the call site",
+    "explanation": "When an object *literal* is assigned or passed directly, TypeScript checks it more strictly: any property the target type doesn't declare is an error, since it's almost certainly a typo (`colour` vs `color`). Workarounds: a type assertion (`as SquareConfig`), assigning the literal to an intermediate variable first, or adding an index signature like `[propName: string]: unknown` to the interface.",
+    "tags": ["excess-property-checks", "mcq"]
+  },
+  {
+    "id": "ts-obj-004",
+    "topic": "Arrays & Objects",
+    "subtopic": "Extending & Intersections",
+    "difficulty": "hard",
+    "question": "What are the two ways to combine object types in TypeScript, and how do they differ when members conflict?",
+    "answer": "`interface X extends A, B {}` and the intersection `type X = A & B`. On a conflicting property, `extends` produces a compile error at the declaration; an intersection silently types the property as `never`.",
+    "explanation": "```ts\ninterface Colorful { color: string; }\ninterface Circle { radius: number; }\n\ninterface ColorfulCircle extends Colorful, Circle {}\ntype AlsoColorfulCircle = Colorful & Circle;\n```\nBoth produce a type with `color` and `radius`. The difference shows up with incompatible members: extension fails fast and loudly, while an intersection defers the problem — the `never`-typed property only errors when you try to use it.",
+    "tags": ["intersection-types", "interfaces"]
+  },
+  {
+    "id": "ts-rec-001",
+    "topic": "Arrays & Objects",
+    "subtopic": "Record",
+    "difficulty": "medium",
+    "question": "What does the utility type `Record<Keys, Type>` construct?\n```ts\ntype CatName = \"miffy\" | \"boris\" | \"mordred\";\n\ninterface CatInfo { age: number; breed: string; }\n\nconst cats: Record<CatName, CatInfo> = { /* ? */ };\n```",
+    "answer": "An object type whose property keys are `Keys` and whose values are `Type`. Here `cats` must have exactly the keys `miffy`, `boris`, and `mordred`, each holding a `CatInfo`.",
+    "explanation": "```ts\nconst cats: Record<CatName, CatInfo> = {\n  miffy: { age: 10, breed: \"Persian\" },\n  boris: { age: 5, breed: \"Maine Coon\" },\n  mordred: { age: 16, breed: \"British Shorthair\" },\n};\n```\nWith a union as `Keys`, every member is required — omitting `mordred` is an error. `Record<string, T>` is the loose dictionary form, equivalent to an index signature.",
+    "tags": ["record", "utility-types"]
+  },
+  {
+    "id": "ts-fn-001",
+    "topic": "Functions",
+    "subtopic": "Function Types",
+    "difficulty": "easy",
+    "question": "How do you write the type of a function that takes a string and returns nothing?",
+    "answer": "With a function type expression: `(a: string) => void`.",
+    "explanation": "```ts\ntype GreetFunction = (a: string) => void;\n\nfunction greeter(fn: GreetFunction) {\n  fn(\"Hello\");\n}\n```\nThe syntax mirrors arrow functions: parameter list, arrow, return type. The parameter name (`a`) is required in the type but purely descriptive — `(string) => void` would mean a parameter *named* `string` of type `any`.",
+    "tags": ["function-types"]
+  },
+  {
+    "id": "ts-fn-002",
+    "topic": "Functions",
+    "subtopic": "Function Types",
+    "difficulty": "medium",
+    "question": "How do you type a function that also has properties, like a callable object with a `description` field?",
+    "answer": "With a call signature inside an object type:\n```ts\ntype DescribableFunction = {\n  description: string;\n  (someArg: number): boolean;\n};\n```",
+    "explanation": "A function type expression `(x: number) => boolean` can't carry extra properties. An object type with a call signature can: the unnamed `(someArg: number): boolean` member makes the object callable, and other members type its properties. A similar `new (s: string): SomeObject` member is a construct signature, for functions invoked with `new`.",
+    "tags": ["call-signatures"]
+  },
+  {
+    "id": "ts-fn-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Functions",
+    "subtopic": "Generics",
+    "difficulty": "easy",
+    "question": "What is the inferred type of `s`?\n```ts\nfunction firstElement<Type>(arr: Type[]): Type | undefined {\n  return arr[0];\n}\n\nconst s = firstElement([\"a\", \"b\", \"c\"]);\n```",
+    "options": [
+      "string | undefined",
+      "string",
+      "any",
+      "unknown"
+    ],
+    "answer": "string | undefined",
+    "explanation": "TypeScript infers `Type = string` from the argument — no explicit type argument needed. The declared return type is `Type | undefined`, because indexing an empty array yields `undefined`, so `s` is `string | undefined`. The generic links the input type to the output type; that link is the whole point of generic functions.",
+    "tags": ["generics", "inference", "mcq"]
+  },
+  {
+    "id": "ts-fn-003",
+    "topic": "Functions",
+    "subtopic": "Generics",
+    "difficulty": "medium",
+    "question": "What does a constraint on a type parameter do?\n```ts\nfunction longest<Type extends { length: number }>(a: Type, b: Type) {\n  return a.length >= b.length ? a : b;\n}\n```",
+    "answer": "`extends { length: number }` limits which types can be used for `Type` — only values with a numeric `length` property are accepted — and lets the function body access `.length` safely.",
+    "explanation": "Without the constraint, `a.length` is an error because an unconstrained `Type` could be anything. With it, `longest(\"alice\", \"bob\")` and `longest([1, 2], [1, 2, 3])` work (strings and arrays have `length`), while `longest(10, 100)` is rejected — numbers don't satisfy the constraint.",
+    "tags": ["generics", "constraints"]
+  },
+  {
+    "id": "ts-fn-004",
+    "topic": "Functions",
+    "subtopic": "Generics",
+    "difficulty": "hard",
+    "question": "The Handbook gives three guidelines for writing good generic functions. What are they?",
+    "answer": "1) Push type parameters down: prefer `<T>(arr: T[])` over `<T extends any[]>(arr: T)`. 2) Use as few type parameters as possible. 3) A type parameter should appear at least twice — if it's used only once, it isn't relating anything and probably shouldn't exist.",
+    "explanation": "Type parameters exist to *relate* types — an input to an output, or two inputs to each other. `function greet<S extends string>(s: S)` relates nothing; `function greet(s: string)` is identical but simpler. Unnecessary type parameters make functions harder to call and harder to read, and constraints that wrap the whole parameter (`T extends any[]`) make inference return less specific types.",
+    "tags": ["generics", "best-practices"]
+  },
+  {
+    "id": "ts-fn-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Functions",
+    "subtopic": "Overloads",
+    "difficulty": "hard",
+    "question": "Why does the last line fail?\n```ts\nfunction makeDate(timestamp: number): Date;\nfunction makeDate(m: number, d: number, y: number): Date;\nfunction makeDate(mOrTimestamp: number, d?: number, y?: number): Date {\n  return d !== undefined && y !== undefined\n    ? new Date(y, mOrTimestamp, d)\n    : new Date(mOrTimestamp);\n}\n\nmakeDate(5, 5); // error\n```",
+    "options": [
+      "The implementation signature is not callable — only the two overload signatures are, and neither accepts two arguments",
+      "Optional parameters are not allowed in implementation signatures",
+      "Overloaded functions require explicit type arguments at the call site",
+      "The two overload signatures conflict, so the function cannot be called at all"
+    ],
+    "answer": "The implementation signature is not callable — only the two overload signatures are, and neither accepts two arguments",
+    "explanation": "The signature of the implementation (`mOrTimestamp, d?, y?`) is invisible from outside; callers can only match the overload signatures above it, which take exactly one or exactly three numbers. Two arguments match neither. This is also why the Handbook recommends preferring union types over overloads when possible — they're simpler for callers.",
+    "tags": ["overloads", "mcq"]
+  },
+  {
+    "id": "ts-fn-005",
+    "topic": "Functions",
+    "subtopic": "Special Types",
+    "difficulty": "medium",
+    "question": "In function signatures, what do the return types `void`, `unknown`, and `never` each mean?",
+    "answer": "`void`: the function's return value should be ignored. `unknown`: it returns something, but you must narrow it before use (the type-safe `any`). `never`: it never returns at all — it always throws or loops forever.",
+    "explanation": "```ts\nfunction log(msg: string): void { console.log(msg); }\nfunction safeParse(s: string): unknown { return JSON.parse(s); }\nfunction fail(msg: string): never { throw new Error(msg); }\n```\nUnlike `any`, an `unknown` return forces callers to check the value before using it. `never` also feeds control-flow analysis: code after a call to a `never`-returning function is unreachable, and in exhaustive switches the leftover type is `never`.",
+    "tags": ["void", "unknown", "never"]
+  },
+  {
+    "id": "ts-fn-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Functions",
+    "subtopic": "Special Types",
+    "difficulty": "hard",
+    "question": "Does this compile?\n```ts\ntype voidFunc = () => void;\n\nconst f1: voidFunc = () => true;\n```",
+    "options": [
+      "Yes — a contextual `void` return type allows returning a value; it is just ignored",
+      "No — a function typed `() => void` must not return anything",
+      "Yes, but only because `true` is coerced to `undefined`",
+      "No — arrow functions cannot be assigned to named function types"
+    ],
+    "answer": "Yes — a contextual `void` return type allows returning a value; it is just ignored",
+    "explanation": "Contextual typing with a `void` return does **not** forbid returning values — it forbids *using* them. This is what makes patterns like `[1, 2, 3].forEach(n => arr.push(n))` legal even though `push` returns a number. The strict case is a literal definition: `function f(): void { return true; }` *is* an error because the annotation is on the function itself.",
+    "tags": ["void", "assignability", "mcq"]
+  },
+  {
+    "id": "ts-fn-006",
+    "topic": "Functions",
+    "subtopic": "Parameters",
+    "difficulty": "easy",
+    "question": "What are the two ways to make a function parameter optional?",
+    "answer": "Mark it with `?` — `function f(x?: number)` — or give it a default value — `function f(x = 10)`.",
+    "explanation": "With `x?: number`, the parameter's type inside the function is `number | undefined`. With a default (`x = 10`), callers may still omit it but the body sees plain `number`, because `undefined` arguments are replaced by the default. Both also allow explicitly passing `undefined`.",
+    "tags": ["optional-parameters", "defaults"]
+  },
+  {
+    "id": "ts-fn-007",
+    "topic": "Functions",
+    "subtopic": "Parameters",
+    "difficulty": "medium",
+    "question": "Why does this fail, and what's the fix?\n```ts\nconst args = [8, 5];\nconst angle = Math.atan2(...args); // error\n```",
+    "answer": "`args` is inferred as `number[]` — an array of unknown length — but `atan2` requires exactly two arguments. Fix: `const args = [8, 5] as const;` so the type becomes the fixed-length tuple `readonly [8, 5]`.",
+    "explanation": "Spreading into a call only type-checks when the compiler can prove the argument count matches. A general `number[]` could have any length; `as const` turns the literal into an immutable tuple whose length (2) is part of the type, satisfying `atan2(y: number, x: number)`.",
+    "tags": ["rest-arguments", "as-const", "tuples"]
+  },
+  {
+    "id": "ts-fn-008",
+    "topic": "Functions",
+    "subtopic": "this",
+    "difficulty": "medium",
+    "question": "How do you declare the type of `this` for a callback in TypeScript?\n```ts\ninterface DB {\n  filterUsers(filter: /* ? */): User[];\n}\n```",
+    "answer": "With a `this` pseudo-parameter as the first parameter of the function type: `filter: (this: User) => boolean`. It types `this` only — it is erased and callers don't pass it.",
+    "explanation": "```ts\nconst admins = db.filterUsers(function (this: User) {\n  return this.admin;\n});\n```\nNote the callback must be a `function` expression — arrow functions don't have their own `this`, so they can't satisfy a `this` parameter. TypeScript checks both that the implementation uses `this` consistently and that the caller invokes it with the right receiver.",
+    "tags": ["this", "callbacks"]
+  },
+  {
+    "id": "ts-iface-001",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Aliases vs Interfaces",
+    "difficulty": "easy",
+    "question": "What are the two ways to name an object type in TypeScript?",
+    "answer": "A type alias — `type Point = { x: number; y: number };` — or an interface — `interface Point { x: number; y: number }`. For plain object shapes they are used identically.",
+    "explanation": "Both give a reusable name to a shape and both can describe function parameters, return types, and implementations. The differences only show up at the edges: extension syntax, declaration merging, and what aliases can name beyond objects (unions, primitives, tuples).",
+    "tags": ["interfaces", "type-aliases"]
+  },
+  {
+    "id": "ts-iface-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Aliases vs Interfaces",
+    "difficulty": "medium",
+    "question": "Which of these can an `interface` do that a `type` alias cannot?",
+    "options": [
+      "Be declared twice with the same name, merging the declarations into one type",
+      "Describe a union like `number | string`",
+      "Be extended with additional members",
+      "Be used as a function parameter type"
+    ],
+    "answer": "Be declared twice with the same name, merging the declarations into one type",
+    "explanation": "```ts\ninterface Window { title: string; }\ninterface Window { ts: TypeScriptAPI; } // merges!\n```\nDeclaration merging is interface-only — re-declaring a `type` alias is a duplicate identifier error. The Handbook's summary: a type cannot be changed after being created; an interface is always extendable. The reverse limitation: only `type` can name a union, so the second option is something *aliases* do that interfaces can't.",
+    "tags": ["interfaces", "declaration-merging", "mcq"]
+  },
+  {
+    "id": "ts-iface-002",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Aliases vs Interfaces",
+    "difficulty": "medium",
+    "question": "How does each form extend an existing type? Show the interface way and the type-alias way of adding `honey: boolean` to `Animal`.",
+    "answer": "Interface: `interface Bear extends Animal { honey: boolean; }`. Type alias: `type Bear = Animal & { honey: boolean; };` (an intersection).",
+    "explanation": "Both produce a `Bear` with all `Animal` members plus `honey`. `extends` checks compatibility at the declaration and is generally friendlier to compiler performance; intersections combine silently and surface conflicts later as `never`-typed members.",
+    "tags": ["interfaces", "intersection-types"]
+  },
+  {
+    "id": "ts-union-001",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Unions",
+    "difficulty": "easy",
+    "question": "What is a union type, and what can you do with a value of type `number | string` before narrowing it?",
+    "answer": "A union is a type formed from two or more types — the value may be any one of them. Before narrowing you can only use operations valid for *every* member of the union.",
+    "explanation": "```ts\nfunction printId(id: number | string) {\n  console.log(id.toUpperCase()); // Error — numbers have no toUpperCase\n  if (typeof id === \"string\") {\n    console.log(id.toUpperCase()); // OK — narrowed to string\n  }\n}\n```\nTypeScript only allows what is safe for all members; a `typeof` check narrows the union so member-specific operations become available.",
+    "tags": ["unions", "narrowing"]
+  },
+  {
+    "id": "ts-assert-001",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Type Assertions",
+    "difficulty": "medium",
+    "question": "What does a type assertion do, and what happens at runtime?\n```ts\nconst myCanvas = document.getElementById(\"main_canvas\") as HTMLCanvasElement;\n```",
+    "answer": "It tells the compiler to treat the value as a more specific type that you know but it can't verify. At runtime, nothing happens — assertions are erased and perform no checking or conversion.",
+    "explanation": "`getElementById` returns `HTMLElement | null`; the assertion claims it's specifically a canvas. TypeScript only allows assertions between sufficiently overlapping types; to force an unrelated conversion you need the two-step `expr as unknown as T` — allowed but dangerous, since a wrong assertion produces no error until something breaks downstream. The `<HTMLCanvasElement>expr` angle-bracket form is equivalent but illegal in `.tsx` files.",
+    "tags": ["type-assertions"]
+  },
+  {
+    "id": "ts-gen-001",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Generics",
+    "difficulty": "easy",
+    "question": "Why is the generic identity function better than one typed with `any`?\n```ts\nfunction identity(arg: any): any { return arg; }\nfunction identity<Type>(arg: Type): Type { return arg; }\n```",
+    "answer": "`any` loses the type: passing a string returns `any`, so all checking stops. The generic *captures* the argument's type and returns it, so `identity(\"myString\")` is typed `string`.",
+    "explanation": "Generics exist to preserve type information through a function. The type parameter relates input to output: whatever goes in is what comes out. You can call it with an explicit argument (`identity<string>(\"x\")`) or, far more commonly, let inference fill it in.",
+    "tags": ["generics", "any"]
+  },
+  {
+    "id": "ts-gen-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Generics",
+    "difficulty": "medium",
+    "question": "Why does this fail to compile?\n```ts\nfunction loggingIdentity<Type>(arg: Type): Type {\n  console.log(arg.length); // error\n  return arg;\n}\n```",
+    "options": [
+      "An unconstrained `Type` could be any type, and not all types have `.length`",
+      "Generic parameters can never have their properties accessed",
+      "`length` is a reserved property name inside generic functions",
+      "The function is missing an explicit type argument"
+    ],
+    "answer": "An unconstrained `Type` could be any type, and not all types have `.length`",
+    "explanation": "Someone could call `loggingIdentity(3)` — numbers have no `.length`. Two fixes: operate on arrays (`arg: Type[]`), or constrain the parameter:\n```ts\ninterface Lengthwise { length: number; }\nfunction loggingIdentity<Type extends Lengthwise>(arg: Type): Type {\n  console.log(arg.length); // OK\n  return arg;\n}\n```\nAfter the constraint, calls must supply a value with a numeric `length`.",
+    "tags": ["generics", "constraints", "mcq"]
+  },
+  {
+    "id": "ts-gen-002",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Generics",
+    "difficulty": "medium",
+    "question": "How do you declare a generic interface and a generic class?",
+    "answer": "Put the type parameter list after the name:\n```ts\ninterface GenericIdentityFn<Type> {\n  (arg: Type): Type;\n}\n\nclass GenericNumber<NumType> {\n  zeroValue: NumType;\n  add: (x: NumType, y: NumType) => NumType;\n}\n```",
+    "explanation": "Lifting the parameter to the interface/class level makes it visible to all members and forces users to pin it when using the type:\n```ts\nlet myIdentity: GenericIdentityFn<number> = identity;\nlet n = new GenericNumber<number>();\n```\nNote generic classes are only generic over their *instance* side — static members can't use the class's type parameter.",
+    "tags": ["generics", "interfaces", "classes"]
+  },
+  {
+    "id": "ts-gen-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Generics",
+    "difficulty": "hard",
+    "question": "What does `Key extends keyof Type` accomplish here?\n```ts\nfunction getProperty<Type, Key extends keyof Type>(obj: Type, key: Key) {\n  return obj[key];\n}\n\nconst x = { a: 1, b: 2, c: 3 };\ngetProperty(x, \"a\");\ngetProperty(x, \"m\");\n```",
+    "options": [
+      "It restricts `key` to the actual property names of `obj`, so `\"m\"` is a compile error",
+      "It converts `key` to a string at runtime before the lookup",
+      "It makes the property lookup return `any` for unknown keys",
+      "It requires `Type` to be an object with only string values"
+    ],
+    "answer": "It restricts `key` to the actual property names of `obj`, so `\"m\"` is a compile error",
+    "explanation": "`keyof Type` for `x` is the union `\"a\" | \"b\" | \"c\"`. Constraining `Key` to it means only real property names are accepted, and the return type is the precise `Type[Key]` — `getProperty(x, \"a\")` returns `number`. This one-parameter-constrains-another pattern is the type-safe way to write property accessors.",
+    "tags": ["generics", "keyof", "mcq"]
+  },
+  {
+    "id": "ts-gen-003",
+    "topic": "Interfaces & Generics",
+    "subtopic": "Generics",
+    "difficulty": "hard",
+    "question": "How do you type a factory function that takes a class and returns an instance of it?",
+    "answer": "Use a construct signature for the parameter: `function create<Type>(c: { new (): Type }): Type { return new c(); }` — or the shorthand `c: new () => Type`.",
+    "explanation": "```ts\nfunction createInstance<A extends Animal>(c: new () => A): A {\n  return new c();\n}\n\ncreateInstance(Bee).keeper.hasMask; // fully type-safe\n```\nThe `new () => A` type means \"a constructor that produces an `A`\". Passing the class itself (`Bee`, not `new Bee()`) satisfies it, and the return type tracks the specific subclass — so subclass-only properties like `keeper` are visible on the result.",
+    "tags": ["generics", "construct-signatures", "factories"]
+  },
+  {
+    "id": "ts-class-001",
+    "topic": "Classes",
+    "subtopic": "Fields",
+    "difficulty": "medium",
+    "question": "What does `strictPropertyInitialization` enforce, and what is the `!` after a field name for?\n```ts\nclass OKGreeter {\n  name!: string;\n}\n```",
+    "answer": "It requires every declared field to be initialized — either inline or in the constructor. The definite assignment assertion `!` opts a field out of that check, telling the compiler \"this will be assigned before use, trust me\".",
+    "explanation": "Use `!` when initialization happens somewhere TypeScript can't see, like a helper method called from the constructor or a DI framework. Like all assertions it's compile-time only — if the field really is unassigned at runtime, you get `undefined` with no warning.",
+    "tags": ["fields", "strict-property-initialization"]
+  },
+  {
+    "id": "ts-class-002",
+    "topic": "Classes",
+    "subtopic": "Fields",
+    "difficulty": "easy",
+    "question": "What does `readonly` on a class field allow and forbid?\n```ts\nclass Greeter {\n  readonly name: string = \"world\";\n  constructor(otherName?: string) {\n    if (otherName !== undefined) this.name = otherName;\n  }\n}\n```",
+    "answer": "The field can be assigned inline and inside the constructor — anywhere else, assignment is a compile error.",
+    "explanation": "The constructor is the one place a `readonly` field may still be written, which is what makes the example legal. After construction the field is fixed: methods of the class and outside code both get an error on assignment.",
+    "tags": ["readonly", "fields"]
+  },
+  {
+    "id": "ts-class-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Classes",
+    "subtopic": "implements",
+    "difficulty": "hard",
+    "question": "`NameChecker` implements `Checkable` — so what is the type of parameter `s`?\n```ts\ninterface Checkable {\n  check(name: string): boolean;\n}\n\nclass NameChecker implements Checkable {\n  check(s) {\n    return s.toLowerCase() === \"ok\";\n  }\n}\n```",
+    "options": [
+      "any — an `implements` clause checks compatibility but adds no type information to members",
+      "string — it is inherited from the interface's `check` signature",
+      "unknown — unannotated parameters in classes default to unknown",
+      "never — the parameter cannot be used until annotated"
+    ],
+    "answer": "any — an `implements` clause checks compatibility but adds no type information to members",
+    "explanation": "A common misconception: `implements` only *verifies* that the finished class satisfies the interface — it doesn't flow parameter types into the implementation. `s` is implicit `any` (an error under `noImplicitAny`). You still need to write `check(s: string)` yourself.",
+    "tags": ["implements", "interfaces", "mcq"]
+  },
+  {
+    "id": "ts-class-003",
+    "topic": "Classes",
+    "subtopic": "Visibility",
+    "difficulty": "easy",
+    "question": "What do the `public`, `protected`, and `private` member visibility modifiers mean?",
+    "answer": "`public` (the default): accessible everywhere. `protected`: accessible in the class and its subclasses. `private`: accessible only inside the declaring class itself.",
+    "explanation": "```ts\nclass Base {\n  public x = 1;\n  protected y = 2;\n  private z = 3;\n}\n\nclass Derived extends Base {\n  test() {\n    this.x; // OK\n    this.y; // OK\n    this.z; // Error — private to Base\n  }\n}\n```\nSince `public` is the default, you rarely write it except for style or documentation.",
+    "tags": ["visibility"]
+  },
+  {
+    "id": "ts-class-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Classes",
+    "subtopic": "Visibility",
+    "difficulty": "hard",
+    "question": "What does this print?\n```ts\nclass MySafe {\n  private secretKey = 12345;\n}\n\nconst s = new MySafe();\nconsole.log(s[\"secretKey\"]);\n```",
+    "options": [
+      "12345 — TypeScript's `private` is compile-time only, and bracket access even type-checks",
+      "undefined — private fields are stripped from the emitted object",
+      "It throws a TypeError at runtime",
+      "It does not compile — bracket notation cannot access private members"
+    ],
+    "answer": "12345 — TypeScript's `private` is compile-time only, and bracket access even type-checks",
+    "explanation": "TypeScript's `private` is *soft* privacy: it's erased at compile time, and the language deliberately permits bracket-notation access to ease testing. The value is right there at runtime. For *hard* privacy that survives compilation, use JavaScript's native `#` fields:\n```ts\nclass Dog {\n  #barkAmount = 0; // truly inaccessible outside the class\n}\n```",
+    "tags": ["visibility", "private", "mcq"]
+  },
+  {
+    "id": "ts-class-004",
+    "topic": "Classes",
+    "subtopic": "Parameter Properties",
+    "difficulty": "medium",
+    "question": "What does this constructor shorthand do?\n```ts\nclass Params {\n  constructor(\n    public readonly x: number,\n    protected y: number,\n    private z: number\n  ) {}\n}\n```",
+    "answer": "Parameter properties: prefixing a constructor parameter with a visibility modifier (or `readonly`) declares a class field of the same name and assigns the argument to it automatically.",
+    "explanation": "It is exactly equivalent to declaring `x`, `y`, `z` as fields and writing `this.x = x; this.y = y; this.z = z;` in the constructor body — just without the boilerplate. Note the modifier is required: a bare `constructor(x: number)` parameter creates no field.",
+    "tags": ["parameter-properties", "constructors"]
+  },
+  {
+    "id": "ts-class-005",
+    "topic": "Classes",
+    "subtopic": "Abstract Classes",
+    "difficulty": "medium",
+    "question": "What is an abstract class, and what does an `abstract` member mean?\n```ts\nabstract class Base {\n  abstract getName(): string;\n  printName() {\n    console.log(\"Hello, \" + this.getName());\n  }\n}\n```",
+    "answer": "An abstract class can't be instantiated directly — it exists to be extended. An `abstract` member has no implementation; every concrete subclass must provide one.",
+    "explanation": "```ts\nclass Derived extends Base {\n  getName() { return \"world\"; }\n}\n\nnew Derived().printName(); // \"Hello, world\"\nnew Base();                // Error — cannot create an instance\n```\nThe pattern lets the base class implement shared logic (`printName`) in terms of pieces (`getName`) that subclasses fill in.",
+    "tags": ["abstract"]
+  },
+  {
+    "id": "ts-class-006",
+    "topic": "Classes",
+    "subtopic": "Static Members",
+    "difficulty": "medium",
+    "question": "What are `static` class members, and why can't they reference the class's type parameters?\n```ts\nclass Box<Type> {\n  static defaultValue: Type; // error — why?\n}\n```",
+    "answer": "Static members belong to the class itself, not to instances — `MyClass.x`, not `new MyClass().x`. Type parameters are erased at runtime and there is only one static slot shared by `Box<string>`, `Box<number>`, etc., so a static member's type can't depend on `Type`.",
+    "explanation": "```ts\nclass MyClass {\n  static x = 0;\n  static printX() { console.log(MyClass.x); }\n}\nMyClass.printX();\n```\nIf `static defaultValue: Type` were allowed, what type would `Box.defaultValue` have? There's no instance to pin `Type` down — which is exactly why the language forbids it.",
+    "tags": ["static", "generics"]
+  },
+  {
+    "id": "ts-class-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Classes",
+    "subtopic": "Getters & Setters",
+    "difficulty": "medium",
+    "question": "A class declares a `get size()` accessor but no `set`. What is the effect?",
+    "options": [
+      "The property is automatically readonly — assigning to it is a compile error",
+      "Assignments are silently ignored at compile time and runtime",
+      "The class fails to compile — every getter requires a setter",
+      "The property returns undefined until a setter is added"
+    ],
+    "answer": "The property is automatically readonly — assigning to it is a compile error",
+    "explanation": "If only a `get` exists, TypeScript infers the property as `readonly`. Conveniently, getters and setters may also disagree on types — a setter can accept a wider type than the getter returns:\n```ts\nclass Thing {\n  _size = 0;\n  get size(): number { return this._size; }\n  set size(value: string | number | boolean) {\n    this._size = Number(value);\n  }\n}\n```",
+    "tags": ["getters-setters", "readonly", "mcq"]
+  },
+  {
+    "id": "ts-class-007",
+    "topic": "Classes",
+    "subtopic": "Inheritance",
+    "difficulty": "hard",
+    "question": "In what order do fields and constructors run when instantiating a derived class, and what rule about `super()` follows from it?",
+    "answer": "Base fields → base constructor → derived fields → derived constructor. Because base initialization must finish first, a derived constructor must call `super()` before touching `this`.",
+    "explanation": "This ordering has a classic gotcha: if a base constructor calls an overridden method, the derived class's fields are not initialized yet, so the override may read `undefined`. Keep constructors from calling overridable methods, and remember TypeScript enforces the `super()`-before-`this` rule at compile time.",
+    "tags": ["inheritance", "initialization-order", "super"]
+  },
+  {
+    "id": "ts-narrow-001",
+    "topic": "Type Narrowing",
+    "subtopic": "typeof Guards",
+    "difficulty": "easy",
+    "question": "What is type narrowing? Explain using this function:\n```ts\nfunction padLeft(padding: number | string, input: string): string {\n  if (typeof padding === \"number\") {\n    return \" \".repeat(padding) + input;\n  }\n  return padding + input;\n}\n```",
+    "answer": "Narrowing is TypeScript refining a value's type to something more specific based on the code's checks. Inside the `if`, `padding` is `number`; after it, control-flow analysis knows only `string` remains.",
+    "explanation": "TypeScript understands ordinary JavaScript constructs — `typeof` checks, `if`/`else`, returns — as type guards. No casts needed: the `number` branch returns, so the code after the `if` is only reachable when `padding` is a `string`, and the compiler types it accordingly.",
+    "tags": ["narrowing", "typeof", "control-flow"]
+  },
+  {
+    "id": "ts-narrow-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Type Narrowing",
+    "subtopic": "typeof Guards",
+    "difficulty": "medium",
+    "question": "What is the type of `strs` inside the `if` block?\n```ts\nfunction printAll(strs: string | string[] | null) {\n  if (typeof strs === \"object\") {\n    // here\n  }\n}\n```",
+    "options": [
+      "string[] | null",
+      "string[]",
+      "null",
+      "object"
+    ],
+    "answer": "string[] | null",
+    "explanation": "A classic JavaScript quirk: `typeof null === \"object\"`. So the check eliminates `string` but keeps both the array *and* `null` — iterating `strs` here is still a possible runtime crash. Add a truthiness check to finish the job: `if (strs && typeof strs === \"object\")`.",
+    "tags": ["narrowing", "typeof", "null", "mcq"]
+  },
+  {
+    "id": "ts-narrow-002",
+    "topic": "Type Narrowing",
+    "subtopic": "Truthiness",
+    "difficulty": "medium",
+    "question": "How does truthiness narrowing work, and what subtle bug can it introduce when the value is a string?",
+    "answer": "`if (value)` removes falsy types like `null` and `undefined` from the union. The catch: `\"\"` and `0` are also falsy, so a truthiness check on a `string` accidentally treats the empty string like a missing value.",
+    "explanation": "```ts\nfunction printAll(strs: string | string[] | null) {\n  if (strs && typeof strs === \"object\") {\n    for (const s of strs) console.log(s);\n  } else if (typeof strs === \"string\") {\n    console.log(strs);\n  }\n}\n```\nWrapping the whole body in `if (strs)` instead would silently skip the empty string — a valid input. Prefer explicit checks (`!= null`) when falsy values are meaningful.",
+    "tags": ["narrowing", "truthiness"]
+  },
+  {
+    "id": "ts-narrow-003",
+    "topic": "Type Narrowing",
+    "subtopic": "Equality",
+    "difficulty": "medium",
+    "question": "What does the loose comparison `container.value != null` eliminate from the type, and why is it idiomatic?",
+    "answer": "It removes both `null` *and* `undefined` in one check, because `==`/`!=` treats them as equal to each other and to nothing else.",
+    "explanation": "This is one of the few places loose equality is idiomatic TypeScript: `x != null` is the concise guard for \"x has a real value\", narrowing `T | null | undefined` to `T`. Strict equality narrows too, but needs two comparisons to cover both cases.",
+    "tags": ["narrowing", "equality", "null"]
+  },
+  {
+    "id": "ts-narrow-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Type Narrowing",
+    "subtopic": "in & instanceof",
+    "difficulty": "easy",
+    "question": "Which guard narrows `animal` to `Fish` here?\n```ts\ntype Fish = { swim: () => void };\ntype Bird = { fly: () => void };\n\nfunction move(animal: Fish | Bird) {\n  // ?\n}\n```",
+    "options": [
+      "if (\"swim\" in animal)",
+      "if (animal instanceof Fish)",
+      "if (typeof animal === \"Fish\")",
+      "if (animal.swim !== undefined)"
+    ],
+    "answer": "if (\"swim\" in animal)",
+    "explanation": "The `in` operator narrows by property presence — `\"swim\" in animal` selects the union members that declare `swim`. `instanceof Fish` fails because `Fish` is a type alias, not a class (no runtime constructor exists). Plain `animal.swim` doesn't compile: you can't access a property that isn't on every union member. `instanceof` is the right tool when the members *are* classes, like `Date`.",
+    "tags": ["narrowing", "in-operator", "instanceof", "mcq"]
+  },
+  {
+    "id": "ts-narrow-004",
+    "topic": "Type Narrowing",
+    "subtopic": "Type Predicates",
+    "difficulty": "hard",
+    "question": "What is a type predicate, and what does it enable here?\n```ts\nfunction isFish(pet: Fish | Bird): pet is Fish {\n  return (pet as Fish).swim !== undefined;\n}\n```",
+    "answer": "`pet is Fish` is a user-defined type guard: when the function returns `true`, TypeScript narrows the argument to `Fish` at the call site.",
+    "explanation": "```ts\nif (isFish(pet)) {\n  pet.swim(); // pet: Fish\n} else {\n  pet.fly();  // pet: Bird\n}\n\nconst underWater: Fish[] = zoo.filter(isFish); // works in filter too\n```\nType predicates let you package narrowing logic into reusable functions — including array `filter`, where the result type tightens to `Fish[]`. The compiler trusts your implementation, so a wrong predicate produces wrong types silently.",
+    "tags": ["narrowing", "type-predicates"]
+  },
+  {
+    "id": "ts-narrow-005",
+    "topic": "Type Narrowing",
+    "subtopic": "Discriminated Unions",
+    "difficulty": "medium",
+    "question": "What is a discriminated union, and what makes it work?\n```ts\ninterface Circle { kind: \"circle\"; radius: number; }\ninterface Square { kind: \"square\"; sideLength: number; }\ntype Shape = Circle | Square;\n```",
+    "answer": "A union whose members share a common property with a different *literal* type in each (`kind`). Checking that property — e.g. `switch (shape.kind)` — narrows to the exact member.",
+    "explanation": "```ts\nfunction getArea(shape: Shape) {\n  switch (shape.kind) {\n    case \"circle\":\n      return Math.PI * shape.radius ** 2; // shape: Circle\n    case \"square\":\n      return shape.sideLength ** 2;       // shape: Square\n  }\n}\n```\nThe literal types are essential — if `kind` were just `string`, no case could prove which member you have. This is the idiomatic TypeScript pattern for modeling \"one of several shapes of data\", far safer than optional properties on a single interface.",
+    "tags": ["discriminated-unions", "narrowing"]
+  },
+  {
+    "id": "ts-narrow-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Type Narrowing",
+    "subtopic": "Exhaustiveness",
+    "difficulty": "hard",
+    "question": "What does this `default` case accomplish?\n```ts\nfunction getArea(shape: Shape) {\n  switch (shape.kind) {\n    case \"circle\": return Math.PI * shape.radius ** 2;\n    case \"square\": return shape.sideLength ** 2;\n    default:\n      const _exhaustiveCheck: never = shape;\n      return _exhaustiveCheck;\n  }\n}\n```",
+    "options": [
+      "Exhaustiveness checking — if a new member is added to Shape, this line becomes a compile error",
+      "It guarantees the function throws at runtime for unknown shapes",
+      "It silences the compiler's missing-return-statement warning only",
+      "It converts unhandled shapes to never so they are skipped"
+    ],
+    "answer": "Exhaustiveness checking — if a new member is added to Shape, this line becomes a compile error",
+    "explanation": "When every case is handled, the remaining type in `default` is `never`, and assigning `never` to `never` is fine. Add `Triangle` to `Shape` without a case, and `shape` in `default` is `Triangle` — not assignable to `never`, so the compiler points you straight at the switch that needs updating. Cheap insurance for growing unions.",
+    "tags": ["never", "exhaustiveness", "discriminated-unions", "mcq"]
+  },
+  {
+    "id": "ts-narrow-006",
+    "topic": "Type Narrowing",
+    "subtopic": "Assignments",
+    "difficulty": "medium",
+    "question": "What are the types of `x` at each step, and why does the last line fail?\n```ts\nlet x = Math.random() < 0.5 ? 10 : \"hello\";\nx = 1;\nx = \"goodbye\";\nx = true; // error\n```",
+    "answer": "`x` is declared as `string | number`. After `x = 1` its narrowed type is `number`; after `x = \"goodbye\"` it's `string`. `x = true` fails because `boolean` was never part of the *declared* type.",
+    "explanation": "Assignment narrows the *observed* type, but every assignment is checked against the declared type from the initializer. You can move freely between `string` and `number` — switching to `boolean` would need the declaration to include it from the start.",
+    "tags": ["narrowing", "assignments", "control-flow"]
+  },
+  {
+    "id": "ts-narrow-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Type Narrowing",
+    "subtopic": "Equality",
+    "difficulty": "hard",
+    "question": "Inside the `if`, what are the types of `x` and `y`?\n```ts\nfunction example(x: string | number, y: string | boolean) {\n  if (x === y) {\n    // here\n  }\n}\n```",
+    "options": [
+      "Both are string — it is the only type the two unions share",
+      "x: string | number, y: string | boolean — equality does not narrow",
+      "Both are string | number | boolean — the union of both",
+      "Both are never — different unions can never be equal"
+    ],
+    "answer": "Both are string — it is the only type the two unions share",
+    "explanation": "For `x === y` to be true, both values must have the same type. The only type present in both unions is `string`, so TypeScript narrows both variables to `string` inside the block — `x.toUpperCase()` and `y.toLowerCase()` are both safe there.",
+    "tags": ["narrowing", "equality", "mcq"]
+  }
+]
