@@ -80,6 +80,7 @@ app/
 - `/` — start screen
 - `/card-library` — card library (read-only table of all cards)
 - `/card-library?filter=due&topic=Arrays&attempted=attempted&q=typeof` — library with filters pre-applied
+- `/card/:id` — card detail page (e.g. `/card/types-prim-002`)
 
 ### SM-2 algorithm (`srs.js`)
 
@@ -151,6 +152,16 @@ Paste new objects into `app/data/data.json`. IDs must be unique. Two shapes:
 ```
 
 Progress is stored separately in `localStorage` (key `srs:all`) and never written into `data.json`. Adding questions never disturbs existing progress.
+
+### Card detail (`/card/:id`)
+
+Read-only view of a single card. Accessible by clicking any question row in the card library. Back button uses `history.back()` to return to the exact library URL (preserving filters).
+
+Sections:
+- **Card block** — full badges (topic, subtopic, difficulty, type, tags), full question text, answer/explanation for reveal cards, all options with correct answer highlighted for MCQ cards
+- **Progress block** — SM-2 status badge, interval/ease/next-due for review cards, "Never studied" for new cards, card ID
+
+Unknown IDs redirect to `/card-library`.
 
 ### Card library (`/card-library`)
 
