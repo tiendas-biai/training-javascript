@@ -306,13 +306,13 @@ export function renderMCQAnswered(card, { remaining, cardInfo, previews }, picke
   );
 }
 
-// ── Grade toast (replaces grade-area for 1.2 s then fires onDone) ─────────────
+// ── Grade toast (replaces grade-area for 3 s then fires onDone) ──────────────
 
 export function renderGradeToast(message, onDone) {
   const area = document.getElementById('grade-area');
   if (!area) { onDone(); return; }
   area.innerHTML = `<p class="grade-toast">${esc(message)}</p>`;
-  setTimeout(onDone, 5000);
+  setTimeout(onDone, 3000);
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────────
