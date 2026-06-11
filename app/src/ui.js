@@ -311,7 +311,7 @@ export function renderSummary({ reviewed, correct }, { onAgain, onHome }) {
 
 // ── Card library ─────────────────────────────────────────────────────────────
 
-export function renderCardList(allCards, progressMap, { onBack }) {
+export function renderCardList(allCards, progressMap, { onBack, onCardClick }) {
   const topics = [...new Set(allCards.map(c => c.topic))].sort();
   const now = Date.now();
 
@@ -438,8 +438,10 @@ export function renderCardList(allCards, progressMap, { onBack }) {
                       : card.question;
                     return `<tr>
                       <td class="col-q">
-                        <span class="q-text">${esc(q)}</span>
-                        <span class="q-id">${esc(card.id)}</span>
+                        <button class="q-link" data-id="${esc(card.id)}">
+                          <span class="q-text">${esc(q)}</span>
+                          <span class="q-id">${esc(card.id)}</span>
+                        </button>
                       </td>
                       <td class="col-topic"><span class="badge">${esc(card.topic)}</span></td>
                       <td class="col-diff">${diffBadge(card.difficulty)}</td>
@@ -459,9 +461,100 @@ export function renderCardList(allCards, progressMap, { onBack }) {
     document.getElementById('lib-search')?.addEventListener('input', e => { search = e.target.value; updateURL(); render(); });
     document.getElementById('lib-topic')?.addEventListener('change', e => { topicFilter = e.target.value; updateURL(); render(); });
     document.getElementById('lib-attempted')?.addEventListener('change', e => { attemptedFilter = e.target.value; updateURL(); render(); });
+    if (onCardClick) {
+      document.querySelectorAll('.q-link').forEach(btn =>
+        btn.addEventListener('click', () => onCardClick(btn.dataset.id))
+      );
+    }
   }
 
   render();
+}
+
+// ── Card detail ──────────────────────────────────────────────────────────────
+
+export function renderCardDetail(card, progressMap, { onBack }) {
+  const s = getOrCreate(card.id, progressMap);
+  const type = getCardType(card);
+  const tags = (card.tags ?? []).map(t => `<span class="badge">${esc(t)}</span>`).join('');
+
+  function progressSection() {
+    if (s.totalSeen === 0) {
+      return `<div class="detail-progress-row">
+        <span class="badge badge-lib-new">New</span>
+        <span class="detail-progress-info">Never studied</span>
+      </div>`;
+    }
+    if (s.phase === 'learning') {
+      return `<div class="detail-progress-row">
+        <span class="badge badge-learning">Learning</span>
+        <span class="detail-progress-info">Seen ${s.totalSeen} time${s.totalSeen !== 1 ? 's' : ''} · in learning phase</span>
+      </div>`;
+    }
+    const isMastered = s.interval >= 7;
+    const badge = isMastered
+      ? `<span class="badge badge-lib-mastered">Mastered</span>`
+      : `<span class="badge badge-review">Review</span>`;
+    const nextStr = s.nextDue > Date.now() ? formatNextDue(s.nextDue) : 'due now';
+    const lastStr = s.lastReviewed ? new Date(s.lastReviewed).toLocaleDateString() : 'never';
+    return `
+      <div class="detail-progress-row">
+        ${badge}
+        <span class="detail-progress-info">Interval: ${s.interval}d · Ease: ${s.ease.toFixed(2)} · Next: ${esc(nextStr)}</span>
+      </div>
+      <div class="detail-progress-row" style="margin-top:8px">
+        <span class="detail-progress-info">Last reviewed: ${lastStr} · Seen ${s.totalSeen} times</span>
+      </div>`;
+  }
+
+  function answerSection() {
+    if (type === 'multiple-choice') {
+      const opts = card.options.map(opt => {
+        const correct = opt === card.answer;
+        return `<li><span class="detail-option${correct ? ' correct' : ''}">${esc(opt)}</span></li>`;
+      }).join('');
+      return `
+        <ul class="detail-options">${opts}</ul>
+        <div class="answer-section">
+          <p class="answer-label">Explanation</p>
+          <p class="explanation-text">${esc(card.explanation)}</p>
+        </div>`;
+    }
+    return `
+      <div class="answer-section">
+        <p class="answer-label">Answer</p>
+        <p class="answer-text">${esc(card.answer)}</p>
+        <p class="explanation-text">${esc(card.explanation)}</p>
+      </div>`;
+  }
+
+  root().innerHTML = `
+    <div class="screen">
+      <div class="lib-header">
+        <button class="exit-btn" id="back-btn">← Back</button>
+        <span class="lib-title">Card Detail</span>
+      </div>
+
+      <div class="card">
+        <div class="card-meta">
+          <span class="badge">${esc(card.topic)}</span>
+          ${card.subtopic ? `<span class="badge">${esc(card.subtopic)}</span>` : ''}
+          ${diffBadge(card.difficulty)}
+          <span class="badge">${type === 'multiple-choice' ? 'MCQ' : 'reveal'}</span>
+          ${tags}
+        </div>
+        <p class="question-text">${esc(card.question)}</p>
+        ${answerSection()}
+      </div>
+
+      <div class="detail-progress-card">
+        <p class="detail-section-label">Progress</p>
+        ${progressSection()}
+        <p class="q-id" style="margin-top:10px">${esc(card.id)}</p>
+      </div>
+    </div>`;
+
+  document.getElementById('back-btn')?.addEventListener('click', onBack);
 }
 
 // ── Nothing due ───────────────────────────────────────────────────────────────

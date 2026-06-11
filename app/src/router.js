@@ -1,7 +1,16 @@
 const routes = new Map();
+const paramRoutes = [];
 
 export function route(path, fn) {
-  routes.set(path, fn);
+  if (path.includes(':')) {
+    const keys = [];
+    const regex = new RegExp(
+      '^' + path.replace(/:([^/]+)/g, (_, k) => { keys.push(k); return '([^/]+)'; }) + '$'
+    );
+    paramRoutes.push({ regex, keys, fn });
+  } else {
+    routes.set(path, fn);
+  }
 }
 
 export function navigate(path) {
@@ -14,8 +23,17 @@ export function replaceState(path) {
 }
 
 function dispatch() {
-  const fn = routes.get(location.pathname) ?? routes.get('/');
-  fn?.();
+  const exact = routes.get(location.pathname);
+  if (exact) { exact(); return; }
+  for (const { regex, keys, fn } of paramRoutes) {
+    const m = location.pathname.match(regex);
+    if (m) {
+      const params = Object.fromEntries(keys.map((k, i) => [k, decodeURIComponent(m[i + 1])]));
+      fn(params);
+      return;
+    }
+  }
+  routes.get('/')?.();
 }
 
 export function initRouter() {

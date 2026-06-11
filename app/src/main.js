@@ -13,6 +13,7 @@ import {
   renderSummary,
   renderNothingDue,
   renderCardList,
+  renderCardDetail,
 } from './ui.js';
 
 // ── State ──────────────────────────────────────────────────────────────────────
@@ -37,7 +38,17 @@ route('/', () => {
 
 route('/card-library', () => {
   progressMap = loadProgress();
-  renderCardList(allCards, progressMap, { onBack: () => navigate('/') });
+  renderCardList(allCards, progressMap, {
+    onBack: () => navigate('/'),
+    onCardClick: (id) => navigate(`/card/${id}`),
+  });
+});
+
+route('/card/:id', ({ id }) => {
+  progressMap = loadProgress();
+  const card = allCards.find(c => c.id === id);
+  if (!card) { navigate('/card-library'); return; }
+  renderCardDetail(card, progressMap, { onBack: () => history.back() });
 });
 
 // ── Home ───────────────────────────────────────────────────────────────────────
