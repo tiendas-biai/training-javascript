@@ -220,8 +220,6 @@ body {
 .question-text {
   font-size: 1.05rem;
   line-height: 1.65;
-  white-space: pre-wrap;
-  font-family: inherit;
 }
 
 /* ── Answer section ── */
@@ -242,13 +240,11 @@ body {
   font-weight: 600;
   color: var(--text);
   margin-bottom: 10px;
-  white-space: pre-wrap;
 }
 .explanation-text {
   font-size: 0.9rem;
   color: var(--muted);
   line-height: 1.65;
-  white-space: pre-wrap;
 }
 
 /* ── Grade buttons (Hard / Good / Easy) ── */
@@ -551,6 +547,53 @@ body {
   padding: 60px 0;
   color: var(--muted);
 }
+
+/* ── Code blocks ── */
+.code-block {
+  background: #151720;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 10px 0;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-size: 0.83rem;
+  line-height: 1.65;
+}
+.code-block code {
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  padding: 0;
+  white-space: pre;
+}
+.inline-code {
+  background: rgba(108,99,255,0.12);
+  border: 1px solid rgba(108,99,255,0.22);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 0.87em;
+  color: var(--text);
+}
+
+/* Prism tokens — One Dark palette */
+.token.comment, .token.prolog, .token.doctype, .token.cdata {
+  color: #5c6370;
+  font-style: italic;
+}
+.token.keyword, .token.important { color: #c678dd; }
+.token.string, .token.attr-value, .token.regex { color: #98c379; }
+.token.template-string { color: #98c379; }
+.token.template-punctuation.string { color: #98c379; }
+.token.number, .token.boolean, .token.null, .token.builtin { color: #d19a66; }
+.token.function, .token.function-variable { color: #61afef; }
+.token.class-name { color: #e5c07b; }
+.token.operator { color: #56b6c2; }
+.token.punctuation { color: #abb2bf; }
+.token.property { color: #e06c75; }
+.token.interpolation { color: var(--text); }
+.token.interpolation-punctuation.punctuation { color: #e5c07b; }
 
 /* ── Responsive ── */
 @media (max-width: 480px) {

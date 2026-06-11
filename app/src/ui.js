@@ -1,3 +1,5 @@
+import Prism from 'prismjs';
+import 'prismjs/components/prism-javascript';
 import { computeStats, getOrCreate } from './srs.js';
 import { applyFilters, getCardType } from './session.js';
 import { replaceState } from './router.js';
@@ -10,6 +12,33 @@ function esc(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// Renders markdown-style text: fenced code blocks get Prism highlighting,
+// inline `code` gets styled, newlines become <br>.
+function renderText(str) {
+  if (!str) return '';
+  const parts = str.split(/(```(?:\w+)?\n[\s\S]*?```)/g);
+  return parts.map(part => {
+    const m = part.match(/^```(\w+)?\n([\s\S]*?)```$/);
+    if (m) {
+      const lang = m[1] === 'js' ? 'javascript' : (m[1] || 'javascript');
+      const grammar = Prism.languages[lang] ?? Prism.languages.javascript;
+      const highlighted = Prism.highlight(m[2], grammar, lang);
+      return `<pre class="code-block"><code>${highlighted}</code></pre>`;
+    }
+    return esc(part)
+      .replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>')
+      .replace(/\n/g, '<br>');
+  }).join('');
+}
+
+// Returns plain text suitable for search previews: strips code fences and backticks.
+function plainText(str) {
+  if (!str) return '';
+  return str
+    .replace(/```[\s\S]*?```/g, '[code]')
+    .replace(/`([^`\n]+)`/g, '$1');
 }
 
 function shuffleCopy(arr) {
@@ -191,7 +220,7 @@ export function renderRevealQuestion(card, { remaining, cardInfo }, onShowAnswer
       ${sessionHeader(remaining)}
       <div class="card">
         ${cardMeta(card, cardInfo)}
-        <p class="question-text">${esc(card.question)}</p>
+        <div class="question-text">${renderText(card.question)}</div>
       </div>
       <button id="show-btn" class="btn-show-answer">Show Answer</button>
     </div>`;
@@ -207,11 +236,11 @@ export function renderRevealAnswer(card, { remaining, cardInfo, previews }, onGr
       ${sessionHeader(remaining)}
       <div class="card">
         ${cardMeta(card, cardInfo)}
-        <p class="question-text">${esc(card.question)}</p>
+        <div class="question-text">${renderText(card.question)}</div>
         <div class="answer-section">
           <p class="answer-label">Answer</p>
-          <p class="answer-text">${esc(card.answer)}</p>
-          <p class="explanation-text">${esc(card.explanation)}</p>
+          <div class="answer-text">${renderText(card.answer)}</div>
+          <div class="explanation-text">${renderText(card.explanation)}</div>
         </div>
       </div>
       ${gradeButtons(previews)}
@@ -231,7 +260,7 @@ export function renderMCQQuestion(card, { remaining, cardInfo }, onPick, onExit)
       ${sessionHeader(remaining)}
       <div class="card">
         ${cardMeta(card, cardInfo)}
-        <p class="question-text">${esc(card.question)}</p>
+        <div class="question-text">${renderText(card.question)}</div>
         <ul class="options-list">
           ${shuffled.map((opt, i) =>
             `<li><button class="option-btn" data-idx="${i}">${esc(opt)}</button></li>`
@@ -262,11 +291,11 @@ export function renderMCQAnswered(card, { remaining, cardInfo, previews }, picke
       ${sessionHeader(remaining)}
       <div class="card">
         ${cardMeta(card, cardInfo)}
-        <p class="question-text">${esc(card.question)}</p>
+        <div class="question-text">${renderText(card.question)}</div>
         <ul class="options-list">${optionsHtml}</ul>
         <div class="answer-section">
           <p class="answer-label">${isCorrect ? '✓ Correct' : '✗ Incorrect'}</p>
-          <p class="explanation-text">${esc(card.explanation)}</p>
+          <div class="explanation-text">${renderText(card.explanation)}</div>
         </div>
       </div>
       ${gradeButtons(previews)}
@@ -433,9 +462,8 @@ export function renderCardList(allCards, progressMap, { onBack, onCardClick }) {
                 </thead>
                 <tbody>
                   ${filtered.map(card => {
-                    const q = card.question.length > 80
-                      ? card.question.slice(0, 80) + '…'
-                      : card.question;
+                    const raw = plainText(card.question);
+                    const q = raw.length > 80 ? raw.slice(0, 80) + '…' : raw;
                     return `<tr>
                       <td class="col-q">
                         <button class="q-link" data-id="${esc(card.id)}">
@@ -517,14 +545,14 @@ export function renderCardDetail(card, progressMap, { onBack }) {
         <ul class="detail-options">${opts}</ul>
         <div class="answer-section">
           <p class="answer-label">Explanation</p>
-          <p class="explanation-text">${esc(card.explanation)}</p>
+          <div class="explanation-text">${renderText(card.explanation)}</div>
         </div>`;
     }
     return `
       <div class="answer-section">
         <p class="answer-label">Answer</p>
-        <p class="answer-text">${esc(card.answer)}</p>
-        <p class="explanation-text">${esc(card.explanation)}</p>
+        <div class="answer-text">${renderText(card.answer)}</div>
+        <div class="explanation-text">${renderText(card.explanation)}</div>
       </div>`;
   }
 
@@ -543,7 +571,7 @@ export function renderCardDetail(card, progressMap, { onBack }) {
           <span class="badge">${type === 'multiple-choice' ? 'MCQ' : 'reveal'}</span>
           ${tags}
         </div>
-        <p class="question-text">${esc(card.question)}</p>
+        <div class="question-text">${renderText(card.question)}</div>
         ${answerSection()}
       </div>
 
