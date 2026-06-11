@@ -1130,5 +1130,1061 @@
     "answer": "API Gateway with AWS Lambda — pay only per request and compute time",
     "explanation": "At hundreds of sub-second requests per day, the workload is idle >99.9% of the time — the definition of a serverless fit. Lambda bills per invocation and per ms of execution (with a permanent free tier that may cover this entirely); API Gateway replaces the always-on ALB. Every EC2/ECS variant keeps paying for idle hours; an RI just discounts the waste.",
     "tags": ["lambda", "api-gateway", "serverless", "ec2"]
+  },
+  {
+    "id": "aws-sec-mcq-017",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "IAM",
+    "difficulty": "medium",
+    "question": "An IAM user has one policy that allows `s3:*` on all resources and a second policy that explicitly denies `s3:DeleteObject` on a specific bucket. What happens when the user tries to delete an object in that bucket?",
+    "options": [
+      "The request is denied — an explicit Deny always overrides any Allow",
+      "The request is allowed — the broader s3:* policy takes precedence",
+      "The request is allowed — the most recently attached policy wins",
+      "The result is random, depending on policy evaluation order"
+    ],
+    "answer": "The request is denied — an explicit Deny always overrides any Allow",
+    "explanation": "IAM policy evaluation: start at implicit deny, allow only if some policy allows AND nothing explicitly denies. An explicit Deny is absolute — it can't be out-voted by any number of Allows, from any policy type (identity, resource, SCP). This is why guardrails are written as Deny statements. Attachment order is irrelevant.",
+    "tags": ["iam", "policy-evaluation", "explicit-deny"]
+  },
+  {
+    "id": "aws-sec-mcq-018",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Secure Access",
+    "difficulty": "medium",
+    "question": "A security team wants administrators to get shell access to EC2 instances in private subnets without SSH keys, bastion hosts, or any open inbound ports — with all session activity logged. Which solution meets this?",
+    "options": [
+      "AWS Systems Manager Session Manager",
+      "A bastion host in a public subnet with a hardened security group",
+      "SSH over an AWS Site-to-Site VPN",
+      "EC2 Instance Connect with port 22 open to the corporate CIDR"
+    ],
+    "answer": "AWS Systems Manager Session Manager",
+    "explanation": "Session Manager inverts the connection model: the SSM agent on the instance dials out to the service, so no inbound ports, keys, or bastions exist to attack. Access is controlled by IAM and sessions can be logged to CloudWatch Logs or S3 for audit. The other options all keep an SSH listening surface alive somewhere — exactly what the requirement eliminates.",
+    "tags": ["session-manager", "ssm", "bastion", "ssh"]
+  },
+  {
+    "id": "aws-sec-mcq-019",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "App Security",
+    "difficulty": "medium",
+    "question": "A website serves content from S3 through CloudFront. Security requires that users cannot bypass CloudFront and fetch objects directly from the S3 bucket URL. What should the architect configure?",
+    "options": [
+      "An Origin Access Control (OAC) on the distribution, plus a bucket policy that allows reads only from that CloudFront distribution",
+      "S3 Transfer Acceleration",
+      "A bucket ACL granting public read, since CloudFront needs it",
+      "Signed cookies on the S3 bucket"
+    ],
+    "answer": "An Origin Access Control (OAC) on the distribution, plus a bucket policy that allows reads only from that CloudFront distribution",
+    "explanation": "OAC (the successor to Origin Access Identity) lets CloudFront sign its origin requests; the bucket policy then grants `s3:GetObject` only to the CloudFront service principal for that specific distribution, so direct bucket URLs return 403. Public ACLs are precisely what's being prevented; Transfer Acceleration is an upload-speed feature; signed cookies are a CloudFront viewer-side control, not an origin lockdown.",
+    "tags": ["cloudfront", "oac", "s3", "origin-security"]
+  },
+  {
+    "id": "aws-sec-mcq-020",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "App Security",
+    "difficulty": "medium",
+    "question": "A media company sells premium videos delivered via CloudFront. Each purchased video must be downloadable only by the buyer, through a link that expires after 24 hours. Which mechanism fits?",
+    "options": [
+      "CloudFront signed URLs with a 24-hour expiry",
+      "Making the videos public for 24 hours after each purchase",
+      "An S3 bucket policy listing each buyer's IP address",
+      "AWS WAF rules per customer"
+    ],
+    "answer": "CloudFront signed URLs with a 24-hour expiry",
+    "explanation": "Signed URLs embed an expiry time and a signature from your key pair — the application generates one per purchase, and CloudFront rejects the request after the deadline or if tampered with. (Signed *cookies* are the variant for granting access to many files at once.) Public windows expose content to everyone; IP-based policies break on mobile/NAT and don't expire; WAF doesn't do per-user content authorization.",
+    "tags": ["cloudfront", "signed-urls", "content-protection"]
+  },
+  {
+    "id": "aws-sec-mr-005",
+    "type": "multiple-response",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "medium",
+    "question": "A team stores critical documents in S3 and must protect them against accidental overwrites and deletions, including requiring extra authorization for permanent deletes. Which combination of features should be enabled? (Select TWO)",
+    "options": [
+      "S3 Versioning on the bucket",
+      "MFA Delete for permanent version deletions",
+      "S3 Transfer Acceleration",
+      "S3 Intelligent-Tiering",
+      "S3 Requester Pays"
+    ],
+    "answers": [
+      "S3 Versioning on the bucket",
+      "MFA Delete for permanent version deletions"
+    ],
+    "explanation": "Versioning turns overwrites and deletes into recoverable events — the old version survives and a delete just adds a delete marker. MFA Delete stacks on top: permanently removing a version (or disabling versioning) then requires the bucket owner's MFA token. Transfer Acceleration, Intelligent-Tiering, and Requester Pays address speed, cost tiers, and billing — not data protection.",
+    "tags": ["s3", "versioning", "mfa-delete"]
+  },
+  {
+    "id": "aws-sec-mcq-021",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "hard",
+    "question": "Financial regulations require that transaction records written to S3 cannot be modified or deleted by ANY user — including administrators and the root user — for 7 years. Which feature enforces this?",
+    "options": [
+      "S3 Object Lock in compliance mode with a 7-year retention period",
+      "S3 Object Lock in governance mode",
+      "A bucket policy denying s3:DeleteObject",
+      "S3 Versioning with MFA Delete"
+    ],
+    "answer": "S3 Object Lock in compliance mode with a 7-year retention period",
+    "explanation": "Compliance mode is true WORM storage: during retention, no identity — not even root — can shorten the retention or delete the version, period. Governance mode is the softer variant: users with `s3:BypassGovernanceRetention` can override it, which fails the \"including administrators\" requirement. Bucket policies can be edited by admins; MFA Delete protects against accidents, not determined privileged users. Object Lock requires versioning.",
+    "tags": ["s3", "object-lock", "compliance", "worm"]
+  },
+  {
+    "id": "aws-sec-mcq-022",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Multi-Account",
+    "difficulty": "hard",
+    "question": "A third-party monitoring SaaS needs to assume a role in a company's AWS account. AWS recommends the trust policy require an \"external ID\" supplied by the SaaS provider. What attack does this mitigate?",
+    "options": [
+      "The confused deputy problem — another customer of the SaaS tricking it into using its privileges against this company's account",
+      "Brute-force attacks against the role's credentials",
+      "SQL injection through the monitoring agent",
+      "DDoS attacks on the role's STS endpoint"
+    ],
+    "answer": "The confused deputy problem — another customer of the SaaS tricking it into using its privileges against this company's account",
+    "explanation": "Without an external ID, a malicious customer could guess the company's role ARN and ask the SaaS to monitor \"their\" account using that ARN — the SaaS (the deputy) would assume the role with its own legitimate access. The external ID is a per-customer secret the SaaS includes in AssumeRole calls; the trust policy's condition rejects requests carrying the wrong one, binding the role to the right customer relationship.",
+    "tags": ["sts", "external-id", "confused-deputy", "cross-account"]
+  },
+  {
+    "id": "aws-sec-mcq-023",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "medium",
+    "question": "A company requires every object uploaded to a particular S3 bucket to be encrypted at rest with a specific KMS key, without modifying the many client applications that upload. What is the simplest approach?",
+    "options": [
+      "Configure default bucket encryption with SSE-KMS using that key (with S3 Bucket Keys to reduce KMS costs)",
+      "Ask every client team to add encryption headers to their SDK calls",
+      "Run a nightly Lambda that re-uploads unencrypted objects with encryption",
+      "Block all uploads and require files be sent through a custom encrypting proxy"
+    ],
+    "answer": "Configure default bucket encryption with SSE-KMS using that key (with S3 Bucket Keys to reduce KMS costs)",
+    "explanation": "Default bucket encryption applies the chosen method (SSE-KMS with your customer managed key) to every object that arrives without its own encryption headers — zero client changes. Bucket Keys cut the per-request KMS call cost dramatically. Per-team SDK changes are the coordination problem you're avoiding; the nightly Lambda leaves a window of unencrypted data; a proxy is heavy custom infrastructure for a built-in feature.",
+    "tags": ["s3", "sse-kms", "default-encryption", "kms"]
+  },
+  {
+    "id": "aws-sec-mcq-024",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "App Security",
+    "difficulty": "easy",
+    "question": "An application behind an ALB needs an HTTPS certificate for its public domain, with automatic renewal and no certificate cost. What should the architect use?",
+    "options": [
+      "A public certificate from AWS Certificate Manager (ACM) attached to the ALB listener",
+      "A self-signed certificate installed on each EC2 instance",
+      "A commercial certificate purchased annually and uploaded to IAM",
+      "An SSH key pair converted to a TLS certificate"
+    ],
+    "answer": "A public certificate from AWS Certificate Manager (ACM) attached to the ALB listener",
+    "explanation": "ACM public certificates are free, validate via DNS, renew automatically, and integrate natively with ALB, NLB, CloudFront, and API Gateway. Self-signed certs trigger browser warnings; purchased certs add cost and manual renewal risk; SSH keys aren't TLS certificates. One caveat worth remembering: ACM public certs can't be exported to run on EC2 directly — they live on AWS-managed endpoints.",
+    "tags": ["acm", "tls", "alb", "certificates"]
+  },
+  {
+    "id": "aws-sec-mcq-025",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "VPC Security",
+    "difficulty": "medium",
+    "question": "In a three-tier VPC, the app-tier instances must accept traffic ONLY from the web tier — which scales in and out constantly, so IP addresses change all the time. How should the app tier's security group be written?",
+    "options": [
+      "Allow inbound traffic with the web tier's security group ID as the source",
+      "Allow inbound traffic from the VPC CIDR block",
+      "Allow inbound traffic from a list of the web servers' current IPs, updated by a script",
+      "Allow all inbound traffic and filter by IP in the application"
+    ],
+    "answer": "Allow inbound traffic with the web tier's security group ID as the source",
+    "explanation": "Security group references are membership-based: any instance attached to the web tier SG matches the rule, regardless of its IP — scaling events need no rule updates. The VPC CIDR over-grants (database tier, rogue instances, anything in the VPC); IP lists rot the moment Auto Scaling acts; allow-all delegates network security to application code.",
+    "tags": ["security-groups", "vpc", "tiered-architecture"]
+  },
+  {
+    "id": "aws-sec-mcq-026",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "VPC Security",
+    "difficulty": "easy",
+    "question": "An application in a VPC intermittently fails to connect to a database. The team suspects traffic is being rejected by a security group or network ACL and needs to see accepted and rejected connection records. What should they enable?",
+    "options": [
+      "VPC Flow Logs",
+      "AWS CloudTrail",
+      "AWS X-Ray",
+      "Amazon Inspector"
+    ],
+    "answer": "VPC Flow Logs",
+    "explanation": "Flow Logs capture metadata for IP traffic at the VPC/subnet/ENI level — source, destination, ports, protocol, and crucially ACCEPT or REJECT — delivered to CloudWatch Logs or S3. Filtering for REJECT records pinpoints what the SG/NACL is dropping. CloudTrail logs API calls (control plane, not packets); X-Ray traces application requests; Inspector scans for vulnerabilities.",
+    "tags": ["vpc-flow-logs", "troubleshooting", "networking"]
+  },
+  {
+    "id": "aws-sec-mcq-027",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Threat Detection",
+    "difficulty": "medium",
+    "question": "A security team wants continuous, intelligent threat detection across their accounts — flagging things like cryptocurrency mining on EC2, credential exfiltration, and unusual API calls — without deploying any agents or managing infrastructure. Which service does this?",
+    "options": [
+      "Amazon GuardDuty",
+      "Amazon Macie",
+      "AWS WAF",
+      "AWS Config"
+    ],
+    "answer": "Amazon GuardDuty",
+    "explanation": "GuardDuty continuously analyzes CloudTrail events, VPC Flow Logs, and DNS query logs with threat intelligence and ML — one click to enable, no agents, findings ranked by severity. Crypto-mining instances and anomalous credential use are its signature detections. Macie classifies sensitive data in S3; WAF filters web requests; Config evaluates resource configuration compliance.",
+    "tags": ["guardduty", "threat-detection", "security-services"]
+  },
+  {
+    "id": "aws-sec-mcq-028",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "IAM",
+    "difficulty": "medium",
+    "question": "A security review must identify every S3 bucket, IAM role, and KMS key that is accessible from OUTSIDE the company's AWS organization — for example through resource policies granting access to unknown accounts. Which tool is purpose-built for this?",
+    "options": [
+      "IAM Access Analyzer",
+      "AWS Trusted Advisor",
+      "Amazon Detective",
+      "AWS Artifact"
+    ],
+    "answer": "IAM Access Analyzer",
+    "explanation": "Access Analyzer uses automated reasoning on resource policies to find resources shared with principals outside your zone of trust (account or organization), producing findings like \"this bucket policy grants account 1234… read access\". Trusted Advisor has only basic open-bucket checks; Detective investigates incidents after the fact; Artifact serves compliance documents.",
+    "tags": ["access-analyzer", "iam", "resource-policies", "audit"]
+  },
+  {
+    "id": "aws-sec-mcq-029",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "IAM",
+    "difficulty": "hard",
+    "question": "Developers need to create IAM roles for their applications, but the security team must guarantee that no role a developer creates can ever exceed a defined set of permissions — even if the developer attaches an over-permissive policy. What should the security team use?",
+    "options": [
+      "Require a permissions boundary on all developer-created roles",
+      "Review every new role manually before activation",
+      "Restrict developers to read-only access so they can't create roles",
+      "Enable MFA on all developer accounts"
+    ],
+    "answer": "Require a permissions boundary on all developer-created roles",
+    "explanation": "A permissions boundary is a managed policy that caps the *maximum* effective permissions of a role: the role can do only what both its attached policies AND the boundary allow. An IAM condition (`iam:PermissionsBoundary`) can force developers to attach the approved boundary at creation time — delegated role creation without delegated privilege escalation. Manual review doesn't scale; read-only blocks the legitimate need; MFA authenticates but doesn't limit permissions.",
+    "tags": ["iam", "permissions-boundary", "delegation"]
+  },
+  {
+    "id": "aws-sec-mcq-030",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "Multi-Account",
+    "difficulty": "medium",
+    "question": "A company with 60 accounts in AWS Organizations must record all API activity in every account, delivered to one central, tamper-resistant S3 bucket — including for any accounts created in the future. What is the simplest setup?",
+    "options": [
+      "An organization trail in AWS CloudTrail from the management account",
+      "An individual CloudTrail trail configured manually in each account",
+      "VPC Flow Logs in every VPC, aggregated to one bucket",
+      "AWS Config recorders in every Region"
+    ],
+    "answer": "An organization trail in AWS CloudTrail from the management account",
+    "explanation": "An organization trail automatically applies to all member accounts — current and future — and delivers their events to a central bucket that member accounts can't modify; pair with log file validation for tamper evidence. Per-account trails drift and miss new accounts; Flow Logs record network traffic, not API calls; Config tracks resource configuration state, complementary but different.",
+    "tags": ["cloudtrail", "organizations", "audit", "logging"]
+  },
+  {
+    "id": "aws-sec-mr-006",
+    "type": "multiple-response",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "hard",
+    "question": "An application's IAM role can call `s3:GetObject`, yet downloads from a bucket fail with Access Denied. The objects are encrypted with a customer managed KMS key. Which permissions must the role have for downloads to succeed? (Select TWO)",
+    "options": [
+      "s3:GetObject on the bucket's objects",
+      "kms:Decrypt on the customer managed key used to encrypt the objects",
+      "kms:CreateKey on the account",
+      "s3:PutBucketPolicy on the bucket",
+      "iam:PassRole on the application role"
+    ],
+    "answers": [
+      "s3:GetObject on the bucket's objects",
+      "kms:Decrypt on the customer managed key used to encrypt the objects"
+    ],
+    "explanation": "SSE-KMS reads are a two-permission operation: S3 authorizes the object read, then calls KMS on the caller's behalf to decrypt the data key — which requires the caller to have `kms:Decrypt` on that key (granted via IAM and/or the key policy). Missing the KMS half produces exactly this confusing Access Denied despite correct S3 permissions. The other options create keys, edit policies, and pass roles — unrelated to a read path.",
+    "tags": ["kms", "s3", "sse-kms", "troubleshooting"]
+  },
+  {
+    "id": "aws-sec-mr-007",
+    "type": "multiple-response",
+    "topic": "Secure Architectures",
+    "subtopic": "Data Protection",
+    "difficulty": "hard",
+    "question": "A company discovers an unencrypted RDS MySQL instance in production. Encryption at rest must be enabled. RDS does not allow enabling encryption on an existing unencrypted instance directly. Which combination of steps achieves it? (Select TWO)",
+    "options": [
+      "Create a snapshot of the unencrypted DB instance",
+      "Copy the snapshot with encryption enabled, then restore a new DB instance from the encrypted copy and switch the application to it",
+      "Toggle the encryption setting on the running instance during a maintenance window",
+      "Enable Multi-AZ, which encrypts the standby automatically",
+      "Convert the instance to Aurora, which encrypts retroactively in place"
+    ],
+    "answers": [
+      "Create a snapshot of the unencrypted DB instance",
+      "Copy the snapshot with encryption enabled, then restore a new DB instance from the encrypted copy and switch the application to it"
+    ],
+    "explanation": "The snapshot-copy-restore path is the documented procedure: snapshots of unencrypted instances are unencrypted, but *copying* a snapshot lets you enable KMS encryption on the copy, and restoring from that copy yields an encrypted instance. There is no in-place toggle, Multi-AZ replicates whatever encryption state exists (none), and engine migration doesn't bypass the same restriction. Plan a cutover window for the endpoint switch.",
+    "tags": ["rds", "encryption", "snapshots", "kms"]
+  },
+  {
+    "id": "aws-sec-mcq-031",
+    "type": "multiple-choice",
+    "topic": "Secure Architectures",
+    "subtopic": "App Security",
+    "difficulty": "medium",
+    "question": "A login page behind CloudFront is being hit by credential-stuffing bots making thousands of POST requests per minute from rotating IP addresses. Which control blocks IPs that exceed a request threshold automatically?",
+    "options": [
+      "An AWS WAF rate-based rule on the login path",
+      "AWS Shield Standard",
+      "A network ACL denying the attacking IPs",
+      "Increasing the instance count behind the ALB"
+    ],
+    "answer": "An AWS WAF rate-based rule on the login path",
+    "explanation": "Rate-based rules count requests per IP over a sliding window and automatically block IPs exceeding the threshold — scoped here to the login URI so normal browsing is untouched; pair with managed bot-control rules for sophistication. Shield Standard mitigates network-layer (L3/4) floods, not application-layer credential stuffing; manual NACL entries can't chase rotating IPs; adding servers absorbs the attack instead of stopping it.",
+    "tags": ["waf", "rate-limiting", "bots", "cloudfront"]
+  },
+  {
+    "id": "aws-res-mcq-016",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Auto Scaling",
+    "difficulty": "medium",
+    "question": "EC2 instances in an Auto Scaling group behind an ALB sometimes hang: the OS runs (EC2 status checks pass) but the application stops responding, and the ASG never replaces them. What should the architect change?",
+    "options": [
+      "Configure the ASG to use ELB health checks in addition to EC2 status checks",
+      "Increase the ASG's maximum capacity",
+      "Shorten the EC2 status check interval",
+      "Enable detailed monitoring on the instances"
+    ],
+    "answer": "Configure the ASG to use ELB health checks in addition to EC2 status checks",
+    "explanation": "By default an ASG only considers EC2-level health (hardware/hypervisor/OS reachability) — a hung application passes those forever. Setting the health check type to ELB makes the ASG trust the load balancer's application-level checks (HTTP 200 from a health endpoint), so it terminates and replaces instances the ALB marks unhealthy. The other options change capacity and visibility, not the replacement trigger.",
+    "tags": ["auto-scaling", "health-checks", "alb", "self-healing"]
+  },
+  {
+    "id": "aws-res-mcq-017",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Queues & Messaging",
+    "difficulty": "medium",
+    "question": "A payment system must process events for each customer account in the exact order they occurred, and must not process duplicates. Which messaging configuration meets this?",
+    "options": [
+      "An SQS FIFO queue with the account ID as the message group ID and content-based deduplication",
+      "An SQS standard queue with a large visibility timeout",
+      "An SNS topic with one subscriber",
+      "An SQS standard queue with consumers that sort messages by timestamp"
+    ],
+    "answer": "An SQS FIFO queue with the account ID as the message group ID and content-based deduplication",
+    "explanation": "FIFO queues guarantee strict ordering *within a message group* — using account ID as group ID gives per-customer ordering while still processing different customers in parallel — and deduplication suppresses repeats within the 5-minute window (exactly-once processing). Standard queues are best-effort ordering and at-least-once delivery by design; client-side sorting can't fix what may arrive after processing started. Trade-off to remember: FIFO throughput is capped (300 TPS, 3,000 batched) vs standard's nearly unlimited.",
+    "tags": ["sqs", "fifo", "ordering", "deduplication"]
+  },
+  {
+    "id": "aws-res-mcq-018",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Serverless",
+    "difficulty": "medium",
+    "question": "A Lambda function is invoked asynchronously by S3 events. Occasionally an event fails all processing attempts and is lost. The team must capture failed events for later analysis and reprocessing. What should they configure?",
+    "options": [
+      "A dead-letter queue (or OnFailure destination) for the function's asynchronous invocations",
+      "A longer function timeout",
+      "Reserved concurrency of 1 to process events sequentially",
+      "Synchronous invocation so the caller gets the error"
+    ],
+    "answer": "A dead-letter queue (or OnFailure destination) for the function's asynchronous invocations",
+    "explanation": "Async Lambda invocations retry twice; after that the event is discarded unless you configure a DLQ (SQS/SNS) or — the newer, richer option — an OnFailure destination, which captures the full event plus error context. Timeouts and concurrency settings change *how* processing runs, not what happens to exhausted events; S3 event notifications can't simply be made synchronous.",
+    "tags": ["lambda", "dlq", "destinations", "async"]
+  },
+  {
+    "id": "aws-res-mcq-019",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Databases",
+    "difficulty": "hard",
+    "question": "A global application needs its Aurora database protected against a full Region outage, with an RPO measured in seconds and the ability to promote a copy in another Region in under a few minutes. Which feature fits?",
+    "options": [
+      "Aurora Global Database with a secondary Region",
+      "Aurora Multi-AZ within one Region",
+      "Nightly snapshots copied to another Region",
+      "An Aurora read replica in the same Region"
+    ],
+    "answer": "Aurora Global Database with a secondary Region",
+    "explanation": "Aurora Global Database replicates at the storage layer to secondary Regions with typical lag under a second (the RPO) and supports promoting a secondary to full read-write in around a minute (the RTO). Multi-AZ and same-Region replicas die with the Region; nightly cross-Region snapshots mean up to 24 hours of data loss. This is the exam's go-to answer for \"relational + Region failure + seconds of RPO\".",
+    "tags": ["aurora", "global-database", "disaster-recovery", "multi-region"]
+  },
+  {
+    "id": "aws-res-mcq-020",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Databases",
+    "difficulty": "medium",
+    "question": "A mobile app's user-profile service runs in three Regions. Users must read AND write their profiles with low latency in their nearest Region, with changes replicated everywhere automatically. Which database fits?",
+    "options": [
+      "Amazon DynamoDB global tables",
+      "RDS MySQL with cross-Region read replicas",
+      "Aurora Global Database",
+      "ElastiCache Redis with cross-Region snapshots"
+    ],
+    "answer": "Amazon DynamoDB global tables",
+    "explanation": "Global tables are multi-active: every replica Region accepts writes locally (single-digit-millisecond latency) and DynamoDB replicates changes between Regions, resolving conflicts last-writer-wins. RDS cross-Region replicas and Aurora Global Database accept writes only in the primary Region — reads scale globally, writes don't. The discriminator on the exam is \"low-latency *writes* in every Region\" → global tables.",
+    "tags": ["dynamodb", "global-tables", "multi-region", "active-active"]
+  },
+  {
+    "id": "aws-res-mcq-021",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Storage",
+    "difficulty": "easy",
+    "question": "Compliance requires that every object written to an S3 bucket in us-east-1 automatically gets a copy in eu-west-1. What should the architect configure?",
+    "options": [
+      "S3 Cross-Region Replication (CRR) to a destination bucket in eu-west-1, with versioning enabled on both buckets",
+      "An S3 lifecycle rule transitioning objects to eu-west-1",
+      "A cron job running aws s3 sync every hour",
+      "S3 Transfer Acceleration"
+    ],
+    "answer": "S3 Cross-Region Replication (CRR) to a destination bucket in eu-west-1, with versioning enabled on both buckets",
+    "explanation": "CRR replicates new objects (and optionally existing ones via Batch Replication) asynchronously to the destination bucket — managed, automatic, with versioning required on both sides. Lifecycle rules transition between *storage classes*, never between Regions; hourly sync jobs are infrastructure to babysit with up to an hour of RPO; Transfer Acceleration speeds uploads, it doesn't copy anything.",
+    "tags": ["s3", "crr", "replication", "compliance"]
+  },
+  {
+    "id": "aws-res-mr-004",
+    "type": "multiple-response",
+    "topic": "Resilient Architectures",
+    "subtopic": "High Availability",
+    "difficulty": "medium",
+    "question": "A legacy application that cannot be modified runs on a single EC2 instance. The business wants it to recover automatically from instance and AZ failures, accepting brief downtime during recovery. Which combination achieves this WITHOUT code changes? (Select TWO)",
+    "options": [
+      "Run the instance in an Auto Scaling group with min/max/desired capacity of 1 spanning multiple AZs",
+      "Front the instance with a load balancer health check so failures are detected at the application level",
+      "Refactor the application into Lambda functions",
+      "Schedule a nightly reboot of the instance",
+      "Move the instance to a larger instance type"
+    ],
+    "answers": [
+      "Run the instance in an Auto Scaling group with min/max/desired capacity of 1 spanning multiple AZs",
+      "Front the instance with a load balancer health check so failures are detected at the application level"
+    ],
+    "explanation": "A \"min 1, max 1\" ASG is the self-healing pattern for stateful singletons: when the instance or its AZ dies, the ASG launches a replacement in a surviving AZ. The load balancer adds application-level health detection (and a stable endpoint while the instance is replaced). The exam guide calls this out as improving reliability \"when application changes are not possible\" — refactoring violates the constraint, and reboots/resizing don't address failures.",
+    "tags": ["auto-scaling", "legacy", "self-healing", "high-availability"]
+  },
+  {
+    "id": "aws-res-mcq-022",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Databases",
+    "difficulty": "medium",
+    "question": "A developer accidentally ran a destructive UPDATE against production RDS at 14:32. The database has automated backups with 7-day retention. What is the best recovery option?",
+    "options": [
+      "Point-in-time restore to a new instance at 14:31 and recover the affected data",
+      "Reboot the instance to roll back uncommitted transactions",
+      "Restore last night's manual snapshot over the current instance",
+      "Enable Multi-AZ and fail over to the standby"
+    ],
+    "answer": "Point-in-time restore to a new instance at 14:31 and recover the affected data",
+    "explanation": "Automated backups combine daily snapshots with continuous transaction logs, allowing restore to any second within retention (up to the last ~5 minutes). PITR creates a *new* instance at the chosen moment — you then copy the affected rows back, losing only what changed in one minute. A reboot can't undo committed writes; last night's snapshot discards a full day; the Multi-AZ standby faithfully replicated the bad UPDATE too — replication is not a backup.",
+    "tags": ["rds", "pitr", "backups", "recovery"]
+  },
+  {
+    "id": "aws-res-mcq-023",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Load Balancing",
+    "difficulty": "hard",
+    "question": "An Auto Scaling group has 8 instances in AZ-a and 2 in AZ-b behind a load balancer. Users report inconsistent performance — instances in AZ-b receive far more traffic per instance. What balances the per-instance load?",
+    "options": [
+      "Enable cross-zone load balancing so traffic distributes evenly across all instances regardless of AZ",
+      "Add more instances to AZ-b manually",
+      "Switch the ALB to least-connections routing",
+      "Create a separate load balancer per AZ"
+    ],
+    "answer": "Enable cross-zone load balancing so traffic distributes evenly across all instances regardless of AZ",
+    "explanation": "Without cross-zone load balancing, each load balancer node splits traffic 50/50 between AZs — so AZ-b's 2 instances share the same half that AZ-a's 8 share, getting 4× the per-instance load. Cross-zone distributes across all 10 instances equally. It's on by default for ALB but *off* by default for NLB — a favorite exam detail. The other options treat symptoms or add complexity.",
+    "tags": ["cross-zone", "load-balancing", "alb", "nlb"]
+  },
+  {
+    "id": "aws-res-mcq-024",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Event-Driven",
+    "difficulty": "medium",
+    "question": "When orders change status, several systems (email, analytics, inventory, plus future additions) must react — each filtering for only the event types it cares about. The order service should not know its consumers. Which service fits best?",
+    "options": [
+      "Amazon EventBridge with rules routing filtered events to each target",
+      "Direct SDK calls from the order service to each downstream system",
+      "A shared database table that consumers poll for changes",
+      "An SQS queue that all systems read from"
+    ],
+    "answer": "Amazon EventBridge with rules routing filtered events to each target",
+    "explanation": "EventBridge is the event bus for exactly this: producers publish once, rules pattern-match event content and route to many targets (Lambda, SQS, Step Functions, APIs), and new consumers mean a new rule — the producer never changes. Direct calls couple the producer to every consumer; polling a table adds latency and load; one shared SQS queue delivers each message to a single consumer, not to all of them.",
+    "tags": ["eventbridge", "event-driven", "decoupling", "fan-out"]
+  },
+  {
+    "id": "aws-res-mcq-025",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Backup",
+    "difficulty": "easy",
+    "question": "A company must apply one consistent backup policy — daily backups, 35-day retention, copies to a second Region — across its EBS volumes, RDS databases, DynamoDB tables, and EFS file systems, with compliance reporting. Which service does this centrally?",
+    "options": [
+      "AWS Backup with a backup plan assigned to tagged resources",
+      "Separate snapshot scripts per service triggered by cron",
+      "S3 lifecycle rules",
+      "AWS Config"
+    ],
+    "answer": "AWS Backup with a backup plan assigned to tagged resources",
+    "explanation": "AWS Backup is the single control plane for backups across a dozen-plus services: plans define schedule/retention/cross-Region copy, resources join by tag or ARN, vaults can be locked (WORM), and audit reporting is built in. Per-service scripts are exactly the sprawl it replaces; S3 lifecycle manages storage classes of existing objects; Config records configuration, not data.",
+    "tags": ["aws-backup", "backup-plans", "compliance"]
+  },
+  {
+    "id": "aws-res-mr-005",
+    "type": "multiple-response",
+    "topic": "Resilient Architectures",
+    "subtopic": "High Availability",
+    "difficulty": "easy",
+    "question": "A marketing site is fully static (HTML, CSS, JS, images). It currently runs on one EC2 instance, which has failed twice during campaigns. Which combination gives the site the highest availability with the LEAST operational effort? (Select TWO)",
+    "options": [
+      "Host the static files in Amazon S3 with static website hosting",
+      "Serve the site through an Amazon CloudFront distribution",
+      "Move the site to a larger EC2 instance with daily AMI backups",
+      "Run nginx on two EC2 instances behind an ALB",
+      "Store the files on an EFS volume mounted to the existing instance"
+    ],
+    "answers": [
+      "Host the static files in Amazon S3 with static website hosting",
+      "Serve the site through an Amazon CloudFront distribution"
+    ],
+    "explanation": "Static content needs no servers at all: S3 provides 11-nines durable, regionally redundant hosting, and CloudFront adds global caching, HTTPS, and absorbs traffic spikes. Nothing to patch, no instances to fail — strictly more available than any EC2 arrangement and cheaper too. The EC2/EFS options keep operating servers to serve files that don't need one.",
+    "tags": ["s3", "cloudfront", "static-hosting", "serverless"]
+  },
+  {
+    "id": "aws-res-mcq-026",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Auto Scaling",
+    "difficulty": "medium",
+    "question": "A trading platform sees a massive, predictable traffic spike every weekday at exactly 9:00 AM when markets open. Dynamic scaling reacts too slowly, causing 10 minutes of degraded service. What should the architect add?",
+    "options": [
+      "A scheduled scaling action that increases desired capacity shortly before 9:00 AM on weekdays",
+      "A higher CPU threshold on the existing target tracking policy",
+      "Smaller instances so they launch faster",
+      "A second metric alarm on memory usage"
+    ],
+    "answer": "A scheduled scaling action that increases desired capacity shortly before 9:00 AM on weekdays",
+    "explanation": "Reactive policies by definition scale *after* load arrives — boot plus warm-up time creates the 10-minute gap. For a known schedule, scheduled actions pre-provision capacity (e.g. at 8:45) so instances are in service when the spike hits; predictive scaling is the ML alternative when the pattern is regular but not clock-exact. Threshold and metric tweaks still react after the fact.",
+    "tags": ["auto-scaling", "scheduled-scaling", "predictable-load"]
+  },
+  {
+    "id": "aws-res-mcq-027",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "Resilience Patterns",
+    "difficulty": "medium",
+    "question": "An application calling AWS APIs occasionally receives ThrottlingException errors during bursts. Retrying immediately makes the problem worse. What is the AWS-recommended client-side pattern?",
+    "options": [
+      "Retries with exponential backoff and jitter",
+      "Retrying in a tight loop until the call succeeds",
+      "Catching and ignoring the throttling errors",
+      "Switching all API calls to a single sequential worker permanently"
+    ],
+    "answer": "Retries with exponential backoff and jitter",
+    "explanation": "Exponential backoff spreads retries out (1s, 2s, 4s…) so a throttled fleet doesn't immediately re-stampede the API, and jitter (randomization) prevents synchronized retry waves from clients that were throttled together. AWS SDKs implement this by default. Tight loops amplify throttling; ignoring errors drops work; permanent serialization sacrifices throughput to avoid a transient condition.",
+    "tags": ["throttling", "exponential-backoff", "jitter", "retries"]
+  },
+  {
+    "id": "aws-res-mr-006",
+    "type": "multiple-response",
+    "topic": "Resilient Architectures",
+    "subtopic": "Disaster Recovery",
+    "difficulty": "hard",
+    "question": "A critical public API must keep working even if its entire primary AWS Region fails. Which combination of actions provides Regional failover? (Select TWO)",
+    "options": [
+      "Deploy a full copy of the API stack in a second Region",
+      "Use Route 53 failover routing with health checks to switch DNS to the second Region when the primary fails",
+      "Add more Availability Zones to the existing Region's deployment",
+      "Enable cross-zone load balancing on the existing ALB",
+      "Increase the existing Auto Scaling group's maximum capacity"
+    ],
+    "answers": [
+      "Deploy a full copy of the API stack in a second Region",
+      "Use Route 53 failover routing with health checks to switch DNS to the second Region when the primary fails"
+    ],
+    "explanation": "Region-level resilience needs two things: a stack that exists somewhere else (warm standby or active-active in Region 2, with data replicated), and a traffic-steering mechanism that notices the failure and redirects — Route 53 failover records with health checks (or Global Accelerator endpoint failover). More AZs, cross-zone balancing, and bigger ASGs all harden *within* the Region that just failed.",
+    "tags": ["multi-region", "route53", "failover", "disaster-recovery"]
+  },
+  {
+    "id": "aws-res-mcq-028",
+    "type": "multiple-choice",
+    "topic": "Resilient Architectures",
+    "subtopic": "DNS & Failover",
+    "difficulty": "medium",
+    "question": "An application is deployed in three Regions. Every user should be routed to the Region that gives THEM the fastest response, and unhealthy Regions must be taken out of rotation automatically. Which Route 53 configuration fits?",
+    "options": [
+      "Latency-based routing records with health checks on each Regional endpoint",
+      "Geolocation routing mapping each continent to a fixed Region",
+      "A failover policy with one primary and two secondaries",
+      "Simple records returning all three Regional IPs"
+    ],
+    "answer": "Latency-based routing records with health checks on each Regional endpoint",
+    "explanation": "Latency-based routing answers each DNS query with the Region that has the lowest measured network latency for that user — not necessarily the geographically nearest — and health checks remove failing Regions from consideration. Geolocation is for compliance/content localization (fixed mapping, even when slow); failover is active-passive, wasting two Regions; simple records do no steering and no health awareness.",
+    "tags": ["route53", "latency-routing", "health-checks", "multi-region"]
+  },
+  {
+    "id": "aws-perf-mcq-013",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Databases & Caching",
+    "difficulty": "medium",
+    "question": "A gaming company needs an in-memory store for real-time leaderboards (sorted rankings), with replication and automatic failover for high availability, plus persistence options. Which engine should they choose?",
+    "options": [
+      "ElastiCache for Redis",
+      "ElastiCache for Memcached",
+      "DynamoDB standard tables",
+      "RDS MySQL with a large buffer pool"
+    ],
+    "answer": "ElastiCache for Redis",
+    "explanation": "The requirements map to Redis features: sorted sets are purpose-built for leaderboards, and Redis supports replication, Multi-AZ automatic failover, snapshots/AOF persistence, and pub/sub. Memcached is the simpler engine — multithreaded and easy to scale out, but no replication, persistence, or rich data structures. The Redis-vs-Memcached feature split is a reliable exam question.",
+    "tags": ["elasticache", "redis", "memcached", "leaderboards"]
+  },
+  {
+    "id": "aws-perf-mcq-014",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Databases & Caching",
+    "difficulty": "hard",
+    "question": "A DynamoDB table uses `status` (values: ACTIVE, INACTIVE) as its partition key. The table is heavily throttled even though provisioned capacity far exceeds total traffic. What is the root cause?",
+    "options": [
+      "The low-cardinality partition key concentrates traffic on one or two partitions (hot partitions), exceeding per-partition limits",
+      "DynamoDB tables require a sort key to scale",
+      "The table needs a global secondary index to spread load",
+      "Provisioned capacity applies per item, not per table"
+    ],
+    "answer": "The low-cardinality partition key concentrates traffic on one or two partitions (hot partitions), exceeding per-partition limits",
+    "explanation": "DynamoDB spreads data and throughput across partitions by hashing the partition key. With only two possible values, virtually all traffic lands on two partitions — each capped at 3,000 RCU / 1,000 WCU — so the table throttles while aggregate capacity sits idle. The fix is a high-cardinality key (user ID, order ID), possibly with write sharding. Sort keys and GSIs don't repair a degenerate partition key choice.",
+    "tags": ["dynamodb", "partition-key", "hot-partition", "throttling"]
+  },
+  {
+    "id": "aws-perf-mcq-015",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Queues & Messaging",
+    "difficulty": "medium",
+    "question": "Consumers poll an SQS queue continuously. Most ReceiveMessage calls return empty, driving up API costs and CPU. What is the recommended fix?",
+    "options": [
+      "Enable long polling by setting ReceiveMessageWaitTimeSeconds up to 20 seconds",
+      "Poll less frequently with a 5-minute sleep between calls",
+      "Switch to a FIFO queue",
+      "Increase the visibility timeout"
+    ],
+    "answer": "Enable long polling by setting ReceiveMessageWaitTimeSeconds up to 20 seconds",
+    "explanation": "Long polling holds the ReceiveMessage call open (up to 20 s) until a message arrives or the wait expires — eliminating the empty-response storm, cutting API calls (cost) dramatically, and *reducing* delivery latency versus sleeping between polls. Five-minute sleeps add up to 5 minutes of latency; FIFO changes ordering semantics; visibility timeout governs in-flight message invisibility, not polling behavior.",
+    "tags": ["sqs", "long-polling", "cost", "efficiency"]
+  },
+  {
+    "id": "aws-perf-mcq-016",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Serverless",
+    "difficulty": "medium",
+    "question": "A customer-facing API built on Lambda shows occasional latency spikes of 1–2 seconds on the first request after idle periods, while typical requests take 50 ms. Which feature removes these spikes?",
+    "options": [
+      "Provisioned concurrency on the function's production alias",
+      "A larger memory allocation",
+      "Reserved concurrency",
+      "Moving the function code to a container image"
+    ],
+    "answer": "Provisioned concurrency on the function's production alias",
+    "explanation": "The spikes are cold starts — initializing a new execution environment. Provisioned concurrency keeps a configured number of environments initialized and warm, so requests hit pre-warmed instances at steady latency. More memory speeds execution but doesn't prevent initialization; *reserved* concurrency is a limit/guarantee on concurrent executions (a different knob with a confusingly similar name — classic exam distractor); container images generally cold-start slower, not faster.",
+    "tags": ["lambda", "cold-starts", "provisioned-concurrency"]
+  },
+  {
+    "id": "aws-perf-mcq-017",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Storage",
+    "difficulty": "medium",
+    "question": "A machine-learning team runs distributed training on hundreds of EC2 instances that need a shared POSIX file system with sub-millisecond latency and hundreds of GB/s of aggregate throughput, sourcing training data from S3. Which storage service fits?",
+    "options": [
+      "Amazon FSx for Lustre with an S3-linked data repository",
+      "Amazon EFS Standard",
+      "Amazon S3 mounted via Mountpoint on each node",
+      "A large gp3 EBS volume attached to the head node and shared over NFS"
+    ],
+    "answer": "Amazon FSx for Lustre with an S3-linked data repository",
+    "explanation": "FSx for Lustre is the HPC/ML file system: parallel architecture delivering hundreds of GB/s and sub-millisecond latencies, with data repository association that lazy-loads from and writes back to S3. EFS is general-purpose NFS — solid, but not in Lustre's performance class for this pattern. Mountpoint for S3 suits sequential object access, not POSIX random I/O; one instance re-exporting an EBS volume bottlenecks the entire cluster.",
+    "tags": ["fsx-lustre", "hpc", "machine-learning", "s3"]
+  },
+  {
+    "id": "aws-perf-mcq-018",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Storage",
+    "difficulty": "easy",
+    "question": "A company is moving a Windows application that requires shared SMB file storage with Active Directory integration and NTFS permissions. Which AWS service provides this?",
+    "options": [
+      "Amazon FSx for Windows File Server",
+      "Amazon EFS",
+      "Amazon S3",
+      "Amazon FSx for Lustre"
+    ],
+    "answer": "Amazon FSx for Windows File Server",
+    "explanation": "FSx for Windows is a fully managed native Windows file system: SMB protocol, NTFS, DFS namespaces, and AD integration (AWS managed AD or self-managed). EFS speaks NFS — Linux territory; S3 is object storage, not a file share; FSx for Lustre targets Linux HPC. The protocol is the tell: SMB/AD → FSx for Windows, NFS/Linux → EFS, parallel HPC → Lustre.",
+    "tags": ["fsx-windows", "smb", "active-directory", "storage"]
+  },
+  {
+    "id": "aws-perf-mcq-019",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Data Ingestion",
+    "difficulty": "medium",
+    "question": "Application logs must be streamed into S3 (and optionally Redshift) in near real time, with optional transformation via Lambda — and the team wants zero servers, shards, or consumer applications to manage. Which service fits?",
+    "options": [
+      "Amazon Kinesis Data Firehose",
+      "Amazon Kinesis Data Streams with a custom consumer",
+      "Amazon SQS with a fleet of worker instances",
+      "AWS DataSync on a schedule"
+    ],
+    "answer": "Amazon Kinesis Data Firehose",
+    "explanation": "Firehose is the fully managed delivery pipe: it batches, optionally transforms (Lambda) and converts formats, and delivers to S3, Redshift, OpenSearch, and third parties — no shards to size, no consumers to write, scaling handled. Kinesis Data Streams is the answer when you need custom real-time consumers or replay; SQS+workers is hand-built plumbing; DataSync moves file systems, not streams. \"Easiest way to load streaming data into X\" → Firehose.",
+    "tags": ["kinesis-firehose", "streaming", "s3", "managed-services"]
+  },
+  {
+    "id": "aws-perf-mcq-020",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Analytics",
+    "difficulty": "medium",
+    "question": "Analysts run complex aggregation queries joining billions of rows of sales history for BI dashboards. The current RDS PostgreSQL instance takes minutes per query. Which service is purpose-built for this workload?",
+    "options": [
+      "Amazon Redshift",
+      "A larger RDS PostgreSQL instance",
+      "Amazon DynamoDB",
+      "Amazon ElastiCache"
+    ],
+    "answer": "Amazon Redshift",
+    "explanation": "This is OLAP — scanning and aggregating huge datasets — and Redshift's columnar storage, compression, and massively parallel processing are built for it, routinely turning minutes into seconds at petabyte scale. RDS is row-oriented OLTP; scaling it up delays the wall. DynamoDB serves key-based access patterns, not ad-hoc joins; ElastiCache accelerates repeated reads, not novel analytical queries. OLTP→RDS, OLAP→Redshift is core exam vocabulary.",
+    "tags": ["redshift", "olap", "analytics", "data-warehouse"]
+  },
+  {
+    "id": "aws-perf-mcq-021",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Analytics",
+    "difficulty": "easy",
+    "question": "An e-commerce site needs product search with full-text queries, fuzzy matching for typos, filters, and relevance ranking. Which AWS service is designed for this?",
+    "options": [
+      "Amazon OpenSearch Service",
+      "Amazon RDS with LIKE queries",
+      "Amazon DynamoDB with scan operations",
+      "Amazon Athena"
+    ],
+    "answer": "Amazon OpenSearch Service",
+    "explanation": "OpenSearch (the Elasticsearch fork) is the managed search engine: inverted indexes for full-text search, fuzzy matching, faceted filtering, and relevance scoring out of the box. SQL `LIKE '%term%'` can't use indexes and offers no ranking; DynamoDB scans are expensive table reads with no text awareness; Athena is batch SQL over S3, not an interactive search backend.",
+    "tags": ["opensearch", "search", "full-text"]
+  },
+  {
+    "id": "aws-perf-mr-003",
+    "type": "multiple-response",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Compute",
+    "difficulty": "hard",
+    "question": "A tightly coupled simulation across a fleet of EC2 instances is bottlenecked by inter-node network latency and throughput. Which combination of changes improves node-to-node network performance? (Select TWO)",
+    "options": [
+      "Use instance types with enhanced networking (ENA) and high network bandwidth",
+      "Launch the fleet in a cluster placement group in one AZ",
+      "Spread the instances across three Regions for more total bandwidth",
+      "Attach larger EBS volumes to every node",
+      "Put an Application Load Balancer between the nodes"
+    ],
+    "answers": [
+      "Use instance types with enhanced networking (ENA) and high network bandwidth",
+      "Launch the fleet in a cluster placement group in one AZ"
+    ],
+    "explanation": "Two complementary levers: enhanced networking (ENA, and EFA for MPI-style HPC) raises per-instance packet rates and lowers latency, while a cluster placement group physically co-locates the fleet on a low-latency, high-bisection network segment. Spreading across Regions multiplies latency by orders of magnitude; EBS is storage, not network; an ALB is an HTTP front door, not an inter-node fabric.",
+    "tags": ["ena", "placement-groups", "hpc", "networking"]
+  },
+  {
+    "id": "aws-perf-mcq-022",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Databases & Caching",
+    "difficulty": "medium",
+    "question": "An Aurora cluster has one writer and four read replicas. The application should spread its read queries across all replicas automatically, including ones added later by replica auto scaling. What should the application connect to?",
+    "options": [
+      "The cluster's reader endpoint",
+      "The cluster endpoint",
+      "Each replica's instance endpoint, in rotation managed by application code",
+      "The writer's IP address"
+    ],
+    "answer": "The cluster's reader endpoint",
+    "explanation": "Aurora's reader endpoint load-balances connections across all current read replicas — replicas added or removed by auto scaling join and leave automatically, no application changes. The cluster endpoint always targets the writer (use it for writes); hand-rolled rotation over instance endpoints breaks every time the replica set changes; raw IPs break on failover.",
+    "tags": ["aurora", "reader-endpoint", "read-scaling"]
+  },
+  {
+    "id": "aws-perf-mcq-023",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Edge & CDN",
+    "difficulty": "medium",
+    "question": "A REST API on API Gateway serves catalog data that changes every few minutes. Identical GET requests hammer the Lambda backend thousands of times per minute. What reduces backend load with minimal changes?",
+    "options": [
+      "Enable API Gateway caching on the stage with a TTL of a few minutes",
+      "Raise the Lambda reserved concurrency",
+      "Move the API to a larger Lambda memory size",
+      "Switch the integration from Lambda to EC2"
+    ],
+    "answer": "Enable API Gateway caching on the stage with a TTL of a few minutes",
+    "explanation": "Stage-level caching stores responses keyed by request (configurable per method and by parameters), serving repeats from cache until the TTL expires — the Lambda invocation count collapses, which also cuts cost. Matching the TTL to the data's change cadence (a few minutes) keeps staleness acceptable. More concurrency or memory just processes the redundant invocations faster; changing compute doesn't remove the redundancy.",
+    "tags": ["api-gateway", "caching", "lambda", "ttl"]
+  },
+  {
+    "id": "aws-perf-mcq-024",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Storage",
+    "difficulty": "hard",
+    "question": "A data-processing job needs scratch space with millions of IOPS and microsecond latency for temporary intermediate files that are worthless after the job completes. Which storage offers the highest performance for this?",
+    "options": [
+      "NVMe instance store volumes on a storage-optimized instance family",
+      "An io2 EBS volume with maximum provisioned IOPS",
+      "Amazon EFS with provisioned throughput",
+      "Amazon S3 with multipart uploads"
+    ],
+    "answer": "NVMe instance store volumes on a storage-optimized instance family",
+    "explanation": "Instance store is physically attached NVMe — no network hop — delivering millions of IOPS and microsecond latency that even io2 Block Express (network-attached) can't match. Its catch is ephemerality: data is lost on stop/termination, which is exactly acceptable for scratch files. The exam pattern: \"temporary/scratch/cache + extreme IOPS\" → instance store; \"persistent + high IOPS\" → io2.",
+    "tags": ["instance-store", "nvme", "ebs", "scratch-storage"]
+  },
+  {
+    "id": "aws-perf-mcq-025",
+    "type": "multiple-choice",
+    "topic": "High-Performing Architectures",
+    "subtopic": "Databases & Caching",
+    "difficulty": "hard",
+    "question": "An application caches database results in ElastiCache using lazy loading (cache-aside) only. Users complain that data is sometimes stale for a long time after updates. Adding which caching strategy keeps the cache current while preserving fast reads?",
+    "options": [
+      "Write-through — update the cache at the same time the database is written",
+      "A shorter connection timeout to the cache",
+      "Caching the misses as well as the hits",
+      "Switching from Redis to Memcached"
+    ],
+    "answer": "Write-through — update the cache at the same time the database is written",
+    "explanation": "Lazy loading populates the cache only on read misses, so an updated row stays stale until its cached copy expires. Write-through complements it: every database write also updates the cache, so reads always see current data. The classic combination is write-through plus lazy loading with a TTL as a safety net — TTLs bound staleness for anything written by paths that bypass the cache. The other options change failure behavior, memory usage, or engine, not freshness.",
+    "tags": ["elasticache", "caching-strategies", "write-through", "lazy-loading"]
+  },
+  {
+    "id": "aws-cost-mcq-011",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Databases",
+    "difficulty": "medium",
+    "question": "A new application's DynamoDB traffic is completely unpredictable — hours of near-zero activity, then sudden unannounced spikes. Which capacity mode is MOST cost-effective and operationally simple?",
+    "options": [
+      "On-demand capacity mode — pay per request with no capacity planning",
+      "Provisioned capacity sized for the largest possible spike",
+      "Provisioned capacity with auto scaling and aggressive targets",
+      "Reserved capacity purchased for three years"
+    ],
+    "answer": "On-demand capacity mode — pay per request with no capacity planning",
+    "explanation": "On-demand bills per million requests and absorbs sudden spikes without pre-provisioning — near-zero idle hours cost near zero. Provisioning for peak pays for the spike 24/7; auto scaling reacts in minutes, so unannounced spikes throttle first; reserved capacity commits to a baseline this workload doesn't have. The crossover: steady, predictable traffic eventually makes provisioned cheaper — the exam tests recognizing which side you're on.",
+    "tags": ["dynamodb", "on-demand", "capacity-modes"]
+  },
+  {
+    "id": "aws-cost-mcq-012",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "S3 Storage Classes",
+    "difficulty": "hard",
+    "question": "An S3 bill shows significant storage charges that don't match the visible objects in the bucket. The bucket receives many large uploads from unreliable clients. What hidden cost is likely, and how is it fixed?",
+    "options": [
+      "Abandoned incomplete multipart uploads — add a lifecycle rule with AbortIncompleteMultipartUpload",
+      "Delete markers from versioning — disable versioning",
+      "S3 access logs stored in the same bucket — disable logging",
+      "Cross-Region replication copies — delete the replica bucket"
+    ],
+    "answer": "Abandoned incomplete multipart uploads — add a lifecycle rule with AbortIncompleteMultipartUpload",
+    "explanation": "Parts of a multipart upload that's never completed or aborted sit invisibly — they don't appear in object listings but bill as storage indefinitely. Unreliable clients abandoning large uploads accumulate them fast. The lifecycle rule `AbortIncompleteMultipartUpload` (e.g. after 7 days) cleans them automatically; Storage Lens and `ListMultipartUploads` reveal the backlog. The other options describe costs that are visible or intentional.",
+    "tags": ["s3", "multipart-upload", "lifecycle", "hidden-costs"]
+  },
+  {
+    "id": "aws-cost-mcq-013",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Compute Purchasing",
+    "difficulty": "medium",
+    "question": "A containerized Linux workload runs on m5 (x86) instances. The team wants better price-performance with minimal changes. Which option typically delivers up to ~40% better price-performance?",
+    "options": [
+      "Migrate to Graviton (ARM-based) instances such as m7g after rebuilding images for arm64",
+      "Upgrade to the newest x86 generation at the same size",
+      "Move every workload to t3.micro instances",
+      "Switch the containers to Windows hosts"
+    ],
+    "answer": "Migrate to Graviton (ARM-based) instances such as m7g after rebuilding images for arm64",
+    "explanation": "Graviton instances are AWS's headline price-performance lever — up to 40% better than comparable x86 — and containerized Linux workloads are the easiest migration: rebuild multi-arch images, redeploy. Newer x86 generations help single-digit percentages; t3.micro is a size, not a strategy (undersizing causes throttling); Windows adds license cost. Watch for the constraint in questions: closed-source x86-only binaries block the move.",
+    "tags": ["graviton", "arm", "price-performance", "containers"]
+  },
+  {
+    "id": "aws-cost-mcq-014",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Networking Costs",
+    "difficulty": "medium",
+    "question": "A development VPC has private subnets in three AZs, each with its own NAT gateway. The dev workloads tolerate downtime. What reduces NAT costs?",
+    "options": [
+      "Consolidate to a single NAT gateway shared by all three AZs, accepting the availability trade-off",
+      "Replace the NAT gateways with internet gateways in each private subnet",
+      "Add a fourth NAT gateway for redundancy",
+      "Move all workloads to public subnets with public IPs"
+    ],
+    "answer": "Consolidate to a single NAT gateway shared by all three AZs, accepting the availability trade-off",
+    "explanation": "Each NAT gateway bills hourly (~$32/month) plus per-GB processing; three of them triple the hourly cost. Dev environments that tolerate downtime can route all private subnets to one NAT gateway — the documented cost optimization, with the explicit trade-off that an AZ failure breaks egress for the others (which is why production keeps one per AZ, plus avoiding cross-AZ data charges). Internet gateways don't provide NAT for private instances; public IPs change the security posture.",
+    "tags": ["nat-gateway", "vpc", "dev-environments", "trade-offs"]
+  },
+  {
+    "id": "aws-cost-mcq-015",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Networking Costs",
+    "difficulty": "medium",
+    "question": "A popular site serves large downloads directly from S3 to the internet, generating big data-transfer-out charges. How can delivery cost be reduced while improving download speed?",
+    "options": [
+      "Serve the downloads through CloudFront — S3-to-CloudFront transfer is free and edge delivery rates are lower",
+      "Compress all files into ZIP archives",
+      "Move the bucket to a cheaper Region and keep serving directly",
+      "Enable S3 Transfer Acceleration for the downloads"
+    ],
+    "answer": "Serve the downloads through CloudFront — S3-to-CloudFront transfer is free and edge delivery rates are lower",
+    "explanation": "Origin-to-CloudFront transfer is free, CloudFront's per-GB internet rates undercut S3's, caching means popular files leave the origin once instead of millions of times, and users download from nearby edges — cheaper *and* faster. Compression helps but doesn't change rates; Region arbitrage saves cents while adding latency; Transfer Acceleration is for *uploads* and adds cost.",
+    "tags": ["cloudfront", "data-transfer", "s3", "egress-costs"]
+  },
+  {
+    "id": "aws-cost-mr-003",
+    "type": "multiple-response",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Serverless",
+    "difficulty": "medium",
+    "question": "A high-volume Lambda function dominates the monthly serverless bill. The code is already efficient. Which combination of changes reduces its cost without rewriting the logic? (Select TWO)",
+    "options": [
+      "Migrate the function to arm64 (Graviton), which is billed about 20% cheaper per ms",
+      "Tune the memory setting to the sweet spot using power tuning, since billing is memory × duration",
+      "Increase the timeout to the 15-minute maximum",
+      "Switch the function to provisioned concurrency at all hours",
+      "Invoke the function more frequently with smaller payloads"
+    ],
+    "answers": [
+      "Migrate the function to arm64 (Graviton), which is billed about 20% cheaper per ms",
+      "Tune the memory setting to the sweet spot using power tuning, since billing is memory × duration"
+    ],
+    "explanation": "Lambda bills GB-seconds: arm64 cuts the per-ms price (~20%) and often runs faster too, while memory tuning finds the point where added CPU shortens duration enough to lower memory × time (tools like Lambda Power Tuning automate the sweep — sometimes *more* memory is cheaper). Timeout is a safety cap, not a billing factor; always-on provisioned concurrency *adds* an hourly charge; more invocations means more request fees and per-invocation overhead.",
+    "tags": ["lambda", "graviton", "memory-tuning", "serverless-costs"]
+  },
+  {
+    "id": "aws-cost-mcq-016",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "S3 Storage Classes",
+    "difficulty": "medium",
+    "question": "A company must restore 500 TB from S3 Glacier Flexible Retrieval for a regulatory review due in one week. Cost matters more than speed. Which retrieval option should they use?",
+    "options": [
+      "Bulk retrieval — the cheapest tier, completing within 5–12 hours",
+      "Expedited retrieval for every archive",
+      "Standard retrieval with provisioned capacity units",
+      "Copy the archives to S3 Standard first, then download"
+    ],
+    "answer": "Bulk retrieval — the cheapest tier, completing within 5–12 hours",
+    "explanation": "Glacier Flexible Retrieval offers three tiers: expedited (1–5 min, most expensive), standard (3–5 h), and bulk (5–12 h, lowest cost — designed exactly for large planned restores like this). A week of lead time makes bulk's window irrelevant. Expedited at 500 TB maximizes spend for unneeded speed; provisioned capacity exists to guarantee *expedited* throughput; \"copy first\" still performs a retrieval underneath.",
+    "tags": ["glacier", "retrieval-tiers", "bulk", "s3"]
+  },
+  {
+    "id": "aws-cost-mcq-017",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Compute Purchasing",
+    "difficulty": "easy",
+    "question": "Internal tools average 5% CPU with occasional brief bursts to 60%. They currently run on m5.large instances. Which instance family is designed for this usage pattern at lower cost?",
+    "options": [
+      "T family burstable instances (e.g. t3.large), which accrue CPU credits while idle and spend them during bursts",
+      "C family compute-optimized instances",
+      "R family memory-optimized instances",
+      "P family GPU instances"
+    ],
+    "answer": "T family burstable instances (e.g. t3.large), which accrue CPU credits while idle and spend them during bursts",
+    "explanation": "Burstable instances price for a low CPU baseline and bank credits during idle time to spend on bursts — a 5%-average workload runs comfortably and costs notably less than the equivalent m5. Watch the failure mode (also exam-tested): sustained high CPU drains credits and throttles to baseline, unless `unlimited` mode is on — which can quietly cost more than a fixed-performance instance.",
+    "tags": ["t-family", "burstable", "cpu-credits", "right-sizing"]
+  },
+  {
+    "id": "aws-cost-mcq-018",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Compute Purchasing",
+    "difficulty": "hard",
+    "question": "A fault-tolerant processing fleet runs on Spot Instances of a single instance type and suffers frequent simultaneous interruptions when that capacity pool gets reclaimed. What reduces both interruptions and cost?",
+    "options": [
+      "Use an Auto Scaling group with a mixed instances policy diversifying across many instance types and AZs, with the capacity-optimized allocation strategy",
+      "Bid a higher maximum price for the same single instance type",
+      "Switch the whole fleet to On-Demand",
+      "Run all Spot instances in one AZ to keep them together"
+    ],
+    "answer": "Use an Auto Scaling group with a mixed instances policy diversifying across many instance types and AZs, with the capacity-optimized allocation strategy",
+    "explanation": "Spot interruptions happen per capacity pool (instance type × AZ). Diversifying across many pools means a single pool's reclamation takes out only a slice of the fleet, and the capacity-optimized strategy launches into the deepest pools, statistically reducing interruptions. \"Bidding\" higher doesn't help — the strategy is capacity-driven, and you pay the Spot market price regardless. Full On-Demand forfeits the ~90% savings; concentrating in one AZ is maximum blast radius.",
+    "tags": ["spot", "mixed-instances", "diversification", "interruptions"]
+  },
+  {
+    "id": "aws-cost-mcq-019",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Storage",
+    "difficulty": "medium",
+    "question": "Thousands of EBS snapshots accumulate from years of ad-hoc backups, inflating storage costs. The policy should be: daily snapshots, retain 14 days, then delete — automatically. Which service implements this?",
+    "options": [
+      "Amazon Data Lifecycle Manager (DLM) snapshot policies",
+      "A reminder for engineers to clean up monthly",
+      "S3 lifecycle rules applied to the snapshots",
+      "AWS Trusted Advisor automated deletion"
+    ],
+    "answer": "Amazon Data Lifecycle Manager (DLM) snapshot policies",
+    "explanation": "DLM automates EBS snapshot (and AMI) lifecycles: tag-targeted policies create snapshots on schedule and expire them by age or count — exactly \"daily, keep 14, delete\". (AWS Backup is the broader alternative when one plan must span multiple services.) S3 lifecycle rules don't govern EBS snapshots even though snapshots live in S3 internally; Trusted Advisor reports, it doesn't delete; manual cleanup is how the problem grew.",
+    "tags": ["dlm", "ebs", "snapshots", "lifecycle"]
+  },
+  {
+    "id": "aws-cost-mr-004",
+    "type": "multiple-response",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Right-Sizing",
+    "difficulty": "easy",
+    "question": "A monthly cost review should automatically surface idle and underused resources — unattached EBS volumes, idle load balancers, underutilized EC2 instances — with concrete recommendations. Which TWO tools provide these findings? (Select TWO)",
+    "options": [
+      "AWS Trusted Advisor cost optimization checks",
+      "AWS Compute Optimizer rightsizing recommendations",
+      "AWS CloudTrail event history",
+      "Amazon Route 53 health checks",
+      "AWS Artifact reports"
+    ],
+    "answers": [
+      "AWS Trusted Advisor cost optimization checks",
+      "AWS Compute Optimizer rightsizing recommendations"
+    ],
+    "explanation": "Trusted Advisor's cost checks flag idle resources — unassociated Elastic IPs, idle load balancers, low-utilization instances, unattached volumes. Compute Optimizer goes deeper on sizing: ML over CloudWatch metrics yields specific instance-type recommendations (also for EBS, Lambda, ECS). Together they cover \"what's wasted\" and \"what's oversized\". CloudTrail is an API audit log; Route 53 checks endpoint health; Artifact downloads compliance documents.",
+    "tags": ["trusted-advisor", "compute-optimizer", "right-sizing", "idle-resources"]
+  },
+  {
+    "id": "aws-cost-mcq-020",
+    "type": "multiple-choice",
+    "topic": "Cost-Optimized Architectures",
+    "subtopic": "Databases",
+    "difficulty": "medium",
+    "question": "Non-production RDS instances (dev, test, staging) run 24/7 but are only used during business hours on weekdays. Snapshots must be retained. What is the simplest cost reduction?",
+    "options": [
+      "Stop the instances outside business hours (e.g. with an automated scheduler), since stopped instances don't incur instance-hours",
+      "Delete the instances every evening and recreate them each morning from scratch",
+      "Convert them all to Multi-AZ for efficiency",
+      "Move them to io2 storage"
+    ],
+    "answer": "Stop the instances outside business hours (e.g. with an automated scheduler), since stopped instances don't incur instance-hours",
+    "explanation": "Stopped RDS instances stop billing instance-hours (storage and backups still bill) — nights and weekends cut runtime ~75%. Caveat worth knowing: RDS auto-starts stopped instances after 7 days, so schedulers re-stop them. Delete/recreate loses configuration and takes time daily; Multi-AZ *doubles* instance cost; io2 raises storage cost. Pair with right-sizing for the remaining hours.",
+    "tags": ["rds", "scheduling", "non-production", "instance-hours"]
   }
 ]
