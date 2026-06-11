@@ -1,4 +1,4 @@
-import { computeStats } from './srs.js';
+import { computeStats, getOrCreate } from './srs.js';
 import { applyFilters, getCardType } from './session.js';
 
 const root = () => document.getElementById('app');
@@ -75,7 +75,7 @@ function formatNextDue(ts) {
 
 // ── Start screen ──────────────────────────────────────────────────────────────
 
-export function renderStartScreen(allCards, progressMap, { onStart, onReset }) {
+export function renderStartScreen(allCards, progressMap, { onStart, onReset, onTileClick }) {
   const topics = [...new Set(allCards.map(c => c.topic))].sort();
   const tags   = [...new Set(allCards.flatMap(c => c.tags ?? []))].sort();
 
@@ -115,10 +115,10 @@ export function renderStartScreen(allCards, progressMap, { onStart, onReset }) {
         </header>
 
         <div class="stat-tiles">
-          <div class="stat-tile"><span class="stat-val">${stats.attempted}/${stats.total}</span><span class="stat-label">Attempted</span></div>
-          <div class="stat-tile"><span class="stat-val">${stats.inLearning}</span><span class="stat-label">Learning</span></div>
-          <div class="stat-tile"><span class="stat-val">${stats.mastered}</span><span class="stat-label">Mastered</span></div>
-          <div class="stat-tile"><span class="stat-val">${stats.dueToday}</span><span class="stat-label">Due Today</span></div>
+          <div class="stat-tile stat-tile-link" data-filter="attempted"><span class="stat-val">${stats.attempted}/${stats.total}</span><span class="stat-label">Attempted</span></div>
+          <div class="stat-tile stat-tile-link" data-filter="learning"><span class="stat-val">${stats.inLearning}</span><span class="stat-label">Learning</span></div>
+          <div class="stat-tile stat-tile-link" data-filter="mastered"><span class="stat-val">${stats.mastered}</span><span class="stat-label">Mastered</span></div>
+          <div class="stat-tile stat-tile-link" data-filter="due"><span class="stat-val">${stats.dueToday}</span><span class="stat-label">Due Today</span></div>
         </div>
 
         <div class="filters">
@@ -172,6 +172,11 @@ export function renderStartScreen(allCards, progressMap, { onStart, onReset }) {
     document.getElementById('reset-btn')?.addEventListener('click', () => {
       if (confirm('Reset all progress? This cannot be undone.')) onReset();
     });
+    if (onTileClick) {
+      document.querySelectorAll('.stat-tile-link').forEach(tile =>
+        tile.addEventListener('click', () => onTileClick(tile.dataset.filter))
+      );
+    }
   }
 
   render();
@@ -301,6 +306,150 @@ export function renderSummary({ reviewed, correct }, { onAgain, onHome }) {
     </div>`;
   document.getElementById('again-btn')?.addEventListener('click', onAgain);
   document.getElementById('home-btn')?.addEventListener('click', onHome);
+}
+
+// ── Card library ─────────────────────────────────────────────────────────────
+
+export function renderCardList(allCards, progressMap, { initialFilter, onBack }) {
+  const topics = [...new Set(allCards.map(c => c.topic))].sort();
+  const now = Date.now();
+
+  function getState(card) { return getOrCreate(card.id, progressMap); }
+
+  function getStatus(card) {
+    const s = getState(card);
+    if (s.totalSeen === 0) return 'new';
+    if (s.phase === 'learning') return 'learning';
+    if (s.interval >= 7) return 'mastered';
+    return 'review';
+  }
+
+  function isDue(card) { return getState(card).nextDue <= now; }
+
+  // Pre-compute counts (unaffected by filter controls — global reference)
+  const counts = {
+    all: allCards.length,
+    new: allCards.filter(c => getStatus(c) === 'new').length,
+    learning: allCards.filter(c => getStatus(c) === 'learning').length,
+    due: allCards.filter(c => isDue(c)).length,
+    mastered: allCards.filter(c => getStatus(c) === 'mastered').length,
+  };
+
+  // Initial filter state from clicked tile
+  let statusFilter = initialFilter === 'attempted' ? 'all' : (initialFilter ?? 'all');
+  let attemptedFilter = initialFilter === 'attempted' ? 'attempted' : 'all';
+  let topicFilter = '';
+  let search = '';
+
+  function statusBadge(card) {
+    const status = getStatus(card);
+    const s = getState(card);
+    if (status === 'new')      return `<span class="badge badge-lib-new">New</span>`;
+    if (status === 'learning') return `<span class="badge badge-learning">Learning</span>`;
+    if (status === 'mastered') return `<span class="badge badge-lib-mastered">Mastered</span>`;
+    return `<span class="badge badge-review">Review · ${s.interval}d</span>`;
+  }
+
+  function matchesFilters(card) {
+    const s = getState(card);
+    const status = getStatus(card);
+
+    if (statusFilter === 'new'      && status !== 'new')      return false;
+    if (statusFilter === 'learning' && status !== 'learning') return false;
+    if (statusFilter === 'mastered' && status !== 'mastered') return false;
+    if (statusFilter === 'due'      && !isDue(card))          return false;
+
+    if (attemptedFilter === 'attempted'     && s.lastReviewed == null) return false;
+    if (attemptedFilter === 'not-attempted' && s.lastReviewed != null) return false;
+
+    if (topicFilter && card.topic !== topicFilter) return false;
+    if (search && !card.question.toLowerCase().includes(search.toLowerCase())) return false;
+
+    return true;
+  }
+
+  function render() {
+    const filtered = allCards.filter(matchesFilters);
+
+    const chips = [
+      ['all',      `All (${counts.all})`],
+      ['new',      `New (${counts.new})`],
+      ['learning', `Learning (${counts.learning})`],
+      ['due',      `Due (${counts.due})`],
+      ['mastered', `Mastered (${counts.mastered})`],
+    ];
+
+    root().innerHTML = `
+      <div class="screen">
+        <div class="lib-header">
+          <button class="exit-btn" id="back-btn">← Back</button>
+          <span class="lib-title">Card Library</span>
+          <span class="lib-count">${filtered.length} cards</span>
+        </div>
+
+        <div class="lib-filters">
+          <div class="lib-chips">
+            ${chips.map(([val, label]) =>
+              `<button class="chip${statusFilter === val ? ' active' : ''}" data-status="${val}">${esc(label)}</button>`
+            ).join('')}
+          </div>
+          <div class="lib-controls">
+            <input id="lib-search" class="search-box" type="text" placeholder="Search questions…" value="${esc(search)}">
+            <select id="lib-topic" class="filter-select">
+              <option value="">All Topics</option>
+              ${topics.map(t => `<option value="${esc(t)}"${topicFilter === t ? ' selected' : ''}>${esc(t)}</option>`).join('')}
+            </select>
+            <select id="lib-attempted" class="filter-select">
+              <option value="all"${attemptedFilter === 'all' ? ' selected' : ''}>All</option>
+              <option value="attempted"${attemptedFilter === 'attempted' ? ' selected' : ''}>Attempted</option>
+              <option value="not-attempted"${attemptedFilter === 'not-attempted' ? ' selected' : ''}>Not attempted</option>
+            </select>
+          </div>
+        </div>
+
+        ${filtered.length === 0
+          ? `<p class="lib-empty">No cards match the current filters.</p>`
+          : `<div class="lib-table-wrap">
+              <table class="lib-table">
+                <thead>
+                  <tr>
+                    <th class="col-q">Question</th>
+                    <th class="col-topic">Topic</th>
+                    <th class="col-diff">Difficulty</th>
+                    <th class="col-status">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filtered.map(card => {
+                    const q = card.question.length > 80
+                      ? card.question.slice(0, 80) + '…'
+                      : card.question;
+                    return `<tr>
+                      <td class="col-q">
+                        <span class="q-text">${esc(q)}</span>
+                        <span class="q-id">${esc(card.id)}</span>
+                      </td>
+                      <td class="col-topic"><span class="badge">${esc(card.topic)}</span></td>
+                      <td class="col-diff">${diffBadge(card.difficulty)}</td>
+                      <td class="col-status">${statusBadge(card)}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>`
+        }
+      </div>`;
+
+    document.getElementById('back-btn')?.addEventListener('click', onBack);
+    document.querySelectorAll('.chip').forEach(btn =>
+      btn.addEventListener('click', () => { statusFilter = btn.dataset.status; render(); })
+    );
+    document.getElementById('lib-search')?.addEventListener('input', e => { search = e.target.value; render(); });
+    document.getElementById('lib-topic')?.addEventListener('change', e => { topicFilter = e.target.value; render(); });
+    document.getElementById('lib-attempted')?.addEventListener('change', e => { attemptedFilter = e.target.value; render(); });
+  }
+
+  render();
 }
 
 // ── Nothing due ───────────────────────────────────────────────────────────────

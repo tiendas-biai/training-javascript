@@ -11,6 +11,7 @@ import {
   renderGradeToast,
   renderSummary,
   renderNothingDue,
+  renderCardList,
 } from './ui.js';
 
 // ── State ──────────────────────────────────────────────────────────────────────
@@ -26,7 +27,11 @@ let learningStreak = {};  // cardId → consecutive correct count this session
 
 function showStart() {
   progressMap = loadProgress();
-  renderStartScreen(allCards, progressMap, { onStart: startSession, onReset: handleReset });
+  renderStartScreen(allCards, progressMap, { onStart: startSession, onReset: handleReset, onTileClick: showCardList });
+}
+
+function showCardList(filter) {
+  renderCardList(allCards, progressMap, { initialFilter: filter, onBack: showStart });
 }
 
 function handleReset() {
