@@ -37,8 +37,7 @@ route('/', () => {
 
 route('/card-library', () => {
   progressMap = loadProgress();
-  const filter = new URLSearchParams(location.search).get('filter') ?? undefined;
-  renderCardList(allCards, progressMap, { initialFilter: filter, onBack: () => navigate('/') });
+  renderCardList(allCards, progressMap, { onBack: () => navigate('/') });
 });
 
 // ── Home ───────────────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import { computeStats, getOrCreate } from './srs.js';
 import { applyFilters, getCardType } from './session.js';
+import { replaceState } from './router.js';
 
 const root = () => document.getElementById('app');
 
@@ -310,7 +311,7 @@ export function renderSummary({ reviewed, correct }, { onAgain, onHome }) {
 
 // ── Card library ─────────────────────────────────────────────────────────────
 
-export function renderCardList(allCards, progressMap, { initialFilter, onBack }) {
+export function renderCardList(allCards, progressMap, { onBack }) {
   const topics = [...new Set(allCards.map(c => c.topic))].sort();
   const now = Date.now();
 
@@ -335,11 +336,22 @@ export function renderCardList(allCards, progressMap, { initialFilter, onBack })
     mastered: allCards.filter(c => getStatus(c) === 'mastered').length,
   };
 
-  // Initial filter state from clicked tile
-  let statusFilter = initialFilter === 'attempted' ? 'all' : (initialFilter ?? 'all');
-  let attemptedFilter = initialFilter === 'attempted' ? 'attempted' : 'all';
-  let topicFilter = '';
-  let search = '';
+  // Read initial filter state from URL — single source of truth
+  const params = new URLSearchParams(location.search);
+  let statusFilter   = params.get('filter')   ?? 'all';
+  let attemptedFilter = params.get('attempted') ?? 'all';
+  let topicFilter    = params.get('topic')    ?? '';
+  let search         = params.get('q')        ?? '';
+
+  function updateURL() {
+    const p = new URLSearchParams();
+    if (statusFilter !== 'all')    p.set('filter',    statusFilter);
+    if (attemptedFilter !== 'all') p.set('attempted', attemptedFilter);
+    if (topicFilter)               p.set('topic',     topicFilter);
+    if (search)                    p.set('q',         search);
+    const qs = p.toString();
+    replaceState('/card-library' + (qs ? '?' + qs : ''));
+  }
 
   function statusBadge(card) {
     const status = getStatus(card);
@@ -442,11 +454,11 @@ export function renderCardList(allCards, progressMap, { initialFilter, onBack })
 
     document.getElementById('back-btn')?.addEventListener('click', onBack);
     document.querySelectorAll('.chip').forEach(btn =>
-      btn.addEventListener('click', () => { statusFilter = btn.dataset.status; render(); })
+      btn.addEventListener('click', () => { statusFilter = btn.dataset.status; updateURL(); render(); })
     );
-    document.getElementById('lib-search')?.addEventListener('input', e => { search = e.target.value; render(); });
-    document.getElementById('lib-topic')?.addEventListener('change', e => { topicFilter = e.target.value; render(); });
-    document.getElementById('lib-attempted')?.addEventListener('change', e => { attemptedFilter = e.target.value; render(); });
+    document.getElementById('lib-search')?.addEventListener('input', e => { search = e.target.value; updateURL(); render(); });
+    document.getElementById('lib-topic')?.addEventListener('change', e => { topicFilter = e.target.value; updateURL(); render(); });
+    document.getElementById('lib-attempted')?.addEventListener('change', e => { attemptedFilter = e.target.value; updateURL(); render(); });
   }
 
   render();

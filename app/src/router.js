@@ -9,6 +9,10 @@ export function navigate(path) {
   dispatch();
 }
 
+export function replaceState(path) {
+  history.replaceState(null, '', path);
+}
+
 function dispatch() {
   const fn = routes.get(location.pathname) ?? routes.get('/');
   fn?.();
