@@ -2,6 +2,7 @@ import allCards from '../data/data.json';
 import { loadProgress, saveProgress, clearProgress } from './storage.js';
 import { grade, graduate, getOrCreate, computeStats, previewIntervals, getNextDueTime } from './srs.js';
 import { buildQueue, advance, applyFilters, getCardType } from './session.js';
+import { route, navigate, initRouter } from './router.js';
 import {
   renderStartScreen,
   renderRevealQuestion,
@@ -21,23 +22,31 @@ let sessionQueue = [];
 let sessionStats = { reviewed: 0, correct: 0 };
 let lastFilters = {};
 let lastSessionSize = 20;
-let learningStreak = {};  // cardId → consecutive correct count this session
+let learningStreak = {};
 
-// ── Start screen ───────────────────────────────────────────────────────────────
+// ── Routes ─────────────────────────────────────────────────────────────────────
 
-function showStart() {
+route('/', () => {
   progressMap = loadProgress();
-  renderStartScreen(allCards, progressMap, { onStart: startSession, onReset: handleReset, onTileClick: showCardList });
-}
+  renderStartScreen(allCards, progressMap, {
+    onStart: startSession,
+    onReset: handleReset,
+    onTileClick: (filter) => navigate(filter ? `/card-library?filter=${filter}` : '/card-library'),
+  });
+});
 
-function showCardList(filter) {
-  renderCardList(allCards, progressMap, { initialFilter: filter, onBack: showStart });
-}
+route('/card-library', () => {
+  progressMap = loadProgress();
+  const filter = new URLSearchParams(location.search).get('filter') ?? undefined;
+  renderCardList(allCards, progressMap, { initialFilter: filter, onBack: () => navigate('/') });
+});
+
+// ── Home ───────────────────────────────────────────────────────────────────────
 
 function handleReset() {
   clearProgress();
   progressMap = {};
-  showStart();
+  navigate('/');
 }
 
 // ── Session ────────────────────────────────────────────────────────────────────
@@ -58,7 +67,10 @@ function startSession(filters, sessionSize) {
 
 function showCurrentCard() {
   if (sessionQueue.length === 0) {
-    renderSummary(sessionStats, { onAgain: () => startSession(lastFilters, lastSessionSize), onHome: showStart });
+    renderSummary(sessionStats, {
+      onAgain: () => startSession(lastFilters, lastSessionSize),
+      onHome: () => navigate('/'),
+    });
     return;
   }
 
@@ -69,9 +81,9 @@ function showCurrentCard() {
   if (getCardType(card) === 'multiple-choice') {
     renderMCQQuestion(card, { remaining: sessionQueue.length, cardInfo },
       (pickedOption, shuffled) => onMCQPick(card, pickedOption, shuffled),
-      showStart);
+      () => navigate('/'));
   } else {
-    renderRevealQuestion(card, { remaining: sessionQueue.length, cardInfo }, onShowAnswer, showStart);
+    renderRevealQuestion(card, { remaining: sessionQueue.length, cardInfo }, onShowAnswer, () => navigate('/'));
   }
 }
 
@@ -82,7 +94,7 @@ function onShowAnswer() {
   const state = getOrCreate(card.id, progressMap);
   const cardInfo = { phase: state.phase, streak: learningStreak[card.id] ?? 0, interval: state.interval };
   const previews = previewIntervals(state);
-  renderRevealAnswer(card, { remaining: sessionQueue.length, cardInfo, previews }, onGrade, showStart);
+  renderRevealAnswer(card, { remaining: sessionQueue.length, cardInfo, previews }, onGrade, () => navigate('/'));
 }
 
 function onGrade(rating) {
@@ -102,7 +114,7 @@ function onMCQPick(card, pickedOption, shuffled) {
       const msg = processGrade(card, rating);
       renderGradeToast(msg, showCurrentCard);
     },
-    showStart);
+    () => navigate('/'));
 }
 
 // ── Grading logic ──────────────────────────────────────────────────────────────
@@ -157,9 +169,9 @@ function showNothingDue() {
   const filtered = applyFilters(allCards, lastFilters);
   const stats = computeStats(filtered, progressMap);
   const nextDueTs = getNextDueTime(progressMap);
-  renderNothingDue({ nextDueTs, mastered: stats.mastered, total: stats.total }, showStart);
+  renderNothingDue({ nextDueTs, mastered: stats.mastered, total: stats.total }, () => navigate('/'));
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
 
-showStart();
+initRouter();
