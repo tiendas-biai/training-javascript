@@ -27,8 +27,18 @@ function renderText(str) {
       const highlighted = Prism.highlight(m[2], grammar, lang);
       return `<pre class="code-block"><code>${highlighted}</code></pre>`;
     }
+    // Inline code chips are split out first so * inside backticks (e.g. `s3:*`)
+    // is never mistaken for emphasis.
     return esc(part)
-      .replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>')
+      .split(/(`[^`\n]+`)/g)
+      .map(seg => {
+        const code = seg.match(/^`([^`\n]+)`$/);
+        if (code) return `<code class="inline-code">${code[1]}</code>`;
+        return seg
+          .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+      })
+      .join('')
       .replace(/\n/g, '<br>');
   }).join('');
 }
@@ -54,6 +64,13 @@ function diffBadge(d) {
   return `<span class="badge badge-${d}">${d}</span>`;
 }
 
+function typeLabel(card) {
+  const type = getCardType(card);
+  if (type === 'multiple-choice') return 'MCQ';
+  if (type === 'multiple-response') return 'Multi';
+  return 'reveal';
+}
+
 function phaseBadge({ phase, streak, interval }) {
   if (phase === 'learning') {
     return `<span class="badge badge-learning">Learning · ${streak}/2</span>`;
@@ -66,7 +83,7 @@ function cardMeta(card, cardInfo) {
     <div class="card-meta">
       <span class="badge">${esc(card.topic)}</span>
       ${diffBadge(card.difficulty)}
-      <span class="badge">${getCardType(card) === 'multiple-choice' ? 'MCQ' : 'reveal'}</span>
+      <span class="badge">${typeLabel(card)}</span>
       ${cardInfo ? phaseBadge(cardInfo) : ''}
     </div>`;
 }
@@ -205,6 +222,7 @@ export function renderStartScreen(subject, allCards, progressMap, { onStart, onR
             <option value="">All Types</option>
             <option value="reveal"${filters.type === 'reveal' ? ' selected' : ''}>Reveal</option>
             <option value="multiple-choice"${filters.type === 'multiple-choice' ? ' selected' : ''}>Multiple Choice</option>
+            <option value="multiple-response"${filters.type === 'multiple-response' ? ' selected' : ''}>Multiple Response</option>
           </select>
           <select id="f-tag" class="filter-select">
             <option value="">All Tags</option>
@@ -325,6 +343,84 @@ export function renderMCQAnswered(card, { remaining, cardInfo, previews }, picke
     let cls = 'option-btn';
     if (opt === card.answer) cls += ' correct';
     else if (opt === pickedOption) cls += ' wrong';
+    return `<li><button class="${cls}" disabled>${esc(opt)}</button></li>`;
+  }).join('');
+
+  root().innerHTML = `
+    <div class="screen">
+      ${sessionHeader(remaining)}
+      <div class="card">
+        ${cardMeta(card, cardInfo)}
+        <div class="question-text">${renderText(card.question)}</div>
+        <ul class="options-list">${optionsHtml}</ul>
+        <div class="answer-section">
+          <p class="answer-label">${isCorrect ? '✓ Correct' : '✗ Incorrect'}</p>
+          <div class="explanation-text">${renderText(card.explanation)}</div>
+        </div>
+      </div>
+      ${gradeButtons(previews)}
+    </div>`;
+  document.getElementById('exit-btn')?.addEventListener('click', onExit);
+  document.querySelectorAll('[data-rating]').forEach(btn =>
+    btn.addEventListener('click', () => onRate(btn.dataset.rating))
+  );
+}
+
+// ── Multiple response: question + toggleable options ─────────────────────────
+
+export function renderMRQuestion(card, { remaining, cardInfo }, onSubmit, onExit) {
+  const shuffled = shuffleCopy(card.options);
+  const required = card.answers.length;
+  const picked = new Set();
+
+  root().innerHTML = `
+    <div class="screen">
+      ${sessionHeader(remaining)}
+      <div class="card">
+        ${cardMeta(card, cardInfo)}
+        <div class="question-text">${renderText(card.question)}</div>
+        <p class="mr-hint">Select ${required}</p>
+        <ul class="options-list">
+          ${shuffled.map((opt, i) =>
+            `<li><button class="option-btn" data-idx="${i}">${esc(opt)}</button></li>`
+          ).join('')}
+        </ul>
+        <button id="mr-submit" class="btn-show-answer" disabled>Submit</button>
+      </div>
+    </div>`;
+
+  const submitBtn = document.getElementById('mr-submit');
+  document.getElementById('exit-btn')?.addEventListener('click', onExit);
+  document.querySelectorAll('.option-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      if (picked.has(i)) {
+        picked.delete(i);
+        btn.classList.remove('selected');
+      } else {
+        picked.add(i);
+        btn.classList.add('selected');
+      }
+      submitBtn.disabled = picked.size !== required;
+    });
+  });
+  submitBtn.addEventListener('click', () => {
+    if (picked.size !== required) return;
+    onSubmit([...picked].map(i => shuffled[i]), shuffled);
+  });
+}
+
+// ── Multiple response: answered ───────────────────────────────────────────────
+
+export function renderMRAnswered(card, { remaining, cardInfo, previews }, pickedOptions, shuffledOptions, onRate, onExit) {
+  const answerSet = new Set(card.answers);
+  const pickedSet = new Set(pickedOptions);
+  const isCorrect = card.answers.length === pickedOptions.length &&
+    pickedOptions.every(opt => answerSet.has(opt));
+
+  const optionsHtml = shuffledOptions.map(opt => {
+    let cls = 'option-btn';
+    if (answerSet.has(opt)) cls += ' correct';
+    else if (pickedSet.has(opt)) cls += ' wrong';
     return `<li><button class="${cls}" disabled>${esc(opt)}</button></li>`;
   }).join('');
 
@@ -578,9 +674,10 @@ export function renderCardDetail(card, progressMap, { onBack }) {
   }
 
   function answerSection() {
-    if (type === 'multiple-choice') {
+    if (type === 'multiple-choice' || type === 'multiple-response') {
+      const answerSet = new Set(type === 'multiple-response' ? card.answers : [card.answer]);
       const opts = card.options.map(opt => {
-        const correct = opt === card.answer;
+        const correct = answerSet.has(opt);
         return `<li><span class="detail-option${correct ? ' correct' : ''}">${esc(opt)}</span></li>`;
       }).join('');
       return `
@@ -610,7 +707,7 @@ export function renderCardDetail(card, progressMap, { onBack }) {
           <span class="badge">${esc(card.topic)}</span>
           ${card.subtopic ? `<span class="badge">${esc(card.subtopic)}</span>` : ''}
           ${diffBadge(card.difficulty)}
-          <span class="badge">${type === 'multiple-choice' ? 'MCQ' : 'reveal'}</span>
+          <span class="badge">${typeLabel(card)}</span>
           ${tags}
         </div>
         <div class="question-text">${renderText(card.question)}</div>

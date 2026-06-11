@@ -12,6 +12,8 @@ import {
   renderRevealAnswer,
   renderMCQQuestion,
   renderMCQAnswered,
+  renderMRQuestion,
+  renderMRAnswered,
   renderGradeToast,
   renderSummary,
   renderNothingDue,
@@ -129,9 +131,14 @@ function showCurrentCard() {
   const state = getOrCreate(card.id, current.progressMap);
   const cardInfo = { phase: state.phase, streak: learningStreak[card.id] ?? 0, interval: state.interval };
 
-  if (getCardType(card) === 'multiple-choice') {
+  const type = getCardType(card);
+  if (type === 'multiple-choice') {
     renderMCQQuestion(card, { remaining: sessionQueue.length, cardInfo },
       (pickedOption, shuffled) => onMCQPick(card, pickedOption, shuffled),
+      goHome);
+  } else if (type === 'multiple-response') {
+    renderMRQuestion(card, { remaining: sessionQueue.length, cardInfo },
+      (pickedOptions, shuffled) => onMRSubmit(card, pickedOptions, shuffled),
       goHome);
   } else {
     renderRevealQuestion(card, { remaining: sessionQueue.length, cardInfo }, onShowAnswer, goHome);
@@ -161,6 +168,20 @@ function onMCQPick(card, pickedOption, shuffled) {
   const cardInfo = { phase: state.phase, streak: learningStreak[card.id] ?? 0, interval: state.interval };
   const previews = previewIntervals(state);
   renderMCQAnswered(card, { remaining: sessionQueue.length, cardInfo, previews }, pickedOption, shuffled,
+    (rating) => {
+      const msg = processGrade(card, rating);
+      renderGradeToast(msg, showCurrentCard);
+    },
+    goHome);
+}
+
+// ── Multiple response flow ─────────────────────────────────────────────────────
+
+function onMRSubmit(card, pickedOptions, shuffled) {
+  const state = getOrCreate(card.id, current.progressMap);
+  const cardInfo = { phase: state.phase, streak: learningStreak[card.id] ?? 0, interval: state.interval };
+  const previews = previewIntervals(state);
+  renderMRAnswered(card, { remaining: sessionQueue.length, cardInfo, previews }, pickedOptions, shuffled,
     (rating) => {
       const msg = processGrade(card, rating);
       renderGradeToast(msg, showCurrentCard);

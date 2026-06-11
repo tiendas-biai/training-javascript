@@ -642,3 +642,20 @@ body {
 
 /* ── Subjects back button on subject home ── */
 .subjects-back { margin-bottom: 10px; }
+
+/* ── Multiple response ── */
+.mr-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 14px 0 6px;
+}
+.option-btn.selected {
+  border-color: var(--accent);
+  background: rgba(108,99,255,0.12);
+}
+#mr-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

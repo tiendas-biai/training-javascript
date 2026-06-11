@@ -1,7 +1,9 @@
 import { getDueCards } from './srs.js';
 
 export function getCardType(card) {
-  return card.type ?? (card.options ? 'multiple-choice' : 'reveal');
+  if (card.type) return card.type;
+  if (card.answers) return 'multiple-response';
+  return card.options ? 'multiple-choice' : 'reveal';
 }
 
 export function applyFilters(allCards, filters) {

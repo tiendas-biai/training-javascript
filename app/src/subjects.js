@@ -34,6 +34,14 @@ export const subjects = {
     storageKey: 'srs:typescript',
     loadData: () => import('../data/typescript.json'),
   },
+  aws: {
+    id: 'aws',
+    label: 'AWS SAA',
+    icon: '☁',
+    color: '#ff9900',
+    storageKey: 'srs:aws',
+    loadData: () => import('../data/aws.json'),
+  },
 };
 
 export function getSubject(id) {
