@@ -312,7 +312,7 @@ export function renderGradeToast(message, onDone) {
   const area = document.getElementById('grade-area');
   if (!area) { onDone(); return; }
   area.innerHTML = `<p class="grade-toast">${esc(message)}</p>`;
-  setTimeout(onDone, 1200);
+  setTimeout(onDone, 5000);
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────────
