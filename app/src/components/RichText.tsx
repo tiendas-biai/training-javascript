@@ -1,5 +1,6 @@
 import Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 // Renders markdown-style text: fenced code blocks get Prism highlighting,
@@ -35,10 +36,30 @@ function CodeBlock({ lang, code }: { lang: string | undefined; code: string }) {
   const grammar = Prism.languages[language] ?? Prism.languages.javascript;
   // Prism output is trusted: it highlights our own question-bank JSON.
   const html = Prism.highlight(code, grammar, language);
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable (e.g. insecure context) — leave the button as-is
+    }
+  };
+
   return (
-    <pre className="code-block">
-      <code dangerouslySetInnerHTML={{ __html: html }} />
-    </pre>
+    <div className="code-block-wrap">
+      <button type="button" className="copy-btn" onClick={copy} aria-label="Copy code">
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+      <pre className="code-block">
+        <code dangerouslySetInnerHTML={{ __html: html }} />
+      </pre>
+    </div>
   );
 }
 

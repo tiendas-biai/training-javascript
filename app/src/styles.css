@@ -551,6 +551,40 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
 }
 
 /* ── Code blocks ── */
+.code-block-wrap {
+  position: relative;
+  margin: 10px 0;
+}
+.code-block-wrap .code-block { margin: 0; }
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  border: 1px solid rgba(171,178,191,0.25);
+  border-radius: 6px;
+  background: rgba(21,23,32,0.85);
+  color: #abb2bf;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  padding: 3px 9px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+.code-block-wrap:hover .copy-btn,
+.copy-btn:focus-visible {
+  opacity: 1;
+}
+.copy-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+/* Touch devices have no hover — keep the button visible. */
+@media (hover: none) {
+  .copy-btn { opacity: 1; }
+}
+
 .code-block {
   background: #151720;
   border: 1px solid var(--border);

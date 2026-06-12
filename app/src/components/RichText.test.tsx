@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RichText, plainText } from './RichText';
 
 describe('RichText', () => {
@@ -33,6 +34,14 @@ describe('RichText', () => {
     const pre = container.querySelector('pre.code-block');
     expect(pre).not.toBeNull();
     expect(pre!.querySelector('.token.keyword')).not.toBeNull(); // const
+  });
+
+  test('copy button copies the raw code and shows feedback', async () => {
+    const user = userEvent.setup(); // stubs navigator.clipboard under jsdom
+    render(<RichText text={'```js\nconst x = 1;\n```'} />);
+    await user.click(screen.getByRole('button', { name: 'Copy code' }));
+    expect(await screen.findByText('Copied')).toBeInTheDocument();
+    expect(await window.navigator.clipboard.readText()).toBe('const x = 1;\n');
   });
 
   test('converts newlines to <br> outside code blocks', () => {
