@@ -130,7 +130,7 @@ Legacy single-subject data (`srs:all`) is moved to `srs:javascript` once at boot
 
 - Subject home lets you filter by topic / difficulty / type / tag and pick session size: **10 / 20 / All**
 - Session builds a queue of due cards (shuffled). Learning cards cycle back; review cards exit after one answer.
-- After grading, a 2-second toast confirms the outcome before advancing.
+- Grading advances to the next card immediately (no confirmation toast).
 
 ### Card types
 

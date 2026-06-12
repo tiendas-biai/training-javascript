@@ -14,7 +14,6 @@ import {
   renderMCQAnswered,
   renderMRQuestion,
   renderMRAnswered,
-  renderGradeToast,
   renderSummary,
   renderNothingDue,
   renderCardList,
@@ -156,9 +155,8 @@ function onShowAnswer() {
 }
 
 function onGrade(rating) {
-  const card = sessionQueue[0];
-  const msg = processGrade(card, rating);
-  renderGradeToast(msg, showCurrentCard);
+  processGrade(sessionQueue[0], rating);
+  showCurrentCard();
 }
 
 // ── MCQ flow ───────────────────────────────────────────────────────────────────
@@ -169,8 +167,8 @@ function onMCQPick(card, pickedOption, shuffled) {
   const previews = previewIntervals(state);
   renderMCQAnswered(card, { remaining: sessionQueue.length, cardInfo, previews }, pickedOption, shuffled,
     (rating) => {
-      const msg = processGrade(card, rating);
-      renderGradeToast(msg, showCurrentCard);
+      processGrade(card, rating);
+      showCurrentCard();
     },
     goHome);
 }
@@ -183,8 +181,8 @@ function onMRSubmit(card, pickedOptions, shuffled) {
   const previews = previewIntervals(state);
   renderMRAnswered(card, { remaining: sessionQueue.length, cardInfo, previews }, pickedOptions, shuffled,
     (rating) => {
-      const msg = processGrade(card, rating);
-      renderGradeToast(msg, showCurrentCard);
+      processGrade(card, rating);
+      showCurrentCard();
     },
     goHome);
 }
@@ -195,35 +193,28 @@ function processGrade(card, rating) {
   const state = getOrCreate(card.id, current.progressMap);
   let newState;
   let cardExits = false;
-  let toastMsg;
 
   if (state.phase === 'learning') {
     if (rating === 'easy') {
       newState = grade(state, 'easy');
       cardExits = true;
-      toastMsg = 'Graduated! See you in 3 days';
     } else if (rating === 'good') {
       const streak = (learningStreak[card.id] ?? 0) + 1;
       learningStreak[card.id] = streak;
       if (streak >= 2) {
         newState = graduate(state, 'good');
         cardExits = true;
-        toastMsg = 'Graduated! See you in 2 days';
         delete learningStreak[card.id];
       } else {
         newState = { ...state, totalSeen: state.totalSeen + 1, lastReviewed: Date.now() };
-        toastMsg = '1 more correct to graduate';
       }
     } else {
       learningStreak[card.id] = 0;
       newState = { ...state, totalSeen: state.totalSeen + 1, lastReviewed: Date.now() };
-      toastMsg = 'Coming back soon';
     }
   } else {
     newState = grade(state, rating);
     cardExits = true;
-    const previews = previewIntervals(state);
-    toastMsg = `See you in ${previews[rating]}`;
   }
 
   current.progressMap = { ...current.progressMap, [card.id]: newState };
@@ -232,7 +223,6 @@ function processGrade(card, rating) {
   if (rating !== 'hard') sessionStats.correct++;
 
   sessionQueue = advance(sessionQueue, cardExits, rating);
-  return toastMsg;
 }
 
 // ── Nothing due ────────────────────────────────────────────────────────────────

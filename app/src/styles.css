@@ -303,14 +303,6 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   opacity: 0.85;
 }
 
-.grade-toast {
-  text-align: center;
-  padding: 18px;
-  color: var(--muted);
-  font-size: 0.95rem;
-  font-style: italic;
-}
-
 /* ── MCQ options ── */
 .options-list {
   list-style: none;

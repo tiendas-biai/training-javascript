@@ -98,7 +98,7 @@ function sessionHeader(remaining) {
 
 function gradeButtons(previews) {
   return `
-    <div id="grade-area" class="grade-buttons">
+    <div class="grade-buttons">
       <button class="btn-hard" data-rating="hard">
         Hard <span class="interval-label">${esc(previews.hard)}</span>
       </button>
@@ -442,15 +442,6 @@ export function renderMRAnswered(card, { remaining, cardInfo, previews }, picked
   document.querySelectorAll('[data-rating]').forEach(btn =>
     btn.addEventListener('click', () => onRate(btn.dataset.rating))
   );
-}
-
-// ── Grade toast (replaces grade-area for 3 s then fires onDone) ──────────────
-
-export function renderGradeToast(message, onDone) {
-  const area = document.getElementById('grade-area');
-  if (!area) { onDone(); return; }
-  area.innerHTML = `<p class="grade-toast">${esc(message)}</p>`;
-  setTimeout(onDone, 2000);
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────────
