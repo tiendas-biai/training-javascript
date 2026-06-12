@@ -1,12 +1,22 @@
-import { getDueCards } from './srs.js';
+import type { Card, CardType, MCQCard, MRCard, Rating, SessionFilters } from '../types';
+import type { StoredProgressMap } from './srs';
+import { getDueCards } from './srs';
 
-export function getCardType(card) {
+export function getCardType(card: Card): CardType {
   if (card.type) return card.type;
-  if (card.answers) return 'multiple-response';
-  return card.options ? 'multiple-choice' : 'reveal';
+  if ('answers' in card && card.answers) return 'multiple-response';
+  return 'options' in card && card.options ? 'multiple-choice' : 'reveal';
 }
 
-export function applyFilters(allCards, filters) {
+export function isMCQ(card: Card): card is MCQCard {
+  return getCardType(card) === 'multiple-choice';
+}
+
+export function isMR(card: Card): card is MRCard {
+  return getCardType(card) === 'multiple-response';
+}
+
+export function applyFilters(allCards: Card[], filters: SessionFilters): Card[] {
   return allCards.filter(card => {
     if (filters.topic && card.topic !== filters.topic) return false;
     if (filters.difficulty && card.difficulty !== filters.difficulty) return false;
@@ -16,7 +26,12 @@ export function applyFilters(allCards, filters) {
   });
 }
 
-export function buildQueue(allCards, progressMap, filters, sessionSize) {
+export function buildQueue(
+  allCards: Card[],
+  progressMap: StoredProgressMap,
+  filters: SessionFilters,
+  sessionSize: number,
+): Card[] {
   const filtered = applyFilters(allCards, filters);
   const due = getDueCards(filtered, progressMap);
   return sessionSize === Infinity ? due : due.slice(0, sessionSize);
@@ -24,7 +39,7 @@ export function buildQueue(allCards, progressMap, filters, sessionSize) {
 
 // cardExits=true removes the card; false keeps it cycling.
 // When staying, 'hard' re-inserts after 2 positions; 'good' goes to end.
-export function advance(queue, cardExits, rating) {
+export function advance(queue: Card[], cardExits: boolean, rating: Rating): Card[] {
   if (cardExits) return queue.slice(1);
   if (rating === 'hard') {
     const rest = queue.slice(1);
