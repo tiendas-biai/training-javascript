@@ -8,18 +8,19 @@ import { SessionHeader } from '../components/SessionHeader';
 interface Props {
   card: RevealCardData;
   remaining: number;
+  done?: number;
   cardInfo: CardInfo;
   previews: Record<Rating, string>;
   onGrade: (rating: Rating) => void;
   onExit: () => void;
 }
 
-export function RevealCard({ card, remaining, cardInfo, previews, onGrade, onExit }: Props) {
+export function RevealCard({ card, remaining, done, cardInfo, previews, onGrade, onExit }: Props) {
   const [revealed, setRevealed] = useState(false);
 
   return (
     <div className="screen">
-      <SessionHeader remaining={remaining} onExit={onExit} />
+      <SessionHeader remaining={remaining} done={done} onExit={onExit} />
       <div className="card">
         <CardMeta card={card} cardInfo={cardInfo} />
         <div className="question-text"><RichText text={card.question} /></div>

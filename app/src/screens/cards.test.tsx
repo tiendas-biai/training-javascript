@@ -49,10 +49,10 @@ describe('RevealCard', () => {
     expect(onGrade).toHaveBeenCalledWith('good');
   });
 
-  test('shows remaining count and exit button', async () => {
+  test('shows done/remaining counts and exit button', async () => {
     const onExit = jest.fn();
-    render(<RevealCard card={revealData} remaining={7} cardInfo={cardInfo} previews={previews} onGrade={noop} onExit={onExit} />);
-    expect(screen.getByText('7 left')).toBeInTheDocument();
+    render(<RevealCard card={revealData} remaining={7} done={3} cardInfo={cardInfo} previews={previews} onGrade={noop} onExit={onExit} />);
+    expect(screen.getByText('3 done · 7 left')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /exit/i }));
     expect(onExit).toHaveBeenCalled();
   });

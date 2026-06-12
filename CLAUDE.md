@@ -45,7 +45,7 @@ async-cache, async-queue, batch-executor, circuit-breaker, poll, promise-all, pr
 
 ## Part 2 — Dev Drill App (`app/`)
 
-A multi-subject spaced-repetition flashcard app. **Vite + React 18/19 + TypeScript**, with React Router for routing and Jest + React Testing Library for tests. The home screen is a subject picker; each subject has its own question bank, progress storage, and routes. Deployed to Vercel (training-javascript-one.vercel.app) on push to main; `app/vercel.json` holds the SPA rewrite.
+A multi-subject spaced-repetition flashcard app. **Vite + React 19 + TypeScript**, with React Router for routing and Jest + React Testing Library for tests. The home screen is a subject picker; each subject has its own question bank, progress storage, and routes. Deployed to Vercel (training-javascript-one.vercel.app) on push to main; `app/vercel.json` holds the SPA rewrite.
 
 ### Commands
 
@@ -89,7 +89,8 @@ app/
 │   ├── screens/            # SubjectPicker, SubjectLayout, SubjectHome, Session,
 │   │                       # RevealCard/MCQCard/MRCard, Summary, NothingDue,
 │   │                       # CardLibrary, CardDetail
-│   └── styles.css          # global, class-based (no CSS-in-JS)
+│   └── styles.css          # global, class-based (no CSS-in-JS); tiendasbiai brand palette
+│                           # (white/cream, cyan #0cc0df accent), Antonio headings + Inter body
 ├── index.html
 ├── jest.config.cjs         # app-local Jest config (root config belongs to exercises/)
 ├── tsconfig.json           # app; tsconfig.test.json for ts-jest
@@ -130,7 +131,7 @@ Current subjects: `javascript`, `react`, `node`, `typescript`, `aws`.
 
 Unknown subject ids redirect to `/`; unknown card ids redirect to that subject's library.
 
-### SM-2 algorithm (`srs.js`)
+### SM-2 algorithm (`src/lib/srs.ts`)
 
 Single mode — no drill/SRS toggle. Every card follows SM-2 (per subject):
 
@@ -174,7 +175,7 @@ As of June 2026:
 | TypeScript | 63 | Authored from the official Handbook: Primitive Types, Arrays & Objects, Functions, Interfaces & Generics, Classes, Type Narrowing |
 | React | 62 | Authored from react.dev: Components, JSX, State, Effects & Lifecycle, Props & Composition, Forms, Context, Refs |
 | Node.js | 61 | Authored from nodejs.org + expressjs.com: Event Loop, Modules, Events, Core API, Streams & Buffers, HTTP, Error Handling, Express |
-| AWS SAA | 64 | SAA-C03 exam-style scenario questions, weighted by official domain percentages (Secure 20, Resilient 18, High-Performing 14, Cost-Optimized 12); uses multiple-response cards |
+| AWS SAA | 184 | SAA-C03 exam-style scenario questions, weighted by official domain percentages (Secure 56, Resilient 50, High-Performing 42, Cost-Optimized 36); heaviest user of multiple-response cards |
 
 ### Adding questions
 
@@ -204,7 +205,7 @@ Progress is stored separately in `localStorage` and never written into the data 
 
 ### Card detail (`/:subject/card/:id`)
 
-Read-only view of a single card. Accessible by clicking any question row in the card library. Back button uses `history.back()` to return to the exact library URL (preserving filters).
+Read-only view of a single card. Accessible by clicking any question row in the card library. Back button uses `navigate(-1)` to return to the exact library URL (preserving filters).
 
 Sections:
 - **Card block** — full badges (topic, subtopic, difficulty, type, tags), full question text, answer/explanation for reveal cards, all options with the correct answer(s) highlighted for MCQ/multiple-response cards
@@ -222,7 +223,7 @@ Filter controls:
 - **Topic dropdown** (`?topic=`)
 - **Attempted select**: All / Attempted / Not attempted (`?attempted=`)
 
-All filter state is reflected in the URL via `replaceState` — shareable/bookmarkable. Chip counts show global totals and don't change when other filters are applied.
+All filter state lives in the URL via `useSearchParams` (replace mode) — shareable/bookmarkable. Chip counts show global totals and don't change when other filters are applied.
 
 ### Text rendering (`src/components/RichText.tsx`)
 

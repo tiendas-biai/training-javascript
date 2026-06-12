@@ -65,7 +65,7 @@ export function Session({ initialQueue, progressMap, onProgress, onRestart, onEx
     setQueue(q => advance(q, cardExits, rating));
   }
 
-  const common = { remaining: queue.length, cardInfo, previews, onGrade: handleGrade, onExit };
+  const common = { remaining: queue.length, done: stats.reviewed, cardInfo, previews, onGrade: handleGrade, onExit };
 
   // The key includes the grade count so internal card state (revealed/picked)
   // resets on every new presentation — including a learning card cycling back

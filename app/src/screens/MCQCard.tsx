@@ -9,13 +9,14 @@ import { SessionHeader } from '../components/SessionHeader';
 interface Props {
   card: MCQCardData;
   remaining: number;
+  done?: number;
   cardInfo: CardInfo;
   previews: Record<Rating, string>;
   onGrade: (rating: Rating) => void;
   onExit: () => void;
 }
 
-export function MCQCard({ card, remaining, cardInfo, previews, onGrade, onExit }: Props) {
+export function MCQCard({ card, remaining, done, cardInfo, previews, onGrade, onExit }: Props) {
   const shuffled = useMemo(() => shuffleCopy(card.options), [card]);
   const [picked, setPicked] = useState<string | null>(null);
   const answered = picked !== null;
@@ -23,7 +24,7 @@ export function MCQCard({ card, remaining, cardInfo, previews, onGrade, onExit }
 
   return (
     <div className="screen">
-      <SessionHeader remaining={remaining} onExit={onExit} />
+      <SessionHeader remaining={remaining} done={done} onExit={onExit} />
       <div className="card">
         <CardMeta card={card} cardInfo={cardInfo} />
         <div className="question-text"><RichText text={card.question} /></div>
