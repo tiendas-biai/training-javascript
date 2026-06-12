@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 A learning repo with two distinct parts:
 
 1. **`exercises/`** — Coding challenges (mostly async/Promise patterns) with Jest tests.
-2. **`app/`** — A Vite vanilla-JS spaced-repetition drill app (Dev Drill) with separate question banks for JavaScript, TypeScript, React, Node.js, and AWS SAA.
+2. **`app/`** — A Vite + React + TypeScript spaced-repetition drill app (Dev Drill) with separate question banks for JavaScript, TypeScript, React, Node.js, and AWS SAA.
 
 ## Part 1 — Exercises
 
@@ -45,15 +45,17 @@ async-cache, async-queue, batch-executor, circuit-breaker, poll, promise-all, pr
 
 ## Part 2 — Dev Drill App (`app/`)
 
-A multi-subject spaced-repetition flashcard app. Vite + vanilla JS, no framework. The home screen is a subject picker; each subject has its own question bank, progress storage, and routes.
+A multi-subject spaced-repetition flashcard app. **Vite + React 18/19 + TypeScript**, with React Router for routing and Jest + React Testing Library for tests. The home screen is a subject picker; each subject has its own question bank, progress storage, and routes. Deployed to Vercel (training-javascript-one.vercel.app) on push to main; `app/vercel.json` holds the SPA rewrite.
 
 ### Commands
 
 ```bash
 cd app
-npm install      # first time only
-npm run dev      # dev server at http://localhost:5173
-npm run build    # production build to app/dist/
+npm install        # first time only
+npm run dev        # dev server at http://localhost:5173
+npm run build      # production build to app/dist/ (gitignored)
+npm test           # Jest + React Testing Library (app suites only)
+npm run typecheck  # tsc --noEmit, strict mode
 ```
 
 ### App structure
@@ -61,35 +63,55 @@ npm run build    # production build to app/dist/
 ```
 app/
 ├── data/
-│   ├── javascript.json  # one question bank per subject — single source of truth
+│   ├── javascript.json     # one question bank per subject — single source of truth
 │   ├── typescript.json
 │   ├── react.json
 │   ├── node.json
 │   └── aws.json
+├── public/fonts/           # Antonio + Inter woff2 (brand fonts)
 ├── src/
-│   ├── main.js          # entry point: registers routes, wires all modules
-│   ├── subjects.js      # subject registry — THE extension point for new subjects
-│   ├── router.js        # tiny History API router: route(), navigate(), replaceState()
-│   ├── srs.js           # SM-2 algorithm: grade(), graduate(), previewIntervals(), getDueCards(), computeStats()
-│   ├── storage.js       # localStorage wrapper, parameterised by storage key
-│   ├── migrate.js       # one-time legacy migration: 'srs:all' → 'srs:javascript'
-│   ├── session.js       # buildQueue(), advance(), applyFilters(), getCardType()
-│   ├── ui.js            # render functions for every screen/phase
-│   └── styles.css
+│   ├── main.tsx            # entry: runs storage migration, mounts <App/> in BrowserRouter
+│   ├── App.tsx             # route table
+│   ├── types.ts            # Card (discriminated union), Progress, Subject, Rating, …
+│   ├── lib/                # pure logic — no DOM, fully unit-tested
+│   │   ├── subjects.ts     # subject registry — THE extension point for new subjects
+│   │   ├── srs.ts          # SM-2: grade(), graduate(), previewIntervals(), getDueCards(), computeStats()
+│   │   ├── session.ts      # buildQueue(), advance(), applyFilters(), getCardType(), isMCQ/isMR guards
+│   │   ├── storage.ts      # localStorage wrapper, parameterised by storage key
+│   │   ├── migrate.ts      # one-time legacy migration: 'srs:all' → 'srs:javascript'
+│   │   └── shuffle.ts
+│   ├── hooks/
+│   │   ├── useProgress.ts  # progress map state + persistence for a storage key
+│   │   └── useSubjectData.ts # cached dynamic import of a subject's cards
+│   ├── components/         # RichText, badges/CardMeta, GradeButtons, SessionHeader
+│   ├── screens/            # SubjectPicker, SubjectLayout, SubjectHome, Session,
+│   │                       # RevealCard/MCQCard/MRCard, Summary, NothingDue,
+│   │                       # CardLibrary, CardDetail
+│   └── styles.css          # global, class-based (no CSS-in-JS)
 ├── index.html
-├── package.json         # vite + prismjs
-└── vite.config.js
+├── jest.config.cjs         # app-local Jest config (root config belongs to exercises/)
+├── tsconfig.json           # app; tsconfig.test.json for ts-jest
+├── vercel.json             # SPA rewrite: all paths → index.html
+└── vite.config.ts
 ```
 
-### Subjects (`subjects.js`)
+### Testing
+
+- Test files live next to their source (`src/lib/*.test.ts`, `src/screens/*.test.tsx`).
+- `lib/` has exhaustive unit tests (SM-2 math, queue mechanics, storage, migration). Time is controlled via `jest.spyOn(Date, 'now')`; shuffles via `jest.spyOn(Math, 'random')`.
+- Screens are tested with RTL + user-event; routing tests mock `lib/subjects` (dynamic JSON imports don't resolve under Jest) and render `<App/>` in a `MemoryRouter`.
+- `jest.polyfills.cjs` provides TextEncoder for react-router under jsdom.
+- Session gotcha encoded in a test: card components reset via a per-presentation key (`${card.id}:${stats.reviewed}`) — `card.id` alone breaks when a learning card cycles back to the front.
+
+### Subjects (`src/lib/subjects.ts`)
 
 The registry follows the open/closed principle: **adding a subject = one registry entry + one data file in `data/`**. Nothing else changes.
 
-```js
+```ts
 aws: {
   id: 'aws', label: 'AWS SAA', icon: '☁', color: '#ff9900',
   storageKey: 'srs:aws',
-  loadData: () => import('../data/aws.json'),
+  loadData: () => load(import('../../data/aws.json')),
 },
 ```
 
@@ -124,7 +146,7 @@ Progress shape stored in `localStorage` (key `srs:<subject>`):
 ```js
 { id, phase: 'learning'|'review', interval, ease, nextDue, lastReviewed, totalSeen }
 ```
-Legacy single-subject data (`srs:all`) is moved to `srs:javascript` once at boot by `migrate.js`. Old Leitner data (box/correctStreak shape) is auto-migrated on first load via `migrateIfNeeded()` in `srs.js`.
+Legacy single-subject data (`srs:all`) is moved to `srs:javascript` once at boot by `lib/migrate.ts`. Old Leitner data (box/correctStreak shape) is auto-migrated on read via `getOrCreate()` in `lib/srs.ts`.
 
 ### Session
 
@@ -200,14 +222,13 @@ Filter controls:
 
 All filter state is reflected in the URL via `replaceState` — shareable/bookmarkable. Chip counts show global totals and don't change when other filters are applied.
 
-### Text rendering (`ui.js`)
+### Text rendering (`src/components/RichText.tsx`)
 
-Question, answer, and explanation text supports markdown-like formats:
+Question, answer, and explanation text supports markdown-like formats via the `<RichText text={…} />` component:
 
-- **Fenced code blocks** — ` ```js\n...\n``` ` are rendered as highlighted `<pre>` blocks using **Prism.js** (One Dark token colors).
+- **Fenced code blocks** — ` ```js\n...\n``` ` are rendered as highlighted `<pre>` blocks using **Prism.js** (One Dark token colors; the only `dangerouslySetInnerHTML` in the app — Prism output over our own JSON).
 - **Inline code** — `` `backtick` `` spans are rendered as styled `<code>` chips.
 - **Emphasis** — `*italic*` and `**bold**` render as `<em>`/`<strong>`. Code spans are protected: a literal `*` inside backticks (e.g. `` `s3:*` ``) is never treated as emphasis.
-- `renderText(str)` — parses and renders all formats; used for all question/answer/explanation fields.
 - `plainText(str)` — strips code fences to `[code]` for library table previews.
 
 ### Planning docs
@@ -215,3 +236,4 @@ Question, answer, and explanation text supports markdown-like formats:
 - `PROJECT_SPEC.md` — original spec for the drill app
 - `FEATURE_PLAN.md` — implementation plan with architecture decisions and reference to `training-ai`
 - `MULTI_SUBJECT_PLAN.md` — multi-subject refactor plan (subject registry, per-subject storage, content pipeline)
+- `REACT_REFACTOR_PLAN.md` — the vanilla-JS → React/TypeScript refactor plan (phases, test scenarios, invariants)
