@@ -58,6 +58,8 @@ npm test           # Jest + React Testing Library (app suites only)
 npm run typecheck  # tsc --noEmit, strict mode
 ```
 
+From the repo root (no cd needed): `npm run app` (dev server), `npm run app:build`, `npm run app:test`, `npm run app:typecheck`.
+
 ### App structure
 
 ```

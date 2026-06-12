@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "app": "npm run dev --prefix app",
+    "app:build": "npm run build --prefix app",
+    "app:test": "npm test --prefix app",
+    "app:typecheck": "npm run typecheck --prefix app"
   },
   "private": true,
   "devDependencies": {
