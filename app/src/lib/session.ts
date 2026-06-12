@@ -1,4 +1,4 @@
-import type { Card, CardType, Rating, SessionFilters } from '../types';
+import type { Card, CardType, MCQCard, MRCard, Rating, SessionFilters } from '../types';
 import type { StoredProgressMap } from './srs';
 import { getDueCards } from './srs';
 
@@ -6,6 +6,14 @@ export function getCardType(card: Card): CardType {
   if (card.type) return card.type;
   if ('answers' in card && card.answers) return 'multiple-response';
   return 'options' in card && card.options ? 'multiple-choice' : 'reveal';
+}
+
+export function isMCQ(card: Card): card is MCQCard {
+  return getCardType(card) === 'multiple-choice';
+}
+
+export function isMR(card: Card): card is MRCard {
+  return getCardType(card) === 'multiple-response';
 }
 
 export function applyFilters(allCards: Card[], filters: SessionFilters): Card[] {
