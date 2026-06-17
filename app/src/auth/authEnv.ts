@@ -15,6 +15,12 @@ export const authConfig = {
   apiUrl: env.VITE_API_URL as string | undefined,
 };
 
+// Opt-in: load question banks from the cards API instead of the bundled JSON.
+// Off by default — the bundled JSON stays the source of truth and the app needs
+// no network for core content.
+export const cardsFromApi =
+  env.VITE_CARDS_FROM_API === 'true' && Boolean(env.VITE_API_URL);
+
 // Auth UI is only shown when the tenant is wired up. Until the env vars are set
 // (locally or in Vercel), the app behaves exactly as today — anonymous, local.
 export const isAuthConfigured = Boolean(authConfig.domain && authConfig.clientId);

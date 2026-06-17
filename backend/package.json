@@ -1,0 +1,14 @@
+{
+  "name": "dev-drill-backend-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tooling (seed scripts) for the Dev Drill backend. Lambda deps live in progress/ and cards/.",
+  "scripts": {
+    "seed": "node scripts/seed-cards.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/util-dynamodb": "^3.600.0"
+  }
+}

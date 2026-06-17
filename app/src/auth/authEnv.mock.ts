@@ -10,3 +10,5 @@ export const authConfig = {
 };
 
 export const isAuthConfigured = false;
+
+export const cardsFromApi = false;

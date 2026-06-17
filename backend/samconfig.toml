@@ -10,7 +10,7 @@ s3_prefix = "dev-drill-backend-dev"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Environment=\"dev\" Auth0Domain=\"REPLACE_ME.us.auth0.com\" Auth0Audience=\"https://dev-drill-api\" ProgressTableName=\"drill-progress-dev\" AllowedOrigins=\"http://localhost:5173,https://training-javascript-one.vercel.app\""
+parameter_overrides = "Environment=\"dev\" Auth0Domain=\"REPLACE_ME.us.auth0.com\" Auth0Audience=\"https://dev-drill-api\" ProgressTableName=\"drill-progress-dev\" CardsTableName=\"drill-cards-dev\" AllowedOrigins=\"http://localhost:5173,https://training-javascript-one.vercel.app\""
 
 [dev.global.parameters]
 region = "us-east-1"
@@ -22,7 +22,7 @@ s3_prefix = "dev-drill-backend-prod"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Environment=\"prod\" Auth0Domain=\"REPLACE_ME.us.auth0.com\" Auth0Audience=\"https://dev-drill-api\" ProgressTableName=\"drill-progress-prod\" AllowedOrigins=\"https://training-javascript-one.vercel.app\""
+parameter_overrides = "Environment=\"prod\" Auth0Domain=\"REPLACE_ME.us.auth0.com\" Auth0Audience=\"https://dev-drill-api\" ProgressTableName=\"drill-progress-prod\" CardsTableName=\"drill-cards-prod\" AllowedOrigins=\"https://training-javascript-one.vercel.app\""
 
 [prod.global.parameters]
 region = "us-east-1"

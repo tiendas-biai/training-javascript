@@ -28,6 +28,11 @@ Parameters:
     Default: drill-progress-dev
     Description: DynamoDB table name for per-user progress
 
+  CardsTableName:
+    Type: String
+    Default: drill-cards-dev
+    Description: DynamoDB table name for the question banks (read model)
+
 Globals:
   Function:
     Runtime: nodejs24.x
@@ -35,6 +40,24 @@ Globals:
     Timeout: 15
 
 Resources:
+  # Question banks (derived read model; JSON in app/data stays the source of truth).
+  # PK subject + SK id, so one Query returns a whole subject's cards.
+  CardsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref CardsTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: subject
+          AttributeType: S
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: subject
+          KeyType: HASH
+        - AttributeName: id
+          KeyType: RANGE
+
   # Per-card progress rows: PK userId (Auth0 sub) + SK cardKey ("<subject>#<cardId>").
   ProgressTable:
     Type: AWS::DynamoDB::Table
@@ -62,7 +85,7 @@ Resources:
       CorsConfiguration:
         AllowOrigins: !Ref AllowedOrigins
         AllowHeaders: [Content-Type, Authorization]
-        AllowMethods: [GET, PUT, DELETE, OPTIONS]
+        AllowMethods: [GET, POST, PUT, DELETE, OPTIONS]
         MaxAge: 600
       Auth:
         Authorizers:
@@ -106,6 +129,49 @@ Resources:
             Path: /progress/{subject}
             Method: DELETE
 
+  CardsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: cards/
+      Handler: index.handler
+      Description: !Sub "Dev Drill question banks handler - ${Environment}"
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref CardsTableName
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CardsTableName
+      Events:
+        # Public read — no authorizer, so the app can load banks anonymously.
+        ListCards:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref DrillHttpApi
+            Path: /cards/{subject}
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        # Writes require a valid token; the Lambda also checks the manage:cards
+        # permission claim before mutating.
+        CreateCard:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref DrillHttpApi
+            Path: /cards/{subject}
+            Method: POST
+        UpdateCard:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref DrillHttpApi
+            Path: /cards/{subject}/{cardId}
+            Method: PUT
+        DeleteCard:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref DrillHttpApi
+            Path: /cards/{subject}/{cardId}
+            Method: DELETE
+
 Outputs:
   ApiUrl:
     Description: Base URL for VITE_API_URL (local .env + Vercel env)
@@ -113,3 +179,6 @@ Outputs:
   ProgressTableName:
     Description: DynamoDB progress table name
     Value: !Ref ProgressTableName
+  CardsTableName:
+    Description: DynamoDB cards table name (seed target)
+    Value: !Ref CardsTableName
