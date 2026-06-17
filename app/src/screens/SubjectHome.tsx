@@ -8,6 +8,7 @@ import { useSubjectCtx } from './SubjectLayout';
 import { Session } from './Session';
 import { NothingDue } from './NothingDue';
 import { formatNextDue } from './NothingDue';
+import { AuthButtons } from '../auth/AuthButtons';
 
 type Mode =
   | { name: 'start' }
@@ -114,6 +115,7 @@ export function SubjectHome() {
 
   return (
     <div className="screen">
+      <div className="auth-bar"><AuthButtons /></div>
       <header className="app-header">
         <button className="exit-btn subjects-back" onClick={() => navigate('/')}>← Subjects</button>
         <h1 className="app-title">{subject.label}</h1>

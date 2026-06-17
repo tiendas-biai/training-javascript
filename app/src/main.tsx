@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
+import { Auth0ProviderWithNavigate } from './auth/Auth0ProviderWithNavigate';
 import { migrateStorageKeys } from './lib/migrate';
 
 migrateStorageKeys();
@@ -9,7 +10,9 @@ migrateStorageKeys();
 createRoot(document.getElementById('app')!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <Auth0ProviderWithNavigate>
+        <App />
+      </Auth0ProviderWithNavigate>
     </BrowserRouter>
   </StrictMode>,
 );

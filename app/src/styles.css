@@ -42,6 +42,27 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
 .app-title   { font-size: 2rem; font-weight: 700; }
 .app-subtitle { color: var(--muted); font-size: 0.95rem; margin-top: 4px; }
 
+/* ── Auth (login/logout) ── */
+.auth-bar { display: flex; justify-content: flex-end; align-items: center; min-height: 32px; margin-bottom: 8px; }
+.auth-btn {
+  padding: 6px 14px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.auth-btn:hover { border-color: var(--accent); color: var(--accent); }
+.auth-user { display: flex; align-items: center; gap: 10px; }
+.auth-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.auth-avatar-fallback {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #fff; font-weight: 700; text-transform: uppercase;
+}
+
 /* ── Session size toggle ── */
 .size-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
 .size-toggle {
