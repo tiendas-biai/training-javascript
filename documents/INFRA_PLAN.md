@@ -45,9 +45,10 @@ No `drill*` tables or `*drill*` functions exist yet — clean slate for us.
 
 1. **Integrate into the shared `entorno-biai` API** (not a dedicated API).
 2. **Per-env Auth0 tenant with a dedicated authorizer.** Dev uses the `dev-zhk0…`
-   tenant + audience `https://dev-drill-api`; `wire-api.sh` creates a dedicated
-   `dev-drill-auth0` JWT authorizer for it (kept separate from the shared prod
-   `auth0-authorizer`/`hnjqjd`, which trusts the production `entornobiai` tenant).
+   tenant + audience `https://entorno-biai` (that tenant's own "Entorno Biai API";
+   identifiers are per-tenant, so the issuer/tenant is what separates dev from prod).
+   `wire-api.sh` creates a dedicated `dev-drill-auth0` JWT authorizer for it, kept
+   separate from the shared prod `auth0-authorizer`/`hnjqjd`.
 3. **Enforce JWT at the gateway** on `/progress/*` and card writes; `GET /cards/*` public.
 
 Forced deviation: **runtime `nodejs22.x`**, because AWS disabled new-function creation

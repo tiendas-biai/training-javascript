@@ -13,8 +13,9 @@ account convention. Full design + audit: [`../documents/INFRA_PLAN.md`](../docum
   guards `/progress/*` + card writes — separate from the shared prod `auth0-authorizer`.
   It trusts our app's Auth0 tenant; the Lambda then trusts
   `requestContext.authorizer.jwt.claims.sub` — never the path/body. The dev env uses the
-  `dev-zhk0…` tenant + audience `https://dev-drill-api` (override via `ISSUER`/`AUDIENCE`
-  env vars when running `wire-api.sh`).
+  `dev-zhk0…` tenant + audience `https://entorno-biai` (the dev tenant's own "Entorno Biai
+  API"). The **issuer** (tenant) is what separates dev from prod — override the tenant via
+  `ISSUER`/`AUDIENCE` env vars when running `wire-api.sh`.
 
 ## Routes (on the shared API)
 

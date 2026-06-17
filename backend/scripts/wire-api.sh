@@ -16,8 +16,8 @@ ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
 
 # Our own authorizer (kept separate from the shared prod "auth0-authorizer").
 AUTH_NAME="${AUTH_NAME:-dev-drill-auth0}"
-ISSUER="${ISSUER:-https://dev-zhk0rclzhr4i4q0b.us.auth0.com/}"   # dev tenant
-AUDIENCE="${AUDIENCE:-https://dev-drill-api}"                    # API identifier in that tenant
+ISSUER="${ISSUER:-https://dev-zhk0rclzhr4i4q0b.us.auth0.com/}"   # dev tenant (issuer distinguishes dev vs prod)
+AUDIENCE="${AUDIENCE:-https://entorno-biai}"                     # "Entorno Biai API" identifier in that tenant
 
 q() { aws apigatewayv2 "$@" --api-id "$API_ID" --region "$REGION"; }
 
@@ -28,7 +28,12 @@ INTS_JSON="$(q get-integrations --output json)"
 ensure_authorizer() {
   local id
   id="$(jq -r --arg n "$AUTH_NAME" '.Items[] | select(.Name==$n) | .AuthorizerId' <<<"$AUTHZ_JSON" | head -n1)"
-  if [[ -n "$id" ]]; then echo "$id"; return; fi
+  if [[ -n "$id" ]]; then
+    # Converge issuer/audience in case they changed.
+    q update-authorizer --authorizer-id "$id" \
+      --jwt-configuration "Issuer=${ISSUER},Audience=${AUDIENCE}" >/dev/null
+    echo "$id"; return
+  fi
   q create-authorizer --name "$AUTH_NAME" --authorizer-type JWT \
     --identity-source '$request.header.Authorization' \
     --jwt-configuration "Issuer=${ISSUER},Audience=${AUDIENCE}" \
