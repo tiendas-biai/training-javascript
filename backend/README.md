@@ -1,17 +1,21 @@
 # Dev Drill — backend (AWS SAM)
 
-Per-user progress API for the Dev Drill app. Separate from the Vercel frontend.
+Progress + cards API for the Dev Drill app. This stack deploys **only Lambdas +
+DynamoDB tables**; the routes live on the **shared `entorno-biai` HTTP API**
+(`m02lp78cnl`), dispatched per stage (dev/prod) by stage variables — matching the
+account convention. Full design + audit: [`../documents/INFRA_PLAN.md`](../documents/INFRA_PLAN.md).
 
-- **`ProgressFunction`** (`progress/`) — Node 24 Lambda, GET/PUT/DELETE per-user progress.
-- **`CardsFunction`** (`cards/`) — Node 24 Lambda, public GET banks + admin writes.
-- **`drill-progress-{env}`** — DynamoDB table, PK `userId` (Auth0 `sub`) + SK `cardKey` (`<subject>#<cardId>`), `PAY_PER_REQUEST`.
-- **`drill-cards-{env}`** — DynamoDB table, PK `subject` + SK `id` (question banks, a derived read model).
-- **HTTP API** with an **Auth0 JWT authorizer** (validates issuer + audience). The Lambda
-  trusts `requestContext.authorizer.jwt.claims.sub` as the user id — never the path/body.
+- **`ProgressFunction`** (`progress/`) — Node 22 Lambda, GET/PUT/DELETE per-user progress.
+- **`CardsFunction`** (`cards/`) — Node 22 Lambda, public GET banks + admin writes.
+- **`drill-progress`/`-dev`** — DynamoDB, PK `userId` (Auth0 `sub`) + SK `cardKey` (`<subject>#<cardId>`).
+- **`drill-cards`/`-dev`** — DynamoDB, PK `subject` + SK `id` (question banks, derived read model).
+- Auth: the shared API's existing **Auth0 JWT authorizer** (`hnjqjd`, tenant
+  `entornobiai`, audience `https://entorno-biai`) guards `/progress/*` + card writes.
+  The Lambda trusts `requestContext.authorizer.jwt.claims.sub` — never the path/body.
 
-## Routes
+## Routes (on the shared API)
 
-Progress (all require a valid Auth0 access token):
+Progress (require a valid Auth0 access token):
 
 | Method | Path | Action |
 |---|---|---|
@@ -28,22 +32,6 @@ Cards (GET public; writes require the `manage:cards` permission claim):
 | PUT | `/cards/{subject}/{cardId}` | Admin — upsert a card (id from path) |
 | DELETE | `/cards/{subject}/{cardId}` | Admin — delete a card |
 
-## Seed the cards table
-
-JSON in `app/data/*.json` stays the source of truth; the table is a derived read model.
-After deploy (or whenever the banks change):
-
-```bash
-npm install                                   # backend/ tooling deps (AWS SDK)
-TABLE_NAME=drill-cards-dev npm run seed        # BatchWriteItem app/data/*.json → table
-```
-
-## Prerequisites
-
-1. Auth0 **API** created with identifier `https://dev-drill-api`, signing RS256.
-2. Set the real tenant domain in `samconfig.toml` (replace `REPLACE_ME.us.auth0.com`).
-3. AWS credentials configured for `us-east-1`.
-
 ## Develop & test
 
 ```bash
@@ -55,22 +43,39 @@ cd ..       && sam validate --lint         # template lint
 ## Deploy
 
 ```bash
+# 1) Lambdas + tables for this env
 sam build
-sam deploy --config-env dev      # or: --config-env prod
+sam deploy --config-env dev                 # or: --config-env prod
+
+# 2) Wire the shared entorno-biai API (scripts are idempotent)
+./scripts/wire-api.sh                        # integrations + routes — run ONCE (env-independent)
+./scripts/set-stage-vars.sh dev              # point the dev stage at the dev functions
+./scripts/add-cors-origin.sh                 # add the Vercel origin to shared CORS — run once
+
+# 3) Seed the cards read model (optional; JSON in app/data stays source of truth)
+npm install && TABLE_NAME=drill-cards-dev npm run seed
 ```
 
-Copy the `ApiUrl` stack output into the frontend's `VITE_API_URL`
-(`app/.env` for local, Vercel project settings for prod).
+For prod: `sam deploy --config-env prod && ./scripts/set-stage-vars.sh prod`
+(prod stage AutoDeploys; dev does not, so `set-stage-vars.sh dev` forces a deployment).
 
-## Smoke test (after deploy)
+## Smoke test
 
 ```bash
-TOKEN=...    # an Auth0 access token for audience https://dev-drill-api
-API=...      # ApiUrl output
-curl -s "$API/progress/react" -H "Authorization: Bearer $TOKEN"            # -> {}
+API=https://m02lp78cnl.execute-api.us-east-1.amazonaws.com/dev
+TOKEN=...   # Auth0 access token, audience https://entorno-biai
+
+curl -s "$API/cards/react"                                                   # public -> Card[]
+curl -s "$API/progress/react"                                                # -> 401 (no token)
+curl -s "$API/progress/react" -H "Authorization: Bearer $TOKEN"              # -> {}
 curl -s -X PUT "$API/progress/react/react-hooks-001" \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"id":"react-hooks-001","phase":"review","interval":5,"ease":2.5}'   # -> 204
-curl -s "$API/progress/react" -H "Authorization: Bearer $TOKEN"            # -> { "react-hooks-001": {...} }
-curl -s "$API/progress/react"                                              # -> 401 (no token)
+  -d '{"id":"react-hooks-001","phase":"review","interval":5,"ease":2.5}'     # -> 204
+```
+
+## Teardown
+
+```bash
+./scripts/unwire-api.sh           # remove routes + integrations from the shared API
+sam delete --config-env dev       # remove this env's functions + tables
 ```

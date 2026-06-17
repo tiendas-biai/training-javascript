@@ -1,63 +1,43 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Dev Drill - per-user progress API (Lambda + DynamoDB + Auth0 JWT authorizer)
+Description: Dev Drill - progress + cards Lambdas & DynamoDB tables (wired into the shared entorno-biai HTTP API)
+
+# This stack deploys ONLY Lambdas + tables (+ invoke permission), matching the
+# account convention: the shared HTTP API "entorno-biai" (m02lp78cnl) owns the
+# routes/stages and dispatches dev|prod via stage variables. Routes, integrations,
+# stage variables and CORS are wired by backend/scripts/*. See documents/INFRA_PLAN.md.
 
 Parameters:
   Environment:
     Type: String
     Default: dev
     AllowedValues: [dev, prod]
-    Description: Deployment environment
+    Description: Deployment environment (drives function/table names)
 
-  Auth0Domain:
+  SharedApiId:
     Type: String
-    Description: Auth0 tenant domain, e.g. dev-xxxx.us.auth0.com (no scheme, no trailing slash)
-
-  Auth0Audience:
-    Type: String
-    Default: https://dev-drill-api
-    Description: Auth0 API identifier (the access-token audience)
-
-  AllowedOrigins:
-    Type: CommaDelimitedList
-    Default: "http://localhost:5173,https://training-javascript-one.vercel.app"
-    Description: CORS allow-list for the HTTP API
+    Default: m02lp78cnl
+    Description: ID of the shared entorno-biai HTTP API allowed to invoke these functions
 
   ProgressTableName:
     Type: String
     Default: drill-progress-dev
-    Description: DynamoDB table name for per-user progress
+    Description: DynamoDB table name for per-user progress (prod has no -dev suffix)
 
   CardsTableName:
     Type: String
     Default: drill-cards-dev
-    Description: DynamoDB table name for the question banks (read model)
+    Description: DynamoDB table name for the question banks read model
 
 Globals:
   Function:
-    Runtime: nodejs24.x
+    # nodejs22.x: AWS disabled new-function creation on nodejs20.x (2026-06-01).
+    Runtime: nodejs22.x
     MemorySize: 256
     Timeout: 15
+    Architectures: [arm64]
 
 Resources:
-  # Question banks (derived read model; JSON in app/data stays the source of truth).
-  # PK subject + SK id, so one Query returns a whole subject's cards.
-  CardsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Ref CardsTableName
-      BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-        - AttributeName: subject
-          AttributeType: S
-        - AttributeName: id
-          AttributeType: S
-      KeySchema:
-        - AttributeName: subject
-          KeyType: HASH
-        - AttributeName: id
-          KeyType: RANGE
-
   # Per-card progress rows: PK userId (Auth0 sub) + SK cardKey ("<subject>#<cardId>").
   ProgressTable:
     Type: AWS::DynamoDB::Table
@@ -75,31 +55,28 @@ Resources:
         - AttributeName: cardKey
           KeyType: RANGE
 
-  # HTTP API with an Auth0 JWT authorizer applied to every route by default.
-  # The authorizer validates issuer + audience; the Lambda then trusts
-  # requestContext.authorizer.jwt.claims.sub as the user id (never the body).
-  DrillHttpApi:
-    Type: AWS::Serverless::HttpApi
+  # Question banks (derived read model; JSON in app/data stays the source of truth).
+  CardsTable:
+    Type: AWS::DynamoDB::Table
     Properties:
-      StageName: !Ref Environment
-      CorsConfiguration:
-        AllowOrigins: !Ref AllowedOrigins
-        AllowHeaders: [Content-Type, Authorization]
-        AllowMethods: [GET, POST, PUT, DELETE, OPTIONS]
-        MaxAge: 600
-      Auth:
-        Authorizers:
-          Auth0JwtAuthorizer:
-            IdentitySource: $request.header.Authorization
-            JwtConfiguration:
-              issuer: !Sub "https://${Auth0Domain}/"
-              audience:
-                - !Ref Auth0Audience
-        DefaultAuthorizer: Auth0JwtAuthorizer
+      TableName: !Ref CardsTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: subject
+          AttributeType: S
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: subject
+          KeyType: HASH
+        - AttributeName: id
+          KeyType: RANGE
 
   ProgressFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # Explicit name so the shared API's stage variable can target it deterministically.
+      FunctionName: !Sub "dev-drill-progress-${Environment}"
       CodeUri: progress/
       Handler: index.handler
       Description: !Sub "Dev Drill per-user progress handler - ${Environment}"
@@ -109,29 +86,11 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ProgressTableName
-      Events:
-        GetProgress:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref DrillHttpApi
-            Path: /progress/{subject}
-            Method: GET
-        PutProgress:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref DrillHttpApi
-            Path: /progress/{subject}/{cardId}
-            Method: PUT
-        ResetProgress:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref DrillHttpApi
-            Path: /progress/{subject}
-            Method: DELETE
 
   CardsFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Sub "dev-drill-cards-${Environment}"
       CodeUri: cards/
       Handler: index.handler
       Description: !Sub "Dev Drill question banks handler - ${Environment}"
@@ -141,41 +100,31 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CardsTableName
-      Events:
-        # Public read — no authorizer, so the app can load banks anonymously.
-        ListCards:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref DrillHttpApi
-            Path: /cards/{subject}
-            Method: GET
-            Auth:
-              Authorizer: NONE
-        # Writes require a valid token; the Lambda also checks the manage:cards
-        # permission claim before mutating.
-        CreateCard:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref DrillHttpApi
-            Path: /cards/{subject}
-            Method: POST
-        UpdateCard:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref DrillHttpApi
-            Path: /cards/{subject}/{cardId}
-            Method: PUT
-        DeleteCard:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref DrillHttpApi
-            Path: /cards/{subject}/{cardId}
-            Method: DELETE
+
+  # Allow the shared HTTP API to invoke each function (any stage/route on that API).
+  ProgressInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProgressFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SharedApiId}/*/*"
+
+  CardsInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CardsFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SharedApiId}/*/*"
 
 Outputs:
-  ApiUrl:
-    Description: Base URL for VITE_API_URL (local .env + Vercel env)
-    Value: !Sub "https://${DrillHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+  ProgressFunctionName:
+    Description: Set as the shared API stage variable "progressFunctionName" for this env
+    Value: !Ref ProgressFunction
+  CardsFunctionName:
+    Description: Set as the shared API stage variable "cardsFunctionName" for this env
+    Value: !Ref CardsFunction
   ProgressTableName:
     Description: DynamoDB progress table name
     Value: !Ref ProgressTableName

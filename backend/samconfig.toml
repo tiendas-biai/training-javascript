@@ -1,7 +1,8 @@
 version = 0.1
 
-# Fill in Auth0Domain (your tenant, e.g. dev-xxxx.us.auth0.com) before deploying.
-# All parameters here are PUBLIC config (no secrets) — safe to commit.
+# This stack deploys only Lambdas + tables. Routes/authorizer/CORS/stage-variables
+# on the shared entorno-biai API (m02lp78cnl) are wired by backend/scripts/*.
+# See documents/INFRA_PLAN.md.
 
 [dev.deploy.parameters]
 stack_name = "dev-drill-backend-dev"
@@ -10,7 +11,7 @@ s3_prefix = "dev-drill-backend-dev"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Environment=\"dev\" Auth0Domain=\"REPLACE_ME.us.auth0.com\" Auth0Audience=\"https://dev-drill-api\" ProgressTableName=\"drill-progress-dev\" CardsTableName=\"drill-cards-dev\" AllowedOrigins=\"http://localhost:5173,https://training-javascript-one.vercel.app\""
+parameter_overrides = "Environment=\"dev\" SharedApiId=\"m02lp78cnl\" ProgressTableName=\"drill-progress-dev\" CardsTableName=\"drill-cards-dev\""
 
 [dev.global.parameters]
 region = "us-east-1"
@@ -22,7 +23,7 @@ s3_prefix = "dev-drill-backend-prod"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Environment=\"prod\" Auth0Domain=\"REPLACE_ME.us.auth0.com\" Auth0Audience=\"https://dev-drill-api\" ProgressTableName=\"drill-progress-prod\" CardsTableName=\"drill-cards-prod\" AllowedOrigins=\"https://training-javascript-one.vercel.app\""
+parameter_overrides = "Environment=\"prod\" SharedApiId=\"m02lp78cnl\" ProgressTableName=\"drill-progress\" CardsTableName=\"drill-cards\""
 
 [prod.global.parameters]
 region = "us-east-1"
