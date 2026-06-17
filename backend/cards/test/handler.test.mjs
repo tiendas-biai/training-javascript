@@ -93,3 +93,21 @@ test("admin role survives a stringified user_roles claim", async () => {
   );
   assert.equal(res.statusCode, 204);
 });
+
+test("admin role is read from the configured namespaced claim (ROLES_CLAIM)", async () => {
+  mock.method(dynamoDBClient, "send", async () => ({}));
+  process.env.ROLES_CLAIM = "https://devdrill/user_roles";
+  try {
+    const res = await handler(
+      event({
+        method: "POST",
+        subject: "react",
+        claims: { "https://devdrill/user_roles": ["admin"], scope: "openid profile email" },
+        body: JSON.stringify({ id: "r4", question: "Q?" }),
+      }),
+    );
+    assert.equal(res.statusCode, 200);
+  } finally {
+    delete process.env.ROLES_CLAIM;
+  }
+});

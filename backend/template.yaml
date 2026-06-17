@@ -29,6 +29,14 @@ Parameters:
     Default: drill-cards-dev
     Description: DynamoDB table name for the question banks read model
 
+  RolesClaim:
+    Type: String
+    Default: ""
+    Description: >-
+      Optional namespaced access-token claim to read roles from for card-write
+      authorization (e.g. https://devdrill/user_roles). The non-namespaced
+      user_roles/roles claims are always checked too.
+
 Globals:
   Function:
     # nodejs22.x: AWS disabled new-function creation on nodejs20.x (2026-06-01).
@@ -97,6 +105,7 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref CardsTableName
+          ROLES_CLAIM: !Ref RolesClaim
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CardsTableName

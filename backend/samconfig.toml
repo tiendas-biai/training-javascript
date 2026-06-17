@@ -11,7 +11,8 @@ s3_prefix = "dev-drill-backend-dev"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Environment=\"dev\" SharedApiId=\"m02lp78cnl\" ProgressTableName=\"drill-progress-dev\" CardsTableName=\"drill-cards-dev\""
+# Set RolesClaim to your namespaced roles claim (e.g. https://devdrill/user_roles) if you namespace it.
+parameter_overrides = "Environment=\"dev\" SharedApiId=\"m02lp78cnl\" ProgressTableName=\"drill-progress-dev\" CardsTableName=\"drill-cards-dev\" RolesClaim=\"\""
 
 [dev.global.parameters]
 region = "us-east-1"
@@ -23,7 +24,7 @@ s3_prefix = "dev-drill-backend-prod"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Environment=\"prod\" SharedApiId=\"m02lp78cnl\" ProgressTableName=\"drill-progress\" CardsTableName=\"drill-cards\""
+parameter_overrides = "Environment=\"prod\" SharedApiId=\"m02lp78cnl\" ProgressTableName=\"drill-progress\" CardsTableName=\"drill-cards\" RolesClaim=\"\""
 
 [prod.global.parameters]
 region = "us-east-1"
