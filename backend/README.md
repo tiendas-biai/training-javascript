@@ -9,9 +9,12 @@ account convention. Full design + audit: [`../documents/INFRA_PLAN.md`](../docum
 - **`CardsFunction`** (`cards/`) — Node 22 Lambda, public GET banks + admin writes.
 - **`drill-progress`/`-dev`** — DynamoDB, PK `userId` (Auth0 `sub`) + SK `cardKey` (`<subject>#<cardId>`).
 - **`drill-cards`/`-dev`** — DynamoDB, PK `subject` + SK `id` (question banks, derived read model).
-- Auth: the shared API's existing **Auth0 JWT authorizer** (`hnjqjd`, tenant
-  `entornobiai`, audience `https://entorno-biai`) guards `/progress/*` + card writes.
-  The Lambda trusts `requestContext.authorizer.jwt.claims.sub` — never the path/body.
+- Auth: a **dedicated JWT authorizer `dev-drill-auth0`** (created by `wire-api.sh`)
+  guards `/progress/*` + card writes — separate from the shared prod `auth0-authorizer`.
+  It trusts our app's Auth0 tenant; the Lambda then trusts
+  `requestContext.authorizer.jwt.claims.sub` — never the path/body. The dev env uses the
+  `dev-zhk0…` tenant + audience `https://dev-drill-api` (override via `ISSUER`/`AUDIENCE`
+  env vars when running `wire-api.sh`).
 
 ## Routes (on the shared API)
 
