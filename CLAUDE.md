@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-A learning repo with two distinct parts:
+A learning repo with three parts:
 
 1. **`exercises/`** — Coding challenges (mostly async/Promise patterns) with Jest tests.
-2. **`app/`** — A Vite + React + TypeScript spaced-repetition drill app (Dev Drill) with separate question banks for JavaScript, TypeScript, React, Node.js, and AWS SAA.
+2. **`app/`** — A Vite + React + TypeScript spaced-repetition drill app (Dev Drill) with separate question banks for JavaScript, TypeScript, React, Node.js, and AWS SAA. Anonymous users work against `localStorage`; signed-in users get **Auth0 login + per-user cloud progress**.
+3. **`backend/`** — An AWS SAM project (Lambdas + DynamoDB) behind the shared `entorno-biai` HTTP API, providing the per-user progress API and the question-banks read model. See **Part 3** and `documents/INFRA_PLAN.md`.
 
 ## Part 1 — Exercises
 
@@ -72,23 +73,35 @@ app/
 │   └── aws.json
 ├── public/fonts/           # Antonio + Inter woff2 (brand fonts)
 ├── src/
-│   ├── main.tsx            # entry: runs storage migration, mounts <App/> in BrowserRouter
-│   ├── App.tsx             # route table
+│   ├── main.tsx            # entry: storage migration, mounts <App/> in BrowserRouter + Auth0Provider
+│   ├── App.tsx             # route table; runs useCloudSync (login → local progress merge)
 │   ├── types.ts            # Card (discriminated union), Progress, Subject, Rating, …
+│   ├── auth/               # Auth0 (gated on isAuthConfigured; dormant until VITE_* set)
+│   │   ├── authEnv.ts      # reads VITE_AUTH0_*/VITE_API_URL (authEnv.mock for Jest); cardsFromApi flag
+│   │   ├── Auth0ProviderWithNavigate.tsx  # provider inside Router (localStorage token cache)
+│   │   ├── AuthButtons.tsx # login/logout/avatar (renders null until configured)
+│   │   ├── useIsAdmin.ts   # reads user_roles/roles from the Auth0 user
+│   │   └── RequireAdmin.tsx# route guard for admin-only screens
 │   ├── lib/                # pure logic — no DOM, fully unit-tested
-│   │   ├── subjects.ts     # subject registry — THE extension point for new subjects
+│   │   ├── subjects.ts     # subject registry; loadData prefers cards API when cardsFromApi, else bundled JSON
 │   │   ├── srs.ts          # SM-2: grade(), graduate(), previewIntervals(), getDueCards(), computeStats()
 │   │   ├── session.ts      # buildQueue(), advance(), applyFilters(), getCardType(), isMCQ/isMR guards
 │   │   ├── storage.ts      # localStorage wrapper, parameterised by storage key
 │   │   ├── migrate.ts      # one-time legacy migration: 'srs:all' → 'srs:javascript'
+│   │   ├── apiClient.ts    # makeApiClient(getToken): typed fetch + bearer token
+│   │   ├── cardsApi.ts     # CRUD client for the cards API (admin editor)
+│   │   ├── mergeProgress.ts# diffForUpload: later-wins per-card merge rule
+│   │   ├── cloudSync.ts    # syncSubjectToCloud: merge local → cloud, then clear local
+│   │   ├── progress/       # ProgressStore seam: types, localStore, remoteStore
 │   │   └── shuffle.ts
 │   ├── hooks/
-│   │   ├── useProgress.ts  # progress map state + persistence for a storage key
+│   │   ├── useProgress.ts  # auth-aware: Local vs Remote ProgressStore by isAuthenticated; loading guard
+│   │   ├── useCloudSync.ts # one-time local→cloud merge prompt on first authenticated load
 │   │   └── useSubjectData.ts # cached dynamic import of a subject's cards
 │   ├── components/         # RichText, badges/CardMeta, GradeButtons, SessionHeader
 │   ├── screens/            # SubjectPicker, SubjectLayout, SubjectHome, Session,
 │   │                       # RevealCard/MCQCard/MRCard, Summary, NothingDue,
-│   │                       # CardLibrary, CardDetail
+│   │                       # CardLibrary, CardDetail, AdminCards, AdminCardForm
 │   └── styles.css          # global, class-based (no CSS-in-JS); tiendasbiai brand palette
 │                           # (white/cream, cyan #0cc0df accent), Antonio headings + Inter body
 ├── index.html
@@ -104,6 +117,7 @@ app/
 - `lib/` has exhaustive unit tests (SM-2 math, queue mechanics, storage, migration). Time is controlled via `jest.spyOn(Date, 'now')`; shuffles via `jest.spyOn(Math, 'random')`.
 - Screens are tested with RTL + user-event; routing tests mock `lib/subjects` (dynamic JSON imports don't resolve under Jest) and render `<App/>` in a `MemoryRouter`.
 - `jest.polyfills.cjs` provides TextEncoder for react-router under jsdom.
+- **Auth in tests** (`jest.config.cjs` moduleNameMapper): `@auth0/auth0-react` → `src/test/auth0.mock.tsx` (anonymous, settled) so existing tests stay on the local path; `auth/authEnv` → `authEnv.mock.ts` because `import.meta.env` is invalid under the CommonJS transpile. Tests that need an authenticated/admin user override `@auth0/auth0-react` with a local `jest.mock` exposing a mutable `authState` (see `useProgress.test.tsx`, `admin.test.tsx`).
 - Session gotcha encoded in a test: card components reset via a per-presentation key (`${card.id}:${stats.reviewed}`) — `card.id` alone breaks when a learning card cycles back to the front.
 
 ### Subjects (`src/lib/subjects.ts`)
@@ -118,7 +132,7 @@ aws: {
 },
 ```
 
-Data files are dynamic-imported per subject, so Vite code-splits each bank into its own chunk. Progress is stored per subject under `srs:<id>`; "Reset progress" clears only the active subject.
+Data files are dynamic-imported per subject, so Vite code-splits each bank into its own chunk. Progress is stored per subject under `srs:<id>` (or in the cloud for signed-in users — see Part 3); "Reset progress" clears only the active subject. `loadData` is wrapped so that when `VITE_CARDS_FROM_API=true` it fetches the bank from the cards API and falls back to the bundled import; default (flag off) is the bundled JSON, unchanged.
 
 Current subjects: `javascript`, `react`, `node`, `typescript`, `aws`.
 
@@ -128,6 +142,7 @@ Current subjects: `javascript`, `react`, `node`, `typescript`, `aws`.
 - `/:subject` — subject home / start screen (e.g. `/javascript`)
 - `/:subject/card-library` — card library; filters live in the URL (`?filter=due&topic=Arrays&attempted=attempted&q=typeof`)
 - `/:subject/card/:id` — card detail page (e.g. `/javascript/card/types-prim-002`)
+- `/:subject/admin` — admin card editor (behind `RequireAdmin`; "⚙ Manage cards" link on SubjectHome for admins only)
 
 Unknown subject ids redirect to `/`; unknown card ids redirect to that subject's library.
 
@@ -145,11 +160,11 @@ Single mode — no drill/SRS toggle. Every card follows SM-2 (per subject):
   - Easy: `interval × ease × 1.3`, ease increases (max 3.0)
 - **Mastered** = review phase + interval ≥ 7 days
 
-Progress shape stored in `localStorage` (key `srs:<subject>`):
+Progress shape (key `srs:<subject>` in `localStorage`, same shape in the cloud):
 ```js
 { id, phase: 'learning'|'review', interval, ease, nextDue, lastReviewed, totalSeen }
 ```
-Legacy single-subject data (`srs:all`) is moved to `srs:javascript` once at boot by `lib/migrate.ts`. Old Leitner data (box/correctStreak shape) is auto-migrated on read via `getOrCreate()` in `lib/srs.ts`.
+Legacy single-subject data (`srs:all`) is moved to `srs:javascript` once at boot by `lib/migrate.ts`. Old Leitner data (box/correctStreak shape) is auto-migrated on read via `getOrCreate()` in `lib/srs.ts`. Where progress lives (localStorage vs cloud) is decided by `useProgress` via the `ProgressStore` seam — see Part 3.
 
 ### Session
 
@@ -173,7 +188,7 @@ As of June 2026:
 |---|---|---|
 | JavaScript | 267 | Arrays/Strings instance methods, Types, Scope, Async, Modern JS, Execution, Coercion, Functions, this, Prototypes, Error Handling |
 | TypeScript | 63 | Authored from the official Handbook: Primitive Types, Arrays & Objects, Functions, Interfaces & Generics, Classes, Type Narrowing |
-| React | 62 | Authored from react.dev: Components, JSX, State, Effects & Lifecycle, Props & Composition, Forms, Context, Refs |
+| React | 200 | Authored from react.dev: Components, JSX, State, Effects & Lifecycle, Props & Composition, Forms, Context, Refs |
 | Node.js | 61 | Authored from nodejs.org + expressjs.com: Event Loop, Modules, Events, Core API, Streams & Buffers, HTTP, Error Handling, Express |
 | AWS SAA | 184 | SAA-C03 exam-style scenario questions, weighted by official domain percentages (Secure 56, Resilient 50, High-Performing 42, Cost-Optimized 36); heaviest user of multiple-response cards |
 
@@ -240,3 +255,38 @@ Question, answer, and explanation text supports markdown-like formats via the `<
 - `FEATURE_PLAN.md` — implementation plan with architecture decisions and reference to `training-ai`
 - `MULTI_SUBJECT_PLAN.md` — multi-subject refactor plan (subject registry, per-subject storage, content pipeline)
 - `REACT_REFACTOR_PLAN.md` — the vanilla-JS → React/TypeScript refactor plan (phases, test scenarios, invariants)
+- `documents/AUTH0_AND_BACKEND_PLAN.md` — Auth0 + cloud-progress + cards-API plan (Phases 0–6)
+- `documents/INFRA_PLAN.md` — AWS infra: audit of the shared `entorno-biai` API + how this repo's backend integrates
+
+---
+
+## Part 3 — Auth0 login, cloud progress & backend
+
+Optional, **dormant until configured**: with no `VITE_*` env vars set, the app behaves exactly as Part 2 (anonymous, `localStorage`). The whole auth surface is gated on `isAuthConfigured` (`auth/authEnv.ts`). Plan + rationale in `documents/AUTH0_AND_BACKEND_PLAN.md`; infra audit/decisions in `documents/INFRA_PLAN.md`.
+
+### Frontend
+
+- **Auth0** via `@auth0/auth0-react`. `Auth0ProviderWithNavigate` wraps `<App/>` inside the router, `cacheLocation: "localstorage"` + refresh tokens. `AuthButtons` (login/logout/avatar) sit in the SubjectPicker/SubjectHome headers and render `null` until configured.
+- **Storage seam** — `useProgress(subject)` is auth-aware: `isAuthenticated ? RemoteProgressStore (API) : LocalProgressStore (localStorage)`, both implementing `lib/progress/types.ts`. The anonymous path hydrates synchronously (no loading flash, identical to before); the authenticated path loads async with a loading guard, optimistic writes, and bounded-backoff retry.
+- **Login migration** — on first authenticated load, `useCloudSync` offers a one-time merge of this device's local progress into the account (`mergeProgress.diffForUpload`: later-`lastReviewed` wins, `totalSeen` tiebreak; `cloudSync.syncSubjectToCloud` uploads only newer cards then clears local — never on a failed upload).
+- **Admin editor** — `/:subject/admin` (`RequireAdmin` + `useIsAdmin`) lists the **live** bank from the cards API and does create/edit/delete via `lib/cardsApi.ts`. Reads/writes `drill-cards`, so edits show in the editor immediately but only reach study sessions when `VITE_CARDS_FROM_API=true`.
+
+Env (`app/.env`, also Vercel) — see `app/.env.example`:
+```
+VITE_AUTH0_DOMAIN=…        VITE_AUTH0_CLIENT_ID=…
+VITE_AUTH0_AUDIENCE=https://entorno-biai
+VITE_API_URL=https://m02lp78cnl.execute-api.us-east-1.amazonaws.com/dev
+VITE_CARDS_FROM_API=false  # optional: serve banks from the cards API
+```
+
+### Backend (`backend/` — AWS SAM, us-east-1)
+
+Deploys **only Lambdas + DynamoDB tables**; routes live on the **shared `entorno-biai` HTTP API** (`m02lp78cnl`, stages `dev`/`prod`), dispatched per stage by stage variables — the account convention. `backend/README.md` has the full runbook.
+
+- **`ProgressFunction`** (`progress/`) — `GET/PUT/DELETE /progress/{subject}[/{cardId}]`; per-user rows in `drill-progress[-dev]` (PK `userId`=Auth0 `sub`, SK `<subject>#<cardId>`). `userId` comes only from `claims.sub`.
+- **`CardsFunction`** (`cards/`) — `GET /cards/{subject}` public; `POST/PUT/DELETE` admin-only (Lambda checks `manage:cards` permission OR an `admin` role in `user_roles`/`roles`/the `ROLES_CLAIM` namespaced claim). Banks in `drill-cards[-dev]` (PK `subject`, SK `id`) — a derived read model; **`app/data/*.json` stays the source of truth**, synced up via `backend/scripts/seed-cards.mjs`.
+- **Auth** — a dedicated `dev-drill-auth0` JWT authorizer (issuer = the dev Auth0 tenant, audience `https://entorno-biai`) created/converged by `backend/scripts/wire-api.sh`; guards `/progress/*` + card writes.
+- **Scripts** (`backend/scripts/`, idempotent, jq-based — never a client-side `--query` under CLI auto-pagination): `wire-api.sh` (authorizer + integrations + routes), `set-stage-vars.sh <env>`, `add-cors-origin.sh`, `unwire-api.sh`.
+- **Lambda tests** — `node --test` per function with a mocked `@aws-sdk/client-dynamodb` (`backend/{progress,cards}/test/`). `nodejs22.x`, arm64, `PAY_PER_REQUEST`.
+
+> Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live).
