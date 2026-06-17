@@ -1,6 +1,7 @@
 import type { Card, CardType, MCQCard, MRCard, Rating, SessionFilters } from '../types';
 import type { StoredProgressMap } from './srs';
 import { getDueCards } from './srs';
+import { shuffleCopy } from './shuffle';
 
 export function getCardType(card: Card): CardType {
   if (card.type) return card.type;
@@ -26,15 +27,18 @@ export function applyFilters(allCards: Card[], filters: SessionFilters): Card[] 
   });
 }
 
+// practice=true ignores due dates and draws from every filtered card (cram mode);
+// the caller is responsible for not persisting progress so the schedule is untouched.
 export function buildQueue(
   allCards: Card[],
   progressMap: StoredProgressMap,
   filters: SessionFilters,
   sessionSize: number,
+  practice = false,
 ): Card[] {
   const filtered = applyFilters(allCards, filters);
-  const due = getDueCards(filtered, progressMap);
-  return sessionSize === Infinity ? due : due.slice(0, sessionSize);
+  const pool = practice ? shuffleCopy(filtered) : getDueCards(filtered, progressMap);
+  return sessionSize === Infinity ? pool : pool.slice(0, sessionSize);
 }
 
 // cardExits=true removes the card; false keeps it cycling.

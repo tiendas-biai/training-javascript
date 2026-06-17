@@ -77,6 +77,21 @@ describe('buildQueue', () => {
     const queue = buildQueue(mixed, {}, { topic: 'Arrays' }, 10);
     expect(queue.map(c => c.id).sort()).toEqual(['r1', 'r2']);
   });
+
+  test('practice mode includes not-due cards that normal mode excludes', () => {
+    const future = Date.now() + 86_400_000;
+    const progress = Object.fromEntries(
+      cards.map(c => [c.id, { id: c.id, phase: 'review', interval: 5, ease: 2.5, nextDue: future, lastReviewed: 1, totalSeen: 1 }]),
+    );
+    expect(buildQueue(cards, progress, {}, Infinity)).toHaveLength(0);
+    expect(buildQueue(cards, progress, {}, Infinity, true)).toHaveLength(5);
+  });
+
+  test('practice mode still applies filters and caps at sessionSize', () => {
+    const mixed: Card[] = [reveal('r1'), mcq('m1'), reveal('r2')];
+    expect(buildQueue(mixed, {}, { topic: 'Arrays' }, 1, true)).toHaveLength(1);
+    expect(buildQueue(mixed, {}, { topic: 'Scope' }, 10, true).map(c => c.id)).toEqual(['m1']);
+  });
 });
 
 describe('advance', () => {

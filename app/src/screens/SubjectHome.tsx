@@ -9,7 +9,9 @@ import { Session } from './Session';
 import { NothingDue } from './NothingDue';
 import { formatNextDue } from './NothingDue';
 
-type Mode = { name: 'start' } | { name: 'session'; filters: SessionFilters; size: number; queue: Card[] };
+type Mode =
+  | { name: 'start' }
+  | { name: 'session'; filters: SessionFilters; size: number; queue: Card[]; practice: boolean };
 
 const EMPTY_FILTERS: SessionFilters = { topic: '', difficulty: '', type: '', tag: '' };
 
@@ -40,9 +42,9 @@ export function SubjectHome() {
     );
   }
 
-  function startSession(f: SessionFilters, size: number) {
-    const queue = buildQueue(cards, progressMap, f, size);
-    setMode({ name: 'session', filters: f, size, queue });
+  function startSession(f: SessionFilters, size: number, practice = false) {
+    const queue = buildQueue(cards, progressMap, f, size, practice);
+    setMode({ name: 'session', filters: f, size, queue, practice });
   }
 
   if (mode.name === 'session') {
@@ -62,8 +64,9 @@ export function SubjectHome() {
       <Session
         initialQueue={mode.queue}
         progressMap={progressMap}
-        onProgress={update}
-        onRestart={() => startSession(mode.filters, mode.size)}
+        // Practice (cram) sessions must not touch the SRS schedule, so swallow grades.
+        onProgress={mode.practice ? () => {} : update}
+        onRestart={() => startSession(mode.filters, mode.size, mode.practice)}
         onExit={() => setMode({ name: 'start' })}
       />
     );
@@ -97,6 +100,10 @@ export function SubjectHome() {
   const effectiveSize = sessionSize === Infinity
     ? Math.min(stats.dueToday, filtered.length)
     : Math.min(sessionSize, stats.dueToday);
+
+  const practiceSize = sessionSize === Infinity
+    ? filtered.length
+    : Math.min(sessionSize, filtered.length);
 
   const setFilter = (key: keyof SessionFilters) => (e: React.ChangeEvent<HTMLSelectElement>) =>
     setFilters(prev => ({ ...prev, [key]: e.target.value }));
@@ -174,6 +181,15 @@ export function SubjectHome() {
       </button>
       {nextDueTsFiltered != null && (
         <p className="next-due-hint">Next review {formatNextDue(nextDueTsFiltered)}</p>
+      )}
+
+      {filtered.length > 0 && (
+        <button
+          className="btn-secondary"
+          onClick={() => startSession(filters, sessionSize, true)}
+        >
+          Practice {practiceSize} cards · won't affect schedule
+        </button>
       )}
 
       <button className="btn-reset" onClick={handleReset}>Reset all progress</button>
