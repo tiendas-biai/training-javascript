@@ -12,6 +12,7 @@ export const METHOD_PUT = "PUT";
 export const METHOD_DELETE = "DELETE";
 
 export const MANAGE_CARDS = "manage:cards";
+export const ADMIN_ROLE = "admin";
 
 export const ERROR_METHOD_NOT_ALLOWED = "Method Not Allowed";
 export const ERROR_INTERNAL_SERVER = "Internal Server Error";

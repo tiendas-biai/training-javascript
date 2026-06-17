@@ -4,12 +4,10 @@ import { marshall } from "@aws-sdk/util-dynamodb";
 import { handler } from "../index.mjs";
 import { dynamoDBClient } from "../utils/dynamo.mjs";
 
-const event = ({ method, subject, cardId, body, permissions }) => ({
+const event = ({ method, subject, cardId, body, claims }) => ({
   requestContext: {
     http: { method },
-    ...(permissions !== undefined
-      ? { authorizer: { jwt: { claims: { permissions } } } }
-      : {}),
+    ...(claims !== undefined ? { authorizer: { jwt: { claims } } } : {}),
   },
   pathParameters: { ...(subject && { subject }), ...(cardId && { cardId }) },
   body,
@@ -27,9 +25,9 @@ test("GET is public and returns the subject's cards without the partition key", 
   assert.deepEqual(JSON.parse(res.body), [{ id: "r1", question: "Q?", topic: "Hooks" }]);
 });
 
-test("writes without manage:cards are forbidden", async () => {
+test("writes without manage:cards or admin role are forbidden", async () => {
   const res = await handler(
-    event({ method: "DELETE", subject: "react", cardId: "r1", permissions: ["read:x"] }),
+    event({ method: "DELETE", subject: "react", cardId: "r1", claims: { permissions: ["read:x"], user_roles: ["viewer"] } }),
   );
   assert.equal(res.statusCode, 403);
 });
@@ -46,7 +44,7 @@ test("PUT with manage:cards upserts under the path subject + cardId", async () =
       method: "PUT",
       subject: "react",
       cardId: "r1",
-      permissions: ["manage:cards"],
+      claims: { permissions: ["manage:cards"] },
       body: JSON.stringify({ id: "ignored", question: "Q?" }),
     }),
   );
@@ -63,9 +61,35 @@ test("manage:cards survives a stringified permissions claim", async () => {
     event({
       method: "POST",
       subject: "react",
-      permissions: "[manage:cards read:x]",
+      claims: { permissions: "[manage:cards read:x]" },
       body: JSON.stringify({ id: "r2", question: "Q?" }),
     }),
   );
   assert.equal(res.statusCode, 200);
+});
+
+test("admin role in user_roles authorizes writes (no manage:cards needed)", async () => {
+  mock.method(dynamoDBClient, "send", async () => ({}));
+  const res = await handler(
+    event({
+      method: "POST",
+      subject: "react",
+      claims: { user_roles: ["admin"], scope: "openid profile email" },
+      body: JSON.stringify({ id: "r3", question: "Q?" }),
+    }),
+  );
+  assert.equal(res.statusCode, 200);
+});
+
+test("admin role survives a stringified user_roles claim", async () => {
+  mock.method(dynamoDBClient, "send", async () => ({}));
+  const res = await handler(
+    event({
+      method: "DELETE",
+      subject: "react",
+      cardId: "r3",
+      claims: { user_roles: "[admin]" },
+    }),
+  );
+  assert.equal(res.statusCode, 204);
 });
