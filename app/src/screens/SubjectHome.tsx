@@ -9,6 +9,7 @@ import { Session } from './Session';
 import { NothingDue } from './NothingDue';
 import { formatNextDue } from './NothingDue';
 import { AuthButtons } from '../auth/AuthButtons';
+import { useIsAdmin } from '../auth/useIsAdmin';
 
 type Mode =
   | { name: 'start' }
@@ -20,6 +21,7 @@ export function SubjectHome() {
   const { subject, cards } = useSubjectCtx();
   const navigate = useNavigate();
   const { progressMap, update, reset, loading } = useProgress(subject);
+  const isAdmin = useIsAdmin();
 
   const [filters, setFilters] = useState<SessionFilters>(EMPTY_FILTERS);
   const [sessionSize, setSessionSize] = useState<number>(20);
@@ -210,6 +212,12 @@ export function SubjectHome() {
       )}
 
       <button className="btn-reset" onClick={handleReset}>Reset all progress</button>
+
+      {isAdmin && (
+        <button className="btn-secondary admin-link" onClick={() => navigate(`/${subject.id}/admin`)}>
+          ⚙ Manage cards
+        </button>
+      )}
     </div>
   );
 }

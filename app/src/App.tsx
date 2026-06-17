@@ -4,6 +4,8 @@ import { SubjectLayout } from './screens/SubjectLayout';
 import { SubjectHome } from './screens/SubjectHome';
 import { CardLibrary } from './screens/CardLibrary';
 import { CardDetail } from './screens/CardDetail';
+import { AdminCards } from './screens/AdminCards';
+import { RequireAdmin } from './auth/RequireAdmin';
 import { useCloudSync } from './hooks/useCloudSync';
 
 export function App() {
@@ -16,6 +18,7 @@ export function App() {
         <Route index element={<SubjectHome />} />
         <Route path="card-library" element={<CardLibrary />} />
         <Route path="card/:id" element={<CardDetail />} />
+        <Route path="admin" element={<RequireAdmin><AdminCards /></RequireAdmin>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

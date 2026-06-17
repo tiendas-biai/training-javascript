@@ -63,6 +63,32 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   background: var(--accent); color: #fff; font-weight: 700; text-transform: uppercase;
 }
 
+/* ── Admin card editor ── */
+.admin-link { margin-top: 12px; }
+.admin-new { margin-left: auto; padding: 8px 14px; }
+.admin-muted { color: var(--muted); font-size: 0.9rem; margin: 8px 0 12px; }
+.admin-error { color: #b00020; background: rgba(176,0,32,0.08); border-radius: 8px; padding: 8px 12px; margin: 8px 0; }
+.admin-actions { display: flex; gap: 8px; white-space: nowrap; }
+.admin-actions .btn-secondary, .admin-actions .btn-reset { padding: 6px 12px; font-size: 0.8rem; width: auto; margin: 0; }
+.admin-form { display: flex; flex-direction: column; gap: 14px; }
+.admin-form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.admin-form input, .admin-form textarea, .admin-form select {
+  padding: 9px 10px; border: 2px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text); font: inherit; font-weight: 400;
+}
+.admin-form input:disabled { opacity: 0.6; }
+.admin-form-row { display: flex; gap: 12px; }
+.admin-form-row label { flex: 1; }
+.admin-options { border: 2px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.admin-options legend { font-size: 0.8rem; font-weight: 600; color: var(--muted); padding: 0 6px; }
+.admin-option-row { display: flex; align-items: center; gap: 8px; }
+.admin-option-row input[type="text"], .admin-option-row > input:not([type]) { flex: 1; }
+.admin-remove { width: 32px; border: 2px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; font-size: 1rem; }
+.admin-remove:disabled { opacity: 0.4; cursor: default; }
+.admin-add-option { width: auto; align-self: flex-start; padding: 6px 12px; font-size: 0.8rem; margin: 0; }
+.admin-form-actions { display: flex; gap: 12px; }
+.admin-form-actions .btn-primary, .admin-form-actions .btn-secondary { width: auto; flex: 1; margin: 0; }
+
 /* ── Session size toggle ── */
 .size-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
 .size-toggle {
