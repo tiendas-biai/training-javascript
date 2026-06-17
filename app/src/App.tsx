@@ -4,8 +4,11 @@ import { SubjectLayout } from './screens/SubjectLayout';
 import { SubjectHome } from './screens/SubjectHome';
 import { CardLibrary } from './screens/CardLibrary';
 import { CardDetail } from './screens/CardDetail';
+import { useCloudSync } from './hooks/useCloudSync';
 
 export function App() {
+  useCloudSync(); // one-time merge of local progress into the account on login
+
   return (
     <Routes>
       <Route path="/" element={<SubjectPicker />} />
