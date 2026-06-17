@@ -1,0 +1,30 @@
+version = 0.1
+
+# This stack deploys only Lambdas + tables. Routes/authorizer/CORS/stage-variables
+# on the shared entorno-biai API (m02lp78cnl) are wired by backend/scripts/*.
+# See documents/INFRA_PLAN.md.
+
+[dev.deploy.parameters]
+stack_name = "dev-drill-backend-dev"
+resolve_s3 = true
+s3_prefix = "dev-drill-backend-dev"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+# Set RolesClaim to your namespaced roles claim (e.g. https://devdrill/user_roles) if you namespace it.
+parameter_overrides = "Environment=\"dev\" SharedApiId=\"m02lp78cnl\" ProgressTableName=\"drill-progress-dev\" CardsTableName=\"drill-cards-dev\" RolesClaim=\"\""
+
+[dev.global.parameters]
+region = "us-east-1"
+
+[prod.deploy.parameters]
+stack_name = "dev-drill-backend-prod"
+resolve_s3 = true
+s3_prefix = "dev-drill-backend-prod"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"prod\" SharedApiId=\"m02lp78cnl\" ProgressTableName=\"drill-progress\" CardsTableName=\"drill-cards\" RolesClaim=\"\""
+
+[prod.global.parameters]
+region = "us-east-1"

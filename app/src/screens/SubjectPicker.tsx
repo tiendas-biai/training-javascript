@@ -4,6 +4,7 @@ import type { Subject } from '../types';
 import { listSubjects } from '../lib/subjects';
 import { loadProgress } from '../lib/storage';
 import { computeStats } from '../lib/srs';
+import { AuthButtons } from '../auth/AuthButtons';
 
 interface Tile {
   subject: Subject;
@@ -29,6 +30,7 @@ export function SubjectPicker() {
 
   return (
     <div className="screen">
+      <div className="auth-bar"><AuthButtons /></div>
       <header className="app-header">
         <h1 className="app-title">Dev Drill</h1>
         <p className="app-subtitle">Pick a subject to study</p>

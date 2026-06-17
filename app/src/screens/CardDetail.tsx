@@ -11,7 +11,7 @@ export function CardDetail() {
   const { subject, cards } = useSubjectCtx();
   const { id } = useParams();
   const navigate = useNavigate();
-  const { progressMap } = useProgress(subject.storageKey);
+  const { progressMap } = useProgress(subject);
 
   const card = cards.find(c => c.id === id);
   if (!card) return <Navigate to={`/${subject.id}/card-library`} replace />;

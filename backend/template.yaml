@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Dev Drill - progress + cards Lambdas & DynamoDB tables (wired into the shared entorno-biai HTTP API)
+
+# This stack deploys ONLY Lambdas + tables (+ invoke permission), matching the
+# account convention: the shared HTTP API "entorno-biai" (m02lp78cnl) owns the
+# routes/stages and dispatches dev|prod via stage variables. Routes, integrations,
+# stage variables and CORS are wired by backend/scripts/*. See documents/INFRA_PLAN.md.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+    Description: Deployment environment (drives function/table names)
+
+  SharedApiId:
+    Type: String
+    Default: m02lp78cnl
+    Description: ID of the shared entorno-biai HTTP API allowed to invoke these functions
+
+  ProgressTableName:
+    Type: String
+    Default: drill-progress-dev
+    Description: DynamoDB table name for per-user progress (prod has no -dev suffix)
+
+  CardsTableName:
+    Type: String
+    Default: drill-cards-dev
+    Description: DynamoDB table name for the question banks read model
+
+  RolesClaim:
+    Type: String
+    Default: ""
+    Description: >-
+      Optional namespaced access-token claim to read roles from for card-write
+      authorization (e.g. https://devdrill/user_roles). The non-namespaced
+      user_roles/roles claims are always checked too.
+
+Globals:
+  Function:
+    # nodejs22.x: AWS disabled new-function creation on nodejs20.x (2026-06-01).
+    Runtime: nodejs22.x
+    MemorySize: 256
+    Timeout: 15
+    Architectures: [arm64]
+
+Resources:
+  # Per-card progress rows: PK userId (Auth0 sub) + SK cardKey ("<subject>#<cardId>").
+  ProgressTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref ProgressTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: cardKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: cardKey
+          KeyType: RANGE
+
+  # Question banks (derived read model; JSON in app/data stays the source of truth).
+  CardsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref CardsTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: subject
+          AttributeType: S
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: subject
+          KeyType: HASH
+        - AttributeName: id
+          KeyType: RANGE
+
+  ProgressFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # Explicit name so the shared API's stage variable can target it deterministically.
+      FunctionName: !Sub "dev-drill-progress-${Environment}"
+      CodeUri: progress/
+      Handler: index.handler
+      Description: !Sub "Dev Drill per-user progress handler - ${Environment}"
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ProgressTableName
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProgressTableName
+
+  CardsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "dev-drill-cards-${Environment}"
+      CodeUri: cards/
+      Handler: index.handler
+      Description: !Sub "Dev Drill question banks handler - ${Environment}"
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref CardsTableName
+          ROLES_CLAIM: !Ref RolesClaim
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CardsTableName
+
+  # Allow the shared HTTP API to invoke each function (any stage/route on that API).
+  ProgressInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProgressFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SharedApiId}/*/*"
+
+  CardsInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CardsFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SharedApiId}/*/*"
+
+Outputs:
+  ProgressFunctionName:
+    Description: Set as the shared API stage variable "progressFunctionName" for this env
+    Value: !Ref ProgressFunction
+  CardsFunctionName:
+    Description: Set as the shared API stage variable "cardsFunctionName" for this env
+    Value: !Ref CardsFunction
+  ProgressTableName:
+    Description: DynamoDB progress table name
+    Value: !Ref ProgressTableName
+  CardsTableName:
+    Description: DynamoDB cards table name (seed target)
+    Value: !Ref CardsTableName

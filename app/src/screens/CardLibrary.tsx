@@ -30,7 +30,7 @@ function StatusBadge({ card, progressMap }: { card: Card; progressMap: StoredPro
 export function CardLibrary() {
   const { subject, cards } = useSubjectCtx();
   const navigate = useNavigate();
-  const { progressMap } = useProgress(subject.storageKey);
+  const { progressMap } = useProgress(subject);
   const [params, setParams] = useSearchParams();
 
   const statusFilter = params.get('filter') ?? 'all';
