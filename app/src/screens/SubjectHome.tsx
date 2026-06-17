@@ -19,7 +19,7 @@ const EMPTY_FILTERS: SessionFilters = { topic: '', difficulty: '', type: '', tag
 export function SubjectHome() {
   const { subject, cards } = useSubjectCtx();
   const navigate = useNavigate();
-  const { progressMap, update, reset } = useProgress(subject.storageKey);
+  const { progressMap, update, reset, loading } = useProgress(subject);
 
   const [filters, setFilters] = useState<SessionFilters>(EMPTY_FILTERS);
   const [sessionSize, setSessionSize] = useState<number>(20);
@@ -39,6 +39,21 @@ export function SubjectHome() {
             ← Subjects
           </button>
         </div>
+      </div>
+    );
+  }
+
+  // Authenticated users load progress from the cloud; show a brief loading state
+  // so stats/session don't flash with empty progress. Anonymous load is synchronous.
+  if (loading) {
+    return (
+      <div className="screen">
+        <div className="auth-bar"><AuthButtons /></div>
+        <header className="app-header">
+          <button className="exit-btn subjects-back" onClick={() => navigate('/')}>← Subjects</button>
+          <h1 className="app-title">{subject.label}</h1>
+          <p className="app-subtitle">Loading your progress…</p>
+        </header>
       </div>
     );
   }
