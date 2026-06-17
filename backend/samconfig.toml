@@ -1,0 +1,28 @@
+version = 0.1
+
+# Fill in Auth0Domain (your tenant, e.g. dev-xxxx.us.auth0.com) before deploying.
+# All parameters here are PUBLIC config (no secrets) — safe to commit.
+
+[dev.deploy.parameters]
+stack_name = "dev-drill-backend-dev"
+resolve_s3 = true
+s3_prefix = "dev-drill-backend-dev"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"dev\" Auth0Domain=\"REPLACE_ME.us.auth0.com\" Auth0Audience=\"https://dev-drill-api\" ProgressTableName=\"drill-progress-dev\" AllowedOrigins=\"http://localhost:5173,https://training-javascript-one.vercel.app\""
+
+[dev.global.parameters]
+region = "us-east-1"
+
+[prod.deploy.parameters]
+stack_name = "dev-drill-backend-prod"
+resolve_s3 = true
+s3_prefix = "dev-drill-backend-prod"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"prod\" Auth0Domain=\"REPLACE_ME.us.auth0.com\" Auth0Audience=\"https://dev-drill-api\" ProgressTableName=\"drill-progress-prod\" AllowedOrigins=\"https://training-javascript-one.vercel.app\""
+
+[prod.global.parameters]
+region = "us-east-1"

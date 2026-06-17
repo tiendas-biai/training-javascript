@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Dev Drill - per-user progress API (Lambda + DynamoDB + Auth0 JWT authorizer)
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+    Description: Deployment environment
+
+  Auth0Domain:
+    Type: String
+    Description: Auth0 tenant domain, e.g. dev-xxxx.us.auth0.com (no scheme, no trailing slash)
+
+  Auth0Audience:
+    Type: String
+    Default: https://dev-drill-api
+    Description: Auth0 API identifier (the access-token audience)
+
+  AllowedOrigins:
+    Type: CommaDelimitedList
+    Default: "http://localhost:5173,https://training-javascript-one.vercel.app"
+    Description: CORS allow-list for the HTTP API
+
+  ProgressTableName:
+    Type: String
+    Default: drill-progress-dev
+    Description: DynamoDB table name for per-user progress
+
+Globals:
+  Function:
+    Runtime: nodejs24.x
+    MemorySize: 256
+    Timeout: 15
+
+Resources:
+  # Per-card progress rows: PK userId (Auth0 sub) + SK cardKey ("<subject>#<cardId>").
+  ProgressTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref ProgressTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: cardKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: cardKey
+          KeyType: RANGE
+
+  # HTTP API with an Auth0 JWT authorizer applied to every route by default.
+  # The authorizer validates issuer + audience; the Lambda then trusts
+  # requestContext.authorizer.jwt.claims.sub as the user id (never the body).
+  DrillHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Environment
+      CorsConfiguration:
+        AllowOrigins: !Ref AllowedOrigins
+        AllowHeaders: [Content-Type, Authorization]
+        AllowMethods: [GET, PUT, DELETE, OPTIONS]
+        MaxAge: 600
+      Auth:
+        Authorizers:
+          Auth0JwtAuthorizer:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer: !Sub "https://${Auth0Domain}/"
+              audience:
+                - !Ref Auth0Audience
+        DefaultAuthorizer: Auth0JwtAuthorizer
+
+  ProgressFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: progress/
+      Handler: index.handler
+      Description: !Sub "Dev Drill per-user progress handler - ${Environment}"
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ProgressTableName
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProgressTableName
+      Events:
+        GetProgress:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref DrillHttpApi
+            Path: /progress/{subject}
+            Method: GET
+        PutProgress:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref DrillHttpApi
+            Path: /progress/{subject}/{cardId}
+            Method: PUT
+        ResetProgress:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref DrillHttpApi
+            Path: /progress/{subject}
+            Method: DELETE
+
+Outputs:
+  ApiUrl:
+    Description: Base URL for VITE_API_URL (local .env + Vercel env)
+    Value: !Sub "https://${DrillHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+  ProgressTableName:
+    Description: DynamoDB progress table name
+    Value: !Ref ProgressTableName
