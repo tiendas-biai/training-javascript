@@ -2226,82 +2226,114 @@
     ]
   },
   "react-types-001": {
-    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Without types, a component can be called with the wrong props and you only find out at runtime. **How to type props:** define a `type`/`interface` for the props object and annotate the parameter — `function Greeting({ name }: { name: string })`, or a named `type Props = { name: string }` for reuse and clarity. **Why a named type:** it's reusable, self-documenting, and shows up in editor tooltips and autocompletion. **Optional vs required:** mark optional props with `?`. **Common mistakes:** typing props as `any` (defeats the point), forgetting `?` for optional props, or annotating the destructured fields individually instead of the whole props object.",
+    "example": "```tsx\ntype GreetingProps = {\n  name: string;\n  excited?: boolean; // optional\n};\n\nfunction Greeting({ name, excited = false }: GreetingProps) {\n  return <h2>Hello, {name}{excited ? '!' : '.'}</h2>;\n}\n\nexport default function App() {\n  return <Greeting name=\"Ada\" excited />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Typechecking",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — TypeScript with components",
+        "url": "https://react.dev/learn/typescript#typing-props"
+      },
+      {
+        "label": "react.dev — Using TypeScript",
+        "url": "https://react.dev/learn/typescript"
       }
     ]
   },
   "react-types-002": {
-    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** What type accepts 'any renderable content' for a `children` prop? **The answer:** `React.ReactNode`. It covers everything React can render — elements, strings, numbers, arrays of nodes, fragments, `null`, `undefined`, and booleans. **Why not `JSX.Element`:** that only allows a single element and rejects strings/numbers/arrays, so it's too narrow for `children`. **Why not `ReactElement`:** same problem. **Rule of thumb:** for the children slot, use `ReactNode`; for a prop that must be exactly one element, use `ReactElement`. **Common mistakes:** typing `children: JSX.Element` and then being unable to pass text or multiple nodes.",
+    "example": "```tsx\nimport type { ReactNode } from 'react';\n\nfunction Card({ children }: { children: ReactNode }) {\n  return <div style={{ border: '1px solid #ccc', padding: 8 }}>{children}</div>;\n}\n\nexport default function App() {\n  // Mixed children: text, number, and an element — all valid ReactNode.\n  return <Card>Total: {42} <strong>items</strong></Card>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Typechecking",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Typing children",
+        "url": "https://react.dev/learn/typescript#typing-children"
+      },
+      {
+        "label": "react.dev — ReactNode",
+        "url": "https://react.dev/reference/react/Children"
       }
     ]
   },
   "react-types-mcq-001": {
-    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** What's the right type for an input's `onChange` handler? **The answer:** `(e: React.ChangeEvent<HTMLInputElement>) => void`. **Why:** React passes a typed *synthetic* event; `ChangeEvent<HTMLInputElement>` makes `e.target` an `HTMLInputElement`, so `e.target.value` is correctly typed as `string`. **Why the others are wrong:** the DOM `Event` type doesn't know about React's synthetic event or the element; `MouseEvent` is for clicks, not changes; `any` throws away all safety. **Tip:** if you write the handler inline in JSX, TypeScript usually *infers* the event type, so you only annotate when extracting the handler. **Common mistakes:** using `any` or the wrong element generic (`HTMLTextAreaElement` vs `HTMLInputElement`).",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [value, setValue] = useState('');\n  // Extracted handler -> annotate with React.ChangeEvent<HTMLInputElement>.\n  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {\n    setValue(e.target.value); // e.target.value is typed as string\n  }\n  return <input value={value} onChange={handleChange} />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Typechecking",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Typing event handlers",
+        "url": "https://react.dev/learn/typescript#typing-dom-events"
+      },
+      {
+        "label": "react.dev — Using TypeScript",
+        "url": "https://react.dev/learn/typescript"
       }
     ]
   },
   "react-types-003": {
-    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** `useState` usually infers the type from the initial value — but sometimes the initial value doesn't represent the full intended type. **When to pass a type argument:** when the initial value is `null`/`undefined` (or otherwise narrower) but the state will later hold something else, e.g. `useState<User | null>(null)`. Without it, TypeScript infers `null` and rejects setting a `User`. **Why:** the generic tells TS the complete set of values the state can take. **When you don't need it:** `useState(0)` infers `number`, `useState('')` infers `string`. **Common mistakes:** omitting the generic for nullable state (later `setUser(user)` errors), or over-annotating where inference already works.",
+    "example": "```tsx\nimport { useState } from 'react';\n\ntype User = { id: number; name: string };\n\nexport default function App() {\n  // Without <User | null>, TS infers `null` and setUser(user) would error.\n  const [user, setUser] = useState<User | null>(null);\n  return (\n    <div>\n      <button onClick={() => setUser({ id: 1, name: 'Ada' })}>load</button>\n      <p>{user ? user.name : 'no user'}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Typechecking",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Typing useState",
+        "url": "https://react.dev/learn/typescript#typing-usestate"
+      },
+      {
+        "label": "react.dev — useState",
+        "url": "https://react.dev/reference/react/useState"
       }
     ]
   },
   "react-types-004": {
-    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Before TypeScript was common in React, how did you validate props? **PropTypes:** a *runtime* validation library — you declared `Component.propTypes = { name: PropTypes.string.isRequired }` and React logged a **development-time warning** if the props didn't match. **How TypeScript differs:** it checks types at **compile time** with zero runtime cost, catches errors in your editor before running, and covers far more (unions, generics, return types). **Why PropTypes faded:** TS supersedes it for static guarantees; PropTypes only warned at runtime in dev. **Common mistakes:** adding PropTypes *and* TS (redundant), or expecting PropTypes to catch errors in production (it's stripped/dev-only).",
+    "example": "```tsx\n// The modern, compile-time equivalent of PropTypes is just a TS type:\ntype ButtonProps = {\n  label: string;       // required (was PropTypes.string.isRequired)\n  disabled?: boolean;  // optional (was PropTypes.bool)\n};\n\nfunction Button({ label, disabled = false }: ButtonProps) {\n  return <button disabled={disabled}>{label}</button>;\n}\n\nexport default function App() {\n  return <Button label=\"Save\" />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Typechecking",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — TypeScript instead of PropTypes",
+        "url": "https://react.dev/learn/typescript"
+      },
+      {
+        "label": "legacy React — Typechecking With PropTypes",
+        "url": "https://legacy.reactjs.org/docs/typechecking-with-proptypes.html"
       }
     ]
   },
   "react-types-mcq-002": {
-    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A reusable `<List items renderItem />` should work for *any* item type while keeping `renderItem`'s argument correctly typed. **The answer:** make it a **generic component** — `function List<T>({ items, renderItem }: ListProps<T>)`, where `ListProps<T> = { items: T[]; renderItem: (item: T) => ReactNode }`. TypeScript infers `T` from the `items` you pass, so `renderItem`'s parameter is the exact item type. **Why not `any[]`/`object[]`:** they discard the element type, so `renderItem` loses safety and autocompletion. **Common mistakes:** using `any` to 'simplify', or casting inside `renderItem` instead of letting the generic flow the type through.",
+    "example": "```tsx\nimport type { ReactNode } from 'react';\n\ntype ListProps<T> = { items: T[]; renderItem: (item: T) => ReactNode };\n\nfunction List<T>({ items, renderItem }: ListProps<T>) {\n  return <ul>{items.map((item, i) => <li key={i}>{renderItem(item)}</li>)}</ul>;\n}\n\nexport default function App() {\n  // T is inferred as { id: number; name: string } — renderItem is fully typed.\n  const users = [{ id: 1, name: 'Ada' }, { id: 2, name: 'Linus' }];\n  return <List items={users} renderItem={u => <strong>{u.name}</strong>} />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Typechecking",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Generic components / TypeScript",
+        "url": "https://react.dev/learn/typescript"
+      },
+      {
+        "label": "TypeScript Handbook — Generics",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html"
       }
     ]
   },
   "react-types-005": {
-    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** `createContext` consumers often have to deal with a possible `undefined` default, scattering null checks. **The pattern:** type the context as your value `| undefined`, default to `undefined`, then wrap `useContext` in a **custom Hook** that throws a clear error if used outside a provider. After the throw, TypeScript narrows the value to non-undefined, so consumers get a clean typed value. **Why:** it centralizes the 'must be inside a provider' guarantee and improves error messages. **Common mistakes:** providing a fake default object (hides the missing-provider bug), or null-checking the context at every call site instead of once in the Hook.",
+    "example": "```tsx\nimport { createContext, useContext } from 'react';\n\ntype AuthValue = { user: string };\nconst AuthContext = createContext<AuthValue | undefined>(undefined);\n\nfunction useAuth(): AuthValue {\n  const ctx = useContext(AuthContext);\n  if (!ctx) throw new Error('useAuth must be used within <AuthContext.Provider>');\n  return ctx; // narrowed to AuthValue here\n}\n\nfunction Profile() {\n  const { user } = useAuth();\n  return <p>Hello {user}</p>;\n}\n\nexport default function App() {\n  return (\n    <AuthContext.Provider value={{ user: 'Ada' }}>\n      <Profile />\n    </AuthContext.Provider>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Typechecking",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Typing useContext",
+        "url": "https://react.dev/learn/typescript#typing-usecontext"
+      },
+      {
+        "label": "react.dev — useContext",
+        "url": "https://react.dev/reference/react/useContext"
       }
     ]
   },
   "react-types-006": {
-    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Should you annotate a component's return type (`: JSX.Element`)? **Usually no.** TypeScript **infers** the return type from the JSX you return — JSX expressions are valid element types — so an explicit annotation adds noise without catching anything extra. **When an annotation can help:** rarely, e.g. to enforce that a component may return `null` (`: React.ReactNode`) or for documentation in a shared library. **Why inference is enough:** if you return something non-renderable, TS errors at the return site regardless. **Common mistakes:** sprinkling `: JSX.Element` everywhere (clutter), or using `React.FC` mainly for its return typing when a plain function with typed props is simpler and avoids `FC`'s quirks.",
+    "example": "```tsx\n// No return annotation needed — TS infers it from the returned JSX.\nfunction Greeting({ name }: { name: string }) {\n  return <h2>Hi {name}</h2>;\n}\n\nexport default function App() {\n  return <Greeting name=\"Ada\" />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Typechecking",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — TypeScript: typing components",
+        "url": "https://react.dev/learn/typescript#typing-props"
+      },
+      {
+        "label": "react.dev — Why not React.FC",
+        "url": "https://react.dev/learn/typescript"
       }
     ]
   },
