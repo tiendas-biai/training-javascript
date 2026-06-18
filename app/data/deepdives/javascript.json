@@ -1554,5 +1554,385 @@
         "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map"
       }
     ]
+  },
+  "array-pop-001": {
+    "explanation": "**The problem:** what does `pop()` return on an **empty** array? **The answer: `undefined`** — there's no last element to remove, so it returns `undefined` and the array stays empty (length 0). **Why:** `pop()` removes and returns the final element; with nothing there, it has nothing to give. **Why it matters:** in a `while (arr.length) arr.pop()` drain loop the empty check guards you, but calling `pop()` blindly just yields `undefined` rather than throwing. **Common mistakes:** treating an `undefined` result as \"error\" vs \"empty\", or assuming `pop()` throws on an empty array (it doesn't).",
+    "example": "```js\nconst empty = [];\nconsole.log(empty.pop()); // undefined — nothing to remove\nconsole.log(empty.length); // 0\n\nconst a = [1];\nconsole.log(a.pop(), a.pop()); // 1 undefined — second call is empty\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.pop()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/pop"
+      }
+    ]
+  },
+  "array-pop-002": {
+    "explanation": "**The problem:** what does `pop()` return, and what's left in the array? **The answer:** it returns the **removed last element** (`3` for `[1,2,3]`) and **mutates** the array to `[1, 2]`. **Why:** `pop()` removes the final element in place, decrements `length`, and hands back that element — not an array. **Why it matters:** `pop` pairs with `push` to use an array as a stack (LIFO). **Common mistakes:** expecting `pop()` to return the remaining array or a single-element array (it returns the value), or forgetting it mutates the original.",
+    "example": "```js\nconst a = [1, 2, 3];\nconst v = a.pop();\nconsole.log(v); // 3   — the removed element\nconsole.log(a); // [1, 2] — mutated in place\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.pop()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/pop"
+      }
+    ]
+  },
+  "array-pop-003": {
+    "explanation": "**The problem:** is `pop()` mutating or does it return a copy? **The answer: it mutates** — `pop()` removes the last element from the **original** array in place and decrements `length`, returning the removed element. **Why:** along with `push`/`shift`/`unshift`/`splice`/`sort`/`reverse`/`fill`/`copyWithin`, it's one of the classic in-place mutators. **Why it matters:** in immutable/state code (e.g. React), mutating with `pop` can cause stale renders — copy first (`arr.slice(0, -1)`) instead. **Common mistakes:** assuming `pop()` returns a new array, or using it on shared/state arrays without copying.",
+    "example": "```js\nconst a = [1, 2, 3];\nconst b = a;\na.pop();\nconsole.log(a, b); // [1, 2] [1, 2] — same array, mutated\n\n// non-mutating alternative:\nconst orig = [1, 2, 3];\nconst without = orig.slice(0, -1);\nconsole.log(orig, without); // [1, 2, 3] [1, 2]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.pop()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/pop"
+      }
+    ]
+  },
+  "array-push-001": {
+    "explanation": "**The problem:** what does `push()` return — the array or something else? **The answer: the new `length`** of the array after the elements are appended. **Why:** returning the length lets you cheaply track size or use it in loops; `push` mutates the array in place and hands back a number, not the array. **Why it matters:** you can't chain off `push` as if it returned the array (`arr.push(x).push(y)` fails — the second `push` runs on a number). **Common mistakes:** expecting `push` to return the array (it returns the count) or the pushed element.",
+    "example": "```js\nconst a = [1, 2];\nconst len = a.push(3, 4);\nconsole.log(len); // 4 — new length\nconsole.log(a);   // [1, 2, 3, 4]\n// a.push(5).push(6); // TypeError — push returns a number, not the array\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.push()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push"
+      }
+    ]
+  },
+  "array-push-002": {
+    "explanation": "**The problem:** append **all** elements of array `b` onto `a` in one call, without creating a new array. **The answer: `a.push(...b)`** — spread expands `b` into individual arguments, so each element is pushed onto `a` in place. **Why not `a.push(b)`:** that appends `b` as a **single nested array** element. **Why not `a.concat(b)`:** it returns a **new** array and doesn't mutate `a`. **Why not `a.append`:** there's no such method. **The caveat:** for very large `b`, spread can hit the argument-count limit — use a loop or `for...of` then. **Common mistakes:** pushing the whole array, or expecting `concat` to mutate.",
+    "example": "```js\nconst a = [1, 2];\nconst b = [3, 4];\na.push(...b);     // spread b into individual args\nconsole.log(a);   // [1, 2, 3, 4] — mutated\n\nconst c = [1, 2];\nc.push([3, 4]);   // wrong: appends a nested array\nconsole.log(c);   // [1, 2, [3, 4]]\n```",
+    "resources": [
+      {
+        "label": "MDN — Spread syntax",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax"
+      }
+    ]
+  },
+  "array-push-003": {
+    "explanation": "**The problem:** does `push()` mutate or return a new array? **The answer: it mutates** — `push()` appends to the **end** of the original array in place and returns the new **length** (a number, not the array). **Why:** it's an in-place mutator, like `pop`/`shift`/`unshift`/`splice`. **Why it matters:** in immutable contexts (React state), prefer non-mutating appends like `[...arr, x]` or `arr.concat(x)` so references change and renders trigger. **Common mistakes:** assuming `push` returns the array (it returns the length), or mutating shared/state arrays directly.",
+    "example": "```js\nconst a = [1, 2];\nconst len = a.push(3);\nconsole.log(a, len); // [1, 2, 3] 3 — mutated, returns length\n\n// immutable append:\nconst next = [...a, 4];\nconsole.log(a, next); // [1, 2, 3] [1, 2, 3, 4]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.push()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push"
+      }
+    ]
+  },
+  "array-reduce-001": {
+    "explanation": "**The problem:** `reduce()` on an **empty** array with **no `initialValue`** throws a `TypeError`. **Why:** without an initial value, `reduce` uses the **first element** as the starting accumulator — but an empty array has no first element, so there's nothing to start from, and the spec mandates a `TypeError` rather than guessing. **The fix:** always pass an `initialValue` (e.g. `0`, `[]`, `{}`); then an empty array simply returns that initial value. **Why it matters:** reducing data of unknown length is unsafe without an initial value. **Common mistakes:** omitting `initialValue` and crashing on empty inputs, or assuming it returns `undefined` for empty arrays (it throws).",
+    "example": "```js\ntry {\n  [].reduce((acc, n) => acc + n); // no initialValue\n} catch (e) {\n  console.log(e.constructor.name); // TypeError\n}\nconsole.log([].reduce((acc, n) => acc + n, 0)); // 0 — safe with initialValue\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.reduce()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce"
+      }
+    ]
+  },
+  "array-reduce-002": {
+    "explanation": "**The problem:** how many times does the callback run for `[10].reduce((acc, n) => acc + n)` (no `initialValue`)? **The answer: `0`.** **Why:** with no `initialValue`, `reduce` takes the **single element** (`10`) as the accumulator and **skips** calling the callback for it — there's no second element to combine with, so the callback never fires; `reduce` returns `10` directly. **Why it matters:** for a one-element array without an initial value, the callback (and its side effects) won't run. **Common mistakes:** expecting one invocation, or a `TypeError` (that's only for an *empty* array with no initial value).",
+    "example": "```js\nlet calls = 0;\nconst r = [10].reduce((acc, n) => { calls++; return acc + n; });\nconsole.log(r, calls); // 10 0 — callback never called, element used as seed\n\nlet calls2 = 0;\nconst r2 = [10].reduce((acc, n) => { calls2++; return acc + n; }, 0);\nconsole.log(r2, calls2); // 10 1 — with initialValue, callback runs once\n```",
+    "resources": [
+      {
+        "label": "MDN — reduce() (without initialValue)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce#description"
+      }
+    ]
+  },
+  "array-reduce-003": {
+    "explanation": "**The problem:** `initialValue` changes **where** iteration starts. **With `initialValue`:** the accumulator begins as `initialValue` and the callback runs starting at **index 0** (every element is processed). **Without `initialValue`:** the accumulator begins as the **element at index 0**, and the callback runs starting at **index 1** (index 0 is consumed as the seed, not visited by the callback). **Why it matters:** the count of callback invocations and the handling of the first element differ, which affects accumulators like objects/strings. **Common mistakes:** forgetting that without an initial value the first element bypasses the callback, or that an empty array without an initial value throws.",
+    "example": "```js\nconst nums = [1, 2, 3];\nconst withInit = nums.reduce((acc, n, i) => { console.log('i', i); return acc + n; }, 0);\n// logs i 0, i 1, i 2  →  withInit = 6\nconst noInit = nums.reduce((acc, n, i) => { console.log('j', i); return acc + n; });\n// logs j 1, j 2       →  noInit = 6 (acc started at nums[0])\nconsole.log(withInit, noInit); // 6 6\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.reduce()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce"
+      }
+    ]
+  },
+  "array-reduceRight-001": {
+    "explanation": "**The problem:** `reduce()` and `reduceRight()` differ only in **direction**. **`reduce()`** folds **left-to-right** (index 0 → end); **`reduceRight()`** folds **right-to-left** (last index → 0). Everything else — `initialValue` rules, callback signature `(acc, cur, i, arr)`, empty-array behavior — is identical. **Why it matters:** direction changes the result for non-commutative operations like string building, subtraction, or array concatenation. **When to use `reduceRight`:** right-associative composition or processing from the end. **Common mistakes:** assuming the direction doesn't matter (it does for order-dependent folds), or that `reduceRight` reverses the array (it only changes traversal order).",
+    "example": "```js\nconst chars = ['a', 'b', 'c'];\nconsole.log(chars.reduce((acc, c) => acc + c, ''));      // 'abc' — left to right\nconsole.log(chars.reduceRight((acc, c) => acc + c, '')); // 'cba' — right to left\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.reduceRight()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduceRight"
+      }
+    ]
+  },
+  "array-reduceRight-002": {
+    "explanation": "**The problem:** `[['a','b'],['c','d'],['e','f']].reduceRight((acc, cur) => acc.concat(cur), [])` yields `['e','f','c','d','a','b']`. **Why:** `reduceRight` processes elements **right-to-left**, so the **last** sub-array `['e','f']` is concatenated first, then `['c','d']`, then `['a','b']` — building `['e','f','c','d','a','b']`. **Why not `['a','b','c','d','e','f']`:** that's what `reduce` (left-to-right) would produce. **Why not a full reverse:** within each pair, order is preserved (`'e','f'` stays `'e','f'`); only the **groups** are reversed. **Common mistakes:** expecting a deep reverse, or confusing the group order with element order.",
+    "example": "```js\nconst pairs = [['a', 'b'], ['c', 'd'], ['e', 'f']];\nconsole.log(pairs.reduceRight((acc, cur) => acc.concat(cur), []));\n// ['e','f','c','d','a','b'] — groups reversed, items within a group kept\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.reduceRight()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduceRight"
+      }
+    ]
+  },
+  "array-reverse-001": {
+    "explanation": "**The problem:** does `reverse()` return a new array or change the original? **The answer: it mutates** — `reverse()` reverses the array's elements **in place** and returns a **reference to the same** (now reversed) array. **Why it matters:** `const b = a.reverse()` makes `b` and `a` the **same** reversed array, not a copy — a common source of accidental shared mutation. **The non-mutating option:** `toReversed()` (ES2023) or `[...a].reverse()`. **Common mistakes:** assuming `reverse()` leaves the original intact, or that the returned value is an independent copy.",
+    "example": "```js\nconst a = [1, 2, 3];\nconst b = a.reverse();\nconsole.log(a); // [3, 2, 1] — original mutated\nconsole.log(a === b); // true — same array reference\n\nconst c = [1, 2, 3];\nconsole.log([...c].reverse(), c); // [3,2,1] [1,2,3] — copy-first keeps c intact\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.reverse()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reverse"
+      }
+    ]
+  },
+  "array-reverse-002": {
+    "explanation": "**The problem:** you want to reverse **without mutating** the original. **The answer: `toReversed()`** (ES2023) — it returns a **new** reversed array and leaves the source untouched. **Why it exists:** the classic `reverse()` mutates in place, which is dangerous for shared/state arrays; `toReversed` is the immutable counterpart (joining `toSorted`, `toSpliced`, and `with`). **Why the other names are wrong:** `reverseClone`, `reverseCopy`, `immutableReverse` aren't real methods. **The pre-ES2023 idiom:** `[...arr].reverse()`. **Common mistakes:** reaching for a made-up method name, or using `reverse()` on state and causing stale renders.",
+    "example": "```js\nconst a = [1, 2, 3];\nconst r = a.toReversed();\nconsole.log(r); // [3, 2, 1] — new array\nconsole.log(a); // [1, 2, 3] — original untouched\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.toReversed()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toReversed"
+      }
+    ]
+  },
+  "array-shift-001": {
+    "explanation": "**The problem:** what does `shift()` do and return? **The answer:** it **removes the first element**, returns it, and **mutates** the array (every remaining element shifts down one index, length decreases). **Why it matters:** `shift`/`push` together make a queue (FIFO); but `shift` is **O(n)** because all elements re-index, unlike `pop` which is O(1). **The empty case:** `shift()` on `[]` returns `undefined`. **Common mistakes:** assuming it returns the remaining array (it returns the removed element), forgetting the performance cost on large arrays, or using it on shared/state arrays without copying.",
+    "example": "```js\nconst a = [1, 2, 3];\nconst first = a.shift();\nconsole.log(first); // 1     — removed element\nconsole.log(a);     // [2, 3] — mutated, indices shifted\nconsole.log([].shift()); // undefined — empty array\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.shift()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/shift"
+      }
+    ]
+  },
+  "array-shift-002": {
+    "explanation": "**The problem:** what does `const v = a.shift()` produce for `a = [1, 2, 3]`? **The answer:** `v` is `1` (the removed first element) and `a` becomes `[2, 3]` (mutated). **Why:** `shift()` removes and returns the **first** element, then re-indexes the rest down by one. **Why not `undefined`/`[1, 2, 3]`:** the array isn't empty and `shift` does mutate it. **Why not `[1]`:** it returns the **value**, not a single-element array. **Common mistakes:** confusing `shift` (front) with `pop` (back), or expecting the original array to be unchanged.",
+    "example": "```js\nconst a = [1, 2, 3];\nconst v = a.shift();\nconsole.log(v, a); // 1 [2, 3]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.shift()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/shift"
+      }
+    ]
+  },
+  "array-slice-001": {
+    "explanation": "**The problem:** does `slice()` modify the original array? **The answer: no** — `slice(start, end)` returns a **shallow copy** of the `[start, end)` portion and leaves the original untouched. **Why it's useful:** quick copies (`arr.slice()` clones the whole array), safe sub-ranges, and non-mutating alternatives to `splice`. **The shallow caveat:** nested objects are shared by reference between the source and the slice. **Don't confuse it with `splice`,** which **mutates** and removes/inserts. **Common mistakes:** mixing up `slice` (copy, non-mutating) and `splice` (mutating), or expecting a deep copy.",
+    "example": "```js\nconst a = [1, 2, 3, 4];\nconst part = a.slice(1, 3);\nconsole.log(part); // [2, 3] — copy of [start, end)\nconsole.log(a);    // [1, 2, 3, 4] — unchanged\nconsole.log(a.slice() === a); // false — slice() clones\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.slice()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice"
+      }
+    ]
+  },
+  "array-slice-002": {
+    "explanation": "**The problem:** `['a','b','c','d','e'].slice(1, -1)` returns `['b','c','d']`. **Why:** `start` is inclusive and `end` is exclusive; a **negative `end`** counts from the end, so `-1` means \"up to (but not including) the last element\" — index `length - 1` = 4. So it copies indices 1, 2, 3 → `['b','c','d']`. **Why it's handy:** `slice(1, -1)` trims the first and last elements in one call. **Common mistakes:** treating `end` as inclusive, or thinking `-1` selects the last element (it's the exclusive bound — the last element is dropped).",
+    "example": "```js\nconst a = ['a', 'b', 'c', 'd', 'e'];\nconsole.log(a.slice(1, -1)); // ['b', 'c', 'd'] — drop first and last\nconsole.log(a.slice(-2));    // ['d', 'e'] — last two\nconsole.log(a.slice(2));     // ['c', 'd', 'e'] — from index 2 to end\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.slice()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice"
+      }
+    ]
+  },
+  "array-some-001": {
+    "explanation": "**The problem:** what does `some()` return for an **empty** array? **The answer: `false`** — vacuously, since there's no element that passes the test. **Why:** `some()` returns `true` only if it finds at least one element for which the callback is truthy; with zero elements, it never finds one. This is the mirror of `every([])` being `true`. **Why it matters:** `items.some(isInvalid)` is `false` for empty inputs (nothing invalid) — sometimes intended, sometimes a bug. **Common mistakes:** expecting `true` for `[]`, or forgetting the symmetric quirk with `every`.",
+    "example": "```js\nconsole.log([].some((x) => x > 0));        // false — vacuously false\nconsole.log([1, 2, 3].some((x) => x > 2)); // true  — 3 passes\nconsole.log([1, 2].some((x) => x > 5));    // false — none pass\nconsole.log([].every((x) => x > 0));       // true  — the symmetric case\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.some()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some"
+      }
+    ]
+  },
+  "array-some-002": {
+    "explanation": "**The problem:** how does `some()` short-circuit? **The answer:** it stops iterating **the moment the callback returns truthy** and returns `true`, skipping all remaining elements. If none pass, it visits everything and returns `false`. **Why:** once one element satisfies \"at least one\", the answer is decided, so further work is wasted. **Why it matters:** side effects after the first match won't run, and it's efficient on large arrays. **Common mistakes:** confusing it with `every` (which short-circuits on the first **falsy**), or assuming `some` always visits every element (it stops at the first truthy).",
+    "example": "```js\nconst seen = [];\nconst found = [1, 2, 3, 4].some((n) => {\n  seen.push(n);\n  return n === 2; // truthy at 2\n});\nconsole.log(found); // true\nconsole.log(seen);  // [1, 2] — stopped after the first match\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.some()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some"
+      }
+    ]
+  },
+  "array-some-003": {
+    "explanation": "**The problem:** does `some()` run the callback for empty slots (holes)? **The answer: no** — like `forEach`, `map`, `filter`, and `every`, `some()` **skips holes** in sparse arrays; the callback is never invoked for an empty slot. **Why it matters:** a hole can't make `some` return `true` since the predicate never runs on it. **The contrast:** the `find`/`findIndex`/`findLast` family and the `entries`/`keys`/`values` iterators **do** visit holes (as `undefined`). **Common mistakes:** assuming all iteration methods treat holes the same — they split into hole-skipping (`some` and friends) and hole-visiting (`find` family, iterators).",
+    "example": "```js\nconst sparse = [1, , 3]; // hole at index 1\nlet visits = 0;\nsparse.some((v) => { visits++; return false; });\nconsole.log(visits); // 2 — the hole at index 1 was skipped\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.some() (sparse arrays)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some#description"
+      }
+    ]
+  },
+  "array-sort-001": {
+    "explanation": "**The problem:** `[1, 30, 4, 21, 100000].sort()` gives `[1, 100000, 21, 30, 4]`, not numeric order. **Why:** the default `sort()` converts elements to **strings** and compares them **lexicographically** (by UTF-16 code units). As strings, `'100000' < '21' < '30' < '4'` because `'1' < '2' < '3' < '4'` at the first character. **The fix:** pass a comparator — `sort((a, b) => a - b)` for ascending numbers. **Why it's a classic trap:** numbers sort \"alphabetically\" by default. **Common mistakes:** sorting numbers without a comparator, or assuming `sort()` is numeric for number arrays.",
+    "example": "```js\nconsole.log([1, 30, 4, 21, 100000].sort());            // [1, 100000, 21, 30, 4] — string order\nconsole.log([1, 30, 4, 21, 100000].sort((a, b) => a - b)); // [1, 4, 21, 30, 100000]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.sort()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort"
+      }
+    ]
+  },
+  "array-sort-002": {
+    "explanation": "**The problem:** does `sort()` return a new array or mutate? **The answer: it mutates** — `sort()` orders the array **in place** and returns a **reference to the same** array. **Why it matters:** `const b = a.sort()` makes `b` and `a` the same sorted array; mutating shared/state arrays this way causes subtle bugs (and stale renders in React). **The immutable option:** `toSorted()` (ES2023) or `[...a].sort()`. **Also note:** `sort` is stable (equal elements keep their relative order) in modern engines. **Common mistakes:** assuming `sort()` leaves the original untouched, or that the return value is a copy.",
+    "example": "```js\nconst a = [3, 1, 2];\nconst b = a.sort((x, y) => x - y);\nconsole.log(a, a === b); // [1, 2, 3] true — same array, mutated\n\nconst c = [3, 1, 2];\nconsole.log([...c].sort((x, y) => x - y), c); // [1,2,3] [3,1,2] — copy-first\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.sort()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort"
+      }
+    ]
+  },
+  "array-sort-003": {
+    "explanation": "**The problem:** where do `undefined` values and empty slots (holes) land after a default `sort()`? **The answer:** all **`undefined` values sort to the end**, and **empty slots come after even the `undefined`s** — at the very end of the array. **Why:** `sort` moves `undefined`s to the end **without** calling the comparator on them, and holes are pushed past everything (they're not real elements). **Why it matters:** sparse or `undefined`-containing arrays don't sort the way you'd expect, and your comparator never sees those values. **Common mistakes:** writing a comparator assuming it handles `undefined`/holes (it's never called for them), or expecting them at the start.",
+    "example": "```js\nconst a = [3, undefined, 1, , 2]; // value undefined at idx 1, hole at idx 3\na.sort((x, y) => x - y);\nconsole.log(a);        // [1, 2, 3, undefined, <1 empty item>]\nconsole.log(a.length); // 5 — undefined precedes the hole at the very end\n```",
+    "resources": [
+      {
+        "label": "MDN — sort() (sorting with undefined)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#sorting_with_undefined_and_holes"
+      }
+    ]
+  },
+  "array-splice-001": {
+    "explanation": "**The problem:** what does `splice()` **return** (versus what it does to the array)? **The answer:** it returns an **array of the removed elements** — or an **empty array `[]`** if nothing was removed (e.g. a pure insertion). Separately, it **mutates** the original array in place. **Why two effects:** `splice(start, deleteCount, ...items)` can delete and/or insert; the return value reports only what was deleted. **Why it matters:** to get the modified array, read the original (it's mutated); the return value is the removed slice. **Common mistakes:** expecting `splice` to return the modified array (that's the mutated original), or assuming it's non-mutating like `slice`.",
+    "example": "```js\nconst a = [1, 2, 3, 4];\nconst removed = a.splice(1, 2); // remove 2 elements from index 1\nconsole.log(removed); // [2, 3] — the removed elements\nconsole.log(a);       // [1, 4]  — mutated original\nconsole.log([1, 2].splice(0, 0, 'x')); // [] — pure insert removes nothing\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.splice()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice"
+      }
+    ]
+  },
+  "array-splice-002": {
+    "explanation": "**The problem:** what does `[1,2,3,4,5].splice(2, 0, 'a', 'b')` do? **The answer:** it **inserts** `'a'` and `'b'` at index 2 **without removing** anything — `deleteCount` is `0`. The array becomes `[1, 2, 'a', 'b', 3, 4, 5]`, and `splice` returns `[]` (nothing removed). **Why:** the signature is `splice(start, deleteCount, ...itemsToInsert)`; a `deleteCount` of `0` means \"insert here\". **Why it matters:** this is the idiom for inserting at a position in place. **Common mistakes:** thinking it replaces elements at index 2 (that needs `deleteCount > 0`), or that `start` is `'a'` (the first arg is always the index).",
+    "example": "```js\nconst a = [1, 2, 3, 4, 5];\nconst removed = a.splice(2, 0, 'a', 'b'); // insert at index 2, delete none\nconsole.log(a);       // [1, 2, 'a', 'b', 3, 4, 5]\nconsole.log(removed); // [] — nothing removed\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.splice()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice"
+      }
+    ]
+  },
+  "array-splice-003": {
+    "explanation": "**The problem:** `splice()` and `slice()` are easy to confuse. **`splice(start, deleteCount, ...items)`:** **mutates** the array (removes and/or inserts) and **returns the removed elements**. **`slice(start, end)`:** **does not mutate** — it returns a **shallow copy** of the `[start, end)` range. **The mnemonic:** *spl*ice changes the array (it has an extra letter and extra power); slice just copies. **Why it matters:** using `splice` where you meant `slice` corrupts the source array. **Common mistakes:** swapping them, or assuming both take the same arguments (`slice`'s second arg is an end index; `splice`'s is a delete count).",
+    "example": "```js\nconst a = [1, 2, 3, 4];\nconsole.log(a.slice(1, 3)); // [2, 3] — copy, non-mutating\nconsole.log(a);             // [1, 2, 3, 4] — unchanged\n\nconst b = [1, 2, 3, 4];\nconsole.log(b.splice(1, 2)); // [2, 3] — removed elements\nconsole.log(b);              // [1, 4]  — mutated\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.splice()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice"
+      }
+    ]
+  },
+  "array-toReversed-001": {
+    "explanation": "**The problem:** `reverse()` and `toReversed()` both reverse — the key difference is mutation. **`reverse()`:** reverses **in place** and returns the **same** (mutated) array. **`toReversed()` (ES2023):** returns a **new** reversed array and leaves the original **unchanged**. **Why it matters:** `toReversed` is safe for shared/state arrays where you must not mutate (React state, props); `reverse` risks surprising side effects. **The pre-ES2023 equivalent:** `[...arr].reverse()`. **Common mistakes:** using `reverse()` on data you didn't mean to change, or assuming `toReversed` mutates like its older sibling.",
+    "example": "```js\nconst a = [1, 2, 3];\nconst r = a.toReversed();\nconsole.log(r, a); // [3, 2, 1] [1, 2, 3] — original intact\n\nconst b = [1, 2, 3];\nb.reverse();\nconsole.log(b);    // [3, 2, 1] — mutated in place\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.toReversed()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toReversed"
+      }
+    ]
+  },
+  "array-toReversed-002": {
+    "explanation": "**The problem:** `[1, , 3].toReversed()` returns `[3, undefined, 1]` — the hole becomes `undefined`. **Why:** the ES2023 immutable methods (`toReversed`, `toSorted`, `toSpliced`, `with`) operate as if reading every index `0..length-1`, so **holes are read as `undefined`** and the result is a **dense** array. Reversing `[1, hole, 3]` gives `[3, undefined, 1]`. **The contrast:** the mutating `reverse()` preserves holes. **Why it matters:** these newer methods normalize sparseness to `undefined`. **Common mistakes:** expecting the hole to stay a hole (`[3, , 1]`), or that `toReversed` drops it.",
+    "example": "```js\nconst a = [1, , 3]; // hole at index 1\nconsole.log(a.toReversed()); // [3, undefined, 1] — dense, hole → undefined\nconst b = [1, , 3];\nb.reverse();\nconsole.log(1 in b); // false — mutating reverse keeps the hole\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.toReversed()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toReversed"
+      }
+    ]
+  },
+  "array-toSorted-001": {
+    "explanation": "**The problem:** `toSorted()` vs `sort()` — same ordering, different mutation. **`sort()`:** sorts **in place** and returns the same mutated array. **`toSorted()` (ES2023):** returns a **new** sorted array and leaves the original **unchanged**. Both accept the same optional comparator and default to **string** comparison without one. **Why it matters:** `toSorted` is the immutable choice for state/shared arrays; no need for `[...arr].sort()`. **Common mistakes:** forgetting the comparator for numbers with **either** method (both string-sort by default), or assuming `toSorted` mutates.",
+    "example": "```js\nconst a = [3, 1, 2];\nconst s = a.toSorted((x, y) => x - y);\nconsole.log(s, a); // [1, 2, 3] [3, 1, 2] — original intact\nconsole.log([3, 1, 2].toSorted()); // [1, 2, 3] here, but string-sorts in general\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.toSorted()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted"
+      }
+    ]
+  },
+  "array-toSorted-002": {
+    "explanation": "**The problem:** `[1, 10, 21, 2].toSorted()` returns `[1, 10, 2, 21]`, not numeric order. **Why:** like `sort()`, `toSorted()` **with no comparator** converts elements to **strings** and sorts lexicographically — `'1' < '10' < '2' < '21'` because `'1' < '2'` at the first character and `'10' < '2'`. **The fix:** pass a comparator — `toSorted((a, b) => a - b)`. **Why it's a trap:** `toSorted` being newer/immutable doesn't change the default string comparison. **Common mistakes:** assuming `toSorted` is numeric by default, or that only `sort` has the string-sort quirk.",
+    "example": "```js\nconsole.log([1, 10, 21, 2].toSorted());            // [1, 10, 2, 21] — string order\nconsole.log([1, 10, 21, 2].toSorted((a, b) => a - b)); // [1, 2, 10, 21]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.toSorted()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted"
+      }
+    ]
+  },
+  "array-toSpliced-001": {
+    "explanation": "**The problem:** you want `splice`'s remove/insert power **without** mutating the original. **`toSpliced(start, deleteCount, ...items)` (ES2023):** returns a **new** array with the changes applied and leaves the source **unchanged**. **The key difference from `splice`:** `splice` mutates and returns the **removed** elements; `toSpliced` doesn't mutate and returns the **resulting** array. **Why it matters:** ideal for updating state arrays immutably in one call. **Common mistakes:** expecting `toSpliced` to return the removed elements (that's `splice`), or assuming it mutates like `splice`.",
+    "example": "```js\nconst a = [1, 2, 5];\nconst b = a.toSpliced(2, 0, 3, 4); // insert 3,4 at index 2\nconsole.log(b); // [1, 2, 3, 4, 5] — new array\nconsole.log(a); // [1, 2, 5]       — original untouched\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.toSpliced()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSpliced"
+      }
+    ]
+  },
+  "array-toSpliced-002": {
+    "explanation": "**The problem:** `const b = a.toSpliced(1, 0, 'Feb')` for `a = ['Jan','Mar','Apr']` — what are `a` and `b`? **The answer:** `a` stays `['Jan','Mar','Apr']` (unchanged) and `b` is `['Jan','Feb','Mar','Apr']` (the new array with `'Feb'` inserted at index 1, deleting none). **Why:** `toSpliced` is the **non-mutating** sibling of `splice` — it builds and returns a new array, never touching the source. **Why it matters:** this is the clean way to insert into a state array without copying first. **Common mistakes:** expecting `a` to also change (it won't), or that `b` is the removed elements (it's the full result).",
+    "example": "```js\nconst a = ['Jan', 'Mar', 'Apr'];\nconst b = a.toSpliced(1, 0, 'Feb');\nconsole.log(a); // ['Jan', 'Mar', 'Apr']          — unchanged\nconsole.log(b); // ['Jan', 'Feb', 'Mar', 'Apr']   — new array\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.toSpliced()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSpliced"
+      }
+    ]
+  },
+  "array-unshift-001": {
+    "explanation": "**The problem:** what does `unshift()` return? **The answer: the new `length`** of the array after the elements are prepended (mirroring `push`). **Why:** `unshift` adds elements to the **front** in place and hands back the count, not the array. **The performance note:** like `shift`, it's **O(n)** because every existing element re-indexes. **Why it matters:** you can't chain off `unshift` as if it returned the array. **Common mistakes:** expecting it to return the array or the added elements, or ignoring the re-indexing cost on large arrays.",
+    "example": "```js\nconst a = [3, 4];\nconst len = a.unshift(1, 2);\nconsole.log(len); // 4 — new length\nconsole.log(a);   // [1, 2, 3, 4] — prepended in place\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.unshift()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/unshift"
+      }
+    ]
+  },
+  "array-unshift-002": {
+    "explanation": "**The problem:** one `unshift(1, 2, 3)` vs three separate `unshift(1)`, `unshift(2)`, `unshift(3)` give different orders. **Why:** `unshift(1, 2, 3)` inserts all three **at once**, preserving their order at the front → `[1, 2, 3, 4, 5]`. But calling `unshift` **three times** prepends one element each call: after `unshift(1)` → `[1,4,5]`, then `unshift(2)` → `[2,1,4,5]`, then `unshift(3)` → `[3,2,1,4,5]`. Each new element jumps ahead of the previously prepended ones, **reversing** them. **Common mistakes:** assuming repeated single `unshift`s build the same order as one multi-arg call (they reverse).",
+    "example": "```js\nconst a = [4, 5];\na.unshift(1, 2, 3);\nconsole.log(a); // [1, 2, 3, 4, 5] — inserted together, order kept\n\nconst b = [4, 5];\nb.unshift(1); b.unshift(2); b.unshift(3);\nconsole.log(b); // [3, 2, 1, 4, 5] — each prepend jumps to the front\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.unshift()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/unshift"
+      }
+    ]
+  },
+  "array-values-001": {
+    "explanation": "**The problem:** how do you iterate an array's **values** via an explicit iterator? **What `values()` returns:** an **array iterator** that yields each **element value** in order. **Why it exists:** it's the counterpart to `keys()` (indices) and `entries()` (`[index, value]`), and it's exactly what `for...of` uses under the hood (`arr[Symbol.iterator] === arr.values`). **A detail:** the iterator is **stateful and one-shot** — once consumed, it's exhausted. **Common mistakes:** expecting `values()` to return an array (it's an iterator — spread with `[...arr.values()]`), or reusing an exhausted iterator (see the next card).",
+    "example": "```js\nconst a = ['x', 'y', 'z'];\nconst it = a.values();\nconsole.log(it.next().value); // 'x'\nconsole.log([...a.values()]); // ['x', 'y', 'z'] — materialize\nfor (const v of a.values()) console.log(v); // x | y | z\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.values()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/values"
+      }
+    ]
+  },
+  "array-values-002": {
+    "explanation": "**The problem:** after fully consuming an iterator in one `for...of`, a second loop over the **same** iterator logs **nothing**. **Why:** an iterator is **stateful and single-use** — once it reaches `done: true`, it stays exhausted; it doesn't reset. The first loop drains it, so the second has nothing left. **The fix:** call `arr.values()` again to get a **fresh** iterator, or loop over the array directly (each `for...of` on the array creates a new iterator). **Why it matters:** storing an iterator and iterating it twice is a common bug. **Common mistakes:** expecting iterators to be reusable like arrays, or that a new `for...of` rewinds an existing iterator.",
+    "example": "```js\nconst it = ['a', 'b', 'c'].values();\nfor (const v of it) { /* consume all */ }\nfor (const v of it) console.log(v); // (nothing) — iterator exhausted\n\nconst a = ['a', 'b', 'c'];\nfor (const v of a) {} // looping the ARRAY makes a fresh iterator each time\nfor (const v of a) console.log(v); // a | b | c\n```",
+    "resources": [
+      {
+        "label": "MDN — Iteration protocols",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols"
+      }
+    ]
+  },
+  "array-with-001": {
+    "explanation": "**The problem:** you want to change one element **without mutating** the array. **`with(index, value)` (ES2023):** returns a **new** array identical to the original except that `index` holds `value`; the original is **unchanged**. It's the immutable replacement for `arr[i] = value`. **Why it matters:** updating a single item in a state array becomes a one-liner with no copy step (`arr.with(i, v)` instead of `arr.map((x, j) => j === i ? v : x)`). **It supports negative indices** (counting from the end). **Common mistakes:** expecting `with` to mutate (it returns a copy), or using bracket assignment on state arrays (mutates).",
+    "example": "```js\nconst a = [1, 2, 3, 4, 5];\nconst b = a.with(2, 99);\nconsole.log(b); // [1, 2, 99, 4, 5] — new array\nconsole.log(a); // [1, 2, 3, 4, 5]  — original untouched\nconsole.log(a.with(-1, 0)); // [1, 2, 3, 4, 0] — negative index\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.with()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/with"
+      }
+    ]
+  },
+  "array-with-002": {
+    "explanation": "**The problem:** `[1,2,3].with(10, 99)` throws a **`RangeError`**. **Why:** `with(index, value)` requires the index to be **within bounds** (`0 <= index < length`, or a valid negative offset). Index `10` is past the end of a 3-element array, so it throws rather than extending or padding the array. **The contrast:** bracket assignment `a[10] = 99` would silently grow the array and create holes — `with` is stricter. **Why it matters:** `with` won't accidentally create sparse arrays. **Common mistakes:** expecting `with` to append at an out-of-range index (use `push`/spread for that), or that it returns the array unchanged on a bad index (it throws).",
+    "example": "```js\ntry {\n  [1, 2, 3].with(10, 99); // index out of bounds\n} catch (e) {\n  console.log(e.constructor.name); // RangeError\n}\nconsole.log([1, 2, 3].with(1, 99)); // [1, 99, 3] — valid index\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.with()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/with"
+      }
+    ]
   }
 }
