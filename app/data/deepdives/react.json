@@ -836,72 +836,94 @@
     ]
   },
   "react-build-001": {
-    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Browsers can't run a React source tree as-is — they don't understand JSX, and historically not bare module specifiers (`import x from 'react'`); shipping hundreds of separate source files would also mean hundreds of slow requests. **What a bundler does:** transpiles JSX/TS to plain JS, resolves and inlines module imports, and bundles + optimizes everything (minify, tree-shake, split) into a few cache-friendly files. **Why it matters:** it bridges authoring ergonomics (modules, JSX, TS) and what browsers efficiently load. **Common mistakes:** thinking you can serve `.tsx` directly to a browser, or confusing the dev server (on-demand) with the production bundle (optimized output).",
     "resources": [
       {
-        "label": "react.dev — Building",
-        "url": "https://react.dev/learn"
+        "label": "Vite — Why Vite",
+        "url": "https://vite.dev/guide/why"
+      },
+      {
+        "label": "react.dev — Start a New React Project (build tooling)",
+        "url": "https://react.dev/learn/build-a-react-app-from-scratch"
       }
     ]
   },
   "react-build-002": {
-    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Traditional bundlers rebuild a whole bundle before the dev server is ready, which gets slow as apps grow. **How Vite is fast in dev:** it serves your source files as **native ES modules on demand** — the browser requests modules as it needs them, and Vite transpiles each on the fly with **esbuild** (written in Go, ~10–100× faster than JS-based transpilers). No big upfront bundle. **For production** it does bundle (via Rollup) for optimal output. **Why this design:** dev startup and HMR stay near-instant regardless of app size, since work is per-module and lazy. **Common mistakes:** expecting dev and prod to behave identically (dev is unbundled ESM; prod is bundled/optimized).",
     "resources": [
       {
-        "label": "react.dev — Building",
-        "url": "https://react.dev/learn"
+        "label": "Vite — Why Vite (dev server)",
+        "url": "https://vite.dev/guide/why#the-problems"
+      },
+      {
+        "label": "Vite — Features",
+        "url": "https://vite.dev/guide/features"
       }
     ]
   },
   "react-build-mcq-001": {
-    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Which env vars reach client code in Vite, and how? **The answer:** only variables prefixed **`VITE_`** are exposed to the client, accessed via **`import.meta.env.VITE_X`**. **Why the prefix:** it's a safety guard — Vite refuses to inline non-prefixed vars so you don't accidentally ship secrets (DB passwords, private keys) into the public bundle. **Why the others are wrong:** `process.env.X` is Node-style (not how Vite exposes client vars); there's no `globalThis.env`; and env vars are *not* server-only. **Remember:** anything inlined is public — `VITE_` vars are for non-sensitive config only. **Common mistakes:** naming a secret `VITE_SECRET` (now public), or expecting `process.env` to work in the browser.",
     "resources": [
       {
-        "label": "react.dev — Building",
-        "url": "https://react.dev/learn"
+        "label": "Vite — Env Variables and Modes",
+        "url": "https://vite.dev/guide/env-and-mode"
+      },
+      {
+        "label": "Vite — The VITE_ prefix",
+        "url": "https://vite.dev/guide/env-and-mode#env-files"
       }
     ]
   },
   "react-build-003": {
-    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** One big JS bundle means users download code for screens they may never visit, slowing initial load. **Code splitting:** breaking the bundle into smaller **chunks** loaded on demand instead of all upfront. **How to trigger it:** a dynamic `import()` — the bundler makes whatever you import that way its own chunk. In React, `React.lazy(() => import('./X'))` plus a `<Suspense>` boundary splits at the component/route level. **Why it helps:** smaller initial bundle, faster first load; rarely-used routes load only when navigated to. **Common mistakes:** splitting tiny components (the request overhead outweighs the savings), or forgetting the `<Suspense>` fallback around a lazy component.",
+    "example": "```tsx\nimport { Suspense, lazy } from 'react';\n\n// Real code: lazy(() => import('./HeavyRoute')); inlined here to run standalone.\nconst HeavyRoute = lazy(() =>\n  Promise.resolve({ default: () => <p>Heavy route — loaded in its own chunk</p> }),\n);\n\nexport default function App() {\n  return (\n    <Suspense fallback={<p>Loading…</p>}>\n      <HeavyRoute />\n    </Suspense>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Building",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — lazy",
+        "url": "https://react.dev/reference/react/lazy"
+      },
+      {
+        "label": "Vite — Code splitting (build)",
+        "url": "https://vite.dev/guide/features#dynamic-import"
       }
     ]
   },
   "react-build-004": {
-    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A library might export 50 functions but your app uses 3 — shipping the other 47 is waste. **Tree shaking:** the bundler statically analyzes imports/exports and **drops unused exports** from the final bundle. **What it requires:** **ES module syntax** (`import`/`export`) — because ESM is statically analyzable, the bundler can prove which exports are reachable. CommonJS (`require`) is dynamic and resists this. It also needs the code to be side-effect-free (or marked `\"sideEffects\": false`) so removal is safe. **Common mistakes:** using CommonJS or dynamic requires (defeats it), importing a whole namespace when named imports would shake better, or modules with hidden side effects that prevent elimination.",
     "resources": [
       {
-        "label": "react.dev — Building",
-        "url": "https://react.dev/learn"
+        "label": "MDN — Tree shaking",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Tree_shaking"
+      },
+      {
+        "label": "webpack — Tree Shaking",
+        "url": "https://webpack.js.org/guides/tree-shaking/"
       }
     ]
   },
   "react-build-005": {
-    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Dev builds are optimized for fast feedback, not for shipping. **What a production build adds:** minification (shorter code), stripping dev-only warnings/checks, setting `NODE_ENV=production`, and asset optimization (hashing, compression, splitting). **Why it matters for React specifically:** React ships a separate **production mode** that skips development warnings and dev-only bookkeeping, making it significantly **faster and smaller** — so you must build for production to get React's real performance. **Common mistakes:** deploying a dev build (huge, slow, noisy console), or benchmarking performance in dev mode (misleading — dev React is intentionally slower).",
     "resources": [
       {
-        "label": "react.dev — Building",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Production builds",
+        "url": "https://react.dev/learn/build-a-react-app-from-scratch#production-grade-react-frameworks"
+      },
+      {
+        "label": "Vite — Building for Production",
+        "url": "https://vite.dev/guide/build"
       }
     ]
   },
   "react-build-mcq-002": {
-    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Why do production filenames include content hashes like `app.4f3a.js`? **The answer: cache-busting.** The hash is derived from the file's *content*, so the filename changes **only when the content changes**. That lets you serve assets with long-lived `Cache-Control` headers (cache 'forever'), yet when you deploy a change the new hash = a new URL the browser must fetch — users never get a stale file. **Why the others are wrong:** it's not for obfuscation/security, not load-order randomization, and not an OS requirement. **Common mistakes:** disabling hashing and then fighting stale caches, or caching `index.html` aggressively (it must stay fresh since it references the hashed files).",
     "resources": [
       {
-        "label": "react.dev — Building",
-        "url": "https://react.dev/learn"
+        "label": "Vite — Asset hashing / caching",
+        "url": "https://vite.dev/guide/build#public-base-path"
+      },
+      {
+        "label": "MDN — HTTP caching",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching"
       }
     ]
   },
@@ -2116,132 +2138,173 @@
     ]
   },
   "react-ssg-001": {
-    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Rendering every page on a live server per request adds cost and latency when the content rarely changes. **Static Site Generation (SSG):** render pages to HTML **once at build time**, producing plain static files you serve directly from a CDN — no per-request server rendering. **Why it's great:** extremely fast (CDN-cached HTML), cheap, and resilient (no server to fall over). **Where it fits:** content that's the same for everyone and changes only on deploy (docs, blogs, marketing). **The limitation:** content is frozen until the next build (see ISR for a middle ground). **Common mistakes:** using SSG for per-user/real-time data, or forgetting that interactive pages still need client JS + hydration.",
     "resources": [
       {
-        "label": "react.dev — Static Site Rendering",
-        "url": "https://react.dev/learn"
+        "label": "Next.js — Static Site Generation",
+        "url": "https://nextjs.org/docs/app/building-your-application/rendering/server-components#static-rendering-default"
+      },
+      {
+        "label": "react.dev — Frameworks (rendering strategies)",
+        "url": "https://react.dev/learn/creating-a-react-app"
       }
     ]
   },
   "react-ssg-002": {
-    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** SSG and SSR both produce server HTML — the key difference is **when**. **SSG:** HTML is generated **once at build time**; the output is static files served from a CDN, identical for every visitor. **SSR:** HTML is generated **on the server per request**, so it can include request-specific/personalized data — but it needs a live server doing work on every visit. **The trade-off:** SSG = fastest + cheapest but content is build-time-frozen; SSR = always fresh/personalized but costs server CPU per request and adds latency. **Common mistakes:** picking SSR for static content (needless server cost) or SSG for personalized/real-time content (stale/incorrect). Many frameworks let you mix per-route.",
     "resources": [
       {
-        "label": "react.dev — Static Site Rendering",
-        "url": "https://react.dev/learn"
+        "label": "Next.js — Rendering strategies",
+        "url": "https://nextjs.org/docs/app/building-your-application/rendering"
+      },
+      {
+        "label": "web.dev — Rendering on the Web",
+        "url": "https://web.dev/articles/rendering-on-the-web"
       }
     ]
   },
   "react-ssg-mcq-001": {
-    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Which scenario best fits SSG? **The answer:** a **documentation site** — content is the same for all users and only changes when you deploy. That's the sweet spot: render once at build, serve cached static files, no per-request server work. **Why the others don't fit:** a banking dashboard (per-user live balance), a real-time personalized social feed, and a page that must reflect DB changes within seconds all need **per-request** data — that's SSR (or client fetching), not build-time HTML. **The litmus test:** 'Is this content identical for everyone and stable between deploys?' If yes → SSG. **Common mistakes:** statically generating user-specific or rapidly-changing pages and serving stale data.",
     "resources": [
       {
-        "label": "react.dev — Static Site Rendering",
-        "url": "https://react.dev/learn"
+        "label": "Next.js — When to use Static Generation",
+        "url": "https://nextjs.org/docs/app/building-your-application/rendering/server-components#static-rendering-default"
+      },
+      {
+        "label": "web.dev — Rendering on the Web",
+        "url": "https://web.dev/articles/rendering-on-the-web"
       }
     ]
   },
   "react-ssg-003": {
-    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Does a statically generated page still need JavaScript? **The answer:** if it has interactivity, **yes** — SSG produces the initial HTML, but to make it interactive the client React bundle still loads and **hydrates** the markup (attaching event handlers and state), exactly like SSR. A page with **no** interactivity (pure content) can skip hydration and ship zero/minimal JS. **Why:** SSG only changes *when* the HTML is produced (build time); the client-side interactivity story is the same as SSR. **Common mistakes:** assuming 'static' means 'no JS' for interactive pages, or shipping a heavy bundle to hydrate a page that doesn't actually need interactivity.",
+    "example": "```tsx\nimport { hydrateRoot } from 'react-dom/client';\n\nfunction App() {\n  return <button onClick={() => alert('interactive!')}>Click</button>;\n}\n\n// The container already holds the statically generated HTML for <App/>;\n// hydration wires up its event handlers without rebuilding the markup.\nconst el = document.getElementById('root');\nif (el) hydrateRoot(el, <App />);\n```",
     "resources": [
       {
-        "label": "react.dev — Static Site Rendering",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — hydrateRoot",
+        "url": "https://react.dev/reference/react-dom/client/hydrateRoot"
+      },
+      {
+        "label": "web.dev — Rendering on the Web (hydration)",
+        "url": "https://web.dev/articles/rendering-on-the-web#rehydration"
       }
     ]
   },
   "react-ssg-004": {
-    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Pure SSG freezes content until the next full rebuild — painful for large sites whose content changes occasionally. **Incremental Static Regeneration (ISR):** statically generated pages can be **regenerated in the background** after a set interval (or on-demand via a trigger), so visitors keep getting fast cached HTML while stale pages quietly refresh and replace themselves. **Why it helps:** you get SSG's speed/cost without rebuilding the whole site for every content change, and without per-request SSR. **The trade-off:** content can be slightly stale within the revalidation window. **Common mistakes:** using ISR for data that must be real-time (use SSR), or setting a revalidation interval that's too long for how often content changes.",
     "resources": [
       {
-        "label": "react.dev — Static Site Rendering",
-        "url": "https://react.dev/learn"
+        "label": "Next.js — Incremental Static Regeneration (ISR)",
+        "url": "https://nextjs.org/docs/app/building-your-application/data-fetching/incremental-static-regeneration"
+      },
+      {
+        "label": "web.dev — Rendering on the Web",
+        "url": "https://web.dev/articles/rendering-on-the-web"
       }
     ]
   },
   "react-ssg-005": {
-    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A client-rendered SPA ships an almost-empty `<div id=\"root\"></div>`; crawlers/social scrapers that don't run JS (or run it slowly) see no content — bad for SEO and link previews. **How SSG/prerendering helps:** the build outputs **fully-rendered HTML** containing the real text/markup, so crawlers get the content immediately without executing JavaScript. **Why it matters:** faster indexing, accurate previews, and content visible even if JS fails. **Note:** modern Google can render JS, but prerendered HTML is more reliable and faster for all crawlers. **Common mistakes:** relying on client rendering for content that needs SEO, or assuming all crawlers execute JS the way a browser does.",
     "resources": [
       {
-        "label": "react.dev — Static Site Rendering",
-        "url": "https://react.dev/learn"
+        "label": "web.dev — Rendering on the Web (SEO)",
+        "url": "https://web.dev/articles/rendering-on-the-web"
+      },
+      {
+        "label": "Google — JavaScript SEO basics",
+        "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics"
       }
     ]
   },
   "react-ssr-001": {
-    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A client-rendered SPA shows a blank page until JS downloads, parses, and runs — hurting perceived speed and SEO. **Server-Side Rendering (SSR):** render React components to HTML **on the server for each request** and send that HTML to the browser, which displays it immediately, then hydrates for interactivity. **Two main benefits:** (1) faster **First Contentful Paint** — users see real content before JS loads; (2) better **SEO/link previews** — crawlers receive populated HTML, not an empty `<div id=\"root\">`. **The cost:** a running server and per-request CPU. **Common mistakes:** using browser-only APIs (`window`) during server render, or producing client markup that doesn't match the server's (hydration mismatch).",
     "resources": [
       {
-        "label": "react.dev — Server Rendering",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — react-dom/server",
+        "url": "https://react.dev/reference/react-dom/server"
+      },
+      {
+        "label": "web.dev — Rendering on the Web",
+        "url": "https://web.dev/articles/rendering-on-the-web"
       }
     ]
   },
   "react-ssr-002": {
-    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** You need React markup as an HTML string to send from the server. **What `renderToString` does:** synchronously renders a React tree to an **HTML string** on the server (Node), which you embed in your page response; the client later hydrates it. It lives in **`react-dom/server`**. **Why synchronous matters:** it produces the whole string in one shot — simple, but it can't wait for Suspense/data and blocks until done (for streaming + Suspense, use `renderToPipeableStream`). **Common mistakes:** calling it in the browser (it's server-only), forgetting to hydrate the result on the client, or using it where streaming would give a faster time-to-first-byte.",
+    "example": "```tsx\nimport { renderToString } from 'react-dom/server';\n\nfunction App() {\n  return <h1>Hello from the server</h1>;\n}\n\n// Runs in Node on the server; embed `html` in your page response.\nconst html = renderToString(<App />);\nconsole.log(html); // \"<h1>Hello from the server</h1>\"\n```",
     "resources": [
       {
-        "label": "react.dev — Server Rendering",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — renderToString",
+        "url": "https://react.dev/reference/react-dom/server/renderToString"
+      },
+      {
+        "label": "react.dev — react-dom/server",
+        "url": "https://react.dev/reference/react-dom/server"
       }
     ]
   },
   "react-ssr-mcq-001": {
-    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** After SSR delivers HTML, what is **hydration**? **The answer:** React **attaches event listeners and component state to the existing server HTML**, making the already-visible markup interactive — without rebuilding the DOM. **Why not re-render from scratch:** the server HTML is correct; hydration reuses those nodes and just 'wires them up', which is faster and avoids a flash. **Why the other options are wrong:** React doesn't discard/recreate the HTML (that would defeat SSR), streaming is a separate concept, and it's unrelated to offline caching. **Requirement:** the client's first render must match the server HTML, or you get a hydration mismatch. **Common mistakes:** using `createRoot` on SSR output instead of `hydrateRoot`.",
     "resources": [
       {
-        "label": "react.dev — Server Rendering",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — hydrateRoot",
+        "url": "https://react.dev/reference/react-dom/client/hydrateRoot"
+      },
+      {
+        "label": "web.dev — Rehydration",
+        "url": "https://web.dev/articles/rendering-on-the-web#rehydration"
       }
     ]
   },
   "react-ssr-003": {
-    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** `renderToString` is all-or-nothing and synchronous — the browser waits for the **entire** tree (including slow data) before getting any HTML, and it can't use Suspense. **What `renderToPipeableStream` adds:** it **streams** HTML to the client as it renders and integrates with **Suspense**, so the server can flush the page shell (and ready content) immediately while slow, suspended parts stream in later as they resolve. **Why it's better:** faster time-to-first-byte and progressive display; users see the shell right away. **Where:** Node streams (`react-dom/server`); there's `renderToReadableStream` for Web/edge runtimes. **Common mistakes:** using `renderToString` for data-heavy pages where streaming would show the shell sooner.",
     "resources": [
       {
-        "label": "react.dev — Server Rendering",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — renderToPipeableStream",
+        "url": "https://react.dev/reference/react-dom/server/renderToPipeableStream"
+      },
+      {
+        "label": "react.dev — Suspense",
+        "url": "https://react.dev/reference/react/Suspense"
       }
     ]
   },
   "react-ssr-004": {
-    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Even with SSR, every client component still ships its JS to the browser to hydrate — bundle size grows with your UI. **React Server Components (RSC):** components that render **only on the server** and **never send their JS to the client**. Instead of HTML-to-hydrate, they produce a serialized description of the UI that the client merges in; they can directly access server resources (DB, filesystem) and have **zero** client bundle cost. **How they differ from SSR:** SSR renders *client* components to HTML that still must be hydrated with their JS; RSC components have no client-side JS at all. They compose: Server Components render Client Components where interactivity is needed. **Common mistakes:** using hooks/state/event handlers in a Server Component (those require a Client Component, `'use client'`).",
     "resources": [
       {
-        "label": "react.dev — Server Rendering",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Server Components",
+        "url": "https://react.dev/reference/rsc/server-components"
+      },
+      {
+        "label": "react.dev — 'use client'",
+        "url": "https://react.dev/reference/rsc/use-client"
       }
     ]
   },
   "react-ssr-005": {
-    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Wiring SSR by hand is a lot of plumbing. **What it involves:** server-side routing, fetching data on the server before render, bundling for **two** environments (server + client), streaming, hydration matching, caching, and code-splitting — all kept in sync. **Why teams use a framework (Next.js, Remix):** it handles this plumbing with sensible defaults and conventions, so you write components and data loaders while the framework manages the render pipeline, builds, and deployment story. react.dev now recommends a framework for production apps. **The trade-off:** less low-level control and a framework to learn. **Common mistakes:** rolling a bespoke SSR setup (high maintenance, easy to get hydration/bundling wrong) when a framework would do it reliably.",
     "resources": [
       {
-        "label": "react.dev — Server Rendering",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Creating a React App (frameworks)",
+        "url": "https://react.dev/learn/creating-a-react-app"
+      },
+      {
+        "label": "Next.js — Documentation",
+        "url": "https://nextjs.org/docs"
       }
     ]
   },
   "react-ssr-mcq-002": {
-    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** What's a typical downside of SSR vs a pure client-side SPA? **The answer:** SSR **requires a running server** to render HTML on every request, adding infrastructure and **per-request CPU cost** (and potential latency under load) — whereas an SPA can be served as static files from a CDN. **Why the other options are wrong:** SSR can use Hooks (in client components), generally *improves* SEO (not worsens), and doesn't prevent CSS. **The trade-off in one line:** SSR buys faster first paint + SEO at the price of server cost and complexity. **Common mistakes:** adopting SSR for an app that doesn't need SEO/fast first paint, paying the server cost for no benefit; or ignoring caching that can mitigate the per-request cost.",
     "resources": [
       {
-        "label": "react.dev — Server Rendering",
-        "url": "https://react.dev/learn"
+        "label": "web.dev — Rendering on the Web (tradeoffs)",
+        "url": "https://web.dev/articles/rendering-on-the-web"
+      },
+      {
+        "label": "react.dev — react-dom/server",
+        "url": "https://react.dev/reference/react-dom/server"
       }
     ]
   },
