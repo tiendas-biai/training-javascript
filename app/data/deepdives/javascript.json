@@ -226,5 +226,469 @@
         "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push"
       }
     ]
+  },
+  "coercion-type-001": {
+    "explanation": "**The problem:** `'5' - 3` yields the number `2`, surprising people who expect a string operation. **Why it happens:** the `-` operator has **no string meaning**, so it forces **numeric coercion** on both operands before subtracting — `'5'` becomes `5`, giving `5 - 3 = 2`. **The contrast that trips people:** `+` is overloaded — if *either* operand is a string it does **concatenation**, so `'5' + 3` is `'53'`. **Why this matters:** the result type depends entirely on the operator, not just the values. **Common mistakes:** assuming all arithmetic operators coerce the same way as `+`, or expecting `'5' - 3` to throw or concatenate.",
+    "example": "```js\nconsole.log('5' - 3);  // 2  — '-' coerces '5' to number\nconsole.log('5' * 2);  // 10 — '*' also coerces\nconsole.log('5' + 3);  // '53' — '+' concatenates when a string is present\nconsole.log('5' - '2'); // 3 — both coerced to numbers\n```",
+    "resources": [
+      {
+        "label": "MDN — Subtraction (-)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Subtraction"
+      },
+      {
+        "label": "MDN — Type coercion",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Type_coercion"
+      }
+    ]
+  },
+  "coercion-type-002": {
+    "explanation": "**The problem:** `[] + []`, `[] + {}`, and `{} + []` give `''`, `'[object Object]'`, and (at statement level) `0` — wildly inconsistent. **Why it happens:** `+` coerces objects to **primitives** via `toString`: `[]` → `''` and `{}` → `'[object Object]'`. So `[] + []` is `'' + ''` = `''`, and `[] + {}` is `'' + '[object Object]'`. **The `{} + []` twist:** at the **start of a statement**, `{}` is parsed as an empty **block**, not an object, leaving `+[]` — a unary plus that coerces `[]` → `''` → `0`. In **expression** position (e.g. a function argument or after `(`), `{}` is an object and the result is `'[object Object]'`. **Common mistakes:** assuming `{}` is always an object — leading-`{}` ambiguity is the real gotcha here.",
+    "example": "```js\nconsole.log([] + []);          // '' — '' + ''\nconsole.log([] + {});          // '[object Object]'\nconsole.log({} + []);          // '[object Object]' — {} is an expression as a console.log arg\nconsole.log(eval('{} + []'));  // 0 — at statement start {} is an empty block, then +[] → 0\n```",
+    "resources": [
+      {
+        "label": "MDN — Addition (+)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Addition"
+      }
+    ]
+  },
+  "coercion-type-003": {
+    "explanation": "**The problem:** `Boolean([])` is `true` but `Boolean('')` is `false` and `Boolean('0')` is `true` — empty-looking values disagree. **Why it happens:** boolean coercion has a fixed, short list of **falsy** values: `false`, `0`, `-0`, `0n`, `''`, `null`, `undefined`, `NaN`. **Everything else is truthy** — including *every* object, so an empty array `[]` and empty object `{}` are both truthy. **Why `'0'` is truthy:** it's a non-empty string; the *characters* don't matter, only whether the string is empty. **Common mistakes:** thinking `[]`/`{}` are falsy (they're not), or that the string `'0'`/`'false'` is falsy (non-empty strings are always truthy). To test emptiness of arrays, check `.length`, not truthiness.",
+    "example": "```js\nconsole.log(Boolean([]));   // true  — all objects are truthy\nconsole.log(Boolean(''));   // false — empty string is falsy\nconsole.log(Boolean('0'));  // true  — non-empty string\nconsole.log(Boolean(0));    // false\n// the complete falsy set:\nconsole.log([false, 0, -0, 0n, '', null, undefined, NaN].every(v => !v)); // true\n```",
+    "resources": [
+      {
+        "label": "MDN — Falsy",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Falsy"
+      },
+      {
+        "label": "MDN — Truthy",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Truthy"
+      }
+    ]
+  },
+  "coercion-type-mcq-004": {
+    "explanation": "**The problem:** mixing `+`, `-`, and unary `+` in one snippet produces a mix of strings and numbers. **Why the answer is `'53', 2, 5, 1`:** `'5' + 3` — binary `+` with a string concatenates → `'53'`; `'5' - 3` — `-` forces numeric coercion → `2`; `+'5'` — **unary** `+` converts a string to a number → `5`; `+true` — unary `+` converts a boolean → `1`. **The key distinction:** binary `+` is the *only* arithmetic operator that prefers string concatenation; everything else (including unary `+`) coerces to number. **Common mistakes:** expecting `'5' + 3` to be `8`, or thinking unary `+` keeps the string type.",
+    "example": "```js\nconsole.log('5' + 3); // '53' — binary + concatenates with a string\nconsole.log('5' - 3); // 2   — - coerces to number\nconsole.log(+'5');    // 5   — unary + converts string to number\nconsole.log(+true);   // 1   — unary + converts boolean to number\nconsole.log(typeof ('5' + 3), typeof ('5' - 3)); // 'string' 'number'\n```",
+    "resources": [
+      {
+        "label": "MDN — Unary plus (+)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Unary_plus"
+      }
+    ]
+  },
+  "coercion-equality-001": {
+    "explanation": "**The problem:** `==` and `===` look similar but behave differently, and `==` quietly coerces. **Why it happens:** `===` (strict) compares **value and type** with no conversion — different types are never equal. `==` (loose) first applies the abstract-equality coercion rules (e.g. string↔number, boolean→number) and *then* compares, so `1 == '1'` is `true`. **Why prefer `===`:** it's predictable; `==`'s coercion table produces surprising results (`'' == 0`, `[] == ![]`). **Common mistakes:** using `==` for general comparisons (invites bugs); the one common, accepted use of `==` is `x == null` to match both `null` and `undefined`. **Rule of thumb:** default to `===` everywhere.",
+    "example": "```js\nconsole.log(1 === '1'); // false — different types, no coercion\nconsole.log(1 == '1');  // true  — '1' coerced to 1 first\nconsole.log(0 == false);// true  — both coerced to 0\nconsole.log(0 === false);// false — number vs boolean\n// accepted use of ==: match null OR undefined\nconst x = undefined;\nconsole.log(x == null); // true\n```",
+    "resources": [
+      {
+        "label": "MDN — Equality (==)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Equality"
+      },
+      {
+        "label": "MDN — Strict equality (===)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality"
+      }
+    ]
+  },
+  "coercion-equality-002": {
+    "explanation": "**The problem:** `0 == false`, `'' == false`, and `null == undefined` are all `true`, but `null == false` is `false` — the rules feel arbitrary. **Why it happens:** when one operand is a **boolean**, `==` converts it to a **number** first (`false` → `0`), then continues coercing the other side — so `0 == 0` and `'' → 0 == 0` are both true. **The special case:** `null == undefined` is hardcoded `true` by the spec, and crucially `null` is loosely equal to **only** `null` and `undefined` — it is *not* coerced to a number, so `null == false` (→ `null == 0`) is `false`. **Common mistakes:** assuming `null` coerces to `0` like other falsy values (it doesn't under `==`).",
+    "example": "```js\nconsole.log(0 == false);        // true — false→0, 0==0\nconsole.log('' == false);       // true — false→0, ''→0\nconsole.log(null == undefined); // true — spec special case\nconsole.log(null == false);     // false — null only loosely equals null/undefined\nconsole.log(null == 0);         // false — null is NOT coerced to a number\n```",
+    "resources": [
+      {
+        "label": "MDN — Equality comparisons and sameness",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness"
+      }
+    ]
+  },
+  "coercion-equality-mcq-003": {
+    "explanation": "**The problem:** three equality checks, one of them a `NaN` trap. **Why the answer is `true, false, false`:** `null == undefined` is a spec-defined special case → `true`; `null === undefined` compares types strictly and they differ → `false`; `NaN == NaN` is `false` because `NaN` is defined to be **unequal to everything, including itself**. **Why `NaN` behaves this way:** IEEE-754 mandates that comparisons involving `NaN` are always false, and JS follows it for both `==` and `===`. **The reliable check:** `Number.isNaN(x)`. **Common mistakes:** expecting `null === undefined` to be true (it's loose `==` that's true), or testing `x === NaN` (always false).",
+    "example": "```js\nconsole.log(null == undefined);  // true  — special case\nconsole.log(null === undefined); // false — different types\nconsole.log(NaN == NaN);         // false — NaN equals nothing\nconsole.log(NaN === NaN);        // false\nconsole.log(Number.isNaN(NaN));  // true  — the correct NaN test\n```",
+    "resources": [
+      {
+        "label": "MDN — NaN",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN"
+      }
+    ]
+  },
+  "coercion-equality-004": {
+    "explanation": "**The problem:** `[] == ![]` is `true`, which seems impossible — an array equal to its own negation. **Why it happens, step by step:** `![]` evaluates first — `[]` is **truthy**, so `![]` is `false`. Now it's `[] == false`. With a boolean operand, `==` coerces it to a **number**: `false` → `0`. Then the object `[]` is coerced to a primitive via `toString` → `''`, and `''` → `0`. So it reduces to `0 == 0` → `true`. **Why it's a famous gotcha:** two independent coercions (boolean→number, array→string→number) collapse to equal numbers. **Common mistakes:** reading `![]` as `true`, or assuming `[]` stays an object in the comparison. The fix is simply: never use `==` with objects.",
+    "example": "```js\nconsole.log(![]);          // false — [] is truthy, so negation is false\nconsole.log([] == false);  // true  — false→0, []→''→0, 0==0\nconsole.log([] == ![]);    // true  — the same chain combined\n// strict equality avoids the whole mess:\nconsole.log([] === false); // false\n```",
+    "resources": [
+      {
+        "label": "MDN — Equality comparisons and sameness",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness"
+      }
+    ]
+  },
+  "scope-var-let-const-001": {
+    "explanation": "**The problem:** `var`, `let`, and `const` look interchangeable but scope and rebind differently. **Why it matters:** `var` is **function-scoped** (or global outside any function) and ignores `{}` blocks; `let` and `const` are **block-scoped**, visible only inside the nearest `{}`. **`const` specifics:** it requires an initializer and forbids **reassigning the binding** — but the value it points to (if an object) is still mutable. **Why block scope is safer:** it prevents leakage out of `if`/`for` blocks and the classic loop-closure bug. **Common mistakes:** thinking `const` makes objects immutable (it freezes the *binding*, not the contents), or relying on `var`'s function-scope hoisting. **Rule of thumb:** default to `const`, use `let` when you must reassign, avoid `var`.",
+    "example": "```js\nif (true) {\n  var a = 1;   // function/global-scoped — leaks out of the block\n  let b = 2;   // block-scoped\n  const c = 3; // block-scoped, cannot be reassigned\n}\nconsole.log(a);     // 1 — var leaked\ntry { console.log(b); } catch (e) { console.log(e.name); } // ReferenceError\nconst obj = { n: 1 };\nobj.n = 2;          // allowed — const freezes the binding, not the object\nconsole.log(obj.n); // 2\n```",
+    "resources": [
+      {
+        "label": "MDN — let",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let"
+      },
+      {
+        "label": "MDN — const",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const"
+      }
+    ]
+  },
+  "scope-var-let-const-002": {
+    "explanation": "**The problem:** a `for (var i …)` loop scheduling timeouts prints `3` three times instead of `0 1 2`. **Why it happens:** `var i` is **function-scoped**, so all iterations share **one** `i`. The synchronous loop finishes (leaving `i === 3`) before any `setTimeout` callback runs, and every callback reads that same final `i`. **Why `let` fixes it:** `let` creates a **fresh binding per iteration**, so each callback closes over its own `i` (0, 1, 2). **The mechanism:** closures capture the *variable*, not a snapshot of its value. **Common mistakes:** expecting `setTimeout(…, 0)` to run during the loop (it's queued as a macrotask after the loop), or thinking `var` makes a new variable each iteration.",
+    "example": "```js\nfor (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log('var', i), 0); // var → 3, 3, 3\n}\nfor (let j = 0; j < 3; j++) {\n  setTimeout(() => console.log('let', j), 0); // let → 0, 1, 2\n}\n// all timeouts fire after the loops finish; var shares one i, let rebinds per iteration\n```",
+    "resources": [
+      {
+        "label": "MDN — let (per-iteration scope)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let#description"
+      },
+      {
+        "label": "MDN — Closures",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures"
+      }
+    ]
+  },
+  "scope-var-let-const-mcq-003": {
+    "explanation": "**The problem:** does mutating then reassigning a `const` object throw, and where? **Why the answer is \"`obj.x = 2` succeeds, `obj = {}` throws\":** `const` locks the **binding**, not the value. `obj.x = 2` mutates the existing object's property — allowed. `obj = {}` attempts to point the `const` name at a *new* object — that's a reassignment, which throws `TypeError: Assignment to constant variable`. **Why the distinction:** the constness is about the variable slot, not the heap object it references. **Common mistakes:** expecting `obj.x = 2` to throw (mutation is fine), or expecting both lines to error. To freeze contents too, use `Object.freeze`.",
+    "example": "```js\nconst obj = { x: 1 };\nobj.x = 2;             // OK — mutating a property\nconsole.log(obj.x);    // 2\ntry {\n  obj = {};            // TypeError: Assignment to constant variable\n} catch (e) {\n  console.log(e.name); // TypeError\n}\n```",
+    "resources": [
+      {
+        "label": "MDN — const",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const"
+      }
+    ]
+  },
+  "scope-hoisting-001": {
+    "explanation": "**The problem:** code can reference some names before their declaration line and not others. **What hoisting is:** during compilation the engine registers declarations at the top of their scope before any code runs. **The catch — only declarations, not initializations:** `var x` is hoisted and pre-set to `undefined`, so reading `x` before `var x = 5` gives `undefined`, not an error. **Function declarations** are hoisted *whole* (name + body), so you can call them above their definition. **`let`/`const`** are also hoisted but stay in the **Temporal Dead Zone** — unreadable until their line. **Common mistakes:** thinking assignments move too (they don't), or that `let`/`const` aren't hoisted (they are, just not initialized).",
+    "example": "```js\nconsole.log(x); // undefined — declaration hoisted, assignment is not\nvar x = 5;\n\nhoisted();      // works — function declarations are fully hoisted\nfunction hoisted() { console.log('called before its definition'); }\n\ntry { console.log(y); } catch (e) { console.log(e.name); } // ReferenceError (TDZ)\nlet y = 1;\n```",
+    "resources": [
+      {
+        "label": "MDN — Hoisting",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Hoisting"
+      }
+    ]
+  },
+  "scope-hoisting-002": {
+    "explanation": "**The problem:** before their declarations, `typeof foo` is `'undefined'` but `typeof bar` is `'function'`. **Why it happens:** `var foo` is hoisted and initialized to `undefined`, so at the `console.log` line `foo` exists but holds `undefined`. A **function declaration** (`function bar(){}`) is hoisted **completely** — both name and body — so `bar` is already a callable function before its textual position. **Why this asymmetry:** the engine fully creates function declarations during the compile phase, but only reserves `var` slots (value `undefined`) until their assignment runs. **Common mistakes:** expecting `typeof bar` to be `'undefined'`, or thinking a `var foo = function(){}` expression would also be `'function'` early (it wouldn't — only the `var` part hoists).",
+    "example": "```js\nconsole.log(typeof foo); // 'undefined' — var hoisted, not yet assigned\nconsole.log(typeof bar); // 'function'  — function declaration fully hoisted\nvar foo = 'hello';\nfunction bar() {}\n\n// contrast: a function EXPRESSION only hoists the var binding\nconsole.log(typeof baz); // 'undefined'\nvar baz = function () {};\n```",
+    "resources": [
+      {
+        "label": "MDN — Hoisting",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Hoisting"
+      }
+    ]
+  },
+  "scope-hoisting-mcq-003": {
+    "explanation": "**The problem:** calling `foo()` above a `var foo = function(){}` throws `TypeError: foo is not a function`, not `'hello'` or a `ReferenceError`. **Why it happens:** only the **`var foo` declaration** is hoisted (initialized to `undefined`); the **assignment** of the function expression runs in place. So at the call site `foo` is `undefined`, and calling `undefined()` throws a `TypeError`. **Why not `ReferenceError`:** `foo` *is* declared (hoisted), just not yet a function — it exists with value `undefined`. **Why this matters:** function **expressions** and arrow functions are not callable before their assignment line, unlike function **declarations**. **Common mistakes:** treating function expressions like declarations.",
+    "example": "```js\ntry {\n  foo(); // TypeError: foo is not a function — foo is undefined here\n} catch (e) {\n  console.log(e.constructor.name, '-', e.message);\n}\nvar foo = function () { console.log('hello'); };\nfoo(); // 'hello' — works after the assignment\n```",
+    "resources": [
+      {
+        "label": "MDN — Function expression",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/function"
+      }
+    ]
+  },
+  "scope-hoisting-004": {
+    "explanation": "**The problem:** reading a `let`/`const` variable before its declaration throws `ReferenceError`, even though it's \"hoisted\". **What the TDZ is:** the **Temporal Dead Zone** is the span from entering the block to the variable's declaration line. The binding exists (it's hoisted) but is **uninitialized**, and any access — including `typeof` — throws. **Why it exists:** it turns silent `undefined` bugs (the `var` behavior) into loud errors, enforcing declare-before-use. **Why `var` differs:** `var` is pre-initialized to `undefined`, so it has no TDZ. **Common mistakes:** assuming `typeof x` is safe for `let` variables (it's not in the TDZ), or thinking `let`/`const` aren't hoisted at all.",
+    "example": "```js\n{\n  // TDZ for x starts here\n  try {\n    console.log(x); // ReferenceError: Cannot access 'x' before initialization\n  } catch (e) {\n    console.log(e.name); // ReferenceError\n  }\n  let x = 5; // TDZ ends — x is now initialized\n  console.log(x); // 5\n}\n```",
+    "resources": [
+      {
+        "label": "MDN — Temporal dead zone",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let#temporal_dead_zone_tdz"
+      }
+    ]
+  },
+  "scope-closures-001": {
+    "explanation": "**The problem:** how can an inner function still use an outer function's variables after the outer function has returned? **What a closure is:** a function bundled with a reference to its **lexical environment** — the scope where it was *defined*. When the function is created, it keeps a live link to those outer variables, so they survive after the outer call returns. **Why it works:** the variables aren't destroyed while a closure still references them; they live on the heap, not the stack. **What it enables:** private state, factory functions, memoization, partial application, and callbacks that remember context. **Common mistakes:** thinking closures copy values (they hold a live reference to the variable), or that returning a function loses its scope.",
+    "example": "```js\nfunction makeAdder(x) {\n  return (y) => x + y; // closes over x\n}\nconst add5 = makeAdder(5); // makeAdder has returned, but x=5 lives on\nconsole.log(add5(2));      // 7\nconsole.log(add5(10));     // 15 — x is still remembered\n```",
+    "resources": [
+      {
+        "label": "MDN — Closures",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures"
+      }
+    ]
+  },
+  "scope-closures-002": {
+    "explanation": "**The problem:** a counter built with a closure keeps incrementing (1, 2, 3) across calls — where is the state stored? **Why it works:** `makeCounter` declares `count` and returns an arrow function that **closes over** it. The returned function keeps a live reference to that one `count`, so it persists between calls and is **private** — nothing outside can touch it. **Why each call advances:** `++count` mutates the same captured variable. **Why this is a pattern:** it's encapsulation without classes — the only way to change `count` is through the returned function. **Common mistakes:** expecting `count` to reset each call (it's created once, when `makeCounter` runs), or creating multiple counters and not realizing each gets its **own** independent `count`.",
+    "example": "```js\nfunction makeCounter() {\n  let count = 0;            // private state\n  return () => ++count;     // closure over count\n}\nconst counter = makeCounter();\nconsole.log(counter()); // 1\nconsole.log(counter()); // 2\nconsole.log(counter()); // 3\nconst other = makeCounter();\nconsole.log(other());   // 1 — independent closure\n```",
+    "resources": [
+      {
+        "label": "MDN — Closures (emulating private methods)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures#emulating_private_methods_with_closures"
+      }
+    ]
+  },
+  "scope-closures-003": {
+    "explanation": "**The problem:** pushing `() => i` in a `var` loop and calling them later prints `3 3 3`, not `0 1 2`. **Why it happens:** closures capture the **variable**, not a snapshot of its value. With `var`, all three arrow functions share the **one** function-scoped `i`; by the time they run, the loop has finished and `i` is `3`. **Why `let` fixes it:** `let` gives each iteration its **own binding**, so each closure captures a distinct `i` (0, 1, 2). **The alternative fix:** an IIFE per iteration that takes `i` as a parameter, capturing its current value. **Common mistakes:** believing the closure froze `i` at push time, or reaching for the IIFE workaround when `let` is simpler.",
+    "example": "```js\nconst fns = [];\nfor (var i = 0; i < 3; i++) fns.push(() => i);\nconsole.log(fns[0](), fns[1](), fns[2]()); // 3 3 3 — shared var i\n\nconst fixed = [];\nfor (let j = 0; j < 3; j++) fixed.push(() => j); // let → fresh binding\nconsole.log(fixed[0](), fixed[1](), fixed[2]()); // 0 1 2\n```",
+    "resources": [
+      {
+        "label": "MDN — Closures (in loops)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures#creating_closures_in_loops_a_common_mistake"
+      }
+    ]
+  },
+  "scope-closures-mcq-004": {
+    "explanation": "**The problem:** `inner` logs `20`, even though `x` was `10` when `inner` was *defined*. **Why it happens:** a closure captures the **variable** `x`, not its value at definition time. Between defining `inner` and calling it, `x` is reassigned to `20`; when `inner` finally runs it reads the **current** value. **Why not `10`:** there's no snapshot — the closure holds a live reference to the binding. **Why this is the canonical closure gotcha:** it's the same mechanism behind the `var` loop printing the final value. **Common mistakes:** assuming the closure froze `x` at the moment `inner` was created; to capture a specific value, copy it into a new variable or pass it as an argument.",
+    "example": "```js\nfunction outer() {\n  let x = 10;\n  function inner() { console.log(x); } // captures the variable x\n  x = 20;                              // mutated before inner runs\n  return inner;\n}\nouter()(); // 20 — closures see the latest value, not a snapshot\n```",
+    "resources": [
+      {
+        "label": "MDN — Closures",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures"
+      }
+    ]
+  },
+  "exec-callstack-001": {
+    "explanation": "**The problem:** how does single-threaded JS keep track of nested function calls and where to return? **What the call stack is:** a **LIFO** (last-in, first-out) stack of execution contexts. Calling a function **pushes** a frame (its locals + return point); returning **pops** it. The frame on top is what's currently executing. **Why it matters:** JS has *one* call stack, so only one thing runs at a time; long synchronous work monopolizes it. **Stack overflow:** unbounded recursion pushes frames until the engine's limit is hit, throwing `RangeError: Maximum call stack size exceeded`. **Common mistakes:** confusing the synchronous call stack with the async task/microtask queues (those feed the stack only once it's empty).",
+    "example": "```js\nfunction first() { second(); console.log('first done'); }\nfunction second() { third(); console.log('second done'); }\nfunction third() { console.log('third done'); }\nfirst();\n// push order: first → second → third\n// logs (as each returns/pops): third done, second done, first done\n```",
+    "resources": [
+      {
+        "label": "MDN — Call stack",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Call_stack"
+      }
+    ]
+  },
+  "exec-callstack-002": {
+    "explanation": "**The problem:** in what order are nested calls pushed and popped? **Why the order is push `a → b → c`, pop `c → b → a`:** calling `a()` pushes its frame, then `a` calls `b()` (push), then `b` calls `c()` (push). `c` finishes first and is **popped**, returning control to `b`, which finishes and pops, then `a`. This strict **LIFO** is why the *last* function entered is the *first* to complete. **Why it works this way:** each frame must finish before the one beneath it can resume, since the caller is waiting on the callee's return value. **Common mistakes:** expecting the outermost call to finish first, or thinking the stack runs top-to-bottom in source order rather than by nesting.",
+    "example": "```js\nfunction c() { console.log('c runs'); return 1; }\nfunction b() { const r = c(); console.log('b resumes'); return r; }\nfunction a() { const r = b(); console.log('a resumes'); return r; }\nconsole.log('result:', a());\n// c runs → b resumes → a resumes → result: 1\n// push a,b,c then pop c,b,a (LIFO)\n```",
+    "resources": [
+      {
+        "label": "MDN — Call stack",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Call_stack"
+      }
+    ]
+  },
+  "exec-callstack-mcq-003": {
+    "explanation": "**The problem:** what does infinite recursion throw? **Why the answer is `RangeError: Maximum call stack size exceeded`:** each `recurse()` call pushes a new frame and never returns, so the call stack grows until it hits the engine's size limit; V8 (Chrome/Node) signals this with a `RangeError`. **Why not the others:** `recurse` *is* defined and *is* a function, so it's neither `ReferenceError` nor `TypeError`; `InternalError: too much recursion` is **Firefox's** wording for the same condition, not V8's. **The deeper point:** there's no tail-call optimization in practice, so even tail-recursive loops overflow. **Common mistakes:** assuming the error message is identical across engines, or that recursion is automatically optimized into iteration.",
+    "example": "```js\nfunction recurse() { return recurse(); } // never returns — frames pile up\ntry {\n  recurse();\n} catch (e) {\n  console.log(e.constructor.name); // RangeError (in V8/Node/Chrome)\n  console.log(e.message);          // Maximum call stack size exceeded\n}\n```",
+    "resources": [
+      {
+        "label": "MDN — RangeError: too much recursion",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Too_much_recursion"
+      }
+    ]
+  },
+  "exec-eventloop-001": {
+    "explanation": "**The problem:** with one thread, how do sync code, promises, and timers interleave? **The order:** (1) **synchronous** code runs to completion on the call stack; (2) the **microtask** queue (`Promise.then`, `queueMicrotask`, `await` continuations) is drained completely; (3) **one macrotask** (`setTimeout`, `setInterval`, I/O) runs — then microtasks drain again, and so on. **Why microtasks win:** after every task the loop empties the entire microtask queue **before** taking the next macrotask, so a resolved promise's callback always beats a `setTimeout(…, 0)`. **Why it matters:** ordering bugs and starvation (an endless microtask loop blocks rendering). **Common mistakes:** thinking `setTimeout(…, 0)` runs \"immediately\", or that promises and timers share one queue.",
+    "example": "```js\nconsole.log('sync 1');\nsetTimeout(() => console.log('macrotask'), 0);\nPromise.resolve().then(() => console.log('microtask'));\nqueueMicrotask(() => console.log('microtask 2'));\nconsole.log('sync 2');\n// sync 1, sync 2, microtask, microtask 2, macrotask\n```",
+    "resources": [
+      {
+        "label": "MDN — The event loop",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop"
+      },
+      {
+        "label": "MDN — Microtasks",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide"
+      }
+    ]
+  },
+  "exec-eventloop-002": {
+    "explanation": "**The problem:** the output is `1, 4, 3, 2`, not source order. **Why:** `console.log('1')` and `console.log('4')` are **synchronous** and run first. When the stack empties, the **microtask** queue drains — the `Promise.then` callback logs `3`. Only then does the loop pick up a **macrotask** — the `setTimeout` callback logs `2`. **The key insight:** `setTimeout(…, 0)` doesn't mean \"now\"; it means \"schedule a macrotask\", which always runs **after** all pending microtasks. **Common mistakes:** expecting `2` before `3` because the timer has `0` delay, or expecting strict top-to-bottom order. The promise callback is a microtask and therefore higher priority than any timer.",
+    "example": "```js\nconsole.log('1');                              // sync\nsetTimeout(() => console.log('2'), 0);          // macrotask\nPromise.resolve().then(() => console.log('3')); // microtask\nconsole.log('4');                              // sync\n// output: 1, 4, 3, 2\n```",
+    "resources": [
+      {
+        "label": "MDN — The event loop",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop"
+      }
+    ]
+  },
+  "exec-eventloop-mcq-003": {
+    "explanation": "**The problem:** a chained `.then` interleaves with a `setTimeout` — output is `start, end, p1, p2, timeout`. **Why:** sync first → `start`, `end`. Then microtasks drain: the first `.then` logs `p1`; **its** return schedules the second `.then`, which is added to the microtask queue and runs in the **same drain** → `p2`. The microtask queue must be **fully empty** before any macrotask, so only after `p2` does the `setTimeout` macrotask log `timeout`. **The key insight:** chained promise callbacks are processed back-to-back as microtasks, all ahead of a `0ms` timer. **Common mistakes:** expecting `timeout` between `p1` and `p2`, or thinking each `.then` yields to the macrotask queue.",
+    "example": "```js\nconsole.log('start');\nsetTimeout(() => console.log('timeout'), 0);\nPromise.resolve()\n  .then(() => console.log('p1'))\n  .then(() => console.log('p2'));\nconsole.log('end');\n// start, end, p1, p2, timeout — microtask queue drains fully before the timer\n```",
+    "resources": [
+      {
+        "label": "MDN — Microtask guide",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide"
+      }
+    ]
+  },
+  "exec-eventloop-004": {
+    "explanation": "**The problem:** despite the \"async\" event loop, a long `while` loop freezes the page. **Why it happens:** the event loop is **single-threaded and cooperative** — it can only pick up the next task (rendering, clicks, timers) once the **call stack is empty**. A long synchronous loop never returns, so the stack never clears and nothing else — including repaints — gets a turn. **Why promises don't help:** wrapping CPU work in a promise still runs it synchronously on the same thread; only genuine **I/O** is offloaded. **The fixes:** move heavy work to a **Web Worker** (separate thread), or **chunk** it and yield via `setTimeout`/`scheduler.postTask` so the loop can breathe. **Common mistakes:** thinking `async`/promises make CPU-bound code non-blocking.",
+    "example": "```js\n// BLOCKS the UI — synchronous, never yields:\n// for (let i = 0; i < 5e9; i++) {}\n\n// Non-blocking: chunk the work and yield to the event loop\nfunction chunked(total, perTick, done, i = 0) {\n  const end = Math.min(i + perTick, total);\n  for (; i < end; i++) { /* work */ }\n  if (i < total) setTimeout(() => chunked(total, perTick, done, i), 0);\n  else done();\n}\nchunked(1e6, 1e5, () => console.log('done without freezing'));\n```",
+    "resources": [
+      {
+        "label": "MDN — The event loop",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop"
+      },
+      {
+        "label": "MDN — Web Workers",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers"
+      }
+    ]
+  },
+  "exec-iife-001": {
+    "explanation": "**The problem:** how do you run a function the instant you define it and keep its variables out of the global scope? **What an IIFE is:** an **Immediately Invoked Function Expression** — a function wrapped in parentheses (to make it an *expression*) and called right away with a trailing `()`. **Why it works:** the wrapping `()` forces the parser to read `function` as an expression rather than a declaration, so the trailing `()` can invoke it; everything inside gets its own private scope. **Historic purpose:** before `let`/`const` block scope and ES modules, IIFEs were the way to avoid polluting `window` and to emulate privacy. **Common mistakes:** omitting the wrapper parentheses (`function(){}()` is a SyntaxError), or still reaching for IIFEs when a block or module would do.",
+    "example": "```js\n(function () {\n  const secret = 42;          // private — not on the global object\n  console.log('runs immediately:', secret);\n})();\n// arrow form works too:\n(() => console.log('arrow IIFE'))();\n// secret is not accessible here\n```",
+    "resources": [
+      {
+        "label": "MDN — IIFE",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/IIFE"
+      }
+    ]
+  },
+  "exec-iife-002": {
+    "explanation": "**The problem:** can an IIFE take arguments and return a value? **Yes — it's an ordinary function call.** The function expression is invoked immediately with `(3, 4)`, `return x + y` produces `7`, and that value is assigned to `result`. **Why it works:** an IIFE is just a normal invocation that happens at definition; arguments and return values behave exactly as in any call. **Why it's useful:** you can compute a value in a private scope and capture only the result, keeping helpers out of the surrounding scope — a common module/initialization pattern. **Common mistakes:** assuming an IIFE can't return anything, or forgetting the result is computed once, at definition time, not lazily.",
+    "example": "```js\nconst result = (function (x, y) {\n  return x + y;\n})(3, 4);\nconsole.log(result); // 7\n\n// useful pattern: compute config once in a private scope\nconst config = (() => ({ env: 'prod', retries: 3 }))();\nconsole.log(config.retries); // 3\n```",
+    "resources": [
+      {
+        "label": "MDN — IIFE",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/IIFE"
+      }
+    ]
+  },
+  "exec-iife-mcq-003": {
+    "explanation": "**The problem:** which forms are valid IIFEs? **Why only `(function(){…})()` works:** the leading `(` makes the parser treat `function` as an **expression**, so the trailing `()` invokes it. **Why the bare forms fail:** a statement that *starts* with the `function` keyword is parsed as a **declaration**, and you cannot immediately invoke a declaration — `function(){}()` and `function foo(){}()` are SyntaxErrors. **The fix for any of them:** wrap in parens (or use another expression-forcing operator like `!`, `+`, or `void`). **Note:** named function *expressions* can be IIFEs — `(function foo(){})()` is valid. **Common mistakes:** thinking a name makes it invocable (it's the wrapping, not the name, that matters).",
+    "example": "```js\n(function () { console.log('valid IIFE'); })();   // ✅ wrapped expression\n(function named() { console.log('named IIFE'); })(); // ✅ named expression\n!function () { console.log('operator-forced'); }();  // ✅ ! forces expression\n// function () { ... }();   ❌ SyntaxError — parsed as a declaration\n```",
+    "resources": [
+      {
+        "label": "MDN — IIFE",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/IIFE"
+      }
+    ]
+  },
+  "this-keyword-001": {
+    "explanation": "**The problem:** `this` means different things in regular vs arrow functions. **Regular functions — dynamic `this`:** the value is decided by **how the function is called** — as a method (`obj.fn()` → `obj`), plain call (`fn()` → global or `undefined` in strict mode), with `new`, or via `call`/`apply`/`bind`. **Arrow functions — lexical `this`:** they have **no own `this`**; they inherit it from the **enclosing scope at definition time**, and it can't be changed. **Why arrows help:** as callbacks they preserve the surrounding `this` (no more `const self = this`). **Common mistakes:** using an arrow as an object **method** and expecting `this` to be the object (it's the outer scope), or expecting a detached regular method to keep its object.",
+    "example": "```js\nconst obj = {\n  name: 'Ada',\n  regular() { return this.name; },        // this = obj (call-site)\n  arrow: () => (typeof globalThis.name),  // this = outer scope, not obj\n};\nconsole.log(obj.regular()); // 'Ada'\nconsole.log(obj.arrow());   // 'string'/'undefined' — not obj\n```",
+    "resources": [
+      {
+        "label": "MDN — this",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this"
+      },
+      {
+        "label": "MDN — Arrow functions",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions"
+      }
+    ]
+  },
+  "this-keyword-002": {
+    "explanation": "**The problem:** `obj.greet()` logs the name but `obj.greetArrow()` logs `undefined`. **Why:** `greet` is a **regular function** invoked as a method, so its `this` is the call-site receiver `obj` → `this.name` is `'Alice'`. `greetArrow` is an **arrow function**, which has no own `this`; it captured `this` from where it was **defined** — the surrounding (module/global) scope, not `obj` — so `this.name` is `undefined`. **The rule:** arrow functions ignore how they're called; their `this` is lexical. **Common mistakes:** defining object methods as arrows expecting `this` to be the object. Use regular function/method shorthand for methods that need `this`; reserve arrows for callbacks that should inherit the outer `this`.",
+    "example": "```js\nconst obj = {\n  name: 'Alice',\n  greet() { console.log(this.name); },           // method → this = obj\n  greetArrow: () => console.log(globalThis.name), // arrow → this = outer scope\n};\nobj.greet();      // 'Alice'\nobj.greetArrow(); // undefined — arrow's this isn't obj\n```",
+    "resources": [
+      {
+        "label": "MDN — Arrow functions (no this)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#cannot_be_used_as_methods"
+      }
+    ]
+  },
+  "this-keyword-003": {
+    "explanation": "**The problem:** assigning a method to a variable (`const fn = obj.greet`) and calling `fn()` logs `undefined` — the object context is gone. **Why it happens:** `this` is bound at **call time**, by the call site, not when the method is assigned. `obj.greet()` has receiver `obj`, but `fn()` is a **plain call** with no receiver, so `this` is the global object (non-strict) or `undefined` (strict) — either way `this.name` isn't `'Bob'`. **Where it bites:** passing methods as callbacks/event handlers (`setTimeout(obj.greet)`) silently loses `this`. **The fixes:** `obj.greet.bind(obj)`, an arrow wrapper `() => obj.greet()`, or class fields. **Common mistakes:** assuming the binding travels with the function reference.",
+    "example": "```js\nconst obj = { name: 'Bob', greet() { console.log(this.name); } };\nconst fn = obj.greet;\nfn(); // undefined — plain call, this is not obj\n\nconst bound = obj.greet.bind(obj);\nbound();                  // 'Bob' — this fixed to obj\nsetTimeout(() => obj.greet(), 0); // 'Bob' — arrow preserves obj\n```",
+    "resources": [
+      {
+        "label": "MDN — this (method binding)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this#the_value_passed_as_this_to_a_function"
+      }
+    ]
+  },
+  "this-keyword-mcq-004": {
+    "explanation": "**The problem:** what is `this` in a plain top-level function call under strict mode? **Why the answer is `undefined`:** in strict mode, a function invoked **without a receiver** (`fn()`, not `obj.fn()`) gets `this === undefined`. The engine no longer substitutes the global object. **Why non-strict differs:** sloppy mode \"boxes\" a missing `this` to the global object (`window`/`globalThis`), which is exactly the accident strict mode prevents. **Why it matters:** strict mode surfaces lost-`this` bugs as `TypeError` (e.g. `this.x` throws) instead of silently writing globals. **Common mistakes:** assuming `this` always defaults to the global object, or that modules behave like sloppy scripts — ES modules and class bodies are strict by default.",
+    "example": "```js\n'use strict';\nfunction f() { return this; }\nconsole.log(f()); // undefined — strict-mode plain call\n\n// non-strict would give the global object instead:\nfunction g() { return this; } // (in a sloppy script) → globalThis\n```",
+    "resources": [
+      {
+        "label": "MDN — Strict mode (this)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode#securing_javascript"
+      }
+    ]
+  },
+  "this-cab-001": {
+    "explanation": "**The problem:** `call`, `apply`, and `bind` all set `this`, but differ in *when* and *how* they pass arguments. **`call(thisArg, a, b)`:** invokes **immediately**, arguments listed individually. **`apply(thisArg, [a, b])`:** invokes **immediately**, arguments as an **array**. **`bind(thisArg, a)`:** does **not** invoke — returns a **new function** with `this` (and any preset args) permanently fixed. **Why they exist:** to control `this` explicitly — borrowing a method for another object (`call`/`apply`) or pinning context for a callback/handler (`bind`). **Mnemonic:** **A**pply = **A**rray. **Common mistakes:** expecting `bind` to call the function, or thinking a later `call` can override a `bind` (it can't — the bound `this` wins).",
+    "example": "```js\nfunction intro(greeting, mark) { return `${greeting}, ${this.name}${mark}`; }\nconst user = { name: 'Sam' };\nconsole.log(intro.call(user, 'Hi', '!'));    // 'Hi, Sam!' — args individually\nconsole.log(intro.apply(user, ['Hey', '?'])); // 'Hey, Sam?' — args as array\nconst bound = intro.bind(user, 'Yo');\nconsole.log(bound('.'));                      // 'Yo, Sam.' — this preset, returns fn\n```",
+    "resources": [
+      {
+        "label": "MDN — Function.prototype.call",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/call"
+      },
+      {
+        "label": "MDN — Function.prototype.bind",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind"
+      }
+    ]
+  },
+  "this-cab-002": {
+    "explanation": "**The problem:** `greet.call(user, 'Hello', '!')` and `greet.apply(user, ['Hi', '?'])` both work but pass arguments differently. **Why:** both set `this` to `user` and invoke **immediately**; the only difference is argument shape — `call` takes them **individually**, `apply` takes them as a single **array**. So the function sees `greeting`/`punctuation` filled the same way, producing the greeting with `this.name === 'Carol'`. **When to use which:** `apply` shines when arguments are already in an array (or for `Math.max(...arr)`-style spreading historically); `call` when you have discrete values. **Common mistakes:** passing an array to `call` (it becomes a single arg) or loose args to `apply` (it expects one array).",
+    "example": "```js\nfunction greet(greeting, punctuation) {\n  console.log(greeting + ' ' + this.name + punctuation);\n}\nconst user = { name: 'Carol' };\ngreet.call(user, 'Hello', '!');   // Hello Carol!\ngreet.apply(user, ['Hi', '?']);   // Hi Carol?\n```",
+    "resources": [
+      {
+        "label": "MDN — Function.prototype.apply",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/apply"
+      }
+    ]
+  },
+  "this-cab-mcq-003": {
+    "explanation": "**The problem:** a function bound to one object is then called with `.call(anotherObject)` — which `this` wins? **Why the answer is `'Dave'`:** `bind` creates a **hard binding**; the returned function's `this` is permanently fixed to `{ name: 'Dave' }` and **cannot be overridden** by a later `call`, `apply`, or even `bind`. So `bound.call({ name: 'Eve' })` ignores `Eve` and logs `'Dave'`. **Why bind wins:** internally the bound function discards any `this` supplied at call time. **The one exception:** using the bound function as a constructor (`new bound()`) does ignore the bound `this`. **Common mistakes:** assuming `call`/`apply` can re-point a bound function (they can't), or that the last `this` set always wins.",
+    "example": "```js\nfunction sayName() { console.log(this.name); }\nconst bound = sayName.bind({ name: 'Dave' });\nbound();                       // 'Dave'\nbound.call({ name: 'Eve' });   // 'Dave' — bind's this cannot be overridden\nbound.apply({ name: 'Zoe' });  // 'Dave'\n```",
+    "resources": [
+      {
+        "label": "MDN — Function.prototype.bind",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind"
+      }
+    ]
+  },
+  "proto-chain-001": {
+    "explanation": "**The problem:** how do objects share methods like `toString` without each owning a copy? **What the prototype chain is:** every object has an internal `[[Prototype]]` link to another object. On a property lookup, the engine checks the object itself, then its prototype, then *that* prototype, walking up until it finds the property or reaches `Object.prototype` (whose prototype is `null`). **Why it matters:** this is JS inheritance — methods live once on a shared prototype, and instances delegate to it. **How to inspect:** `Object.getPrototypeOf(obj)` (or the legacy `__proto__`). **Common mistakes:** confusing an object's `[[Prototype]]` with a function's `.prototype` property (the latter is what `new` assigns as instances' prototype), or mutating `Object.prototype` (affects everything).",
+    "example": "```js\nconst animal = { eats: true };\nconst rabbit = Object.create(animal); // rabbit's [[Prototype]] is animal\nrabbit.hops = true;\nconsole.log(rabbit.hops, rabbit.eats); // true true — eats found up the chain\nconsole.log(Object.getPrototypeOf(rabbit) === animal); // true\nconsole.log('toString' in rabbit);     // true — from Object.prototype\n```",
+    "resources": [
+      {
+        "label": "MDN — Inheritance and the prototype chain",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain"
+      }
+    ]
+  },
+  "proto-chain-002": {
+    "explanation": "**The problem:** `'x' in child` is `true` but `child.hasOwnProperty('x')` is `false` for an inherited property. **Why:** the `in` operator searches the object **and its entire prototype chain**, so it finds `x` on `parent`. `hasOwnProperty` checks only the object's **own** (direct) properties, so an inherited `x` returns `false`. **Why both exist:** sometimes you care whether a property is reachable at all (`in`), sometimes only whether it's the object's own (`hasOwnProperty`, e.g. when iterating data). **Modern form:** `Object.hasOwn(child, 'x')` is the safer replacement (works even on `Object.create(null)` objects). **Common mistakes:** using `in` when you meant own-only, or calling `obj.hasOwnProperty` on a null-prototype object (no such method — use `Object.hasOwn`).",
+    "example": "```js\nconst parent = { x: 1 };\nconst child = Object.create(parent);\nchild.y = 2;\nconsole.log('x' in child);                  // true  — found on prototype\nconsole.log(child.hasOwnProperty('x'));     // false — not an own property\nconsole.log(child.hasOwnProperty('y'));     // true\nconsole.log(Object.hasOwn(child, 'x'));     // false — modern, robust\n```",
+    "resources": [
+      {
+        "label": "MDN — in operator",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in"
+      },
+      {
+        "label": "MDN — Object.hasOwn",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwn"
+      }
+    ]
+  },
+  "proto-chain-mcq-003": {
+    "explanation": "**The problem:** what is the prototype of `Object.create(null)`? **Why the answer is `null`:** `Object.create(proto)` sets the new object's `[[Prototype]]` to exactly `proto`; passing `null` makes a **prototype-less** object that inherits nothing. **The consequence:** it has **no** `Object.prototype` methods — no `toString`, `hasOwnProperty`, `__proto__`, etc. **Why it's useful:** a clean **dictionary/hash map** with no inherited keys, so you can store user-provided keys (even `'constructor'` or `'__proto__'`) without collisions or prototype-pollution surprises. **Common mistakes:** calling `obj.hasOwnProperty(...)` on it (throws — use `Object.hasOwn`), or assuming every object descends from `Object.prototype`.",
+    "example": "```js\nconst dict = Object.create(null);\nconsole.log(Object.getPrototypeOf(dict)); // null\ndict.toString = 'a value, not a method'; // safe — no inherited toString to shadow\nconsole.log('toString' in dict);          // true (it's an own key now)\nconsole.log(Object.hasOwn(dict, 'x'));    // false — use Object.hasOwn, not dict.hasOwnProperty\n```",
+    "resources": [
+      {
+        "label": "MDN — Object.create",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create"
+      }
+    ]
+  },
+  "proto-class-001": {
+    "explanation": "**The problem:** does `class` introduce a new, Java-style inheritance model? **No — it's syntactic sugar** over JavaScript's existing **prototype-based** inheritance. Methods you write in a `class` body are placed on the constructor's `.prototype`, instances get that as their `[[Prototype]]`, and `extends` wires the prototype chain between the two prototypes. `typeof MyClass === 'function'` confirms a class *is* a function. **What classes add (still prototypal):** they're not hoisted, run in strict mode, require `new`, and support `super`, private `#fields`, and static members. **Why know this:** debugging inheritance and using `Object.getPrototypeOf` make sense once you see the chain. **Common mistakes:** believing classes copy methods onto each instance (they're shared on the prototype).",
+    "example": "```js\nclass Person {\n  constructor(name) { this.name = name; }\n  hi() { return 'hi ' + this.name; }\n}\nconst p = new Person('Lee');\nconsole.log(typeof Person);                                  // 'function'\nconsole.log(Object.getPrototypeOf(p) === Person.prototype);  // true\nconsole.log(p.hi === Person.prototype.hi);                   // true — shared, not copied\n```",
+    "resources": [
+      {
+        "label": "MDN — Classes",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes"
+      }
+    ]
+  },
+  "proto-class-002": {
+    "explanation": "**The problem:** when do you use `Object.create(proto)` vs `new Constructor()`? **`Object.create(proto)`:** builds a new object whose `[[Prototype]]` is exactly `proto` and runs **no constructor** — pure prototype wiring, including `Object.create(null)` for a clean map. **`new Constructor()`:** allocates an object whose prototype is `Constructor.prototype`, **runs the constructor body** (initializing instance state via `this`), and returns it. **Why both exist:** `Object.create` gives precise control over the chain (the classic `Child.prototype = Object.create(Parent.prototype)` pattern) without invoking a constructor; `new` is the everyday instantiation path that also initializes. **Common mistakes:** expecting `Object.create` to call any init logic, or forgetting to reset `.constructor` after the `Object.create` inheritance pattern.",
+    "example": "```js\nconst proto = { describe() { return `id ${this.id}`; } };\nconst a = Object.create(proto); // no constructor runs\na.id = 1;\nconsole.log(a.describe()); // 'id 1'\n\nfunction Thing(id) { this.id = id; } // constructor initializes state\nThing.prototype.describe = function () { return `id ${this.id}`; };\nconst b = new Thing(2);\nconsole.log(b.describe()); // 'id 2'\n```",
+    "resources": [
+      {
+        "label": "MDN — Object.create",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create"
+      },
+      {
+        "label": "MDN — new operator",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new"
+      }
+    ]
+  },
+  "proto-class-mcq-003": {
+    "explanation": "**The problem:** trace method resolution and the prototype links for `class Dog extends Animal`. **Why the answer is `'woof', true, true`:** `d.speak()` looks up `speak` starting on `d`, finds it on `Dog.prototype` first → `'woof'` (Dog's override shadows Animal's). `Object.getPrototypeOf(d) === Dog.prototype` is `true` because `new Dog()` sets the instance's prototype to `Dog.prototype`. `Object.getPrototypeOf(Dog.prototype) === Animal.prototype` is `true` because `extends` links the subclass prototype to the superclass prototype. **The full chain:** `d → Dog.prototype → Animal.prototype → Object.prototype → null`. **Common mistakes:** thinking the parent method runs (the override wins), or that `extends` links the constructors rather than their prototypes.",
+    "example": "```js\nclass Animal { speak() { return 'generic'; } }\nclass Dog extends Animal { speak() { return 'woof'; } }\nconst d = new Dog();\nconsole.log(d.speak());                                            // 'woof'\nconsole.log(Object.getPrototypeOf(d) === Dog.prototype);          // true\nconsole.log(Object.getPrototypeOf(Dog.prototype) === Animal.prototype); // true\n```",
+    "resources": [
+      {
+        "label": "MDN — extends",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/extends"
+      }
+    ]
   }
 }
