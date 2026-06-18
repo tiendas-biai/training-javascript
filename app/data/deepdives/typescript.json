@@ -460,5 +460,145 @@
         "url": "https://www.typescriptlang.org/docs/handbook/functions.html#this-parameters"
       }
     ]
+  },
+  "ts-iface-001": {
+    "explanation": "**The problem:** Two ways to name an object shape — which to use? **A type alias:** `type Point = { x: number; y: number }`. **An interface:** `interface Point { x: number; y: number }`. **For plain object shapes they're used identically** — both name a structure you can reuse and implement. **The differences show up elsewhere:** interfaces support **declaration merging** and read naturally for object/class contracts; type aliases can also name **unions, tuples, primitives, and mapped/conditional types** that interfaces can't. **Rule of thumb (TS docs):** prefer `interface` for object/class shapes until you need a feature only `type` provides. **Common mistakes:** thinking one is strictly 'better', or trying to write a union with an interface (use a `type`).",
+    "example": "```ts\ntype PointA = { x: number; y: number };   // type alias\ninterface PointB { x: number; y: number }  // interface — same usage here\n\nconst p1: PointA = { x: 1, y: 2 };\nconst p2: PointB = { x: 3, y: 4 };\nconsole.log(p1, p2);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Type Aliases vs Interfaces",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#differences-between-type-aliases-and-interfaces"
+      },
+      {
+        "label": "TypeScript Handbook — Object Types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html"
+      }
+    ]
+  },
+  "ts-iface-mcq-001": {
+    "explanation": "**The problem:** What can an `interface` do that a `type` alias can't? **The answer: declaration merging** — declaring an interface **twice with the same name** combines (merges) the declarations into one type with all members. Type aliases can't be reopened like this — a duplicate `type` name is an error. **Why it exists:** it lets you *augment* existing interfaces (e.g. add properties to `Window` or a library's types). **Why the others are wrong:** type aliases *can* describe unions (`number | string`), can be 'extended' via intersections, and can be used as parameter types — those aren't interface-exclusive. **Caution:** merging is powerful but can surprise readers; prefer it for intentional augmentation. **Common mistakes:** accidentally declaring two same-named interfaces and getting unexpected merged members.",
+    "example": "```ts\ninterface Box { height: number; }\ninterface Box { width: number; }  // merges with the declaration above\n\n// Box now requires BOTH members:\nconst b: Box = { height: 10, width: 20 };\nconsole.log(b);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Declaration Merging",
+        "url": "https://www.typescriptlang.org/docs/handbook/declaration-merging.html"
+      },
+      {
+        "label": "TypeScript Handbook — Extending interfaces",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#extending-types"
+      }
+    ]
+  },
+  "ts-iface-002": {
+    "explanation": "**The problem:** Adding members to an existing type with each form. **Interface:** use `extends` — `interface Bear extends Animal { honey: boolean }`. You can extend multiple interfaces. **Type alias:** use an **intersection** — `type Bear = Animal & { honey: boolean }`. **Both produce the same shape** (everything in `Animal` plus `honey`). **The subtle difference:** on conflicting members, `extends` raises a clear error at the declaration, while an intersection silently makes the conflicting property `never` (see object combination rules). **Which to use:** `extends` for object/class hierarchies; `&` when composing type aliases or unions. **Common mistakes:** mixing the two styles inconsistently, or expecting `&` to error on conflicts the way `extends` does.",
+    "example": "```ts\ninterface Animal { name: string }\n\ninterface Bear extends Animal { honey: boolean }   // interface way\ntype Bear2 = Animal & { honey: boolean };          // type-alias way (intersection)\n\nconst pooh: Bear = { name: 'Pooh', honey: true };\nconst paddington: Bear2 = { name: 'Paddington', honey: true };\nconsole.log(pooh, paddington);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Extending Types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#extending-types"
+      },
+      {
+        "label": "TypeScript Handbook — Intersection Types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types"
+      }
+    ]
+  },
+  "ts-union-001": {
+    "explanation": "**The problem:** A value typed `number | string` could be either — what can you do with it? **A union type** is formed from two or more types; the value is **exactly one** of them, but the compiler doesn't know which. **So before narrowing, you can only use operations valid for *every* member** of the union (the common subset) — e.g. `.toString()` works for both `number` and `string`, but `.toUpperCase()` (string-only) is rejected. **To use member-specific operations, narrow first** (`typeof`, checks, etc.) so the compiler knows the concrete type in that branch. **Why:** safety — calling a string method on a number would crash. **Common mistakes:** trying to call a method that only exists on one member without narrowing, or reaching for `as` instead of a real `typeof` check.",
+    "example": "```ts\nfunction printId(id: number | string) {\n  // @ts-expect-error 'toUpperCase' isn't on number | string (not common to both)\n  console.log(id.toUpperCase());\n\n  console.log(id.toString());            // ✅ valid for every member\n  if (typeof id === 'string') console.log(id.toUpperCase()); // ✅ narrowed to string\n}\nprintId(101);\nprintId('202');\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Union Types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#union-types"
+      },
+      {
+        "label": "TypeScript Handbook — Working with union types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#working-with-union-types"
+      }
+    ]
+  },
+  "ts-assert-001": {
+    "explanation": "**The problem:** Sometimes *you* know a value's specific type but TypeScript can't infer it (e.g. `document.getElementById` returns the general `HTMLElement | null`). **A type assertion** (`value as T`, or `<T>value`) tells the compiler to **treat the value as a more specific type** you're claiming it has. **The crucial caveat:** assertions are a **compile-time only** instruction — at runtime they're **completely erased**, performing **no check and no conversion**. If you assert wrongly, nothing stops the bad value; you just lose the compiler's protection. **Allowed scope:** you can assert to a more/less specific type with overlap; nonsense conversions need `as unknown as T`. **Common mistakes:** treating `as` like a runtime cast/parse (it isn't), or asserting to silence errors and masking real type mismatches.",
+    "example": "```ts\nconst value: unknown = 'hello world';\n\nconst str = value as string;  // 'trust me, it's a string'\nconsole.log(str.length);       // works — it really is a string at runtime\n\nconst n = value as number;     // compiler allows it (from unknown) — NO runtime check\nconsole.log(typeof n);         // 'string' — the assertion converted nothing\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Type Assertions",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#type-assertions"
+      },
+      {
+        "label": "TypeScript Handbook — assertions are erased",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#type-assertions"
+      }
+    ]
+  },
+  "ts-gen-001": {
+    "explanation": "**The problem:** An identity function should return whatever type it received. Typing it with `any` 'works' but **throws away the type** — pass a string, get back `any`, and all checking stops downstream. **The generic version** `identity<Type>(arg: Type): Type` **captures** the argument's type in `Type` and returns the same type, so `identity('myString')` is typed **`string`** and `identity(42)` is `number`. **Why generics win:** they *relate* the input type to the output type, preserving safety and editor help, instead of erasing it like `any`. **The mental model:** a generic is a placeholder the compiler fills in per call. **Common mistakes:** reaching for `any` for 'flexible' functions (loses everything), or adding a type parameter that doesn't relate input to output (then it's pointless).",
+    "example": "```ts\nfunction identity<Type>(arg: Type): Type { return arg; }\n\nconst s = identity('myString'); // typed string — type preserved\nconst n = identity(42);          // typed number\ns.toUpperCase();                 // ✅ allowed, s is string\n\nfunction identityAny(arg: any): any { return arg; }\nconst loose = identityAny('x');  // typed any — checking is gone\nloose.whatever.nope();           // compiles (any disables checks) — a hidden bug\nconsole.log(s, n, loose);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Hello World of Generics",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html#hello-world-of-generics"
+      },
+      {
+        "label": "TypeScript Handbook — Generics",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html"
+      }
+    ]
+  },
+  "ts-gen-mcq-001": {
+    "explanation": "**The problem:** `loggingIdentity<Type>(arg: Type)` fails on `arg.length`. **Why:** `Type` is **unconstrained** — it could be *any* type, and **not all types have a `.length`** (a `number` doesn't). So the compiler can't guarantee the property exists and rejects the access. **The fix:** constrain the parameter to types that *do* have it — `<Type extends { length: number }>` — or accept `Type[]` if you meant an array. **Why the others are wrong:** generic params *can* have constrained properties accessed, `length` isn't reserved, and the issue isn't a missing explicit type argument. **The principle:** inside a generic you may only use what the type parameter's constraint guarantees. **Common mistakes:** assuming a type parameter has members it might not, instead of constraining it.",
+    "example": "```ts\nfunction loggingIdentity<Type>(arg: Type): Type {\n  // @ts-expect-error 'length' does not exist on the unconstrained type 'Type'\n  console.log(arg.length);\n  return arg;\n}\n\n// ✅ Constrain Type so .length is guaranteed:\nfunction logged<Type extends { length: number }>(arg: Type): Type {\n  console.log(arg.length);\n  return arg;\n}\nconsole.log(logged([1, 2, 3]), logged('abc'));\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Generic Constraints",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-constraints"
+      },
+      {
+        "label": "TypeScript Handbook — Working with generic type variables",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html#working-with-generic-type-variables"
+      }
+    ]
+  },
+  "ts-gen-002": {
+    "explanation": "**The problem:** How do interfaces and classes take type parameters? **Put the type parameter list after the name.** **Generic interface:** `interface GenericIdentityFn<Type> { (arg: Type): Type }` — the whole interface is parameterized, so you pick `Type` when you use it (`GenericIdentityFn<number>`). **Generic class:** `class Box<T> { … }` — `T` is available across the class's members (fields, methods, constructor). **Why:** lets one definition work for many types while staying type-safe (a `Box<string>`'s `contents` is `string`). **Note (strict mode):** class fields must be initialized — do it in the constructor (or use `!`). **Common mistakes:** forgetting to supply/let infer the type argument, putting the parameter in the wrong place, or leaving generic class fields uninitialized under `strictPropertyInitialization`.",
+    "example": "```ts\ninterface GenericIdentityFn<Type> {\n  (arg: Type): Type;\n}\nconst numberFn: GenericIdentityFn<number> = (n) => n;\n\nclass Box<T> {\n  contents: T;\n  constructor(value: T) { this.contents = value; } // initialize under strict mode\n}\nconst b = new Box<string>('hello');\nconsole.log(numberFn(5), b.contents);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Generic Types (interfaces)",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-types"
+      },
+      {
+        "label": "TypeScript Handbook — Generic Classes",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-classes"
+      }
+    ]
+  },
+  "ts-gen-mcq-002": {
+    "explanation": "**The problem:** What does `Key extends keyof Type` do in `getProperty<Type, Key extends keyof Type>(obj: Type, key: Key)`? **The answer:** it **restricts `key` to the actual property names of `obj`**. `keyof Type` is the union of `Type`'s keys; constraining `Key` to it means you can only pass a real key — so for `{ a, b, c }`, `getProperty(x, 'a')` is fine but `getProperty(x, 'm')` is a **compile error**. Bonus: the return type is precisely `Type[Key]` (the value type for that key). **Why the others are wrong:** it doesn't convert keys at runtime, doesn't return `any`, and doesn't require all-string values. **Why useful:** type-safe property access/lookup helpers. **Common mistakes:** using a plain `string` key (loses the safety and precise return type), or forgetting the constraint and allowing invalid keys.",
+    "example": "```ts\nfunction getProperty<Type, Key extends keyof Type>(obj: Type, key: Key): Type[Key] {\n  return obj[key];\n}\n\nconst x = { a: 1, b: 2, c: 3 };\nconst a = getProperty(x, 'a'); // ok — return type is number\n// @ts-expect-error '\"m\"' is not assignable to 'a' | 'b' | 'c'\ngetProperty(x, 'm');\nconsole.log(a, getProperty(x, 'b'));\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Using Type Parameters in Generic Constraints",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html#using-type-parameters-in-generic-constraints"
+      },
+      {
+        "label": "TypeScript Handbook — keyof Type Operator",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/keyof-types.html"
+      }
+    ]
+  },
+  "ts-gen-003": {
+    "explanation": "**The problem:** A factory function receives a **class** and should return an **instance** of it, correctly typed. **The solution — a construct signature:** type the class parameter with `{ new (): Type }` (or the shorthand `new () => Type`), which says 'something you can call with `new` to get a `Type`'. The function returns `new c()`, typed as `Type`. **Why a construct signature:** a class used as a *value* is its constructor function; describing it with `new (): Type` lets TypeScript infer the instance type. **Why useful:** generic factories, dependency injection, plugin systems. **Common mistakes:** typing the parameter as the instance type instead of the constructor (you'd pass `new Dog()` rather than `Dog`), or forgetting the constructor's parameters if it requires arguments (`new (arg: X) => Type`).",
+    "example": "```ts\nclass Animal { numLegs = 4; }\nclass Dog extends Animal { bark() { return 'woof'; } }\n\n// Construct signature: accept a class, return an instance of it.\nfunction create<Type>(c: new () => Type): Type {\n  return new c();\n}\n\nconst dog = create(Dog); // typed as Dog\nconsole.log(dog.numLegs, dog.bark());\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Construct Signatures",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/functions.html#construct-signatures"
+      },
+      {
+        "label": "TypeScript Handbook — Using Class Types in Generics",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html#using-class-types-in-generics"
+      }
+    ]
   }
 }
