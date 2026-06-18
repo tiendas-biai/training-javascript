@@ -1838,72 +1838,100 @@
     ]
   },
   "react-route-001": {
-    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A single-page app needs to show different views for different URLs without full page reloads. **How React Router declares routes:** render `<Routes>` containing `<Route path=\"…\" element={<Component/>} />` entries; the router reads the current URL and renders the **first matching** route's element. **Why this is declarative:** your route table *is* the mapping from URL → UI, so the rendered view is a function of the location. **Setup:** wrap the app in a router (`<BrowserRouter>`) once at the top. **Common mistakes:** forgetting the router wrapper (Routes throws), expecting multiple routes to render at once (only the best match renders), or mismatching `path` casing/leading slashes.",
+    "example": "```tsx\nimport { BrowserRouter, Routes, Route, Link } from 'react-router-dom';\n\nfunction Home() { return <h2>Home</h2>; }\nfunction About() { return <h2>About</h2>; }\n\nexport default function App() {\n  return (\n    <BrowserRouter>\n      <nav><Link to=\"/\">Home</Link> | <Link to=\"/about\">About</Link></nav>\n      <Routes>\n        <Route path=\"/\" element={<Home />} />\n        <Route path=\"/about\" element={<About />} />\n      </Routes>\n    </BrowserRouter>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Routing",
-        "url": "https://react.dev/learn"
+        "label": "React Router — Routes & Route",
+        "url": "https://reactrouter.com/start/library/routing"
+      },
+      {
+        "label": "React Router — Picking a Router",
+        "url": "https://reactrouter.com/start/library/installation"
       }
     ]
   },
   "react-route-002": {
-    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Using a plain `<a href>` inside a router-based SPA. **Why it's wrong:** an `<a>` triggers a **full document reload** — the browser fetches the page again, React unmounts, and all in-memory app state is lost. **What `<Link to>` does:** intercepts the click, updates the URL via the History API, and lets the router swap the matching component **without** reloading — fast and state-preserving. **When a plain `<a>` is still right:** linking to external sites or non-SPA pages. **Common mistakes:** mixing `<a href>` for internal navigation (jarring reloads), or using `<Link>` for external URLs where a normal anchor is appropriate.",
+    "example": "```tsx\nimport { BrowserRouter, Routes, Route, Link } from 'react-router-dom';\n\nfunction Page({ title }: { title: string }) { return <h2>{title}</h2>; }\n\nexport default function App() {\n  return (\n    <BrowserRouter>\n      {/* Link = client-side nav (no reload). <a> would reload the whole app. */}\n      <nav><Link to=\"/\">Home</Link> | <Link to=\"/about\">About</Link></nav>\n      <Routes>\n        <Route path=\"/\" element={<Page title=\"Home\" />} />\n        <Route path=\"/about\" element={<Page title=\"About\" />} />\n      </Routes>\n    </BrowserRouter>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Routing",
-        "url": "https://react.dev/learn"
+        "label": "React Router — Link",
+        "url": "https://reactrouter.com/start/library/navigating#link"
+      },
+      {
+        "label": "React Router — Navigating",
+        "url": "https://reactrouter.com/start/library/navigating"
       }
     ]
   },
   "react-route-mcq-001": {
-    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** For a route `path=\"/users/:id\"`, how do you read the dynamic `:id` segment inside the component? **The answer:** `const { id } = useParams()`. **Why:** `:id` is a URL *param*; `useParams()` returns an object of the current route's params keyed by the names in the path. **Why the others are wrong:** `props.match` is the old v5 router-props API (gone in v6+); `useLocation()` gives the location object (pathname/search/hash), not params; `useRoute` isn't a thing. **Note:** param values are strings (or `undefined`), so convert/validate as needed. **Common mistakes:** expecting numbers (params are strings), or reading params from `useLocation`.",
+    "example": "```tsx\nimport { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';\n\nfunction User() {\n  const { id } = useParams(); // matches the :id segment; value is a string\n  return <p>Viewing user #{id}</p>;\n}\n\nexport default function App() {\n  return (\n    <BrowserRouter>\n      <Routes>\n        <Route path=\"/users/:id\" element={<User />} />\n      </Routes>\n    </BrowserRouter>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Routing",
-        "url": "https://react.dev/learn"
+        "label": "React Router — useParams",
+        "url": "https://reactrouter.com/api/hooks/useParams"
+      },
+      {
+        "label": "React Router — Dynamic Segments",
+        "url": "https://reactrouter.com/start/library/routing#dynamic-segments"
       }
     ]
   },
   "react-route-003": {
-    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Several pages share a layout (nav, sidebar) and only the inner content changes per route. **Nested routes + `<Outlet/>`:** declare child `<Route>`s inside a parent `<Route>`; the parent renders shared layout and places an `<Outlet/>` where the active child should appear. The router renders the matched child *into* that outlet. **Why it's powerful:** layout is written once; child routes plug into it, and nesting can go many levels deep. **Common mistakes:** forgetting the `<Outlet/>` (child routes render nothing), or duplicating layout in every page instead of using a parent layout route. Index routes (`<Route index />`) fill the outlet at the parent's exact path.",
+    "example": "```tsx\nimport { BrowserRouter, Routes, Route, Link, Outlet } from 'react-router-dom';\n\nfunction Layout() {\n  return (\n    <div>\n      <nav><Link to=\"/\">Home</Link> | <Link to=\"/about\">About</Link></nav>\n      <hr />\n      <Outlet /> {/* active child route renders here */}\n    </div>\n  );\n}\n\nexport default function App() {\n  return (\n    <BrowserRouter>\n      <Routes>\n        <Route path=\"/\" element={<Layout />}>\n          <Route index element={<h2>Home</h2>} />\n          <Route path=\"about\" element={<h2>About</h2>} />\n        </Route>\n      </Routes>\n    </BrowserRouter>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Routing",
-        "url": "https://react.dev/learn"
+        "label": "React Router — Nested Routes",
+        "url": "https://reactrouter.com/start/library/routing#nested-routes"
+      },
+      {
+        "label": "React Router — Outlet",
+        "url": "https://reactrouter.com/api/components/Outlet"
       }
     ]
   },
   "react-route-004": {
-    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** You need to navigate from code — after a form submit, a login, or a timeout — not from a clicked `<Link>`. **The API:** `const navigate = useNavigate()`, then `navigate('/path')`. `navigate(-1)` goes back (like the browser button), and `navigate('/path', { replace: true })` replaces the current history entry instead of pushing a new one (so Back won't return to it — handy after login). **Why a Hook:** navigation must run inside React's render/event lifecycle. **Common mistakes:** calling `navigate` during render (do it in a handler or effect), or pushing when you meant to replace (leaving a dead entry like a login page in history).",
+    "example": "```tsx\nimport { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';\n\nfunction LoginForm() {\n  const navigate = useNavigate();\n  function handleSubmit(e: React.FormEvent) {\n    e.preventDefault();\n    // …authenticate… then go to the dashboard, replacing the login entry.\n    navigate('/dashboard', { replace: true });\n  }\n  return <form onSubmit={handleSubmit}><button>Log in</button></form>;\n}\n\nexport default function App() {\n  return (\n    <BrowserRouter>\n      <Routes>\n        <Route path=\"/\" element={<LoginForm />} />\n        <Route path=\"/dashboard\" element={<h2>Dashboard</h2>} />\n      </Routes>\n    </BrowserRouter>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Routing",
-        "url": "https://react.dev/learn"
+        "label": "React Router — useNavigate",
+        "url": "https://reactrouter.com/api/hooks/useNavigate"
+      },
+      {
+        "label": "React Router — Navigating",
+        "url": "https://reactrouter.com/start/library/navigating"
       }
     ]
   },
   "react-route-005": {
-    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Some routes should only render for authenticated users; everyone else should be redirected to login. **The pattern:** a small guard component checks auth and either renders its `children` (or an `<Outlet/>`) or returns `<Navigate to=\"/login\" replace />`. Wrap the protected route's element in that guard. **Why `<Navigate replace>`:** it redirects declaratively during render and `replace` keeps the protected URL out of history so Back doesn't bounce the user. **Why a component, not an effect:** redirecting in render avoids a flash of protected content. **Common mistakes:** redirecting in `useEffect` (content flashes first), forgetting `replace` (Back loops), or not preserving the intended destination to return to after login.",
+    "example": "```tsx\nimport type { ReactElement } from 'react';\nimport { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';\n\nconst isAuthed = false; // pretend auth state\n\nfunction RequireAuth({ children }: { children: ReactElement }) {\n  return isAuthed ? children : <Navigate to=\"/login\" replace />;\n}\n\nexport default function App() {\n  return (\n    <BrowserRouter>\n      <Routes>\n        <Route path=\"/login\" element={<h2>Please log in</h2>} />\n        <Route path=\"/secret\" element={<RequireAuth><h2>Secret</h2></RequireAuth>} />\n      </Routes>\n    </BrowserRouter>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Routing",
-        "url": "https://react.dev/learn"
+        "label": "React Router — Navigate component",
+        "url": "https://reactrouter.com/api/components/Navigate"
+      },
+      {
+        "label": "React Router — Auth / protected routes",
+        "url": "https://reactrouter.com/start/library/navigating"
       }
     ]
   },
   "react-route-mcq-002": {
-    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Which Hook reads *and* updates the URL query string (`?filter=due`)? **The answer:** `useSearchParams`. It returns `[searchParams, setSearchParams]` — `searchParams` is a `URLSearchParams` (use `.get('filter')`), and `setSearchParams` updates the query (and the URL). **Why the others are wrong:** `useParams` is for path segments (`:id`), not the query string; `useQuery` isn't a router Hook; `useLocation` only *reads* `location.search` (a raw string) and can't update it. **Why it's nice:** keeping filter/sort/search state in the URL makes views shareable and bookmarkable. **Common mistakes:** storing such state only in React state (lost on refresh/share), or mutating `searchParams` directly instead of calling the setter.",
+    "example": "```tsx\nimport { BrowserRouter, useSearchParams } from 'react-router-dom';\n\nfunction Filters() {\n  const [params, setParams] = useSearchParams();\n  const filter = params.get('filter') ?? 'all';\n  return (\n    <div>\n      <p>filter = {filter}</p>\n      <button onClick={() => setParams({ filter: 'due' })}>show due</button>\n      <button onClick={() => setParams({})}>clear</button>\n    </div>\n  );\n}\n\nexport default function App() {\n  return <BrowserRouter><Filters /></BrowserRouter>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Routing",
-        "url": "https://react.dev/learn"
+        "label": "React Router — useSearchParams",
+        "url": "https://reactrouter.com/api/hooks/useSearchParams"
+      },
+      {
+        "label": "MDN — URLSearchParams",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams"
       }
     ]
   },
