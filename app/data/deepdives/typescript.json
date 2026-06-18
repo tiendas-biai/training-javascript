@@ -600,5 +600,145 @@
         "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html#using-class-types-in-generics"
       }
     ]
+  },
+  "ts-class-001": {
+    "explanation": "**The problem:** A class field declared but never set is a null/undefined bug waiting to happen. **`strictPropertyInitialization`** (part of `strict`) requires every declared field to be **initialized** — either inline (`name = 'x'`) or **in the constructor** — otherwise it's a compile error. **The `!` (definite assignment assertion):** placed after a field name (`name!: string`), it **opts that field out** of the check, telling the compiler 'this will be assigned before use, trust me' — useful when a framework, lifecycle method, or DI sets it later. **The risk:** like `!` elsewhere, it's an unchecked promise — if you're wrong, you get `undefined` at runtime. **Common mistakes:** declaring fields without initializing them (error under strict), or sprinkling `!` to silence the check instead of initializing properly.",
+    "example": "```ts\nclass GoodGreeter {\n  name: string;\n  constructor() { this.name = 'world'; } // initialized in the constructor\n}\nclass LazyGreeter {\n  name!: string; // definite assignment assertion — set later, trust me\n  init() { this.name = 'set later'; }\n}\n// @ts-expect-error 'count' has no initializer and is not set in the constructor\nclass BadGreeter { count: number; }\nconsole.log(new GoodGreeter().name);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — --strictPropertyInitialization",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#--strictpropertyinitialization"
+      },
+      {
+        "label": "TSConfig — strictPropertyInitialization",
+        "url": "https://www.typescriptlang.org/tsconfig#strictPropertyInitialization"
+      }
+    ]
+  },
+  "ts-class-002": {
+    "explanation": "**The problem:** A field should be set once at construction and never changed afterward. **`readonly` on a class field** allows assignment **inline** (at the declaration) and **inside the constructor**, but **forbids assignment anywhere else** — any later `this.field = …` in a method is a compile error. **Why:** it documents and enforces immutability of the binding after construction. **The same shallow caveat as object `readonly`:** if the field holds an object, that object's contents can still be mutated — only reassigning the field is blocked. **Why useful:** ids, configuration, injected dependencies. **Common mistakes:** trying to reassign a `readonly` field in a method, or assuming it deep-freezes the referenced value.",
+    "example": "```ts\nclass Greeter {\n  readonly name: string = 'world';      // inline init allowed\n  constructor(otherName?: string) {\n    if (otherName !== undefined) this.name = otherName; // ✅ constructor allowed\n  }\n  rename(n: string) {\n    // @ts-expect-error cannot assign to 'name' — it is read-only (outside ctor)\n    this.name = n;\n  }\n}\nconsole.log(new Greeter('hi').name);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — readonly fields",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#readonly"
+      },
+      {
+        "label": "TypeScript Handbook — Classes",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html"
+      }
+    ]
+  },
+  "ts-class-mcq-001": {
+    "explanation": "**The problem:** `class NameChecker implements Checkable { check(s) {…} }` — what's the type of `s`? **The answer: `any`** — an `implements` clause only **checks** that the class is *compatible* with the interface; it does **not** add type information to the members. So `s` gets no contextual type from the interface and is **implicitly `any`** (and under `noImplicitAny`/`strict`, that's actually a compile error you must fix by annotating). **Why the others are wrong:** the type isn't inherited from the interface signature, unannotated params don't default to `unknown` or `never`. **The fix:** annotate the parameter yourself — `check(s: string)`. **The principle:** `implements` is a compatibility check, not a source of types. **Common mistakes:** expecting method/param types to flow from the implemented interface.",
+    "example": "```ts\ninterface Checkable { check(name: string): boolean; }\n\nclass NameChecker implements Checkable {\n  // @ts-expect-error 'implements' adds no types: 's' is implicitly 'any' (noImplicitAny)\n  check(s) {\n    return s.toLowerCase() === 'ok';\n  }\n}\n\n// Fix: annotate the parameter yourself — implements won't do it for you.\nclass NameChecker2 implements Checkable {\n  check(s: string) { return s.toLowerCase() === 'ok'; }\n}\nconsole.log(new NameChecker2().check('OK'));\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — implements Clauses",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#implements-clauses"
+      },
+      {
+        "label": "TypeScript Handbook — Cautions on implements",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#cautions"
+      }
+    ]
+  },
+  "ts-class-003": {
+    "explanation": "**The problem:** Controlling who can access a class member. **The three modifiers:** **`public`** (the default) — accessible **everywhere**. **`protected`** — accessible **inside the class and its subclasses**, not from outside instances. **`private`** — accessible **only within the declaring class itself** (not even subclasses). **Why:** encapsulation — expose a clean API while hiding internals, and let subclasses build on protected members. **Important caveat:** these are **compile-time** checks (TypeScript only) — they don't truly hide data at runtime (use JavaScript's `#private` fields for hard runtime privacy). **Common mistakes:** assuming `private` protects data at runtime, expecting subclasses to reach `private` members (they can't — use `protected`), or over-annotating `public` (it's the default).",
+    "example": "```ts\nclass Base {\n  public a = 1;    // accessible everywhere (default)\n  protected b = 2; // this class + subclasses\n  private c = 3;   // only this class\n  total() { return this.a + this.b + this.c; }\n}\nclass Sub extends Base {\n  fromSub() { return this.a + this.b; } // ✅ a, b reachable; c is not\n}\nconst o = new Sub();\nconsole.log(o.a, o.total()); // public ok\n// @ts-expect-error 'b' is protected and 'c' is private — not accessible here\nconsole.log(o.b, o.c);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Member Visibility",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#member-visibility"
+      },
+      {
+        "label": "TypeScript Handbook — private vs #private",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#caveats"
+      }
+    ]
+  },
+  "ts-class-mcq-002": {
+    "explanation": "**The problem:** `new MySafe()['secretKey']` where `secretKey` is `private` — what prints? **The answer: `12345`** — and notably it even **type-checks**. **Why:** TypeScript's `private` is a **compile-time-only** visibility check; at runtime the field is an ordinary property that exists on the object. Worse, **bracket access with a string literal** (`s['secretKey']`) is a known escape hatch that bypasses the privacy check at compile time too. **Why the others are wrong:** the field isn't stripped from the emitted object, it doesn't throw, and bracket notation compiles. **The lesson:** for *real* runtime privacy, use JavaScript's `#private` fields (`#secretKey`), which are truly inaccessible from outside. **Common mistakes:** trusting TS `private` to hide secrets at runtime.",
+    "example": "```ts\nclass MySafe {\n  private secretKey = 12345;\n}\nconst s = new MySafe();\n// `private` is compile-time only; bracket access reaches the runtime property:\nconsole.log(s['secretKey']); // 12345\n\n// True runtime privacy uses JS #private fields:\nclass RealSafe { #key = 999; reveal() { return this.#key; } }\nconsole.log(new RealSafe().reveal());\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — private is compile-time",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#caveats"
+      },
+      {
+        "label": "MDN — Private class fields (#)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties"
+      }
+    ]
+  },
+  "ts-class-004": {
+    "explanation": "**The problem:** The boilerplate of declaring a field, adding a constructor parameter, and assigning `this.x = x` for each dependency. **Parameter properties** collapse all three: prefix a **constructor parameter** with a visibility modifier (`public`/`protected`/`private`) or `readonly`, and TypeScript automatically **declares a field of the same name and assigns the argument to it**. So `constructor(public readonly x: number)` creates a public readonly `x` field set from the argument — no extra code. **Why useful:** concise dependency injection and value objects. **Note:** you must include a modifier for it to become a field — a plain parameter stays just a parameter. **Common mistakes:** forgetting the modifier (then it's not a field), or mixing parameter properties with manual `this.x =` assignments redundantly.",
+    "example": "```ts\nclass Params {\n  // Each modifier-prefixed param becomes a field, auto-assigned from the argument.\n  constructor(\n    public readonly x: number,\n    protected y: number,\n    private z: number,\n  ) {}\n  sum() { return this.x + this.y + this.z; }\n}\nconst p = new Params(1, 2, 3);\nconsole.log(p.x, p.sum()); // x is public; y/z used internally\n// @ts-expect-error 'z' is private — not accessible from outside\nconsole.log(p.z);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Parameter Properties",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#parameter-properties"
+      },
+      {
+        "label": "TypeScript Handbook — Classes",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html"
+      }
+    ]
+  },
+  "ts-class-005": {
+    "explanation": "**The problem:** You want a base class that defines shared behavior but **shouldn't be instantiated on its own**, and forces subclasses to fill in specifics. **An abstract class** (`abstract class Base`) can't be instantiated with `new` — it exists only to be **extended**. **An `abstract` member** has **no implementation**; every **concrete subclass must implement it**, or the subclass is itself abstract. Non-abstract methods can call abstract ones (the template-method pattern). **Why:** enforce a contract while sharing common code. **Difference from an interface:** an abstract class can contain real implementations and state, not just signatures. **Common mistakes:** trying to `new` an abstract class (error), forgetting to implement an abstract member in a subclass, or using an abstract class where a simple interface would do.",
+    "example": "```ts\nabstract class Base {\n  abstract getName(): string;                 // no implementation\n  printName() { console.log('Hello, ' + this.getName()); } // uses the abstract member\n}\n// @ts-expect-error cannot create an instance of an abstract class\nnew Base();\n\nclass Derived extends Base {\n  getName() { return 'world'; } // must implement the abstract member\n}\nnew Derived().printName();\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Abstract Classes and Members",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#abstract-classes-and-members"
+      },
+      {
+        "label": "TypeScript Handbook — Classes",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html"
+      }
+    ]
+  },
+  "ts-class-006": {
+    "explanation": "**The problem:** `static defaultValue: Type` inside `class Box<Type>` is an error — why? **Static members** belong to the **class itself**, not to instances — you access them as `Box.x`, not `new Box().x`, and there's exactly **one** static slot shared across every instantiation. **Why they can't reference the type parameter:** `Type` is **erased at runtime** and is chosen *per instance* (`Box<string>` vs `Box<number>`), but the static lives once on the shared class object — there's no single `Type` for it to be. So a static member's type can't depend on the class's type parameter. **The fix:** make the static non-generic, or make the member an instance member. **Common mistakes:** trying to store a generic default as a static, or expecting `Box<string>.x` and `Box<number>.x` to be different (they're the same slot).",
+    "example": "```ts\nclass Box<Type> {\n  static instances = 0;   // ✅ static, doesn't depend on Type\n  contents: Type;\n  // @ts-expect-error static members cannot reference the class type parameter 'Type'\n  static defaultValue: Type;\n  constructor(value: Type) { this.contents = value; Box.instances++; }\n}\nconst b = new Box(42);\nconsole.log(Box.instances, b.contents); // access static via the class\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Static Members",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#static-members"
+      },
+      {
+        "label": "TypeScript Handbook — Static and type parameters",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#static-members"
+      }
+    ]
+  },
+  "ts-class-mcq-003": {
+    "explanation": "**The problem:** A class has `get size()` but no matching `set size()`. **The effect: the property becomes automatically `readonly`** — reading `obj.size` works, but **assigning** to it is a **compile error**. **Why:** with only a getter, there's no defined way to write the value, so TypeScript treats it as read-only (this changed in TS 4.3+; older versions inferred a permissive setter). **Why the others are wrong:** assignments aren't silently ignored (they error), a getter doesn't require a setter, and it doesn't return undefined. **The fix if you need writes:** add a `set size(v) {…}` accessor. **Why useful:** computed/derived read-only properties (e.g. `area`, `fullName`). **Common mistakes:** trying to assign to a getter-only property, or adding a no-op setter when read-only is what you actually want.",
+    "example": "```ts\nclass Circle {\n  constructor(private r: number) {}\n  get area() { return Math.PI * this.r ** 2; } // getter only -> read-only\n}\nconst c = new Circle(2);\nconsole.log(c.area);\n// @ts-expect-error 'area' is read-only — it has a getter but no setter\nc.area = 10;\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Getters / Setters",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#getters--setters"
+      },
+      {
+        "label": "TypeScript 4.3 — getter-only is readonly",
+        "url": "https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-3.html#separate-write-types-on-properties"
+      }
+    ]
+  },
+  "ts-class-007": {
+    "explanation": "**The problem:** Subtle bugs come from misunderstanding *when* fields and constructors run in a class hierarchy. **The order when you `new` a derived class:** **base fields → base constructor → derived fields → derived constructor**. The base must be fully initialized before the derived part builds on it. **The rule that follows:** a derived constructor **must call `super()` before referencing `this`** — because `this`'s base portion isn't initialized until `super()` runs, touching `this` first is a compile error (and would be unsafe). **Why it matters:** derived field initializers run *after* `super()`, so a base constructor that calls an overridden method may see derived fields still undefined. **Common mistakes:** using `this` before `super()`, or relying on derived fields inside a base constructor (they're not set yet).",
+    "example": "```ts\nclass Animal {\n  legs = 4;\n  constructor() { console.log('Animal ctor'); }\n}\nclass Dog extends Animal {\n  name = 'Rex';\n  constructor() {\n    super();                       // must run before using `this`\n    console.log('Dog ctor', this.name);\n  }\n}\nnew Dog(); // order: Animal fields -> Animal ctor -> Dog fields -> Dog ctor\n\nclass Bad extends Animal {\n  constructor() {\n    // @ts-expect-error 'super' must be called before accessing 'this'\n    this.legs = 2;\n    super();\n  }\n}\nvoid Bad;\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — super calls",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#super-calls"
+      },
+      {
+        "label": "TypeScript Handbook — Initialization order",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#initialization-order"
+      }
+    ]
   }
 }
