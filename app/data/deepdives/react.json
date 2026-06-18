@@ -250,102 +250,142 @@
     ]
   },
   "react-effect-001": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Some code needs to run not in response to a click, but because the component *rendered* — connecting to a chat server, setting up a subscription, syncing a non-React widget. **What an Effect is:** code that runs *after* render to synchronize the component with an external system. **Why it's different from an event handler:** handlers run for a specific interaction (a click), so they hold event-specific logic; Effects run because the component is on screen, regardless of how it got there. **Common mistakes:** using an Effect for things caused by an interaction (those go in handlers), or for transforming data for render (do that during render). Reach for an Effect only to reach *outside* React.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n  // Runs because the component rendered (and when count changes) —\n  // syncing an external system: the document title.\n  useEffect(() => {\n    document.title = `Clicked ${count} times`;\n  }, [count]);\n  return <button onClick={() => setCount(c => c + 1)}>clicked {count}</button>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Synchronizing with Effects",
+        "url": "https://react.dev/learn/synchronizing-with-effects"
+      },
+      {
+        "label": "react.dev — You Might Not Need an Effect",
+        "url": "https://react.dev/learn/you-might-not-need-an-effect"
       }
     ]
   },
   "react-effect-mcq-001": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** The dependency array changes *when* an Effect re-runs, and the three forms are easy to confuse. **The rules:** no array → runs after **every** render; `[]` → runs **once** after mount (cleanup on unmount); `[dep]` → runs on mount **and** whenever a listed dependency changes. **Why:** after each render React compares the new deps to the previous ones; if any differ (by `Object.is`), it re-runs the Effect. **Common mistakes:** omitting the array by accident (Effect fires constantly), or lying about deps — leaving out a value you use inside creates stale closures. Include every reactive value the Effect reads.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [isPlaying, setIsPlaying] = useState(false);\n  const [, setTick] = useState(0);\n\n  useEffect(() => { console.log('A: after every render'); });        // no array\n  useEffect(() => { console.log('B: once on mount'); }, []);          // []\n  useEffect(() => { console.log('C: on mount + isPlaying change'); }, [isPlaying]); // [dep]\n\n  return (\n    <div>\n      <button onClick={() => setIsPlaying(p => !p)}>toggle ({String(isPlaying)})</button>\n      <button onClick={() => setTick(t => t + 1)}>re-render</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Specifying reactive dependencies",
+        "url": "https://react.dev/reference/react/useEffect#specifying-reactive-dependencies"
+      },
+      {
+        "label": "react.dev — Step 2: Specify the Effect dependencies",
+        "url": "https://react.dev/learn/synchronizing-with-effects#step-2-specify-the-effect-dependencies"
       }
     ]
   },
   "react-effect-002": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** An Effect that *starts* something (a subscription, a connection, a timer) must also *stop* it, or you leak listeners and stack duplicate connections. **The cleanup function:** the function you `return` from an Effect. **When React calls it:** before re-running the Effect (deps changed) and once when the component unmounts. **Why it works:** every 'start' is paired with a matching 'stop', so the external system never accumulates stale setups. **Common mistakes:** forgetting cleanup for subscriptions/intervals, or writing cleanup that doesn't undo exactly what the Effect set up (e.g. removing a *different* listener instance).",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [seconds, setSeconds] = useState(0);\n  useEffect(() => {\n    const id = setInterval(() => setSeconds(s => s + 1), 1000);\n    return () => clearInterval(id); // cleanup: stop the timer before re-run/unmount\n  }, []);\n  return <p>elapsed: {seconds}s</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Step 3: Add cleanup if needed",
+        "url": "https://react.dev/learn/synchronizing-with-effects#step-3-add-cleanup-if-needed"
+      },
+      {
+        "label": "react.dev — useEffect: cleanup",
+        "url": "https://react.dev/reference/react/useEffect#connecting-to-an-external-system"
       }
     ]
   },
   "react-effect-mcq-002": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** In development an Effect with `[]` seems to run **twice** on mount with a cleanup in between. **Why:** React Strict Mode intentionally mounts, unmounts, then remounts each component once in dev. This replays setup→cleanup→setup to surface Effects that don't clean up correctly. **Why it's good:** if your Effect breaks under a remount, it has a real bug (a leaked subscription, a duplicated connection) that would also bite in production navigation. **Common mistakes:** trying to 'fix' the double-run with a ref guard — that hides the symptom. The real fix is correct cleanup. It does **not** happen in production builds.",
+    "example": "```tsx\nimport { useEffect } from 'react';\n\nexport default function App() {\n  // In dev + StrictMode this logs: connect, disconnect, connect.\n  // Correct cleanup makes that sequence harmless.\n  useEffect(() => {\n    console.log('✅ connect');\n    return () => console.log('❌ disconnect');\n  }, []);\n  return <p>Open the console — Strict Mode double-invokes Effects in dev.</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — How to handle the Effect firing twice in development",
+        "url": "https://react.dev/learn/synchronizing-with-effects#how-to-handle-the-effect-firing-twice-in-development"
+      },
+      {
+        "label": "react.dev — StrictMode",
+        "url": "https://react.dev/reference/react/StrictMode"
       }
     ]
   },
   "react-effect-003": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** When you fetch in an Effect keyed on `userId`, switching users fast means several requests are in flight; a slow earlier one can resolve *after* a newer one and overwrite the correct data — a race condition. **Why the `ignore` flag fixes it:** each Effect run declares a local `ignore = false`; its cleanup sets `ignore = true`. When `userId` changes, the previous run's cleanup flips its flag, so when its response finally arrives the handler bails out. **Why this is the React-idiomatic guard:** it ties request validity to the Effect's lifecycle. **Common mistakes:** forgetting the flag (stale data flashes in), or aborting without handling the resulting error.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [userId, setUserId] = useState(1);\n  const [name, setName] = useState('');\n  useEffect(() => {\n    let ignore = false;\n    fetch(`https://jsonplaceholder.typicode.com/users/${userId}`)\n      .then(r => r.json())\n      .then((user: { name: string }) => { if (!ignore) setName(user.name); });\n    return () => { ignore = true; }; // stale responses are discarded\n  }, [userId]);\n  return (\n    <div>\n      <button onClick={() => setUserId(id => id + 1)}>next user</button>\n      <p>user {userId}: {name}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Fetching data (race conditions)",
+        "url": "https://react.dev/learn/synchronizing-with-effects#fetching-data"
+      },
+      {
+        "label": "react.dev — What good alternatives to data fetching in Effects are there?",
+        "url": "https://react.dev/learn/you-might-not-need-an-effect#fetching-data"
       }
     ]
   },
   "react-effect-004": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Storing `fullName` in state and using an Effect to keep it in sync with `firstName`/`lastName`. **Why it's wrong:** `fullName` is *derived* — fully determined by other state. Mirroring it adds a redundant source of truth and an extra render (the Effect runs after paint, then sets state, causing a second pass). **The fix:** compute it during render: `const fullName = firstName + ' ' + lastName;`. **Why that's better:** it's always consistent, simpler, and faster. **Common mistakes:** using Effects to 'react' to prop/state changes for derived values — if you can compute it from existing values during render, you don't need state or an Effect.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [firstName, setFirstName] = useState('Grace');\n  const [lastName, setLastName] = useState('Hopper');\n  // Derived during render — no extra state, no Effect.\n  const fullName = firstName + ' ' + lastName;\n  return (\n    <div>\n      <input value={firstName} onChange={e => setFirstName(e.target.value)} />\n      <input value={lastName} onChange={e => setLastName(e.target.value)} />\n      <p>{fullName}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Updating state based on props or state",
+        "url": "https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state"
+      },
+      {
+        "label": "react.dev — You Might Not Need an Effect",
+        "url": "https://react.dev/learn/you-might-not-need-an-effect"
       }
     ]
   },
   "react-effect-mcq-003": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Where does a 'Buy' POST belong — Effect or handler? **The answer:** the click handler. **Why:** the request is caused by a *specific interaction* (clicking Buy), not by the component appearing on screen. Effects run on render and can re-run (e.g. Strict Mode remount, dependency changes), so a purchase in an Effect could fire twice or at the wrong time. **The principle:** ask 'what caused this to run?' Interaction → event handler. Rendering/appearing → Effect. **Common mistakes:** putting mutations in Effects keyed on a `purchased` flag — fragile and prone to double-submits — instead of just doing the work in the handler.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [status, setStatus] = useState('idle');\n  // Caused by the click -> belongs in the handler, not an Effect.\n  async function handleBuy() {\n    setStatus('buying...');\n    await new Promise(r => setTimeout(r, 500)); // pretend POST /api/buy\n    setStatus('purchased ✅');\n  }\n  return (\n    <div>\n      <button onClick={handleBuy}>Buy</button>\n      <p>{status}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Sending a POST request",
+        "url": "https://react.dev/learn/you-might-not-need-an-effect#sending-a-post-request"
+      },
+      {
+        "label": "react.dev — Effects vs events",
+        "url": "https://react.dev/learn/synchronizing-with-effects#what-are-effects-and-how-are-they-different-from-events"
       }
     ]
   },
   "react-effect-005": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Subscribing to a browser event (scroll, resize) is a side effect that must be set up after render and torn down to avoid leaks. **The pattern:** in `useEffect`, `addEventListener` on setup and `removeEventListener` in the returned cleanup, with `[]` deps so it subscribes once. **Why cleanup matters:** without it, each remount adds another listener — they pile up and fire multiple times. **Crucial detail:** pass the *same* function reference to add and remove; an inline arrow in both calls is two different functions and won't unsubscribe. **Common mistakes:** forgetting cleanup, or recreating the handler so removal silently fails.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [y, setY] = useState(0);\n  useEffect(() => {\n    function handleScroll() { setY(window.scrollY); }\n    window.addEventListener('scroll', handleScroll);\n    return () => window.removeEventListener('scroll', handleScroll); // same ref\n  }, []);\n  return (\n    <div style={{ height: '200vh' }}>\n      <p style={{ position: 'fixed', top: 8 }}>scrollY: {Math.round(y)}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Subscribing to events",
+        "url": "https://react.dev/learn/synchronizing-with-effects#subscribing-to-events"
+      },
+      {
+        "label": "react.dev — useEffect with browser APIs",
+        "url": "https://react.dev/reference/react/useEffect#connecting-to-an-external-system"
       }
     ]
   },
   "react-effect-006": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Knowing *when* an Effect runs relative to the screen update matters for reading layout or avoiding flicker. **The answer:** Effects run **after** React commits the render to the DOM and the browser paints. React updates the DOM first, then runs your Effect. **Why:** Effects are for synchronizing with external systems *after* the UI reflects the new state — they shouldn't block painting. **Exception:** `useLayoutEffect` runs synchronously *before* the browser paints, for when you must measure/adjust layout without a visible flash. **Common mistakes:** expecting `useEffect` to run before paint (it doesn't), or reaching for `useLayoutEffect` by default when the async timing of `useEffect` is fine.",
+    "example": "```tsx\nimport { useState, useEffect, useRef } from 'react';\n\nexport default function App() {\n  const [text, setText] = useState('hello');\n  const ref = useRef<HTMLParagraphElement>(null);\n  useEffect(() => {\n    // Runs AFTER the DOM is updated, so the node reflects the latest text.\n    console.log('painted width:', ref.current?.offsetWidth);\n  }, [text]);\n  return (\n    <div>\n      <input value={text} onChange={e => setText(e.target.value)} />\n      <p ref={ref}>{text}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — useEffect timing",
+        "url": "https://react.dev/reference/react/useEffect#caveats"
+      },
+      {
+        "label": "react.dev — useLayoutEffect",
+        "url": "https://react.dev/reference/react/useLayoutEffect"
       }
     ]
   },
   "react-effect-007": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Class-component thinking ('mount/update/unmount') leads to cramming unrelated logic into one lifecycle method. **The Effect mental model:** an Effect knows only two operations — *start synchronizing* (run the body) and *stop synchronizing* (run the cleanup) — possibly repeated. Mount = start; a dependency change = stop then start; unmount = final stop. **Why this reframing helps:** you describe how to sync and unsync *one* external system, and React handles the timing. Each concern gets its own Effect. **Common mistakes:** thinking in terms of 'on update', or merging multiple unrelated syncs into one Effect instead of splitting them.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [room, setRoom] = useState('general');\n  // Each room change: stop syncing the old room, start syncing the new one.\n  useEffect(() => {\n    console.log('✅ connect to', room);\n    return () => console.log('❌ disconnect from', room);\n  }, [room]);\n  return (\n    <div>\n      <button onClick={() => setRoom('general')}>general</button>\n      <button onClick={() => setRoom('random')}>random</button>\n      <p>room: {room}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Lifecycle of Reactive Effects",
+        "url": "https://react.dev/learn/lifecycle-of-reactive-effects"
+      },
+      {
+        "label": "react.dev — Each Effect represents a separate synchronization process",
+        "url": "https://react.dev/learn/lifecycle-of-reactive-effects#each-effect-represents-a-separate-synchronization-process"
       }
     ]
   },
@@ -936,22 +976,30 @@
     ]
   },
   "react-effect-008": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** The dependency array decides how often an Effect re-runs, and the three shapes behave very differently. **The forms:** `[]` → run once after mount, cleanup on unmount; `[a, b]` → also re-run whenever `a` or `b` change; *omitted* → run after every render. **Why React needs it:** after each render it compares deps with `Object.is`; any change re-runs the Effect (after running the previous cleanup). **The key rule:** dependencies aren't a choice — they must list every reactive value (props, state, derived values) the Effect reads, or you get stale data. **Common mistakes:** omitting a used dependency to 'run less often', which the linter flags for good reason.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n  const [step, setStep] = useState(1);\n  // Re-runs only when step changes; reads step, so step must be a dependency.\n  useEffect(() => {\n    console.log('step is now', step);\n  }, [step]);\n  return (\n    <div>\n      <button onClick={() => setCount(c => c + step)}>count: {count}</button>\n      <button onClick={() => setStep(s => s + 1)}>step: {step}</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Specifying the dependencies",
+        "url": "https://react.dev/learn/synchronizing-with-effects#step-2-specify-the-effect-dependencies"
+      },
+      {
+        "label": "react.dev — Removing Effect Dependencies",
+        "url": "https://react.dev/learn/removing-effect-dependencies"
       }
     ]
   },
   "react-effect-mcq-004": {
-    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Telling legitimate Effect use from misuse. **The legitimate one:** subscribing to an external system (WebSocket, browser event, third-party widget) — that's exactly what Effects are for. **Why the others are not:** transforming data for rendering should happen during render; handling a button submit belongs in the event handler; resetting state when a prop changes is better done with a `key` or computed during render. **The litmus test:** an Effect should connect React to something *outside* React. **Common mistakes:** using Effects as a general 'run code when X changes' mechanism, which leads to extra renders, race conditions, and synchronization bugs.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [online, setOnline] = useState(navigator.onLine);\n  // Legit: subscribing to an external system (the browser's online/offline events).\n  useEffect(() => {\n    function update() { setOnline(navigator.onLine); }\n    window.addEventListener('online', update);\n    window.addEventListener('offline', update);\n    return () => {\n      window.removeEventListener('online', update);\n      window.removeEventListener('offline', update);\n    };\n  }, []);\n  return <p>{online ? '🟢 online' : '🔴 offline'}</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Effects & Lifecycle",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — When to use Effects",
+        "url": "https://react.dev/learn/synchronizing-with-effects#you-might-not-need-an-effect"
+      },
+      {
+        "label": "react.dev — useSyncExternalStore (for stores)",
+        "url": "https://react.dev/reference/react/useSyncExternalStore"
       }
     ]
   },
