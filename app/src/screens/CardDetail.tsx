@@ -2,8 +2,10 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { getOrCreate } from '../lib/srs';
 import { getCardType } from '../lib/session';
 import { useProgress } from '../hooks/useProgress';
+import { useDeepDives } from '../hooks/useDeepDives';
 import { useSubjectCtx } from './SubjectLayout';
 import { RichText } from '../components/RichText';
+import { DeepDive } from '../components/DeepDive';
 import { DiffBadge, typeLabel } from '../components/badges';
 import { formatNextDue } from './NothingDue';
 
@@ -12,10 +14,13 @@ export function CardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { progressMap, setFlag } = useProgress(subject);
+  const deepDives = useDeepDives(subject);
 
   const card = cards.find(c => c.id === id);
   if (!card) return <Navigate to={`/${subject.id}/card-library`} replace />;
 
+  // API path puts the deep dive on the card; bundled path looks it up by id.
+  const deepDive = card.deepDive ?? deepDives?.[card.id];
   const s = getOrCreate(card.id, progressMap);
   const type = getCardType(card);
   const answerSet = new Set(
@@ -107,6 +112,8 @@ export function CardDetail() {
         )}
         <p className="q-id" style={{ marginTop: 10 }}>{card.id}</p>
       </div>
+
+      {deepDive && <DeepDive data={deepDive} />}
     </div>
   );
 }

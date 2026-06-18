@@ -641,6 +641,43 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   color: var(--correct);
 }
 
+/* ── Deep dive ── */
+.deep-dive {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 4px 24px;
+  margin-top: 16px;
+}
+.deep-dive[open] { padding-bottom: 20px; }
+.deep-dive-summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 0;
+  font-weight: 700;
+  color: var(--accent);
+  user-select: none;
+}
+.deep-dive-summary::-webkit-details-marker { display: none; }
+.deep-dive-summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.15s;
+}
+.deep-dive[open] .deep-dive-summary::before { transform: rotate(90deg); }
+.deep-dive-body { border-top: 1px solid var(--border); padding-top: 16px; }
+.deep-dive-explanation { line-height: 1.6; }
+.deep-dive-example, .deep-dive-resources { margin-top: 18px; }
+.deep-dive-resources ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.deep-dive-resources a { color: var(--accent); text-decoration: none; }
+.deep-dive-resources a:hover { text-decoration: underline; }
+
 .badge-lib-new      { border-color: var(--muted); color: var(--muted); }
 .badge-lib-mastered { border-color: var(--correct); color: var(--correct); }
 

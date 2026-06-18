@@ -1,0 +1,10 @@
+{
+  "types-prim-001": {
+    "explanation": "**The problem.** \"How many primitive types are there?\" trips people up because they conflate *primitives* with *everything that isn't an object*, and they forget the newer additions (`bigint`, `symbol`).\n\n**What makes a value primitive.** A primitive is immutable and compared **by value**, not by reference. The seven are: `string`, `number`, `bigint`, `boolean`, `undefined`, `symbol`, and `null`. Everything else — arrays, functions, dates, plain `{}` — is an **object** (compared by reference).\n\n**Why the count surprises people.** `typeof null` returns `\"object\"` (a famous historical bug), so `null` *looks* like an object but is a primitive. And `typeof function(){}` returns `\"function\"`, even though functions are objects. So `typeof` reports **eight** strings for **seven** primitives plus objects — don't use it to count primitives.\n\n**Common mistakes.** Calling arrays/objects \"primitive\"; assuming `typeof null === 'null'`; forgetting `bigint`/`symbol` because they're newer.",
+    "example": "```js\nconst samples = [\n  'hi',            // string\n  42,              // number\n  10n,             // bigint\n  true,            // boolean\n  undefined,       // undefined\n  Symbol('id'),    // symbol\n  null,            // null  -> but typeof reports 'object' (legacy bug)\n  {},              // object (not primitive)\n];\n\nfor (const v of samples) {\n  console.log(String(v).padEnd(12), '->', typeof v);\n}\n// note: typeof null === 'object', yet null IS a primitive.\n```",
+    "resources": [
+      { "label": "MDN — Primitive", "url": "https://developer.mozilla.org/en-US/docs/Glossary/Primitive" },
+      { "label": "MDN — typeof", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof" }
+    ]
+  }
+}

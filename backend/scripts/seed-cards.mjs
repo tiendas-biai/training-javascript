@@ -16,11 +16,21 @@ const BATCH_SIZE = 25; // BatchWriteItem hard limit
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR || join(here, "..", "..", "app", "data");
+const DEEPDIVE_DIR = join(DATA_DIR, "deepdives");
 
 const client = new DynamoDBClient({ region: AWS_REGION });
 
 const chunk = (arr, n) =>
   Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));
+
+// Read app/data/deepdives/<subject>.json (id -> deep dive), or {} when absent.
+async function readDeepDives(subject) {
+  try {
+    return JSON.parse(await readFile(join(DEEPDIVE_DIR, `${subject}.json`), "utf8"));
+  } catch {
+    return {};
+  }
+}
 
 async function seed() {
   const files = (await readdir(DATA_DIR)).filter((f) => f.endsWith(".json"));
@@ -35,7 +45,15 @@ async function seed() {
       continue;
     }
 
-    for (const part of chunk(cards, BATCH_SIZE)) {
+    // Merge each card's deep dive (separate file) onto the item so it rides along
+    // through the cards API. Cards without an entry are unchanged.
+    const deepDives = await readDeepDives(subject);
+    const cardsWithDeepDives = cards.map((card) =>
+      deepDives[card.id] ? { ...card, deepDive: deepDives[card.id] } : card,
+    );
+    const ddCount = cards.filter((c) => deepDives[c.id]).length;
+
+    for (const part of chunk(cardsWithDeepDives, BATCH_SIZE)) {
       let requestItems = {
         [TABLE_NAME]: part.map((card) => ({
           PutRequest: { Item: marshall({ subject, ...card }, { removeUndefinedValues: true }) },
@@ -53,7 +71,7 @@ async function seed() {
       }
     }
     total += cards.length;
-    console.log(`✓ ${subject}: ${cards.length} cards`);
+    console.log(`✓ ${subject}: ${cards.length} cards${ddCount ? ` (${ddCount} with deep dives)` : ""}`);
   }
   console.log(`\nSeeded ${total} cards into ${TABLE_NAME} (${AWS_REGION}).`);
 }

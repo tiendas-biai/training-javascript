@@ -1,0 +1,10 @@
+{
+  "react-comp-001": {
+    "explanation": "**The problem.** You need to put a piece of UI on screen and reuse it in many places without copy-pasting markup.\n\n**Why a component solves it.** React lets you describe UI as a *function that returns markup* (JSX). React calls that function, gets a description of what to render, and reconciles it against the DOM. Because it's just a function, you can call it as many times as you like — that's reuse.\n\n**The two non-negotiable rules.** (1) The name must start with a **capital letter** — `<Profile/>` is your component, `<profile/>` is treated as a literal HTML tag. (2) It must **return JSX** (or `null`). `export default` is what lets another file import it.\n\n**Common mistakes.** Lowercase component names (silently render nothing useful), returning two sibling elements without a wrapper/Fragment, and *defining a component inside another component's body* — that remounts it on every render and throws away its state.",
+    "example": "```tsx\nexport default function App() {\n  // A component is just a capitalized function that returns JSX.\n  // It can be reused as many times as you want.\n  return (\n    <main>\n      <Greeting name=\"Ada\" />\n      <Greeting name=\"Linus\" />\n    </main>\n  );\n}\n\nfunction Greeting({ name }: { name: string }) {\n  return <p>Hello, {name}!</p>;\n}\n```",
+    "resources": [
+      { "label": "react.dev — Your First Component", "url": "https://react.dev/learn/your-first-component" },
+      { "label": "react.dev — Writing Markup with JSX", "url": "https://react.dev/learn/writing-markup-with-jsx" }
+    ]
+  }
+}

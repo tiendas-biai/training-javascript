@@ -111,3 +111,34 @@ test("admin role is read from the configured namespaced claim (ROLES_CLAIM)", as
     delete process.env.ROLES_CLAIM;
   }
 });
+
+test("a card's deepDive round-trips through PUT (stored) and GET (returned)", async () => {
+  const deepDive = {
+    explanation: "Why it works.",
+    example: "```tsx\nexport default function App() { return null; }\n```",
+    resources: [{ label: "react.dev", url: "https://react.dev/" }],
+  };
+
+  // PUT stores the deepDive attribute verbatim.
+  let captured;
+  mock.method(dynamoDBClient, "send", async (cmd) => { captured = cmd; return {}; });
+  const put = await handler(
+    event({
+      method: "PUT", subject: "react", cardId: "r5",
+      claims: { permissions: ["manage:cards"] },
+      body: JSON.stringify({ id: "r5", question: "Q?", deepDive }),
+    }),
+  );
+  assert.equal(put.statusCode, 200);
+  assert.ok(captured.input.Item.deepDive, "deepDive attribute is stored");
+  assert.equal(captured.input.Item.deepDive.M.explanation.S, "Why it works.");
+
+  // GET returns the deepDive on the card.
+  mock.restoreAll();
+  mock.method(dynamoDBClient, "send", async () => ({
+    Items: [marshall({ subject: "react", id: "r5", question: "Q?", deepDive })],
+  }));
+  const get = await handler(event({ method: "GET", subject: "react" }));
+  assert.equal(get.statusCode, 200);
+  assert.deepEqual(JSON.parse(get.body)[0].deepDive, deepDive);
+});

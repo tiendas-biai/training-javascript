@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Card, CardType, Difficulty } from '../types';
+import type { Card, CardType, DeepDive, Difficulty } from '../types';
 import { getCardType } from '../lib/session';
 
 interface Props {
@@ -21,6 +21,10 @@ interface FormState {
   answer: string;      // reveal + multiple-choice
   options: string[];   // multiple-choice + multiple-response
   answers: string[];   // multiple-response
+  // Deep dive (all optional)
+  ddExplanation: string;
+  ddExample: string;
+  ddResources: { label: string; url: string }[];
 }
 
 function toForm(card: Card | null): FormState {
@@ -28,6 +32,7 @@ function toForm(card: Card | null): FormState {
     return {
       id: '', type: 'reveal', topic: '', subtopic: '', difficulty: 'medium',
       question: '', explanation: '', tags: '', answer: '', options: ['', ''], answers: [],
+      ddExplanation: '', ddExample: '', ddResources: [],
     };
   }
   const type = getCardType(card);
@@ -43,7 +48,26 @@ function toForm(card: Card | null): FormState {
     answer: 'answer' in card ? card.answer : '',
     options: 'options' in card ? [...card.options] : ['', ''],
     answers: 'answers' in card ? [...card.answers] : [],
+    ddExplanation: card.deepDive?.explanation ?? '',
+    ddExample: card.deepDive?.example ?? '',
+    ddResources: card.deepDive?.resources?.map(r => ({ ...r })) ?? [],
   };
+}
+
+// Build the optional deep dive from the form, or undefined when nothing is filled in.
+// Throws if a deep dive is partially filled (example/links) without an explanation.
+function toDeepDive(f: FormState): DeepDive | undefined {
+  const explanation = f.ddExplanation.trim();
+  const example = f.ddExample.trim();
+  const resources = f.ddResources
+    .map(r => ({ label: r.label.trim(), url: r.url.trim() }))
+    .filter(r => r.label && r.url);
+  if (!explanation && !example && resources.length === 0) return undefined;
+  if (!explanation) throw new Error('Deep dive explanation is required when adding an example or links');
+  const dd: DeepDive = { explanation };
+  if (example) dd.example = example;
+  if (resources.length) dd.resources = resources;
+  return dd;
 }
 
 // Build a Card from the form, or throw a human-readable validation error.
@@ -52,6 +76,7 @@ function toCard(f: FormState): Card {
   if (!id) throw new Error('ID is required');
   if (!f.question.trim()) throw new Error('Question is required');
 
+  const deepDive = toDeepDive(f);
   const base = {
     id,
     topic: f.topic.trim(),
@@ -60,6 +85,7 @@ function toCard(f: FormState): Card {
     question: f.question,
     explanation: f.explanation,
     tags: f.tags.split(',').map(t => t.trim()).filter(Boolean),
+    ...(deepDive ? { deepDive } : {}),
   };
 
   if (f.type === 'reveal') {
@@ -120,6 +146,18 @@ export function AdminCardForm({ initial, existingIds, onSave, onCancel }: Props)
         ? prev.answers.filter(a => a !== opt)
         : [...prev.answers, opt],
     }));
+
+  const setResource = (i: number, key: 'label' | 'url', value: string) =>
+    setF(prev => ({
+      ...prev,
+      ddResources: prev.ddResources.map((r, idx) => (idx === i ? { ...r, [key]: value } : r)),
+    }));
+
+  const addResource = () =>
+    setF(prev => ({ ...prev, ddResources: [...prev.ddResources, { label: '', url: '' }] }));
+
+  const removeResource = (i: number) =>
+    setF(prev => ({ ...prev, ddResources: prev.ddResources.filter((_, idx) => idx !== i) }));
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -203,6 +241,34 @@ export function AdminCardForm({ initial, existingIds, onSave, onCancel }: Props)
         <label>Tags (comma-separated)
           <input value={f.tags} onChange={e => set('tags', e.target.value)} placeholder="hooks, state" />
         </label>
+
+        <fieldset className="admin-options">
+          <legend>Deep Dive (optional)</legend>
+          <label>Explanation (markdown)
+            <textarea value={f.ddExplanation} rows={4}
+              onChange={e => set('ddExplanation', e.target.value)}
+              placeholder="Problem → why → why the solution works → common mistakes" />
+          </label>
+          <label>Example (one fenced code block, e.g. ```tsx … ```)
+            <textarea value={f.ddExample} rows={4}
+              onChange={e => set('ddExample', e.target.value)}
+              placeholder={'```tsx\nexport default function App() { … }\n```'} />
+          </label>
+          <span className="detail-section-label">Resources</span>
+          {f.ddResources.map((r, i) => (
+            <div key={i} className="admin-option-row">
+              <input value={r.label} onChange={e => setResource(i, 'label', e.target.value)}
+                placeholder="Label, e.g. react.dev — Components" aria-label={`resource label ${i + 1}`} />
+              <input value={r.url} onChange={e => setResource(i, 'url', e.target.value)}
+                placeholder="https://…" aria-label={`resource url ${i + 1}`} />
+              <button type="button" className="admin-remove" onClick={() => removeResource(i)}
+                aria-label={`remove resource ${i + 1}`}>×</button>
+            </div>
+          ))}
+          <button type="button" className="btn-secondary admin-add-option" onClick={addResource}>
+            + Add resource
+          </button>
+        </fieldset>
 
         {error && <p className="admin-error">{error}</p>}
 

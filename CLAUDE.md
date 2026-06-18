@@ -70,7 +70,8 @@ app/
 │   ├── typescript.json
 │   ├── react.json
 │   ├── node.json
-│   └── aws.json
+│   ├── aws.json
+│   └── deepdives/          # per-subject deep-dive write-ups, keyed by card id (see Deep dives)
 ├── public/fonts/           # Antonio + Inter woff2 (brand fonts)
 ├── src/
 │   ├── main.tsx            # entry: storage migration, mounts <App/> in BrowserRouter + Auth0Provider
@@ -92,13 +93,15 @@ app/
 │   │   ├── cardsApi.ts     # CRUD client for the cards API (admin editor)
 │   │   ├── mergeProgress.ts# diffForUpload: later-wins per-card merge rule
 │   │   ├── cloudSync.ts    # syncSubjectToCloud: merge local → cloud, then clear local
+│   │   ├── deepdives.ts    # loadDeepDives(subject): cached dynamic import of data/deepdives/<subject>.json
 │   │   ├── progress/       # ProgressStore seam: types, localStore, remoteStore
 │   │   └── shuffle.ts
 │   ├── hooks/
 │   │   ├── useProgress.ts  # auth-aware: Local vs Remote ProgressStore by isAuthenticated; loading guard; setFlag() toggle
 │   │   ├── useCloudSync.ts # one-time local→cloud merge prompt on first authenticated load
-│   │   └── useSubjectData.ts # cached dynamic import of a subject's cards
-│   ├── components/         # RichText, badges/CardMeta, GradeButtons, SessionHeader
+│   │   ├── useSubjectData.ts # cached dynamic import of a subject's cards
+│   │   └── useDeepDives.ts # cached dynamic import of a subject's deep-dive map
+│   ├── components/         # RichText, badges/CardMeta, GradeButtons, SessionHeader, DeepDive
 │   ├── screens/            # SubjectPicker, SubjectLayout, SubjectHome, Session,
 │   │                       # RevealCard/MCQCard/MRCard, Summary, NothingDue,
 │   │                       # CardLibrary, CardDetail, AdminCards, AdminCardForm
@@ -233,6 +236,16 @@ Single-card view (read-only except the flag toggle). Accessible by clicking any 
 Sections:
 - **Card block** — full badges (topic, subtopic, difficulty, type, tags), full question text, answer/explanation for reveal cards, all options with the correct answer(s) highlighted for MCQ/multiple-response cards
 - **Progress block** — SM-2 status badge, interval/ease/next-due for review cards, "Never studied" for new cards, card ID, and a 🚩 flag/unflag toggle
+- **Deep Dive** (when authored) — collapsible teaching write-up; see **Deep dives**
+
+### Deep dives
+
+An optional teaching-grade write-up per card: a prose explanation, a copy-pasteable code example, and links to official docs. Shown as a **collapsible "📘 Deep Dive" section** at the bottom of the card detail page (`DeepDive.tsx`), and absent when a card has no entry.
+
+- **Source of truth / storage** — kept out of the bank files to keep session/library loads lean. One file per subject, `app/data/deepdives/<subject>.json`, keyed by card id (`{ explanation, example?, resources? }` — the `DeepDive` type in `types.ts`). Dynamic-imported per subject by `lib/deepdives.ts` (cached in `hooks/useDeepDives.ts`, mirroring `useSubjectData`), so each subject's deep dives are their own chunk fetched only on the detail page.
+- **Rendering** — explanation + example go through `RichText`, so the example's fenced code block reuses the existing **Copy** button (now with `ts`/`tsx` Prism grammars). Resources render as an external link list.
+- **API path** — `useProgress`-style: `CardDetail` resolves `card.deepDive ?? deepDives[card.id]`, so when `VITE_CARDS_FROM_API=true` the deep dive rides along on the card (see Part 3); otherwise it comes from the bundled file.
+- **Authoring** — run the per-subject prompt in `documents/prompts/` against a card, paste the returned JSON object into `app/data/deepdives/<subject>.json` under the card's id. See `documents/prompts/README.md`.
 
 ### Card library (`/:subject/card-library`)
 
@@ -252,7 +265,7 @@ All filter state lives in the URL via `useSearchParams` (replace mode) — share
 
 Question, answer, and explanation text supports markdown-like formats via the `<RichText text={…} />` component:
 
-- **Fenced code blocks** — ` ```js\n...\n``` ` are rendered as highlighted `<pre>` blocks using **Prism.js** (One Dark token colors; the only `dangerouslySetInnerHTML` in the app — Prism output over our own JSON).
+- **Fenced code blocks** — ` ```js\n...\n``` ` are rendered as highlighted `<pre>` blocks using **Prism.js** (One Dark token colors; the only `dangerouslySetInnerHTML` in the app — Prism output over our own JSON). `js`/`ts`/`jsx`/`tsx` grammars are loaded; other languages fall back to the JS grammar. Each block has a hover **Copy** button.
 - **Inline code** — `` `backtick` `` spans are rendered as styled `<code>` chips.
 - **Emphasis** — `*italic*` and `**bold**` render as `<em>`/`<strong>`. Code spans are protected: a literal `*` inside backticks (e.g. `` `s3:*` ``) is never treated as emphasis.
 - `plainText(str)` — strips code fences to `[code]` for library table previews.

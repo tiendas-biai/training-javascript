@@ -4,6 +4,25 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 export type Rating = 'hard' | 'good' | 'easy';
 export type CardType = 'reveal' | 'multiple-choice' | 'multiple-response';
 
+// A teaching-grade write-up for a card, authored offline (see documents/prompts/)
+// and stored separately from the bank — either in app/data/deepdives/<subject>.json
+// (bundled path) or as a `deepDive` attribute on the card item (cards API path).
+export interface DeepDiveResource {
+  label: string;
+  url: string;
+}
+
+export interface DeepDive {
+  // Markdown (rendered via RichText): problem → why → why the solution works → mistakes.
+  explanation: string;
+  // A single fenced code block, e.g. ```tsx … ```. Optional (AWS cards may omit it).
+  example?: string;
+  resources?: DeepDiveResource[];
+}
+
+// id → DeepDive, the shape of each app/data/deepdives/<subject>.json file.
+export type DeepDiveMap = Record<string, DeepDive>;
+
 interface BaseCard {
   id: string;
   topic: string;
@@ -12,6 +31,9 @@ interface BaseCard {
   question: string;
   explanation: string;
   tags: string[];
+  // Optional deep dive. Never written into the bank data/*.json files; present only
+  // on cards served by the cards API (where it rides along on the item).
+  deepDive?: DeepDive;
 }
 
 export interface RevealCard extends BaseCard {

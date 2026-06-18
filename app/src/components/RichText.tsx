@@ -1,5 +1,10 @@
 import Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
+// Deep-dive examples are often TypeScript/TSX; load those grammars so they
+// highlight properly (otherwise non-js falls back to the javascript grammar).
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-tsx';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
