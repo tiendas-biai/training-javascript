@@ -649,7 +649,7 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   padding: 8px 28px;
   margin-top: 16px;
 }
-.deep-dive[open] { padding-bottom: 24px; }
+.deep-dive[open] { padding-bottom: 28px; }
 .deep-dive-summary {
   cursor: pointer;
   list-style: none;
@@ -666,7 +666,7 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   transition: transform 0.15s;
 }
 .deep-dive[open] .deep-dive-summary::before { transform: rotate(90deg); }
-.deep-dive-body { border-top: 1px solid var(--border); padding-top: 16px; }
+.deep-dive-body { border-top: 1px solid var(--border); padding-top: 20px; }
 .deep-dive-explanation { line-height: 1.6; }
 .deep-dive-example, .deep-dive-resources { margin-top: 18px; }
 .deep-dive-resources ul {
