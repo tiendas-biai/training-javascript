@@ -1416,92 +1416,127 @@
     ]
   },
   "react-perf-001": {
-    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A child re-renders whenever its parent does, even when its props didn't change — wasted work if the child is expensive. **What `React.memo` does:** wraps a component so React **skips** re-rendering it when its props are unchanged, using a **shallow** comparison (each prop compared by `Object.is`). **Why shallow matters:** a new object/array/function prop is a new reference, so it counts as 'changed' — memo won't help unless you also stabilize those props (`useMemo`/`useCallback`). **Common mistakes:** memoizing components that always get new prop references (no benefit), or memoizing cheap components everywhere (the comparison itself costs).",
+    "example": "```tsx\nimport { memo, useState } from 'react';\n\nconst Expensive = memo(function Expensive({ label }: { label: string }) {\n  console.log('Expensive render');\n  return <p>{label}</p>;\n});\n\nexport default function App() {\n  const [n, setN] = useState(0);\n  // label is a stable string, so Expensive skips re-render when only n changes.\n  return (\n    <div>\n      <button onClick={() => setN(n + 1)}>n = {n}</button>\n      <Expensive label=\"unchanged\" />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Performance",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — memo",
+        "url": "https://react.dev/reference/react/memo"
+      },
+      {
+        "label": "react.dev — Skipping re-renders with memo",
+        "url": "https://react.dev/reference/react/memo#skipping-re-rendering-when-props-are-unchanged"
       }
     ]
   },
   "react-perf-002": {
-    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Knowing *why* a component re-rendered is the first step to fixing wasted renders. **The three causes:** (1) its **own state** changed (a `setState`/`dispatch`); (2) its **parent re-rendered** (children re-render by default, regardless of props); (3) a **context** it consumes changed value. **Why parent → child by default:** React re-renders the subtree unless a boundary like `memo` short-circuits it. **The implication:** props *changing* isn't a cause on its own — a parent re-render alone re-renders children. **Common mistakes:** assuming a child only re-renders when its props change (false without `memo`), or chasing renders that cause zero DOM work.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction Child() {\n  console.log('Child re-renders because App did');\n  return <p>child</p>;\n}\n\nexport default function App() {\n  const [n, setN] = useState(0);\n  // Child has no props/state of its own, yet re-renders when App's state changes.\n  return (\n    <div>\n      <button onClick={() => setN(n + 1)}>App state: {n}</button>\n      <Child />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Performance",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Render and Commit",
+        "url": "https://react.dev/learn/render-and-commit"
+      },
+      {
+        "label": "react.dev — State updates trigger renders",
+        "url": "https://react.dev/learn/render-and-commit#step-1-trigger-a-render"
       }
     ]
   },
   "react-perf-mcq-001": {
-    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** When is `useMemo` actually worth it? **The answer:** when the calculation is genuinely **expensive**, or when its result must keep a **stable reference** for a memoized child or an Effect dependency. **Why not always:** `useMemo` has its own cost (storing the value, comparing deps) and adds complexity; for cheap computations it's net negative. **The decision:** profile first; reach for it when a measurable bottleneck exists or referential stability is required. **Common mistakes:** memoizing trivial math 'to be safe', wrong/missing deps (stale cached values), or expecting `useMemo` to fix correctness rather than performance.",
+    "example": "```tsx\nimport { useMemo, useState } from 'react';\n\nexport default function App() {\n  const [count, setCount] = useState(1);\n  // Worthwhile: an expensive computation that should only run when count changes.\n  const factorial = useMemo(() => {\n    let f = 1;\n    for (let i = 2; i <= count; i++) f *= i;\n    return f;\n  }, [count]);\n  return (\n    <div>\n      <button onClick={() => setCount(c => c + 1)}>count = {count}</button>\n      <p>{count}! = {factorial}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Performance",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Should you add useMemo everywhere?",
+        "url": "https://react.dev/reference/react/useMemo#should-you-add-usememo-everywhere"
+      },
+      {
+        "label": "react.dev — useMemo",
+        "url": "https://react.dev/reference/react/useMemo"
       }
     ]
   },
   "react-perf-003": {
-    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Shipping every component in one bundle makes the initial load slow, even for screens the user may never open. **The solution:** `lazy(() => import('./X'))` returns a component whose code is fetched only when it first renders (code-splitting at the import boundary). `<Suspense fallback={…}>` shows fallback UI while that chunk loads. **Why they pair:** `lazy` defers the code; `Suspense` handles the 'still loading' state declaratively. **Common mistakes:** forgetting a `Suspense` boundary above a lazy component (React throws), or code-splitting tiny components where the network round-trip costs more than it saves.",
+    "example": "```tsx\nimport { Suspense, lazy } from 'react';\n\n// Normally lazy(() => import('./Chart')); inlined here so it runs standalone.\nconst Chart = lazy(() =>\n  Promise.resolve({ default: () => <p>📊 Heavy chart loaded on demand</p> }),\n);\n\nexport default function App() {\n  return (\n    <Suspense fallback={<p>Loading chart…</p>}>\n      <Chart />\n    </Suspense>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Performance",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — lazy",
+        "url": "https://react.dev/reference/react/lazy"
+      },
+      {
+        "label": "react.dev — Suspense",
+        "url": "https://react.dev/reference/react/Suspense"
       }
     ]
   },
   "react-perf-004": {
-    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Guessing about performance leads to misplaced optimizations. **What the React DevTools Profiler does:** records a session and shows which components rendered, how many times, and how long each render took (flamegraph + ranked chart), plus *why* each rendered. **Why use it:** it pinpoints components that re-render unnecessarily or are slow, so you optimize the actual bottleneck instead of sprinkling `memo`/`useMemo` blindly. **How:** install React DevTools, open the Profiler tab, record an interaction. **Common mistakes:** optimizing before measuring, or interpreting frequent-but-cheap renders as a problem when total time is negligible.",
     "resources": [
       {
-        "label": "react.dev — Performance",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — React Developer Tools",
+        "url": "https://react.dev/learn/react-developer-tools"
+      },
+      {
+        "label": "react.dev — Profiler component",
+        "url": "https://react.dev/reference/react/Profiler"
       }
     ]
   },
   "react-perf-mcq-002": {
-    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A fast-changing controlled input lives high in the tree, so every keystroke re-renders an expensive sibling subtree. **The simplest structural fix:** **move that state down** into a small child that owns the input, so only that child re-renders on each keystroke — the expensive siblings are no longer affected. **Why it beats `memo` everywhere:** colocating state limits the render's blast radius at the source, instead of patching every sibling with memoization. **Why a ref is wrong:** the value *is* displayed/controlled, so it belongs in state. **Common mistakes:** wrapping the whole page in `React.memo`, or lifting state higher than necessary ('lift only as far as needed').",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction SearchBox() {\n  // State colocated here: typing only re-renders SearchBox, not its siblings.\n  const [q, setQ] = useState('');\n  return <input value={q} onChange={e => setQ(e.target.value)} placeholder=\"search\" />;\n}\n\nfunction ExpensiveList() {\n  console.log('ExpensiveList render (not on every keystroke)');\n  return <p>…big list…</p>;\n}\n\nexport default function App() {\n  return <div><SearchBox /><ExpensiveList /></div>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Performance",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Keep components pure / colocate state",
+        "url": "https://react.dev/learn/choosing-the-state-structure"
+      },
+      {
+        "label": "react.dev — Lifting State Up (only as far as needed)",
+        "url": "https://react.dev/learn/sharing-state-between-components"
       }
     ]
   },
   "react-perf-005": {
-    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Rendering thousands of rows creates thousands of DOM nodes — slow to mount, scroll, and update, even though only a handful are visible. **List virtualization (windowing):** render only the items currently in the viewport (plus a small buffer), and translate/space them so the scrollbar still reflects the full length. **Why it works:** DOM node count stays roughly constant regardless of data size. **When you need it:** very long lists/tables/grids. **In practice:** libraries like `react-window`/`react-virtuoso` handle the math. **Common mistakes:** virtualizing short lists (needless complexity), or breaking accessibility/find-in-page by removing off-screen content without care.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nconst ROW = 24, VISIBLE = 10, TOTAL = 10000;\n\nexport default function App() {\n  const [scrollTop, setScrollTop] = useState(0);\n  const start = Math.floor(scrollTop / ROW);\n  const rows = Array.from({ length: VISIBLE }, (_, i) => start + i);\n  return (\n    <div onScroll={e => setScrollTop(e.currentTarget.scrollTop)}\n         style={{ height: VISIBLE * ROW, overflow: 'auto' }}>\n      <div style={{ height: TOTAL * ROW, position: 'relative' }}>\n        {rows.map(i => (\n          <div key={i} style={{ position: 'absolute', top: i * ROW, height: ROW }}>row {i}</div>\n        ))}\n      </div>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Performance",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Performance & large lists",
+        "url": "https://react.dev/learn/render-and-commit"
+      },
+      {
+        "label": "react-window (windowing library)",
+        "url": "https://github.com/bvaughn/react-window"
       }
     ]
   },
   "react-perf-006": {
-    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A stateful wrapper (say a counter or a toggle) re-renders an expensive subtree nested inside it every time its own state changes. **The fix — pass the subtree as `children`:** when the expensive tree is created by the *grandparent* and handed to the wrapper via `children`, the wrapper updating its own state does **not** re-render those children — React reuses the same element it was given. Only the wrapper re-renders. **Why:** `children` is a prop whose element identity is unchanged by the wrapper's state update. **Common mistakes:** defining the expensive subtree *inside* the wrapper (then it does re-render), or reaching for `memo` when composition solves it for free.",
+    "example": "```tsx\nimport { useState, type ReactNode } from 'react';\n\nfunction Toggle({ children }: { children: ReactNode }) {\n  const [open, setOpen] = useState(true);\n  // Toggling re-renders Toggle, but `children` (passed in) is reused, not re-rendered.\n  return (\n    <div>\n      <button onClick={() => setOpen(o => !o)}>toggle</button>\n      {open && children}\n    </div>\n  );\n}\n\nfunction Expensive() {\n  console.log('Expensive render (only when App renders, not on toggle)');\n  return <p>expensive subtree</p>;\n}\n\nexport default function App() {\n  return <Toggle><Expensive /></Toggle>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Performance",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Passing children as a prop",
+        "url": "https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children"
+      },
+      {
+        "label": "react.dev — Preserving identity to skip renders",
+        "url": "https://react.dev/reference/react/memo"
       }
     ]
   },
   "react-perf-007": {
-    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A heavy state update (re-filtering a huge list) blocks the thread, so typing into the box that triggers it feels frozen. **How transitions help:** wrapping the update in `startTransition` marks it **non-urgent**. React keeps urgent updates (the keystroke, the input value) responsive, renders the transition work at lower priority, and can **interrupt** an in-progress transition render if a newer urgent update arrives. **Result:** the input stays snappy; the expensive view catches up. `isPending` lets you show a subtle pending indicator. **Common mistakes:** marking urgent updates as transitions (input feels laggy), or expecting transitions to make the heavy render itself faster — they only reprioritize it.",
+    "example": "```tsx\nimport { useState, useTransition } from 'react';\n\nexport default function App() {\n  const [query, setQuery] = useState('');\n  const [results, setResults] = useState<string[]>([]);\n  const [isPending, startTransition] = useTransition();\n  function onChange(e: React.ChangeEvent<HTMLInputElement>) {\n    setQuery(e.target.value); // urgent\n    startTransition(() => {    // non-urgent heavy work\n      setResults(Array.from({ length: 10000 }, (_, i) => `${e.target.value}-${i}`));\n    });\n  }\n  return (\n    <div>\n      <input value={query} onChange={onChange} />\n      {isPending ? <p>filtering…</p> : <p>{results.length} results</p>}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Performance",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — useTransition",
+        "url": "https://react.dev/reference/react/useTransition"
+      },
+      {
+        "label": "react.dev — startTransition",
+        "url": "https://react.dev/reference/react/startTransition"
       }
     ]
   },
