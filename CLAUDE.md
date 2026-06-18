@@ -95,7 +95,7 @@ app/
 │   │   ├── progress/       # ProgressStore seam: types, localStore, remoteStore
 │   │   └── shuffle.ts
 │   ├── hooks/
-│   │   ├── useProgress.ts  # auth-aware: Local vs Remote ProgressStore by isAuthenticated; loading guard
+│   │   ├── useProgress.ts  # auth-aware: Local vs Remote ProgressStore by isAuthenticated; loading guard; setFlag() toggle
 │   │   ├── useCloudSync.ts # one-time local→cloud merge prompt on first authenticated load
 │   │   └── useSubjectData.ts # cached dynamic import of a subject's cards
 │   ├── components/         # RichText, badges/CardMeta, GradeButtons, SessionHeader
@@ -162,8 +162,9 @@ Single mode — no drill/SRS toggle. Every card follows SM-2 (per subject):
 
 Progress shape (key `srs:<subject>` in `localStorage`, same shape in the cloud):
 ```js
-{ id, phase: 'learning'|'review', interval, ease, nextDue, lastReviewed, totalSeen }
+{ id, phase: 'learning'|'review', interval, ease, nextDue, lastReviewed, totalSeen, flagged? }
 ```
+`flagged?` is an optional "study this later" annotation, orthogonal to SM-2 — see **Flagging cards**.
 Legacy single-subject data (`srs:all`) is moved to `srs:javascript` once at boot by `lib/migrate.ts`. Old Leitner data (box/correctStreak shape) is auto-migrated on read via `getOrCreate()` in `lib/srs.ts`. Where progress lives (localStorage vs cloud) is decided by `useProgress` via the `ProgressStore` seam — see Part 3.
 
 ### Session
@@ -171,6 +172,13 @@ Legacy single-subject data (`srs:all`) is moved to `srs:javascript` once at boot
 - Subject home lets you filter by topic / difficulty / type / tag and pick session size: **10 / 20 / All**
 - Session builds a queue of due cards (shuffled). Learning cards cycle back; review cards exit after one answer.
 - Grading advances to the next card immediately (no confirmation toast).
+
+### Flagging cards
+
+Any card can be flagged ("study this later") independently of its SM-2 schedule. The flag is a `flagged?: boolean` field on the card's `Progress` record, so it persists through the same `ProgressStore` seam (localStorage / cloud) with **no backend change** — the progress Lambda already stores the whole record. `useProgress` exposes `setFlag(id, flagged)`, the single toggle used everywhere; it writes the flag without touching the schedule, so it works even in practice/cram sessions where grades are swallowed.
+
+- **Toggle** from: the 🚩 button in the session header (`SessionHeader`, all card types), the Card Detail Progress block, and a clickable 🚩 on each Card Library row.
+- **Review** flagged cards via: the **Flagged** status chip in the Card Library (`?filter=flagged`), the **Flagged** stat tile on the subject home, and the **Study flagged** button — a cram session of all flagged cards that won't affect the schedule.
 
 ### Card types
 
@@ -220,20 +228,20 @@ Progress is stored separately in `localStorage` and never written into the data 
 
 ### Card detail (`/:subject/card/:id`)
 
-Read-only view of a single card. Accessible by clicking any question row in the card library. Back button uses `navigate(-1)` to return to the exact library URL (preserving filters).
+Single-card view (read-only except the flag toggle). Accessible by clicking any question row in the card library. Back button uses `navigate(-1)` to return to the exact library URL (preserving filters).
 
 Sections:
 - **Card block** — full badges (topic, subtopic, difficulty, type, tags), full question text, answer/explanation for reveal cards, all options with the correct answer(s) highlighted for MCQ/multiple-response cards
-- **Progress block** — SM-2 status badge, interval/ease/next-due for review cards, "Never studied" for new cards, card ID
+- **Progress block** — SM-2 status badge, interval/ease/next-due for review cards, "Never studied" for new cards, card ID, and a 🚩 flag/unflag toggle
 
 ### Card library (`/:subject/card-library`)
 
-Read-only table of the subject's cards. Accessible by clicking any stat tile on the subject home (pre-filters to that group).
+Table of the subject's cards (read-only except the per-row 🚩 flag toggle in the Status column). Accessible by clicking any stat tile on the subject home (pre-filters to that group).
 
-Columns: Question (with ID below) | Topic | Difficulty | Status
+Columns: Question (with ID below) | Topic | Difficulty | Status (🚩 toggle + status badge)
 
 Filter controls:
-- **Status chips**: All / New / Learning / Due / Mastered
+- **Status chips**: All / New / Learning / Due / Mastered / Flagged
 - **Search box**: free-text filter on question text (`?q=`)
 - **Topic dropdown** (`?topic=`)
 - **Attempted select**: All / Attempted / Not attempted (`?attempted=`)
@@ -290,3 +298,9 @@ Deploys **only Lambdas + DynamoDB tables**; routes live on the **shared `entorno
 - **Lambda tests** — `node --test` per function with a mocked `@aws-sdk/client-dynamodb` (`backend/{progress,cards}/test/`). `nodejs22.x`, arm64, `PAY_PER_REQUEST`.
 
 > Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live).
+
+---
+
+## Tooling
+
+- **Playwright MCP** — `.mcp.json` (project-scoped) registers `@playwright/mcp` for browser-automation tools (navigate / click / type / screenshot / accessibility snapshot), handy for visually verifying the app against `npm run dev` at `localhost:5173`. Project-scoped MCP servers require a one-time per-user approval on first launch; first run also downloads a Chromium browser.
