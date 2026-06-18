@@ -2246,72 +2246,100 @@
     ]
   },
   "react-test-001": {
-    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Tests that poke at component internals (state, instance methods) break on every refactor and don't prove the UI actually works. **RTL's philosophy:** test components **the way a user does** — render them, find elements by what's visible (text, ARIA role, label), interact, and assert on the rendered output. The guiding line: 'the more your tests resemble the way your software is used, the more confidence they give.' **Why it's better:** tests survive refactors as long as behavior is unchanged, and querying by role nudges you toward accessible markup. **Common mistakes:** reaching for `container.querySelector`/test IDs first, or asserting on `useState` values instead of what the user sees.",
+    "example": "```tsx\nimport { test, expect } from '@jest/globals';\nimport { render, screen } from '@testing-library/react';\n\nfunction Greeting({ name }: { name: string }) {\n  return <h1>Hello, {name}!</h1>;\n}\n\ntest('shows the greeting the user would read', () => {\n  render(<Greeting name=\"Ada\" />);\n  // Assert on visible output, not internal state.\n  expect(screen.getByRole('heading', { name: 'Hello, Ada!' })).toBeTruthy();\n});\n```",
     "resources": [
       {
+        "label": "Testing Library — Guiding Principles",
+        "url": "https://testing-library.com/docs/guiding-principles/"
+      },
+      {
         "label": "react.dev — Testing",
-        "url": "https://react.dev/learn"
+        "url": "https://react.dev/learn/testing"
       }
     ]
   },
   "react-test-002": {
-    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Which query to use, and how the variants differ. **Why `getByRole` is preferred:** it finds elements by their accessible role (button, heading, textbox) — matching how users and assistive tech perceive the UI, and rewarding accessible markup. **The three prefixes:** `getBy*` returns the element or **throws** if not found (use when it should exist); `queryBy*` returns `null` instead of throwing (use to assert **absence**); `findBy*` returns a **Promise** that retries until the element appears (use for async UI). **Each has `*AllBy` plural forms.** **Common mistakes:** using `getBy*` to assert something is absent (it throws), or `queryBy*` for async elements (returns null immediately instead of waiting).",
+    "example": "```tsx\nimport { test, expect } from '@jest/globals';\nimport { render, screen } from '@testing-library/react';\n\nfunction Form() {\n  return <form><label>Email <input /></label><button>Submit</button></form>;\n}\n\ntest('getByRole / queryByRole', () => {\n  render(<Form />);\n  expect(screen.getByRole('button', { name: 'Submit' })).toBeTruthy(); // exists -> getBy\n  expect(screen.queryByRole('alert')).toBeNull();                       // absent -> queryBy\n});\n```",
     "resources": [
       {
-        "label": "react.dev — Testing",
-        "url": "https://react.dev/learn"
+        "label": "Testing Library — About Queries",
+        "url": "https://testing-library.com/docs/queries/about/"
+      },
+      {
+        "label": "Testing Library — Which query should I use?",
+        "url": "https://testing-library.com/docs/queries/about/#priority"
       }
     ]
   },
   "react-test-mcq-001": {
-    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** `fireEvent` vs `@testing-library/user-event` for simulating interactions. **Why user-event wins:** it dispatches the **full, realistic sequence** a real user triggers — e.g. typing fires focus, keydown, keypress, input, keyup; clicking fires pointer/mouse/focus events in order. `fireEvent` dispatches a single low-level DOM event, which can miss behavior that depends on the full sequence (focus, controlled inputs). **API note:** user-event is async — `await userEvent.click(...)`. **Why the other options are wrong:** `fireEvent` does work in Jest and can click; user-event is *not* synchronous. **Common mistakes:** forgetting to `await` user-event calls, or using `fireEvent.change` for typing when `userEvent.type` better mimics real input.",
+    "example": "```tsx\nimport { test, expect } from '@jest/globals';\nimport { render, screen } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\nimport { useState } from 'react';\n\nfunction Counter() {\n  const [n, setN] = useState(0);\n  return <button onClick={() => setN(n + 1)}>count {n}</button>;\n}\n\ntest('user-event simulates a real click', async () => {\n  render(<Counter />);\n  await userEvent.click(screen.getByRole('button'));\n  expect(screen.getByRole('button').textContent).toBe('count 1');\n});\n```",
     "resources": [
       {
-        "label": "react.dev — Testing",
-        "url": "https://react.dev/learn"
+        "label": "Testing Library — user-event",
+        "url": "https://testing-library.com/docs/user-event/intro/"
+      },
+      {
+        "label": "Testing Library — fireEvent vs user-event",
+        "url": "https://testing-library.com/docs/user-event/intro/#differences-from-fireevent"
       }
     ]
   },
   "react-test-003": {
-    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Asserting right after rendering fails when the UI updates **asynchronously** (after a fetch/timer), because the element isn't there yet. **The fix:** use queries that **retry**: `findBy*` (returns a Promise that resolves once the element appears) or wrap assertions in `waitFor(() => …)` (re-runs until it passes or times out). **Always `await`** them. **Why retry instead of fixed delays:** no flaky `setTimeout`s — it resolves as soon as the condition holds. **Rule of thumb:** appearing element → `findBy`; arbitrary condition/disappearance → `waitFor`. **Common mistakes:** not awaiting (test passes/fails nondeterministically and you get `act` warnings), or using `getBy` for content that arrives later.",
+    "example": "```tsx\nimport { test, expect } from '@jest/globals';\nimport { render, screen } from '@testing-library/react';\nimport { useState, useEffect } from 'react';\n\nfunction LateMessage() {\n  const [msg, setMsg] = useState('');\n  useEffect(() => { const id = setTimeout(() => setMsg('done'), 10); return () => clearTimeout(id); }, []);\n  return <p>{msg}</p>;\n}\n\ntest('waits for async UI', async () => {\n  render(<LateMessage />);\n  expect(await screen.findByText('done')).toBeTruthy(); // retries until it appears\n});\n```",
     "resources": [
       {
-        "label": "react.dev — Testing",
-        "url": "https://react.dev/learn"
+        "label": "Testing Library — Async Methods (findBy, waitFor)",
+        "url": "https://testing-library.com/docs/dom-testing-library/api-async/"
+      },
+      {
+        "label": "Testing Library — Appearance and Disappearance",
+        "url": "https://testing-library.com/docs/guide-disappearance/"
       }
     ]
   },
   "react-test-004": {
-    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A component calls an API client; tests shouldn't hit the network and need to control responses. **The approach:** `jest.mock('./api')` replaces the module with auto-mocked functions, then per test you set behavior with `mockResolvedValue` (for promises) / `mockReturnValue`. **Why:** deterministic, fast tests; you assert how the component renders for success/error/loading. **Self-contained version:** when there's no separate module, a `jest.fn()` with `mockResolvedValue` does the same for an injected dependency. **Common mistakes:** forgetting `jest.mock` is hoisted above imports, not resetting mocks between tests (`jest.clearAllMocks()`), or mocking too deep instead of at the module boundary.",
+    "example": "```tsx\nimport { test, expect, jest } from '@jest/globals';\nimport { render, screen } from '@testing-library/react';\nimport { useEffect, useState } from 'react';\n\n// Stand-in for a mocked API function (jest.mock('./api') works the same way).\nconst fetchUser = jest.fn<() => Promise<string>>().mockResolvedValue('Ada');\n\nfunction Profile() {\n  const [name, setName] = useState('');\n  useEffect(() => { fetchUser().then(setName); }, []);\n  return <p>{name || 'loading…'}</p>;\n}\n\ntest('renders the mocked user', async () => {\n  render(<Profile />);\n  expect(await screen.findByText('Ada')).toBeTruthy();\n});\n```",
     "resources": [
       {
-        "label": "react.dev — Testing",
-        "url": "https://react.dev/learn"
+        "label": "Jest — Mock Functions",
+        "url": "https://jestjs.io/docs/mock-functions"
+      },
+      {
+        "label": "Jest — jest.mock (ES modules)",
+        "url": "https://jestjs.io/docs/jest-object#jestmockmodulename-factory-options"
       }
     ]
   },
   "react-test-005": {
-    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** It's tempting to assert that `useState` holds a certain value. **Why you shouldn't:** internal state is an implementation detail. Tests that read it couple to *how* the component works, so a harmless refactor (renaming state, switching to `useReducer`) breaks them even though behavior is unchanged — and they don't prove the user sees anything. **What to assert instead:** the rendered output and observable behavior — text, roles, what appears/disappears after interaction. **The principle:** test inputs (props, user actions) and outputs (DOM), treating the component as a black box. **Common mistakes:** reaching into instances/hooks, snapshotting everything, or testing private helpers instead of user-visible results.",
+    "example": "```tsx\nimport { test, expect } from '@jest/globals';\nimport { render, screen } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\nimport { useState } from 'react';\n\nfunction Toggle() {\n  const [on, setOn] = useState(false);\n  return <button onClick={() => setOn(o => !o)}>{on ? 'ON' : 'OFF'}</button>;\n}\n\ntest('asserts visible output, not internal state', async () => {\n  render(<Toggle />);\n  await userEvent.click(screen.getByRole('button'));\n  expect(screen.getByRole('button').textContent).toBe('ON'); // what the user sees\n});\n```",
     "resources": [
       {
-        "label": "react.dev — Testing",
-        "url": "https://react.dev/learn"
+        "label": "Testing Library — Avoid testing implementation details",
+        "url": "https://testing-library.com/docs/guiding-principles/"
+      },
+      {
+        "label": "Kent C. Dodds — Testing implementation details",
+        "url": "https://kentcdodds.com/blog/testing-implementation-details"
       }
     ]
   },
   "react-test-mcq-002": {
-    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** The warning 'An update to Component was not wrapped in act(...).' **What it usually means:** a state update happened **after the test was considered done** — typically an async update (a resolved promise/`setTimeout`) that you didn't await, so React applied it outside the test's `act()` window. **The fix:** await the change with `findBy*` or `waitFor(...)` so the test waits for the update to flush inside `act`. RTL wraps `render` and `user-event` in `act` for you; the gap is usually your own unawaited async. **Why the other options are wrong:** it's unrelated to `key` props, React imports, or file names. **Common mistakes:** firing an async action and asserting synchronously instead of awaiting it.",
+    "example": "```tsx\nimport { test, expect } from '@jest/globals';\nimport { render, screen } from '@testing-library/react';\nimport { useEffect, useState } from 'react';\n\nfunction Async() {\n  const [v, setV] = useState('');\n  useEffect(() => { Promise.resolve().then(() => setV('ready')); }, []);\n  return <p>{v}</p>;\n}\n\ntest('await the async update to avoid the act() warning', async () => {\n  render(<Async />);\n  // Without awaiting, the setV happens after the test -> act warning.\n  expect(await screen.findByText('ready')).toBeTruthy();\n});\n```",
     "resources": [
       {
-        "label": "react.dev — Testing",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — act / test utilities",
+        "url": "https://react.dev/reference/react/act"
+      },
+      {
+        "label": "Testing Library — Fixing act warnings",
+        "url": "https://testing-library.com/docs/dom-testing-library/api-async/"
       }
     ]
   },
