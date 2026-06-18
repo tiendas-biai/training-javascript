@@ -1,1 +1,128 @@
-{}
+{
+  "node-loop-001": {
+    "explanation": "**The problem:** JavaScript runs on a single thread, so how can Node serve thousands of connections without blocking? **Why it works:** Node hands slow I/O (file reads, network, DNS) to the **system kernel** (and a small libuv thread pool for things the kernel can't do async), which work in the background. Node's single JS thread keeps running; when an operation finishes, its **callback is queued** to run on the JS thread via the event loop. **Why this scales:** the thread is almost never blocked waiting — it only runs your JS, which is fast, while the OS handles the waiting. **Common mistakes:** running CPU-heavy synchronous work on the main thread (it blocks *everything*, since there's only one JS thread) — offload that to worker threads or child processes.",
+    "example": "```js\nconst fs = require('node:fs');\n\nconsole.log('1: start (sync)');\n\n// Offloaded to the OS/thread pool; the callback is queued for later.\nfs.readFile(__filename, () => {\n  console.log('3: file read finished (callback)');\n});\n\nconsole.log('2: end of script (sync) — runs before the I/O callback');\n// Output: 1, 2, 3 — the thread never blocked on the read.\n```",
+    "resources": [
+      {
+        "label": "Node.js — The Node.js Event Loop",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick"
+      },
+      {
+        "label": "Node.js — Overview of Blocking vs Non-Blocking",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/overview-of-blocking-vs-non-blocking"
+      }
+    ]
+  },
+  "node-loop-002": {
+    "explanation": "**The problem:** 'The event loop' sounds vague — it's actually a fixed sequence of **phases**, each with its own callback queue. **The order each iteration:** (1) **timers** — due `setTimeout`/`setInterval` callbacks; (2) **pending callbacks** — certain system I/O callbacks deferred from before; (3) **idle, prepare** — internal only; (4) **poll** — retrieve new I/O events and run their callbacks (Node **blocks here** when nothing else is pending); (5) **check** — `setImmediate` callbacks; (6) **close callbacks** — e.g. `socket.on('close')`. **Between every phase** (and between callbacks) Node drains the `nextTick` and microtask (Promise) queues. **Common mistakes:** assuming timers fire at exactly their delay (they fire in the timers phase *at or after* it), or confusing `setImmediate` (check) with `setTimeout(…,0)` (timers).",
+    "example": "```js\n// Illustrates which phase each callback belongs to.\nsetTimeout(() => console.log('timers phase: setTimeout'), 0);\nsetImmediate(() => console.log('check phase: setImmediate'));\nPromise.resolve().then(() => console.log('microtask: drained between phases'));\nprocess.nextTick(() => console.log('nextTick: drained before microtasks'));\nconsole.log('sync: runs first');\n// sync -> nextTick -> microtask -> (timers/check order varies at top level)\n```",
+    "resources": [
+      {
+        "label": "Node.js — Event loop phases",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick#phases-overview"
+      },
+      {
+        "label": "libuv — Design overview",
+        "url": "https://docs.libuv.org/en/v1.x/design.html"
+      }
+    ]
+  },
+  "node-loop-mcq-001": {
+    "explanation": "**The problem:** Inside an I/O callback, `setTimeout(…,0)` vs `setImmediate` — what order? **The answer: immediate, then timeout — always.** **Why deterministic here:** the `fs.readFile` callback runs in the **poll** phase. From poll, the **check** phase (where `setImmediate` lives) comes *next*, before the loop wraps back around to the **timers** phase. So `setImmediate` always wins when both are scheduled from within an I/O callback. **Contrast:** at the *top level* of a script the order is non-deterministic (it depends on startup timing). **Common mistakes:** assuming the order is always the same regardless of context — it's only guaranteed when scheduled inside an I/O callback. **Rule of thumb:** to run 'right after this I/O callback', use `setImmediate`.",
+    "example": "```js\nconst fs = require('node:fs');\n\nfs.readFile(__filename, () => {\n  // Scheduled from inside an I/O (poll-phase) callback:\n  setTimeout(() => console.log('timeout'), 0); // timers phase = next loop\n  setImmediate(() => console.log('immediate')); // check phase = this loop\n});\n// Always prints: immediate, then timeout.\n```",
+    "resources": [
+      {
+        "label": "Node.js — setImmediate() vs setTimeout()",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick#setimmediate-vs-settimeout"
+      },
+      {
+        "label": "Node.js — Understanding setImmediate()",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/understanding-setimmediate"
+      }
+    ]
+  },
+  "node-loop-003": {
+    "explanation": "**The problem:** Where does `process.nextTick()` fit among the event loop phases? **The answer: it's not part of the loop at all.** The `nextTick` queue is drained **immediately after the current operation finishes**, before the event loop is allowed to continue to the next phase — no matter which phase you're in. So nextTick callbacks always run before any timers, I/O, or `setImmediate`. **Why it exists:** to let you defer work to *right after* the current function unwinds (e.g. emit an event after the caller has attached listeners) without yielding to I/O. **Common mistakes:** assuming nextTick is 'the next loop iteration' (that's `setImmediate`), or recursively scheduling nextTick and starving I/O (see the starvation card).",
+    "example": "```js\nconsole.log('1: sync start');\n\nprocess.nextTick(() => console.log('3: nextTick — after current op, before the loop continues'));\n\nPromise.resolve().then(() => console.log('4: microtask — after nextTick'));\n\nconsole.log('2: sync end');\n// Output order: 1, 2, 3, 4\n```",
+    "resources": [
+      {
+        "label": "Node.js — Understanding process.nextTick()",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/understanding-processnexttick"
+      },
+      {
+        "label": "Node.js — process.nextTick API",
+        "url": "https://nodejs.org/api/process.html#processnexttickcallback-args"
+      }
+    ]
+  },
+  "node-loop-mcq-002": {
+    "explanation": "**The problem:** `function recursive() { process.nextTick(recursive); }` then calling it. **The danger: it starves the event loop.** Because the nextTick queue is fully drained *before* the loop may advance, endlessly re-queueing nextTick means the queue **never empties** — so Node never reaches the **poll** phase. All I/O (timers, network, file callbacks) is permanently blocked, even though the call stack doesn't overflow (each call returns before the next is scheduled). **Why not a stack overflow:** the recursion isn't synchronous — each `recursive` returns, then the queued one runs. **The fix:** use `setImmediate` to yield to the loop between iterations. **Common mistakes:** heavy recursive nextTick work, or assuming nextTick is throttled (it isn't).",
+    "example": "```js\n// ❌ DANGER (do not run): never yields, starves all I/O.\n// function recursive() { process.nextTick(recursive); }\n// recursive();\n\n// ✅ Use setImmediate to yield to the event loop each iteration.\nlet n = 0;\nfunction safe() {\n  if (n++ >= 3) return;\n  console.log('iteration', n);\n  setImmediate(safe); // lets the poll phase (I/O) run between iterations\n}\nsafe();\n```",
+    "resources": [
+      {
+        "label": "Node.js — process.nextTick and the event loop",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/understanding-processnexttick"
+      },
+      {
+        "label": "Node.js — Don't block the event loop",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop"
+      }
+    ]
+  },
+  "node-loop-004": {
+    "explanation": "**The problem:** The names are admittedly backwards. **What each really does:** `process.nextTick()` fires the most **immediately** — right after the current operation, in the same phase, before the loop continues. `setImmediate()` fires on the **next** iteration of the event loop (the check phase). So despite the names, *nextTick* is sooner than *setImmediate*. **What the docs recommend:** prefer **`setImmediate`** in general — its 'run on the next loop tick' behavior is easier to reason about and it won't starve I/O the way recursive nextTick can. **Use `nextTick`** only when you specifically need to run before the loop proceeds (e.g. to fire an event after the caller attaches handlers). **Common mistakes:** reaching for nextTick by default and risking starvation.",
+    "example": "```js\nconsole.log('sync');\nsetImmediate(() => console.log('setImmediate — next loop iteration (check phase)'));\nprocess.nextTick(() => console.log('nextTick — sooner: before the loop continues'));\n// Output: sync, nextTick, setImmediate\n```",
+    "resources": [
+      {
+        "label": "Node.js — process.nextTick() vs setImmediate()",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/understanding-processnexttick"
+      },
+      {
+        "label": "Node.js — Understanding setImmediate()",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/understanding-setimmediate"
+      }
+    ]
+  },
+  "node-loop-005": {
+    "explanation": "**The problem:** What's special about the **poll** phase? **The answer: it's where Node actually waits.** The poll phase has two jobs: run queued I/O callbacks, and **retrieve new I/O events**. When there are no timers due and nothing scheduled with `setImmediate`, the loop **blocks in poll** — sleeping efficiently until the OS reports new I/O (a socket readable, a file read done) or a timer becomes due. **Why this matters:** it's how a single-threaded runtime idles at ~0% CPU instead of busy-looping. If a `setImmediate` is pending, poll won't block (it ends so the check phase can run); if a timer is due, poll ends to service it. **Common mistakes:** thinking Node constantly spins the loop — it parks in poll when idle.",
+    "example": "```js\nconst fs = require('node:fs');\n\nconsole.log('scheduling a read; the loop will park in the poll phase until it completes');\nfs.readFile(__filename, () => {\n  console.log('poll phase delivered the I/O event and ran this callback');\n});\n// With nothing else scheduled, Node sleeps in poll (0% CPU) awaiting the read.\n```",
+    "resources": [
+      {
+        "label": "Node.js — The poll phase",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick#poll"
+      },
+      {
+        "label": "libuv — I/O polling",
+        "url": "https://docs.libuv.org/en/v1.x/design.html#the-i-o-loop"
+      }
+    ]
+  },
+  "node-loop-mcq-003": {
+    "explanation": "**The problem:** At the **top level** of a script, `setTimeout(…,0)` vs `setImmediate` — what order? **The answer: unpredictable** — it depends on how fast the process starts up. **Why:** `setTimeout(fn, 0)` is clamped to a ~1 ms minimum. When the loop reaches the **timers** phase, whether that 1 ms has elapsed yet depends on how long startup took — so sometimes the timer is 'due' and runs first, sometimes it isn't and `setImmediate` (check phase) runs first. **Contrast:** inside an I/O callback the order *is* deterministic (immediate first), because you're already past the timers phase in poll. **Common mistakes:** relying on top-level ordering between these two; if you need a guaranteed order, schedule them from inside an I/O callback (or use one consistently).",
+    "example": "```js\n// Top-level (not inside an I/O callback): order is NOT guaranteed.\nsetTimeout(() => console.log('timeout'), 0);\nsetImmediate(() => console.log('immediate'));\n// Could print timeout->immediate or immediate->timeout depending on startup timing.\n```",
+    "resources": [
+      {
+        "label": "Node.js — setImmediate() vs setTimeout()",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick#setimmediate-vs-settimeout"
+      },
+      {
+        "label": "Node.js — Timers",
+        "url": "https://nodejs.org/api/timers.html"
+      }
+    ]
+  },
+  "node-loop-006": {
+    "explanation": "**The problem:** Does `setTimeout(fn, 0)` run `fn` right away? **The answer: no.** It **queues** `fn` to run in the **timers** phase of a *future* loop iteration — never synchronously. Before it runs: the rest of the currently executing code finishes, then the `nextTick` and Promise microtask queues drain, and possibly other phases execute. Also, `0` is clamped to a ~1 ms minimum delay. **Why:** `setTimeout` only *schedules*; it can't interrupt running code on the single thread. **When to use it:** to defer work to a later tick (yield to the loop), not to 'run now'. **Common mistakes:** expecting `setTimeout(fn,0)` to run before synchronous code after it, or using it to 'wait' for state that updates synchronously.",
+    "example": "```js\nconsole.log('1: sync');\nsetTimeout(() => console.log('3: setTimeout(…,0) — a later timers phase'), 0);\nPromise.resolve().then(() => console.log('2: microtask runs before the timer'));\nconsole.log('1.5: more sync, still before the timeout');\n// Output: 1, 1.5, 2, 3\n```",
+    "resources": [
+      {
+        "label": "Node.js — Discover Timers (setTimeout)",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/discover-javascript-timers"
+      },
+      {
+        "label": "Node.js — Timers API",
+        "url": "https://nodejs.org/api/timers.html#settimeoutcallback-delay-args"
+      }
+    ]
+  }
+}
