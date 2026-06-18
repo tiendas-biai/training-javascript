@@ -11,7 +11,7 @@ export function CardDetail() {
   const { subject, cards } = useSubjectCtx();
   const { id } = useParams();
   const navigate = useNavigate();
-  const { progressMap } = useProgress(subject);
+  const { progressMap, setFlag } = useProgress(subject);
 
   const card = cards.find(c => c.id === id);
   if (!card) return <Navigate to={`/${subject.id}/card-library`} replace />;
@@ -65,7 +65,17 @@ export function CardDetail() {
       </div>
 
       <div className="detail-progress-card">
-        <p className="detail-section-label">Progress</p>
+        <div className="detail-progress-head">
+          <p className="detail-section-label">Progress</p>
+          <button
+            type="button"
+            className={`flag-toggle${s.flagged ? ' active' : ''}`}
+            aria-pressed={s.flagged ? true : false}
+            onClick={() => setFlag(card.id, !s.flagged)}
+          >
+            🚩 {s.flagged ? 'Flagged · click to unflag' : 'Flag to study later'}
+          </button>
+        </div>
         {s.totalSeen === 0 ? (
           <div className="detail-progress-row">
             <span className="badge badge-lib-new">New</span>

@@ -14,9 +14,11 @@ interface Props {
   previews: Record<Rating, string>;
   onGrade: (rating: Rating) => void;
   onExit: () => void;
+  flagged?: boolean;
+  onToggleFlag?: () => void;
 }
 
-export function MRCard({ card, remaining, done, cardInfo, previews, onGrade, onExit }: Props) {
+export function MRCard({ card, remaining, done, cardInfo, previews, onGrade, onExit, flagged, onToggleFlag }: Props) {
   const shuffled = useMemo(() => shuffleCopy(card.options), [card]);
   const required = card.answers.length;
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
@@ -36,7 +38,7 @@ export function MRCard({ card, remaining, done, cardInfo, previews, onGrade, onE
 
   return (
     <div className="screen">
-      <SessionHeader remaining={remaining} done={done} onExit={onExit} />
+      <SessionHeader remaining={remaining} done={done} onExit={onExit} flagged={flagged} onToggleFlag={onToggleFlag} />
       <div className="card">
         <CardMeta card={card} cardInfo={cardInfo} />
         <div className="question-text"><RichText text={card.question} /></div>

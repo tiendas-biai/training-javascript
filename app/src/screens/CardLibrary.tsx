@@ -30,7 +30,7 @@ function StatusBadge({ card, progressMap }: { card: Card; progressMap: StoredPro
 export function CardLibrary() {
   const { subject, cards } = useSubjectCtx();
   const navigate = useNavigate();
-  const { progressMap } = useProgress(subject);
+  const { progressMap, setFlag } = useProgress(subject);
   const [params, setParams] = useSearchParams();
 
   const statusFilter = params.get('filter') ?? 'all';
@@ -49,6 +49,7 @@ export function CardLibrary() {
     learning: cards.filter(c => getStatus(c, progressMap) === 'learning').length,
     due: cards.filter(isDue).length,
     mastered: cards.filter(c => getStatus(c, progressMap) === 'mastered').length,
+    flagged: cards.filter(c => getOrCreate(c.id, progressMap).flagged).length,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [cards, progressMap]);
 
@@ -66,6 +67,7 @@ export function CardLibrary() {
     if (statusFilter === 'learning' && status !== 'learning') return false;
     if (statusFilter === 'mastered' && status !== 'mastered') return false;
     if (statusFilter === 'due' && !isDue(card)) return false;
+    if (statusFilter === 'flagged' && !s.flagged) return false;
     if (attemptedFilter === 'attempted' && s.lastReviewed == null) return false;
     if (attemptedFilter === 'not-attempted' && s.lastReviewed != null) return false;
     if (topicFilter && card.topic !== topicFilter) return false;
@@ -79,6 +81,7 @@ export function CardLibrary() {
     ['learning', `Learning (${counts.learning})`],
     ['due', `Due (${counts.due})`],
     ['mastered', `Mastered (${counts.mastered})`],
+    ['flagged', `🚩 Flagged (${counts.flagged})`],
   ] as const;
 
   return (
@@ -138,6 +141,7 @@ export function CardLibrary() {
               {filtered.map(card => {
                 const raw = plainText(card.question);
                 const q = raw.length > 80 ? raw.slice(0, 80) + '…' : raw;
+                const flagged = getOrCreate(card.id, progressMap).flagged ?? false;
                 return (
                   <tr key={card.id}>
                     <td className="col-q">
@@ -148,7 +152,18 @@ export function CardLibrary() {
                     </td>
                     <td className="col-topic"><span className="badge">{card.topic}</span></td>
                     <td className="col-diff"><DiffBadge difficulty={card.difficulty} /></td>
-                    <td className="col-status"><StatusBadge card={card} progressMap={progressMap} /></td>
+                    <td className="col-status">
+                      <button
+                        type="button"
+                        className={`flag-btn flag-btn-sm${flagged ? ' active' : ''}`}
+                        aria-pressed={flagged ? true : false}
+                        title={flagged ? 'Unflag this card' : 'Flag this card to study later'}
+                        onClick={() => setFlag(card.id, !flagged)}
+                      >
+                        🚩
+                      </button>
+                      <StatusBadge card={card} progressMap={progressMap} />
+                    </td>
                   </tr>
                 );
               })}

@@ -23,7 +23,7 @@ describe('Session integration', () => {
 
     render(
       <Session initialQueue={queue} progressMap={progress} onProgress={onProgress}
-        onRestart={noop} onExit={noop} />,
+        onFlag={noop} onRestart={noop} onExit={noop} />,
     );
 
     // First Good: streak 1, card cycles back (still learning, queue of 1 → same card again)
@@ -53,7 +53,7 @@ describe('Session integration', () => {
 
     render(
       <Session initialQueue={queue} progressMap={progress} onProgress={onProgress}
-        onRestart={noop} onExit={noop} />,
+        onFlag={noop} onRestart={noop} onExit={noop} />,
     );
 
     // Card a: Easy → graduates at 3d and exits
@@ -72,12 +72,60 @@ describe('Session integration', () => {
     expect(screen.getByText('67%')).toBeInTheDocument(); // 2 of 3 correct
   });
 
+  test('flag button toggles via onFlag and reflects the card\'s flagged state', async () => {
+    const onFlag = jest.fn();
+    const queue: Card[] = [makeCard('a')];
+
+    const { rerender } = render(
+      <Session initialQueue={queue} progressMap={{}} onProgress={noop}
+        onFlag={onFlag} onRestart={noop} onExit={noop} />,
+    );
+
+    // Unflagged: clicking the flag asks to flag it
+    await userEvent.click(screen.getByTitle(/flag this card to study later/i));
+    expect(onFlag).toHaveBeenCalledWith('a', true);
+
+    // With the card already flagged, the button offers to unflag
+    const flagged: Record<string, Progress> = {
+      a: { id: 'a', phase: 'learning', interval: 0, ease: 2.5, nextDue: 0, lastReviewed: null, totalSeen: 0, flagged: true },
+    };
+    rerender(
+      <Session initialQueue={queue} progressMap={flagged} onProgress={noop}
+        onFlag={onFlag} onRestart={noop} onExit={noop} />,
+    );
+    await userEvent.click(screen.getByTitle(/unflag this card/i));
+    expect(onFlag).toHaveBeenLastCalledWith('a', false);
+  });
+
+  test('toggling the flag preserves the revealed answer (no remount)', async () => {
+    const queue: Card[] = [makeCard('a')];
+    const base: Record<string, Progress> = {
+      a: { id: 'a', phase: 'learning', interval: 0, ease: 2.5, nextDue: 0, lastReviewed: null, totalSeen: 0 },
+    };
+
+    const { rerender } = render(
+      <Session initialQueue={queue} progressMap={base} onProgress={noop}
+        onFlag={noop} onRestart={noop} onExit={noop} />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /show answer/i }));
+    expect(screen.getByText('Answer a')).toBeInTheDocument();
+
+    // Simulate the flag write updating progressMap (as SubjectHome does): the
+    // presentation key is unchanged, so the card must keep its revealed state.
+    rerender(
+      <Session initialQueue={queue} progressMap={{ a: { ...base.a, flagged: true } }} onProgress={noop}
+        onFlag={noop} onRestart={noop} onExit={noop} />,
+    );
+    expect(screen.getByText('Answer a')).toBeInTheDocument();
+  });
+
   test('Study Again triggers onRestart and Back to Home triggers onExit', async () => {
     const onRestart = jest.fn();
     const onExit = jest.fn();
     render(
       <Session initialQueue={[]} progressMap={{}} onProgress={noop}
-        onRestart={onRestart} onExit={onExit} />,
+        onFlag={noop} onRestart={onRestart} onExit={onExit} />,
     );
 
     expect(screen.getByText('Session complete!')).toBeInTheDocument();

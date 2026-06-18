@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Card, SessionFilters } from '../types';
 import { applyFilters, buildQueue } from '../lib/session';
-import { computeStats, getNextDueTime } from '../lib/srs';
+import { computeStats, getNextDueTime, getOrCreate } from '../lib/srs';
+import { shuffleCopy } from '../lib/shuffle';
 import { useProgress } from '../hooks/useProgress';
 import { useSubjectCtx } from './SubjectLayout';
 import { Session } from './Session';
@@ -13,14 +14,14 @@ import { useIsAdmin } from '../auth/useIsAdmin';
 
 type Mode =
   | { name: 'start' }
-  | { name: 'session'; filters: SessionFilters; size: number; queue: Card[]; practice: boolean };
+  | { name: 'session'; filters: SessionFilters; size: number; queue: Card[]; practice: boolean; source: 'due' | 'flagged' };
 
 const EMPTY_FILTERS: SessionFilters = { topic: '', difficulty: '', type: '', tag: '' };
 
 export function SubjectHome() {
   const { subject, cards } = useSubjectCtx();
   const navigate = useNavigate();
-  const { progressMap, update, reset, loading } = useProgress(subject);
+  const { progressMap, update, reset, setFlag, loading } = useProgress(subject);
   const isAdmin = useIsAdmin();
 
   const [filters, setFilters] = useState<SessionFilters>(EMPTY_FILTERS);
@@ -29,6 +30,10 @@ export function SubjectHome() {
 
   const topics = useMemo(() => [...new Set(cards.map(c => c.topic))].sort(), [cards]);
   const tags = useMemo(() => [...new Set(cards.flatMap(c => c.tags ?? []))].sort(), [cards]);
+  // Global flagged total — "Study flagged" reviews every flagged card, ignoring the
+  // start-screen filters, so its count must be global (not the filtered stats.flagged).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const flaggedTotal = useMemo(() => cards.filter(c => getOrCreate(c.id, progressMap).flagged).length, [cards, progressMap]);
 
   if (cards.length === 0) {
     return (
@@ -62,7 +67,16 @@ export function SubjectHome() {
 
   function startSession(f: SessionFilters, size: number, practice = false) {
     const queue = buildQueue(cards, progressMap, f, size, practice);
-    setMode({ name: 'session', filters: f, size, queue, practice });
+    setMode({ name: 'session', filters: f, size, queue, practice, source: 'due' });
+  }
+
+  // Flagged cards are reviewed as a cram run (every flagged card, schedule untouched).
+  function startFlaggedSession() {
+    const flagged = cards.filter(c => getOrCreate(c.id, progressMap).flagged);
+    setMode({
+      name: 'session', filters: EMPTY_FILTERS, size: Infinity,
+      queue: shuffleCopy(flagged), practice: true, source: 'flagged',
+    });
   }
 
   if (mode.name === 'session') {
@@ -84,7 +98,12 @@ export function SubjectHome() {
         progressMap={progressMap}
         // Practice (cram) sessions must not touch the SRS schedule, so swallow grades.
         onProgress={mode.practice ? () => {} : update}
-        onRestart={() => startSession(mode.filters, mode.size, mode.practice)}
+        onFlag={setFlag}
+        onRestart={() =>
+          mode.source === 'flagged'
+            ? startFlaggedSession()
+            : startSession(mode.filters, mode.size, mode.practice)
+        }
         onExit={() => setMode({ name: 'start' })}
       />
     );
@@ -145,6 +164,7 @@ export function SubjectHome() {
           ['learning', String(stats.inLearning), 'Learning'],
           ['mastered', String(stats.mastered), 'Mastered'],
           ['due', String(stats.dueToday), 'Due Today'],
+          ['flagged', String(flaggedTotal), 'Flagged'],
         ] as const).map(([filter, val, label]) => (
           <div
             key={filter}
@@ -208,6 +228,12 @@ export function SubjectHome() {
           onClick={() => startSession(filters, sessionSize, true)}
         >
           Practice {practiceSize} cards · won't affect schedule
+        </button>
+      )}
+
+      {flaggedTotal > 0 && (
+        <button className="btn-secondary" onClick={startFlaggedSession}>
+          🚩 Study flagged · {flaggedTotal} card{flaggedTotal !== 1 ? 's' : ''}
         </button>
       )}
 

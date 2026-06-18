@@ -141,7 +141,7 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
 /* ── Stat tiles ── */
 .stat-tiles {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
   margin-bottom: 24px;
 }
@@ -244,6 +244,59 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
 }
 .exit-btn:hover { color: var(--text); }
 .progress-label { font-size: 0.875rem; color: var(--muted); }
+.flag-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 1rem;
+  line-height: 1.4;
+  cursor: pointer;
+  filter: grayscale(1);
+  opacity: 0.6;
+  transition: filter 0.15s, opacity 0.15s, border-color 0.15s, background 0.15s;
+}
+.flag-btn:hover { opacity: 1; border-color: var(--muted); }
+.flag-btn.active {
+  filter: none;
+  opacity: 1;
+  border-color: var(--accent);
+  background: rgba(12, 192, 223, 0.12);
+}
+.flag-btn-sm {
+  padding: 0 6px;
+  font-size: 0.9rem;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* Card-detail flag/unflag toggle */
+.detail-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.flag-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+  filter: grayscale(1);
+  opacity: 0.7;
+  transition: filter 0.15s, opacity 0.15s, border-color 0.15s, background 0.15s, color 0.15s;
+}
+.flag-toggle:hover { opacity: 1; border-color: var(--muted); color: var(--text); }
+.flag-toggle.active {
+  filter: none;
+  opacity: 1;
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(12, 192, 223, 0.12);
+}
 
 /* ── Card ── */
 .card {

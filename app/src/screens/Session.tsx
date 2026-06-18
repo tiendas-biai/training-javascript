@@ -12,11 +12,14 @@ interface Props {
   initialQueue: Card[];
   progressMap: StoredProgressMap;
   onProgress: (id: string, progress: Progress) => void;
+  // Flags persist independently of the SRS schedule — routed here (not onProgress)
+  // so they're still saved in practice/flagged sessions where grades are swallowed.
+  onFlag: (id: string, flagged: boolean) => void;
   onRestart: () => void;
   onExit: () => void;
 }
 
-export function Session({ initialQueue, progressMap, onProgress, onRestart, onExit }: Props) {
+export function Session({ initialQueue, progressMap, onProgress, onFlag, onRestart, onExit }: Props) {
   const [queue, setQueue] = useState<Card[]>(initialQueue);
   const [stats, setStats] = useState<SessionStats>({ reviewed: 0, correct: 0 });
   // Learning streaks are session-scoped bookkeeping, not rendered — a ref avoids
@@ -31,6 +34,7 @@ export function Session({ initialQueue, progressMap, onProgress, onRestart, onEx
   const state = getOrCreate(card.id, progressMap);
   const cardInfo = { phase: state.phase, streak: streaks.current[card.id] ?? 0, interval: state.interval };
   const previews = previewIntervals(state);
+  const flagged = state.flagged ?? false;
 
   function handleGrade(rating: Rating) {
     const current = getOrCreate(card.id, progressMap);
@@ -65,7 +69,11 @@ export function Session({ initialQueue, progressMap, onProgress, onRestart, onEx
     setQueue(q => advance(q, cardExits, rating));
   }
 
-  const common = { remaining: queue.length, done: stats.reviewed, cardInfo, previews, onGrade: handleGrade, onExit };
+  const common = {
+    remaining: queue.length, done: stats.reviewed, cardInfo, previews,
+    onGrade: handleGrade, onExit,
+    flagged, onToggleFlag: () => onFlag(card.id, !flagged),
+  };
 
   // The key includes the grade count so internal card state (revealed/picked)
   // resets on every new presentation — including a learning card cycling back

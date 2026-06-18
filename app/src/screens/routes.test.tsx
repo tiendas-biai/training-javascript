@@ -70,6 +70,18 @@ describe('routing', () => {
     expect(screen.getByText('B1')).not.toHaveClass('correct');
     expect(screen.getByText('Never studied')).toBeInTheDocument();
   });
+
+  test('card detail can flag and unflag a card', async () => {
+    renderAt('/mocksubj/card/mock-1');
+    await userEvent.click(await screen.findByRole('button', { name: /flag to study later/i }));
+
+    expect(await screen.findByRole('button', { name: /flagged · click to unflag/i })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('srs:mocksubj')!)['mock-1'].flagged).toBe(true);
+
+    await userEvent.click(screen.getByRole('button', { name: /flagged · click to unflag/i }));
+    expect(await screen.findByRole('button', { name: /flag to study later/i })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('srs:mocksubj')!)['mock-1'].flagged).toBe(false);
+  });
 });
 
 describe('card library', () => {
@@ -102,5 +114,49 @@ describe('card library', () => {
     await userEvent.click(await screen.findByText('Mock question one?'));
     expect(await screen.findByText('Card Detail')).toBeInTheDocument();
     expect(screen.getByText('A1')).toBeInTheDocument();
+  });
+
+  test('the Flagged chip filters to flagged cards with a global count', async () => {
+    localStorage.setItem('srs:mocksubj', JSON.stringify({
+      'mock-mr-1': { id: 'mock-mr-1', phase: 'learning', interval: 0, ease: 2.5, nextDue: 0, lastReviewed: null, totalSeen: 1, flagged: true },
+    }));
+    renderAt('/mocksubj/card-library');
+    await screen.findByText('Mock question one?');
+
+    expect(screen.getByRole('button', { name: /Flagged \(1\)/ })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Flagged \(1\)/ }));
+
+    expect(screen.queryByText('Mock question one?')).not.toBeInTheDocument();
+    expect(screen.getByText('Mock multi?')).toBeInTheDocument();
+    expect(screen.getByText('1 cards')).toBeInTheDocument();
+  });
+
+  test('flag toggles directly from a library row and updates the chip count', async () => {
+    renderAt('/mocksubj/card-library');
+    await screen.findByText('Mock question one?');
+    expect(screen.getByRole('button', { name: /Flagged \(0\)/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getAllByTitle('Flag this card to study later')[0]);
+    expect(await screen.findByRole('button', { name: /Flagged \(1\)/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByTitle('Unflag this card'));
+    expect(await screen.findByRole('button', { name: /Flagged \(0\)/ })).toBeInTheDocument();
+  });
+});
+
+describe('flagging a card during a session', () => {
+  test('flag persists from the session to the library Flagged filter', async () => {
+    renderAt('/mocksubj');
+    await userEvent.click(await screen.findByText('Start Session · 2 cards'));
+
+    // Flag whichever card is shown first, then exit the session.
+    await userEvent.click(await screen.findByTitle(/flag this card to study later/i));
+    await userEvent.click(screen.getByRole('button', { name: /exit/i }));
+
+    // The home Flagged tile now counts 1; open the flagged library view.
+    await userEvent.click(await screen.findByText('Flagged'));
+    expect(await screen.findByText('Card Library')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Flagged \(1\)/ }));
+    expect(screen.getByText('1 cards')).toBeInTheDocument();
   });
 });

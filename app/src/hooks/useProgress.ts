@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import type { Progress, Subject } from '../types';
 import type { StoredProgressMap } from '../lib/srs';
+import { getOrCreate } from '../lib/srs';
 import { loadProgress } from '../lib/storage';
 import { makeApiClient } from '../lib/apiClient';
 import { LocalProgressStore } from '../lib/progress/localStore';
@@ -63,5 +64,15 @@ export function useProgress(subject: Subject) {
     void store.reset().catch(err => console.error('progress reset failed', err));
   }, [store]);
 
-  return { progressMap, update, reset, loading };
+  // Flag is a field on the card's Progress record, so it persists through the same
+  // store/optimistic path as a grade — just without touching the SM-2 schedule.
+  const setFlag = useCallback((id: string, flagged: boolean) => {
+    setProgressMap(prev => {
+      const next = { ...getOrCreate(id, prev), flagged };
+      saveWithRetry(store, id, next);
+      return { ...prev, [id]: next };
+    });
+  }, [store]);
+
+  return { progressMap, update, reset, setFlag, loading };
 }
