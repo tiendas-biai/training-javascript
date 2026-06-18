@@ -2236,102 +2236,138 @@
     ]
   },
   "react-vdom-001": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Touching the real DOM directly for every change is verbose and error-prone, and naive full rebuilds are slow. **What the Virtual DOM is:** an in-memory tree of lightweight JS objects (React elements) describing what the UI *should* look like. On each render React builds a new such tree, compares it to the previous one, and computes the **minimal** real-DOM operations to match. **Why it helps:** you write declarative 'what it should look like' code; React figures out the imperative 'how to update'. **Common misconceptions:** the Virtual DOM isn't a faster DOM — it's a diffing layer that makes correct, predictable updates easy. It's a plain object tree, not a shadow browser.",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Preserving and Resetting State (render trees)",
+        "url": "https://react.dev/learn/preserving-and-resetting-state"
+      },
+      {
+        "label": "react.dev — Render and Commit",
+        "url": "https://react.dev/learn/render-and-commit"
       }
     ]
   },
   "react-vdom-002": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** After a render, how does React know what actually changed? **Reconciliation:** the process of comparing the newly produced element tree with the previous one to determine the differences, then applying only those changes to the real DOM (the 'commit' phase). **Why:** re-running your component creates a fresh description; reconciliation turns 'here's the new desired UI' into 'here are the precise DOM mutations'. **The key inputs:** element *type* and *key* drive matching — same type/key → update in place; different → replace. **Common misconceptions:** a re-render doesn't mean a DOM rewrite — reconciliation often results in zero or tiny DOM changes.",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Render and Commit",
+        "url": "https://react.dev/learn/render-and-commit"
+      },
+      {
+        "label": "legacy React — Reconciliation",
+        "url": "https://legacy.reactjs.org/docs/reconciliation.html"
       }
     ]
   },
   "react-vdom-003": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** What happens when an element's *type* changes between renders (a `<div>` becomes a `<span>`, or `ComponentA` becomes `ComponentB` at the same position)? **The heuristic:** React assumes different types produce different trees, so it **tears down the old node and its entire subtree** and builds the new one from scratch — any state inside that subtree is lost. **Why:** comparing across different types is rarely meaningful, so React skips diffing and rebuilds, which is both simpler and usually correct. **Common mistakes:** swapping the wrapper element type and being surprised that nested inputs reset; keep the type stable (and use keys) to preserve state.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction Child() {\n  const [text, setText] = useState('');\n  return <input value={text} onChange={e => setText(e.target.value)} placeholder=\"type me\" />;\n}\n\nexport default function App() {\n  const [span, setSpan] = useState(false);\n  // Switching the wrapper type div<->span remounts Child and clears its input.\n  const Wrapper = span ? 'span' : 'div';\n  return (\n    <div>\n      <button onClick={() => setSpan(s => !s)}>toggle wrapper ({Wrapper})</button>\n      <Wrapper><Child /></Wrapper>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Different components at the same position reset state",
+        "url": "https://react.dev/learn/preserving-and-resetting-state#different-components-at-the-same-position-reset-state"
+      },
+      {
+        "label": "legacy React — Elements of different types",
+        "url": "https://legacy.reactjs.org/docs/reconciliation.html#elements-of-different-types"
       }
     ]
   },
   "react-vdom-mcq-001": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Why does `key={index}` cause bugs on reorder/removal? **The answer:** React matches elements across renders by their key. With index keys, position `0` is always key `0`, so when items move or are deleted, React reuses the element that *was* at that index and just patches its props — keeping the old DOM/state but pairing it with different data. Per-item state (input text, focus, checkbox) ends up on the wrong row. **Why stable IDs fix it:** the same item keeps the same key, so React moves it correctly. **Common misconceptions:** it's not a performance/hashing issue and it's not dev-only — the misplacement happens in production too.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [rows, setRows] = useState([{ id: 'a', n: 'A' }, { id: 'b', n: 'B' }]);\n  // key={r.id} keeps each input's text with its row when reversed.\n  return (\n    <div>\n      <button onClick={() => setRows(r => [...r].reverse())}>reverse</button>\n      {rows.map(r => <div key={r.id}>{r.n}: <input placeholder={r.n} /></div>)}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Pitfall: index as key",
+        "url": "https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key"
+      },
+      {
+        "label": "react.dev — Preserving and Resetting State",
+        "url": "https://react.dev/learn/preserving-and-resetting-state"
       }
     ]
   },
   "react-vdom-004": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** During reconciliation of a list, React needs to know which rendered item is which across renders. **Keys** give each item a stable identity, so React can match, reorder, insert, and remove items while preserving the correct DOM nodes and component state. **Where they come from:** your data — a unique, stable `id` per item — not the array index (which is positional, not identity). **Why it matters:** without stable keys, per-item state attaches to positions and desyncs on reorder. **Common mistakes:** generating keys during render (`Math.random()`), deriving them from mutable fields, or using the index for lists that can change order/length.",
+    "example": "```tsx\nexport default function App() {\n  const users = [\n    { id: 'u1', name: 'Ada' },\n    { id: 'u2', name: 'Linus' },\n  ];\n  // Stable, data-derived keys -> reliable reconciliation.\n  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Why does React need keys?",
+        "url": "https://react.dev/learn/rendering-lists#why-does-react-need-keys"
+      },
+      {
+        "label": "react.dev — Rules of keys",
+        "url": "https://react.dev/learn/rendering-lists#rules-of-keys"
       }
     ]
   },
   "react-vdom-005": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** The old 'stack' reconciler processed an update synchronously and recursively — once it started, it couldn't stop, so a big render could block the main thread and make the UI janky. **What Fiber is:** React's reconciliation engine (since React 16) that represents pending work as a linked list of small units ('fibers') it can **pause, resume, reprioritize, and abort**. **What it enabled:** interruptible rendering, which is the foundation for concurrent features (transitions, Suspense, time-slicing) that keep urgent updates (typing) responsive. **Common misconceptions:** Fiber isn't a new Virtual DOM or something you call directly — it's the internal scheduler that makes concurrency possible.",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — React 18 concurrent features",
+        "url": "https://react.dev/blog/2022/03/29/react-v18"
+      },
+      {
+        "label": "react.dev — startTransition (built on Fiber)",
+        "url": "https://react.dev/reference/react/startTransition"
       }
     ]
   },
   "react-vdom-006": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Several `setState` calls in one flow could trigger several re-renders. **Batching:** React groups multiple state updates that happen together into a **single** re-render. **What React 18 changed:** *automatic batching* — before 18, only updates inside React event handlers were batched; now updates inside promises, `setTimeout`, and native event handlers are batched too. **Why it's good:** fewer renders, no intermediate half-applied UI. **Escape hatch:** `flushSync` forces a synchronous update when you truly need the DOM updated between two state changes. **Common mistakes:** expecting state to update synchronously between two `set` calls, or relying on the pre-18 'async code isn't batched' behavior.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [a, setA] = useState(0);\n  const [b, setB] = useState(0);\n  // Even inside a timeout (React 18+), these are batched into one re-render.\n  const bumpLater = () => setTimeout(() => { setA(x => x + 1); setB(x => x + 1); }, 200);\n  return <button onClick={bumpLater}>a={a} b={b}</button>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "React 18 — Automatic batching",
+        "url": "https://react.dev/blog/2022/03/29/react-v18#new-feature-automatic-batching"
+      },
+      {
+        "label": "react.dev — flushSync",
+        "url": "https://react.dev/reference/react-dom/flushSync"
       }
     ]
   },
   "react-vdom-mcq-002": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** People equate 're-render' with 'DOM update'. **What re-render actually means:** React calls your component function again to produce a new element tree. That's it — it does **not** necessarily touch the DOM. After rendering, reconciliation diffs the new tree against the old and commits only the actual differences (often none). **Why the distinction matters:** a component can re-render many times with zero DOM mutations; performance work targets *unnecessary renders* and *expensive renders*, not 'renders' as if each were a repaint. **Common misconceptions:** that re-render replaces the DOM node, repaints the page, or resets state — none are true.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [n, setN] = useState(0);\n  console.log('render #', n); // re-runs the function; DOM barely changes\n  return <button onClick={() => setN(n + 1)}>rendered {n} times-ish</button>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Render and Commit",
+        "url": "https://react.dev/learn/render-and-commit"
+      },
+      {
+        "label": "react.dev — Re-rendering in response to state",
+        "url": "https://react.dev/learn/render-and-commit#step-1-trigger-a-render"
       }
     ]
   },
   "react-vdom-007": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Sometimes you *want* a component to fully reset — clear its inputs and internal state — when some identifier changes (e.g. switching to a different user's profile form). **Why changing `key` works:** React identifies an element at a position by its key. A new key means 'this is a different instance', so React unmounts the old one (discarding its state) and mounts a fresh one. **Why it's the idiomatic reset:** no manual state-clearing effects needed. **Common mistakes:** using an unstable key that changes every render (constant remounting), or reaching for `useEffect` to reset state on prop change when a `key` does it declaratively.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction ProfileForm() {\n  const [name, setName] = useState('');\n  return <input value={name} onChange={e => setName(e.target.value)} placeholder=\"name\" />;\n}\n\nexport default function App() {\n  const [userId, setUserId] = useState(1);\n  // Changing key remounts ProfileForm -> its input clears for the new user.\n  return (\n    <div>\n      <button onClick={() => setUserId(id => id + 1)}>next user (#{userId})</button>\n      <ProfileForm key={userId} />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Resetting state with a key",
+        "url": "https://react.dev/learn/preserving-and-resetting-state#resetting-state-with-a-key"
+      },
+      {
+        "label": "react.dev — Preserving and Resetting State",
+        "url": "https://react.dev/learn/preserving-and-resetting-state"
       }
     ]
   },
   "react-vdom-008": {
-    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A common myth is 'the Virtual DOM makes React faster than direct DOM manipulation.' **The reality:** no — diffing two trees is *extra* work on top of the DOM updates, so optimal hand-tuned DOM code can be faster. **The Virtual DOM's real value:** it makes *fast-enough* updates **easy and predictable** — you write declarative components and React handles efficient, correct updates without you tracking what changed. **The trade-off:** a little overhead for a lot of developer leverage and fewer bugs. **Common misconceptions:** treating the Virtual DOM as a performance silver bullet, or assuming it eliminates the need to avoid unnecessary/expensive renders.",
     "resources": [
       {
-        "label": "react.dev — Virtual DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Render and Commit (how updates work)",
+        "url": "https://react.dev/learn/render-and-commit"
+      },
+      {
+        "label": "react.dev — Keeping Components Pure",
+        "url": "https://react.dev/learn/keeping-components-pure"
       }
     ]
   }
