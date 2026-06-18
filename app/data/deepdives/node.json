@@ -249,5 +249,103 @@
         "url": "https://nodejs.org/api/modules.html#accessing-the-main-module"
       }
     ]
+  },
+  "node-ev-001": {
+    "explanation": "**The problem:** You need a one-to-many notification system — emit 'something happened' and let any number of interested parties react. **The EventEmitter API:** register a listener with `.on(name, fn)`, and fire the event with `.emit(name, ...args)`. **Passing data:** every argument after the event name in `emit` is forwarded to each listener in order. **Why it's everywhere:** much of Node's core (streams, servers, processes) is built on EventEmitter — it's the backbone of the event-driven model. **Common mistakes:** typos in event names (listener silently never fires — names are just strings), forgetting that `emit` runs listeners synchronously, or emitting before listeners are attached.",
+    "example": "```js\nconst { EventEmitter } = require('node:events');\nconst myEmitter = new EventEmitter();\n\n// Register a listener; emit forwards all extra args to it.\nmyEmitter.on('event', (a, b) => console.log('got:', a, b));\nmyEmitter.emit('event', 'a', 'b'); // logs: got: a b\n```",
+    "resources": [
+      {
+        "label": "Node.js — Events / EventEmitter",
+        "url": "https://nodejs.org/api/events.html#class-eventemitter"
+      },
+      {
+        "label": "Node.js — Passing arguments to listeners",
+        "url": "https://nodejs.org/api/events.html#passing-arguments-and-this-to-listeners"
+      }
+    ]
+  },
+  "node-ev-mcq-001": {
+    "explanation": "**The problem:** When you call `emit('event')`, how do the listeners run? **The answer: synchronously, in registration order** — `emit` invokes each listener one after another and does **not** return until they've all finished. **Why:** EventEmitter is a synchronous dispatch mechanism, not a queue; it's essentially calling an array of functions in order. **Implication:** a slow/throwing listener blocks the emit (and the thread); if you want async behavior, a listener can schedule its own work (e.g. `setImmediate`). **Why the others are wrong:** it's not deferred to the next loop iteration, not parallel (single thread), and not reverse order. **Common mistakes:** assuming `emit` is async, or relying on listener order across modules where registration timing is unclear.",
+    "example": "```js\nconst { EventEmitter } = require('node:events');\nconst e = new EventEmitter();\n\ne.on('go', () => console.log('listener 1'));\ne.on('go', () => console.log('listener 2'));\nconsole.log('before emit');\ne.emit('go');                 // runs both listeners synchronously, in order\nconsole.log('after emit');    // only prints once both listeners finished\n// Output: before emit, listener 1, listener 2, after emit\n```",
+    "resources": [
+      {
+        "label": "Node.js — emitter.emit()",
+        "url": "https://nodejs.org/api/events.html#emitteremiteventname-args"
+      },
+      {
+        "label": "Node.js — Synchronous listener execution",
+        "url": "https://nodejs.org/api/events.html#asynchronous-vs-synchronous"
+      }
+    ]
+  },
+  "node-ev-mcq-002": {
+    "explanation": "**The problem:** `emit('error', new Error('whoops!'))` with **no** `'error'` listener. **What happens: it throws and crashes the process.** **Why:** `'error'` is a special-cased event. If an EventEmitter emits `'error'` and there is no registered `'error'` handler, Node throws the error (and, being unhandled, it terminates the process). This is deliberate — silently swallowing errors would hide failures. **The fix:** always attach an `'error'` listener to emitters that can fail (streams, sockets, etc.). **Why the others are wrong:** it's not swallowed, not merely logged-and-continued, and `emit` doesn't quietly return false here. **Common mistakes:** forgetting the `'error'` handler on streams/servers, leading to crashes in production on the first error.",
+    "example": "```js\nconst { EventEmitter } = require('node:events');\nconst myEmitter = new EventEmitter();\n\n// ❌ Without this listener, emitting 'error' would throw and crash the process:\nmyEmitter.on('error', (err) => console.error('handled:', err.message));\nmyEmitter.emit('error', new Error('whoops!')); // logs: handled: whoops!\n```",
+    "resources": [
+      {
+        "label": "Node.js — Error events",
+        "url": "https://nodejs.org/api/events.html#error-events"
+      },
+      {
+        "label": "Node.js — Capture rejections / errors",
+        "url": "https://nodejs.org/api/events.html#capture-rejections-of-promises"
+      }
+    ]
+  },
+  "node-ev-002": {
+    "explanation": "**The problem:** Sometimes you want a listener to fire forever, sometimes exactly once, and you need to clean them up. **`on()` vs `once()`:** `on(name, fn)` runs `fn` on **every** matching emit; `once(name, fn)` runs it a **single** time, then auto-removes itself. **Removing listeners:** `emitter.off(name, fn)` (alias of `removeListener`) removes a specific listener — which means you must keep a **reference to the same function** you registered (an inline arrow can't be removed). `removeAllListeners(name)` clears them all for an event. **Why cleanup matters:** lingering listeners are a common memory leak (see the MaxListeners warning). **Common mistakes:** passing a different function reference to `off` (no-op), or never removing long-lived listeners.",
+    "example": "```js\nconst { EventEmitter } = require('node:events');\nconst e = new EventEmitter();\n\ne.once('init', () => console.log('runs once only'));\ne.emit('init'); e.emit('init'); // listener fired just the first time\n\nfunction handler() { console.log('on every tick'); }\ne.on('tick', handler);\ne.emit('tick');\ne.off('tick', handler);  // needs the SAME reference\ne.emit('tick');          // no output — handler removed\n```",
+    "resources": [
+      {
+        "label": "Node.js — emitter.once()",
+        "url": "https://nodejs.org/api/events.html#emitteronceeventname-listener"
+      },
+      {
+        "label": "Node.js — emitter.off()",
+        "url": "https://nodejs.org/api/events.html#emitteroffeventname-listener"
+      }
+    ]
+  },
+  "node-ev-mcq-003": {
+    "explanation": "**The problem:** The warning 'MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 listeners added'. **What it means:** more than the **default limit of 10** listeners were registered for a *single* event on one emitter. It's a **warning, not a hard cap** — Node still adds the 11th — meant to flag a likely **leak**: listeners being added repeatedly (e.g. in a loop or on every request) without being removed. **What to do:** find and fix the duplicate registration / add cleanup; if you legitimately need more, raise the limit with `emitter.setMaxListeners(n)`. **Why the others are wrong:** it's not out-of-memory, not a hard limit that drops the 11th, and unrelated to emit count. **Common mistakes:** adding a listener inside a frequently-called function without removing it.",
+    "example": "```js\nconst { EventEmitter } = require('node:events');\nconst e = new EventEmitter();\n\n// Adding 11 listeners for one event triggers the leak warning (default limit 10).\nfor (let i = 0; i < 11; i++) e.on('data', () => {});\nconsole.log('listeners on \"data\":', e.listenerCount('data')); // 11\n// Fix the duplicate registration, or e.setMaxListeners(20) if truly intended.\n```",
+    "resources": [
+      {
+        "label": "Node.js — emitter.setMaxListeners()",
+        "url": "https://nodejs.org/api/events.html#emittersetmaxlistenersn"
+      },
+      {
+        "label": "Node.js — Default max listeners",
+        "url": "https://nodejs.org/api/events.html#eventsdefaultmaxlisteners"
+      }
+    ]
+  },
+  "node-ev-003": {
+    "explanation": "**The problem:** What is `this` inside an EventEmitter listener? **The answer depends on the function type.** A **regular `function`** listener gets `this` bound to the **emitter instance** (so you can reach `this.eventNames()`, etc.). An **arrow function** ignores that binding — arrows capture `this` from their enclosing scope (in a module that's typically `module.exports`/`undefined`), because arrows never rebind `this`. **Why:** EventEmitter calls listeners with the emitter as the call-time `this`, but arrow functions have lexical `this` that can't be overridden. **Common mistakes:** using an arrow listener and expecting `this` to be the emitter, or relying on `this` at all (prefer closing over the emitter variable for clarity).",
+    "example": "```js\nconst { EventEmitter } = require('node:events');\nconst e = new EventEmitter();\n\ne.on('regular', function () {\n  console.log('regular fn this === emitter:', this === e); // true\n});\ne.on('arrow', () => {\n  console.log('arrow this === emitter:', this === e); // false (lexical this)\n});\ne.emit('regular');\ne.emit('arrow');\n```",
+    "resources": [
+      {
+        "label": "Node.js — Passing this to listeners",
+        "url": "https://nodejs.org/api/events.html#passing-arguments-and-this-to-listeners"
+      },
+      {
+        "label": "MDN — Arrow functions and this",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#cannot_be_used_as_methods"
+      }
+    ]
+  },
+  "node-ev-004": {
+    "explanation": "**The problem:** You want to `await` the next occurrence of an event instead of using a callback. **The API:** the **`once` function** exported from `node:events` (not the `.once()` method): `const [value] = await once(emitter, 'myevent');`. It returns a Promise that resolves with an **array** of the emitted arguments when the event fires. **Error handling:** if the emitter emits **`'error'`** while you're awaiting, the promise **rejects** with that error — so wrap it in try/catch. **Why useful:** lets event-based APIs participate in async/await flows cleanly. **Common mistakes:** confusing the `once` function with the `.once()` method, forgetting the result is an array of args, or not handling the rejection path.",
+    "example": "```js\nconst { EventEmitter, once } = require('node:events');\n\nasync function main() {\n  const e = new EventEmitter();\n  setImmediate(() => e.emit('ready', 42)); // fire it soon so the await resolves\n  const [value] = await once(e, 'ready');   // resolves with the emitted args\n  console.log('awaited event value:', value); // 42\n}\nmain();\n```",
+    "resources": [
+      {
+        "label": "Node.js — events.once()",
+        "url": "https://nodejs.org/api/events.html#eventsonceemitter-name-options"
+      },
+      {
+        "label": "Node.js — Using async/await with events",
+        "url": "https://nodejs.org/api/events.html#awaiting-multiple-events-emitted-on-processnexttick"
+      }
+    ]
   }
 }
