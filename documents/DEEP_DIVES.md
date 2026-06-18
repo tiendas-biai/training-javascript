@@ -108,12 +108,19 @@ with **`verify-node-examples.mjs node`** — a separate harness that runs **`nod
 only) on each example, since these snippets import core/uninstalled modules (e.g. `express`) and
 shouldn't be type-checked. 60 of 61 have an example (`node-mod-mcq-002` is conceptual). All parse clean.
 
+**TypeScript — DONE: all 63 cards / 6 topics** (Primitive Types 11, Arrays & Objects 11, Functions 11,
+Interfaces & Generics 10, Classes 10, Type Narrowing 10) have genuine content and an `example`.
+Examples are `ts` snippets; verified with **`verify-deepdive-examples.mjs typescript`** (the tsx harness
+handles `ts` content fine — `.tsx` is a superset). **All 63 type-check clean.** A few examples use
+`// @ts-expect-error` to demonstrate the compile error a card is about (e.g. `typeof null === 'object'`
+leaking `null`); those are intentional and the verifier passes because the error is expected.
+
 **Verification harnesses:**
 - `verify-deepdive-examples.mjs <subject>` — tsx type-check (React; uses installed libs).
 - `verify-node-examples.mjs <subject>` — `node --check` syntax pass (Node/JS snippets). ESM detected
   via top-level `import`/`export`/`await` (written as `.mjs`), else CommonJS (`.cjs`).
 
-**Remaining subjects — not started:** `javascript`, `typescript`, `aws` deepdives files are still
-`{}`. Use the matching prompt in `documents/prompts/`, the same batch workflow. JS/TS use ```js```/
-```ts``` snippets — verify JS with `verify-node-examples.mjs javascript`; for TS, the tsx harness can
-be adapted (or `tsc` the snippets). AWS cards are scenario-based — examples optional.
+**Remaining subjects — not started:** `javascript` and `aws` deepdives files are still
+`{}`. Use the matching prompt in `documents/prompts/`, the same batch workflow. JS uses ```js```
+snippets — verify with `verify-node-examples.mjs javascript`. AWS cards are scenario-based — examples
+optional.
