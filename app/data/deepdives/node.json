@@ -124,5 +124,130 @@
         "url": "https://nodejs.org/api/timers.html#settimeoutcallback-delay-args"
       }
     ]
+  },
+  "node-mod-001": {
+    "explanation": "**The problem:** In a CommonJS file you use `require`, `module`, `exports`, `__filename`, `__dirname` without ever declaring or importing them — where do they come from? **The answer:** before executing a module, Node wraps its source in a function: `(function (exports, require, module, __filename, __dirname) { … })`. Those five identifiers are the **parameters** of that wrapper, which is why they're available in every CJS module. **Why the wrapper:** it gives each module its own scope (top-level `var`s don't leak to global) and injects the module system's API. **Common mistakes:** assuming these are globals (they're module-scoped params — they don't exist in ES modules), or expecting `this` at top level to be `global` (in CJS it's `module.exports`).",
+    "example": "```js\n// These five identifiers exist because Node passes them into the module wrapper.\nconsole.log(typeof require);     // 'function'\nconsole.log(typeof module);      // 'object'\nconsole.log(exports === module.exports); // true (they start as the same object)\nconsole.log(__filename);         // absolute path to this file\nconsole.log(__dirname);          // absolute path to its directory\n```",
+    "resources": [
+      {
+        "label": "Node.js — The module wrapper",
+        "url": "https://nodejs.org/api/modules.html#the-module-wrapper"
+      },
+      {
+        "label": "Node.js — CommonJS modules",
+        "url": "https://nodejs.org/api/modules.html"
+      }
+    ]
+  },
+  "node-mod-mcq-001": {
+    "explanation": "**The problem:** `exports = { hello: false }` — requiring this module yields an **empty object**, not `{ hello: false }`. **Why:** `exports` starts as a *reference* to `module.exports` (the same object). Node returns `module.exports`. Reassigning the local `exports` parameter just points that local variable at a new object — it **breaks the link** to `module.exports`, which is still the original empty object. So the require result is `{}`. **The fixes:** mutate it (`exports.hello = false`) to keep the link, or assign to `module.exports = { hello: false }` directly. **Why the others are wrong:** it's not `{hello:false}`, not undefined, and not read-only. **Common mistakes:** doing `exports = …` (reassign) instead of `module.exports = …` or `exports.x = …`.",
+    "example": "```js\n// thing.js — ❌ reassigning `exports` breaks the link to module.exports\n// exports = { hello: false };          // require('./thing') -> {}\n\n// ✅ Either mutate exports...\nexports.hello = false;                   // require -> { hello: false }\n// ✅ ...or replace module.exports directly\n// module.exports = { hello: false };    // require -> { hello: false }\nconsole.log(module.exports);\n```",
+    "resources": [
+      {
+        "label": "Node.js — exports shortcut",
+        "url": "https://nodejs.org/api/modules.html#exports-shortcut"
+      },
+      {
+        "label": "Node.js — module.exports",
+        "url": "https://nodejs.org/api/modules.html#moduleexports"
+      }
+    ]
+  },
+  "node-mod-002": {
+    "explanation": "**The problem:** What does it mean that `require` **caches** modules? **The answer:** a module's top-level code runs **only once** — on the first `require`. Node stores the resulting `module.exports` in a cache keyed by the resolved file path, and every subsequent `require` of that same path returns the **same** cached object (no re-execution). **Why:** performance and shared singletons — config, DB connections, and counters are shared across all importers. **Implication:** mutating an exported object affects everyone who required it. **Cache key gotcha:** it's the *resolved path*, so case/symlink differences can create separate instances. **Common mistakes:** expecting side-effectful module code to run on every require, or relying on a module as a singleton across differently-resolved paths.",
+    "example": "```js\n// Core modules are cached too: requiring the same id returns the SAME object.\nconst os1 = require('node:os');\nconst os2 = require('node:os');\nconsole.log(os1 === os2); // true — second require returns the cached exports\n\n// Your own modules behave the same: their code runs once, result is reused.\nconsole.log(Object.keys(require.cache).length, 'modules currently cached');\n```",
+    "resources": [
+      {
+        "label": "Node.js — Caching",
+        "url": "https://nodejs.org/api/modules.html#caching"
+      },
+      {
+        "label": "Node.js — require.cache",
+        "url": "https://nodejs.org/api/modules.html#requirecache"
+      }
+    ]
+  },
+  "node-mod-003": {
+    "explanation": "**The problem:** How does `require('X')` decide what to load? **The resolution order:** (1) **core modules** (`fs`, `http`, `node:*`) win immediately; (2) for `./`, `../`, or absolute specifiers, treat `X` as a **file path**, trying `X`, then `X.js`, `X.json`, `X.node`; (3) if it's a **directory**, load its `package.json` `main` field, else `index.js`; (4) otherwise it's a **package name** — look in `node_modules` in the current directory, then walk **up** parent directories (`../node_modules`, `../../node_modules`, …) to the filesystem root. **Why the upward walk:** it lets nested packages share dependencies hoisted higher up. **Common mistakes:** expecting bare specifiers to resolve relative to the file, or forgetting the extension/`index.js` fallbacks.",
+    "example": "```js\n// require.resolve runs the same algorithm but returns the path instead of loading.\nconsole.log(require.resolve('node:path')); // 'node:path' (core module wins)\nconsole.log(require.resolve('./'));         // resolves this dir's index/main to a file path\n// A bare name like require.resolve('some-pkg') would search node_modules upward.\n```",
+    "resources": [
+      {
+        "label": "Node.js — Modules: resolution algorithm",
+        "url": "https://nodejs.org/api/modules.html#all-together"
+      },
+      {
+        "label": "Node.js — Loading from node_modules",
+        "url": "https://nodejs.org/api/modules.html#loading-from-node_modules-folders"
+      }
+    ]
+  },
+  "node-mod-mcq-002": {
+    "explanation": "**The problem:** With no `type` field in `package.json`, which files are ES modules? **The answer: only `.mjs` files.** Without `\"type\": \"module\"`, `.js` defaults to **CommonJS**; `.mjs` is always ESM and `.cjs` is always CommonJS. If you set `\"type\": \"module\"`, then `.js` becomes ESM and you'd use `.cjs` for CommonJS. **Why explicit:** the extension/`type` field tells Node which module system to parse with — it does **not** sniff for `import` statements (that's why a stray `import` in a `.js` CJS file is a syntax error, not an auto-switch). **Why the others are wrong:** `.js` isn't ESM by default, ESM needs no bundler in Node, and there's no content-based fallback. **Common mistakes:** putting `import` in a `.js` file without configuring `type`/using `.mjs`.",
+    "resources": [
+      {
+        "label": "Node.js — Determining module system",
+        "url": "https://nodejs.org/api/packages.html#determining-module-system"
+      },
+      {
+        "label": "Node.js — \"type\" field",
+        "url": "https://nodejs.org/api/packages.html#type"
+      }
+    ]
+  },
+  "node-mod-004": {
+    "explanation": "**The problem:** ES modules don't have `__dirname` or `__filename` (those are CommonJS wrapper params). **The replacement:** `import.meta`. Modern Node (20.11+/21.2+) exposes **`import.meta.dirname`** and **`import.meta.filename`** directly. On older versions, derive them from **`import.meta.url`** (a `file://` URL) using `fileURLToPath`. **Why the change:** ESM is spec-defined across environments and uses URLs, not OS paths, so path globals were replaced by `import.meta`. **Common mistakes:** using `__dirname` in an `.mjs`/`type:module` file (ReferenceError), or passing `import.meta.url` (a URL string) where a filesystem path is expected without converting it.",
+    "example": "```js\n// ESM (.mjs or \"type\": \"module\")\nimport { fileURLToPath } from 'node:url';\nimport { dirname } from 'node:path';\n\n// Modern Node: import.meta.dirname / import.meta.filename exist directly.\n// Portable fallback derives them from import.meta.url:\nconst __filename = fileURLToPath(import.meta.url);\nconst __dirname = dirname(__filename);\nconsole.log(__dirname, __filename);\n```",
+    "resources": [
+      {
+        "label": "Node.js — import.meta",
+        "url": "https://nodejs.org/api/esm.html#importmeta"
+      },
+      {
+        "label": "Node.js — No __dirname/__filename in ESM",
+        "url": "https://nodejs.org/api/esm.html#no-__filename-or-__dirname"
+      }
+    ]
+  },
+  "node-mod-mcq-003": {
+    "explanation": "**The problem:** An ESM file does `import cjs from './cjs.cjs'` where the CJS module did `module.exports = { name: 'exported', value: 42 }`. **What is `cjs`?** The **whole `module.exports` object** — `{ name: 'exported', value: 42 }`. **Why:** Node's interop maps a CommonJS module's `module.exports` to the ES module's **default export**, so the `import x from` (default) binding receives the entire exports object. **Note:** Node also tries to expose named exports via static analysis when it can detect them, but the default import always gives you the full `module.exports`. **Why the others are wrong:** CJS modules do get a default export (the exports object), it's not undefined, and import isn't a Promise (that's dynamic `import()`). **Common mistakes:** expecting named imports from a CJS module that only set `module.exports = {…}`.",
+    "example": "```js\n// cjs.cjs:  module.exports = { name: 'exported', value: 42 };\n\n// app.mjs (ESM):\nimport cjs from './cjs.cjs'; // default import = the whole module.exports object\nconsole.log(cjs.name, cjs.value); // 'exported' 42\n```",
+    "resources": [
+      {
+        "label": "Node.js — Interop with CommonJS",
+        "url": "https://nodejs.org/api/esm.html#interoperability-with-commonjs"
+      },
+      {
+        "label": "Node.js — import expressions",
+        "url": "https://nodejs.org/api/esm.html#import-expressions"
+      }
+    ]
+  },
+  "node-mod-005": {
+    "explanation": "**The problem:** You need an `await`ed value (config, a dynamic import, a DB connection) available as a module's export, before any other code can run. **Top-level await (TLA):** using `await` directly at a module's top level, **outside** any `async` function. **Where it's allowed:** **ES modules only** — not CommonJS (whose synchronous `require` can't pause). When a module uses TLA, modules importing it wait for it to finish initializing. **Why useful:** clean async setup without an init function or IIFE. **The caveat:** it can delay the module graph's evaluation, so don't `await` slow things needlessly at module scope. **Common mistakes:** trying TLA in a `.cjs`/CommonJS file (syntax error), or creating slow import chains where one TLA blocks many importers.",
+    "example": "```js\n// a.mjs — top-level await is allowed only in ES modules.\nexport const five = await Promise.resolve(5);\n\nconst res = await fetch('https://example.com');\nexport const ok = res.ok;\n\nconsole.log('module finished initializing:', five, ok);\n```",
+    "resources": [
+      {
+        "label": "Node.js — Top-Level Await",
+        "url": "https://nodejs.org/api/esm.html#top-level-await"
+      },
+      {
+        "label": "MDN — await (top level)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#top_level_await"
+      }
+    ]
+  },
+  "node-mod-006": {
+    "explanation": "**The problem:** A file should behave differently when run directly (`node file.js`) versus when `require`d as a dependency (e.g. only start a server when run directly). **The check:** `require.main === module`. `require.main` is the module that was the entry point of the process; `module` is the current module. They're equal **only** when this file is the one Node started with. **Why useful:** lets a file both export reusable functions *and* have a runnable CLI/demo section. **ESM equivalent:** compare `import.meta.url` against the launched script (or use the newer `import.meta.main` where available). **Common mistakes:** running setup/`listen()` unconditionally at module top level, so requiring the file for its exports triggers unwanted side effects.",
+    "example": "```js\nfunction greet(name) {\n  return `Hello, ${name}!`;\n}\n\n// Only runs when executed directly: `node file.js`, not when required.\nif (require.main === module) {\n  console.log(greet('CLI user'));\n}\n\nmodule.exports = { greet }; // still reusable via require('./file')\n```",
+    "resources": [
+      {
+        "label": "Node.js — require.main",
+        "url": "https://nodejs.org/api/modules.html#requiremain"
+      },
+      {
+        "label": "Node.js — Accessing the main module",
+        "url": "https://nodejs.org/api/modules.html#accessing-the-main-module"
+      }
+    ]
   }
 }
