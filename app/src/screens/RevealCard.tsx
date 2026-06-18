@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import type { Rating, RevealCard as RevealCardData } from '../types';
+import type { DeepDive as DeepDiveData, Rating, RevealCard as RevealCardData } from '../types';
 import { RichText } from '../components/RichText';
+import { DeepDive } from '../components/DeepDive';
 import { CardMeta, type CardInfo } from '../components/badges';
 import { GradeButtons } from '../components/GradeButtons';
 import { SessionHeader } from '../components/SessionHeader';
@@ -15,9 +16,10 @@ interface Props {
   onExit: () => void;
   flagged?: boolean;
   onToggleFlag?: () => void;
+  deepDive?: DeepDiveData;
 }
 
-export function RevealCard({ card, remaining, done, cardInfo, previews, onGrade, onExit, flagged, onToggleFlag }: Props) {
+export function RevealCard({ card, remaining, done, cardInfo, previews, onGrade, onExit, flagged, onToggleFlag, deepDive }: Props) {
   const [revealed, setRevealed] = useState(false);
 
   return (
@@ -34,6 +36,7 @@ export function RevealCard({ card, remaining, done, cardInfo, previews, onGrade,
           </div>
         )}
       </div>
+      {revealed && deepDive && <DeepDive data={deepDive} />}
       {revealed
         ? <GradeButtons previews={previews} onGrade={onGrade} />
         : <button className="btn-show-answer" onClick={() => setRevealed(true)}>Show Answer</button>}

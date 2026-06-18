@@ -56,6 +56,16 @@ describe('RevealCard', () => {
     await userEvent.click(screen.getByRole('button', { name: /exit/i }));
     expect(onExit).toHaveBeenCalled();
   });
+
+  test('reveals the deep dive only after Show Answer', async () => {
+    const deepDive = { explanation: 'Deeper teaching prose.', resources: [{ label: 'react.dev', url: 'https://react.dev/' }] };
+    render(<RevealCard card={revealData} remaining={1} cardInfo={cardInfo} previews={previews} onGrade={noop} onExit={noop} deepDive={deepDive} />);
+
+    expect(screen.queryByText('📘 Deep Dive')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /show answer/i }));
+    expect(screen.getByText('📘 Deep Dive')).toBeInTheDocument();
+    expect(screen.getByText('Deeper teaching prose.')).toBeInTheDocument();
+  });
 });
 
 describe('MCQCard', () => {

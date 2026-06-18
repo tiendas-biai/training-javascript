@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import type { MCQCard as MCQCardData, Rating } from '../types';
+import type { DeepDive as DeepDiveData, MCQCard as MCQCardData, Rating } from '../types';
 import { shuffleCopy } from '../lib/shuffle';
 import { RichText } from '../components/RichText';
+import { DeepDive } from '../components/DeepDive';
 import { CardMeta, type CardInfo } from '../components/badges';
 import { GradeButtons } from '../components/GradeButtons';
 import { SessionHeader } from '../components/SessionHeader';
@@ -16,9 +17,10 @@ interface Props {
   onExit: () => void;
   flagged?: boolean;
   onToggleFlag?: () => void;
+  deepDive?: DeepDiveData;
 }
 
-export function MCQCard({ card, remaining, done, cardInfo, previews, onGrade, onExit, flagged, onToggleFlag }: Props) {
+export function MCQCard({ card, remaining, done, cardInfo, previews, onGrade, onExit, flagged, onToggleFlag, deepDive }: Props) {
   const shuffled = useMemo(() => shuffleCopy(card.options), [card]);
   const [picked, setPicked] = useState<string | null>(null);
   const answered = picked !== null;
@@ -53,6 +55,7 @@ export function MCQCard({ card, remaining, done, cardInfo, previews, onGrade, on
           </div>
         )}
       </div>
+      {answered && deepDive && <DeepDive data={deepDive} />}
       {answered && <GradeButtons previews={previews} onGrade={onGrade} />}
     </div>
   );

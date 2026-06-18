@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import type { MRCard as MRCardData, Rating } from '../types';
+import type { DeepDive as DeepDiveData, MRCard as MRCardData, Rating } from '../types';
 import { shuffleCopy } from '../lib/shuffle';
 import { RichText } from '../components/RichText';
+import { DeepDive } from '../components/DeepDive';
 import { CardMeta, type CardInfo } from '../components/badges';
 import { GradeButtons } from '../components/GradeButtons';
 import { SessionHeader } from '../components/SessionHeader';
@@ -16,9 +17,10 @@ interface Props {
   onExit: () => void;
   flagged?: boolean;
   onToggleFlag?: () => void;
+  deepDive?: DeepDiveData;
 }
 
-export function MRCard({ card, remaining, done, cardInfo, previews, onGrade, onExit, flagged, onToggleFlag }: Props) {
+export function MRCard({ card, remaining, done, cardInfo, previews, onGrade, onExit, flagged, onToggleFlag, deepDive }: Props) {
   const shuffled = useMemo(() => shuffleCopy(card.options), [card]);
   const required = card.answers.length;
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
@@ -78,6 +80,7 @@ export function MRCard({ card, remaining, done, cardInfo, previews, onGrade, onE
           </div>
         )}
       </div>
+      {submitted && deepDive && <DeepDive data={deepDive} />}
       {submitted && <GradeButtons previews={previews} onGrade={onGrade} />}
     </div>
   );

@@ -5,6 +5,7 @@ import { applyFilters, buildQueue } from '../lib/session';
 import { computeStats, getNextDueTime, getOrCreate } from '../lib/srs';
 import { shuffleCopy } from '../lib/shuffle';
 import { useProgress } from '../hooks/useProgress';
+import { useDeepDives } from '../hooks/useDeepDives';
 import { useSubjectCtx } from './SubjectLayout';
 import { Session } from './Session';
 import { NothingDue } from './NothingDue';
@@ -22,6 +23,7 @@ export function SubjectHome() {
   const { subject, cards } = useSubjectCtx();
   const navigate = useNavigate();
   const { progressMap, update, reset, setFlag, loading } = useProgress(subject);
+  const deepDives = useDeepDives(subject);
   const isAdmin = useIsAdmin();
 
   const [filters, setFilters] = useState<SessionFilters>(EMPTY_FILTERS);
@@ -96,6 +98,7 @@ export function SubjectHome() {
       <Session
         initialQueue={mode.queue}
         progressMap={progressMap}
+        deepDives={deepDives}
         // Practice (cram) sessions must not touch the SRS schedule, so swallow grades.
         onProgress={mode.practice ? () => {} : update}
         onFlag={setFlag}

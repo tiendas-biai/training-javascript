@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import type { Card, Progress, Rating, SessionStats } from '../types';
+import type { Card, DeepDiveMap, Progress, Rating, SessionStats } from '../types';
 import type { StoredProgressMap } from '../lib/srs';
 import { getOrCreate, grade, graduate, previewIntervals } from '../lib/srs';
 import { advance, isMCQ, isMR } from '../lib/session';
@@ -17,9 +17,11 @@ interface Props {
   onFlag: (id: string, flagged: boolean) => void;
   onRestart: () => void;
   onExit: () => void;
+  // Deep-dive map for the subject (bundled path); a card's own deepDive wins when present.
+  deepDives?: DeepDiveMap | null;
 }
 
-export function Session({ initialQueue, progressMap, onProgress, onFlag, onRestart, onExit }: Props) {
+export function Session({ initialQueue, progressMap, onProgress, onFlag, onRestart, onExit, deepDives }: Props) {
   const [queue, setQueue] = useState<Card[]>(initialQueue);
   const [stats, setStats] = useState<SessionStats>({ reviewed: 0, correct: 0 });
   // Learning streaks are session-scoped bookkeeping, not rendered — a ref avoids
@@ -73,6 +75,7 @@ export function Session({ initialQueue, progressMap, onProgress, onFlag, onResta
     remaining: queue.length, done: stats.reviewed, cardInfo, previews,
     onGrade: handleGrade, onExit,
     flagged, onToggleFlag: () => onFlag(card.id, !flagged),
+    deepDive: card.deepDive ?? deepDives?.[card.id],
   };
 
   // The key includes the grade count so internal card state (revealed/picked)
