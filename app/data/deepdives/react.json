@@ -682,112 +682,156 @@
     ]
   },
   "react-ctx-001": {
-    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** 'Prop drilling' — to get data to a deeply nested child, you thread it as props through many intermediate components that don't use it themselves. Verbose, noisy, and fragile. **What Context solves:** a parent makes a value available to *any* descendant directly, no matter how deep, without passing it through every layer. Descendants read it with `useContext`. **Why:** it decouples 'who provides' from 'who consumes'. **When NOT to use it:** for data only a few levels deep (props are clearer) or as a substitute for proper state management. **Common mistakes:** reaching for context first instead of trying props/composition, or overusing it for everything.",
+    "example": "```tsx\nimport { createContext, useContext } from 'react';\n\nconst UserContext = createContext('Guest');\n\nfunction DeepChild() {\n  const user = useContext(UserContext); // no props threaded through\n  return <p>Signed in as {user}</p>;\n}\n\nexport default function App() {\n  return (\n    <UserContext.Provider value=\"Ada\">\n      <div><section><DeepChild /></section></div>\n    </UserContext.Provider>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Context",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Passing Data Deeply with Context",
+        "url": "https://react.dev/learn/passing-data-deeply-with-context"
+      },
+      {
+        "label": "react.dev — The problem with passing props",
+        "url": "https://react.dev/learn/passing-data-deeply-with-context#the-problem-with-passing-props"
       }
     ]
   },
   "react-ctx-002": {
-    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The three steps:** (1) **Create** it — `export const LevelContext = createContext(1)`, where the argument is the default value. (2) **Read** it where needed — `const level = useContext(LevelContext)`. (3) **Provide** it from a parent — wrap descendants in a provider with a `value`. **React 19 note:** you can render `<LevelContext value={level}>` directly; in earlier versions use `<LevelContext.Provider value={level}>`. **Why all three:** create defines the channel and fallback, provide sets the value for a subtree, read subscribes. **Common mistakes:** forgetting to wrap consumers in a provider (they silently get the default), or recreating the context object on each render.",
+    "example": "```tsx\nimport { createContext, useContext } from 'react';\n\nconst LevelContext = createContext(1); // 1) create (default value)\n\nfunction Heading({ children }: { children: string }) {\n  const level = useContext(LevelContext); // 2) read\n  return <p>{'#'.repeat(level)} {children}</p>;\n}\n\nexport default function App() {\n  // 3) provide (React 19: <LevelContext value={3}> also works)\n  return (\n    <LevelContext.Provider value={3}>\n      <Heading>Nested heading</Heading>\n    </LevelContext.Provider>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Context",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Using Context: 3 steps",
+        "url": "https://react.dev/learn/passing-data-deeply-with-context#step-1-create-the-context"
+      },
+      {
+        "label": "react.dev — createContext",
+        "url": "https://react.dev/reference/react/createContext"
       }
     ]
   },
   "react-ctx-mcq-001": {
-    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Two providers of the same context sit above a consumer with different values — which wins? **The answer: the nearest provider above** the consumer in the tree. **Why:** `useContext` walks *up* the tree and stops at the first matching provider, so inner providers override outer ones for their subtree. **Why this is useful:** you can deliberately nest providers to scope a different value to a section (e.g. a nested theme). **Common mistakes:** assuming the outermost provider or expecting values to merge — context resolution is purely 'closest ancestor wins', and nesting is allowed and intentional.",
+    "example": "```tsx\nimport { createContext, useContext } from 'react';\n\nconst ThemeContext = createContext('light');\n\nfunction Label() {\n  return <span>{useContext(ThemeContext)}</span>; // nearest provider wins\n}\n\nexport default function App() {\n  return (\n    <ThemeContext.Provider value=\"light\">\n      <Label /> {/* light */}\n      <ThemeContext.Provider value=\"dark\">\n        <Label /> {/* dark — nearest provider overrides */}\n      </ThemeContext.Provider>\n    </ThemeContext.Provider>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Context",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Overriding context for part of the tree",
+        "url": "https://react.dev/learn/passing-data-deeply-with-context#using-and-providing-context-from-the-same-component"
+      },
+      {
+        "label": "react.dev — useContext caveats",
+        "url": "https://react.dev/reference/react/useContext#caveats"
       }
     ]
   },
   "react-ctx-003": {
-    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Context is powerful but easy to overuse. **Two alternatives react.dev recommends trying first:** (1) **Just pass props** — explicit and self-documenting, even if verbose; it makes data flow obvious. (2) **Composition with `children`** — extract components and pass JSX as `children` so intermediate layers stop relaying props they don't use: `<Layout><Posts posts={posts} /></Layout>` instead of `<Layout posts={posts} />`. **Why try these first:** they keep data flow traceable; context hides where values come from. **Common mistakes:** jumping to context to avoid a little prop passing, when composition removes the drilling entirely.",
+    "example": "```tsx\nimport type { ReactNode } from 'react';\n\nfunction Layout({ children }: { children: ReactNode }) {\n  // Layout doesn't need `posts` — children pass through, no drilling.\n  return <main style={{ padding: 8 }}>{children}</main>;\n}\n\nfunction Posts({ posts }: { posts: string[] }) {\n  return <ul>{posts.map(p => <li key={p}>{p}</li>)}</ul>;\n}\n\nexport default function App() {\n  const posts = ['Hello', 'World'];\n  return <Layout><Posts posts={posts} /></Layout>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Context",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Before you use context",
+        "url": "https://react.dev/learn/passing-data-deeply-with-context#before-you-use-context"
+      },
+      {
+        "label": "react.dev — Extracting components with children",
+        "url": "https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children"
       }
     ]
   },
   "react-ctx-mcq-002": {
-    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** What does the `1` in `createContext(1)` mean? **The answer:** it's the **default value** — what `useContext` returns when there is **no matching provider** above the consumer in the tree. **Why it exists:** it makes a component usable in isolation (tests, top-level, Storybook) without crashing, and documents the expected shape. **It is not** a max provider count, a required first-render value, or a version. **Common mistakes:** relying on the default in production when you actually forgot a provider (often a sign of a bug), or passing `undefined` as default and then not null-checking consumers.",
+    "example": "```tsx\nimport { createContext, useContext } from 'react';\n\nconst CountContext = createContext(42); // default used when no provider\n\nfunction Show() {\n  return <p>count = {useContext(CountContext)}</p>;\n}\n\nexport default function App() {\n  // No provider here, so Show reads the default (42).\n  return <Show />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Context",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — createContext default value",
+        "url": "https://react.dev/reference/react/createContext#parameters"
+      },
+      {
+        "label": "react.dev — The default value never changes",
+        "url": "https://react.dev/reference/react/createContext#caveats"
       }
     ]
   },
   "react-ref-001": {
-    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** You need a value that survives across renders but shouldn't trigger re-renders when it changes. **What `useRef(0)` returns:** a stable, mutable object `{ current: 0 }`. **Its two defining behaviors:** (1) **persistence** — React keeps the *same* object across renders; (2) **no re-render** — mutating `ref.current` does not schedule a render. **Why:** it's an escape hatch for values that aren't part of the visual output (timer IDs, DOM nodes, mutable scratch). **Common mistakes:** using a ref for data that *is* displayed (the UI won't update — use state), or reading/writing `ref.current` during render (do it in handlers/Effects).",
+    "example": "```tsx\nimport { useRef } from 'react';\n\nexport default function App() {\n  const renderCountish = useRef(0);\n  // Persists across renders; mutating it does NOT cause a re-render.\n  renderCountish.current += 1;\n  return (\n    <p>ref.current after this render: {renderCountish.current}</p>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Refs",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Referencing Values with Refs",
+        "url": "https://react.dev/learn/referencing-values-with-refs"
+      },
+      {
+        "label": "react.dev — useRef",
+        "url": "https://react.dev/reference/react/useRef"
       }
     ]
   },
   "react-ref-mcq-001": {
-    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A stopwatch must store its `setInterval` ID so a Stop button can clear it. Ref or state? **The answer: a ref.** **Why:** the interval ID isn't displayed and changing it shouldn't trigger a re-render; storing it in state would cause needless renders and the value isn't part of the UI. A module-level variable would be shared across all instances (a bug). **The rule:** values used only by handlers/Effects — timer IDs, DOM nodes, library handles — belong in refs. **Common mistakes:** keeping the ID in state (extra renders), or in a local variable that's lost on the next render (so Stop can't find it).",
+    "example": "```tsx\nimport { useRef, useState } from 'react';\n\nexport default function App() {\n  const [secs, setSecs] = useState(0);\n  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);\n  const start = () => {\n    if (intervalRef.current) return;\n    intervalRef.current = setInterval(() => setSecs(s => s + 1), 1000);\n  };\n  const stop = () => {\n    if (intervalRef.current) clearInterval(intervalRef.current);\n    intervalRef.current = null;\n  };\n  return (\n    <div>\n      <p>{secs}s</p>\n      <button onClick={start}>start</button>\n      <button onClick={stop}>stop</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Refs",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — When to use refs",
+        "url": "https://react.dev/learn/referencing-values-with-refs#when-to-use-refs"
+      },
+      {
+        "label": "react.dev — Differences between refs and state",
+        "url": "https://react.dev/learn/referencing-values-with-refs#differences-between-refs-and-state"
       }
     ]
   },
   "react-ref-002": {
-    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The comparison.** **State:** you update it with the setter, which **triggers a re-render**, and you can read it any time during rendering (each render sees its own snapshot). **Refs:** you mutate `ref.current` directly, which causes **no re-render**, and you should **not** read or write it during rendering — only in event handlers and Effects, after the render is committed. **Why the read/write restriction:** reading/mutating refs during render makes output depend on timing and breaks purity. **Rule of thumb:** if it's shown on screen, use state; if it's a behind-the-scenes value handlers need, use a ref. **Common mistakes:** mutating a ref during render and expecting consistent UI.",
+    "example": "```tsx\nimport { useRef, useState } from 'react';\n\nexport default function App() {\n  const [count, setCount] = useState(0); // shown -> state, re-renders\n  const clicks = useRef(0);              // behind-the-scenes -> ref, no re-render\n  function handleClick() {\n    clicks.current += 1;        // mutate in a handler, not during render\n    setCount(c => c + 1);\n    console.log('total clicks (ref):', clicks.current);\n  }\n  return <button onClick={handleClick}>count: {count}</button>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Refs",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Differences between refs and state",
+        "url": "https://react.dev/learn/referencing-values-with-refs#differences-between-refs-and-state"
+      },
+      {
+        "label": "react.dev — Best practices for refs",
+        "url": "https://react.dev/learn/referencing-values-with-refs#best-practices-for-refs"
       }
     ]
   },
   "react-ref-mcq-002": {
-    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A Toggle stores its on/off boolean in a ref and flips it on click, but the label never updates. **Why it's broken:** mutating `ref.current` doesn't trigger a re-render, so React never re-runs the component and the displayed label keeps showing the old value — even though `ref.current` did change in memory. **The fix:** this value *is* rendered, so it belongs in **state** (`useState`), whose setter schedules a re-render. **The rule:** ref for values the UI doesn't show; state for anything that drives the output. **Common mistakes:** using refs to avoid re-renders for values that must be visible, then debugging a 'frozen' UI.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  // ❌ useRef(false) wouldn't re-render the label. ✅ state does.\n  const [on, setOn] = useState(false);\n  return <button onClick={() => setOn(o => !o)}>{on ? 'ON' : 'OFF'}</button>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Refs",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Pitfall: don't read/write refs for rendered values",
+        "url": "https://react.dev/learn/referencing-values-with-refs#when-to-use-refs"
+      },
+      {
+        "label": "react.dev — Refs and the DOM / re-render rules",
+        "url": "https://react.dev/learn/referencing-values-with-refs"
       }
     ]
   },
   "react-ref-003": {
-    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Knowing what genuinely belongs in a ref. **Good candidates:** information that event handlers or external systems need but that **never affects what's rendered** — `setTimeout`/`setInterval` IDs, DOM element references, and instances of non-React objects (video players, web sockets, map libraries, animation handles). **Why these fit:** they're mutable, must persist across renders, and changing them shouldn't repaint the UI. **The litmus test:** 'Does the screen show this value?' If no → ref; if yes → state. **Common mistakes:** storing derived/displayed data in refs (UI won't update) or creating new non-React instances every render instead of caching them in a ref.",
+    "example": "```tsx\nimport { useRef } from 'react';\n\nexport default function App() {\n  const inputRef = useRef<HTMLInputElement>(null); // a DOM node — good ref use\n  return (\n    <div>\n      <input ref={inputRef} placeholder=\"focus me\" />\n      <button onClick={() => inputRef.current?.focus()}>focus the input</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Refs",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Manipulating the DOM with Refs",
+        "url": "https://react.dev/learn/manipulating-the-dom-with-refs"
+      },
+      {
+        "label": "react.dev — When to use refs",
+        "url": "https://react.dev/learn/referencing-values-with-refs#when-to-use-refs"
       }
     ]
   },
   "react-ctx-004": {
-    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The common use cases react.dev lists for context:** **theming** (light/dark mode broadcast to every component), the **current user/account** (so any component can read who's signed in), **routing** (the current route/location made available app-wide), and **app-wide state management** — often pairing a reducer's `state` and `dispatch` in context so distant components can read state and dispatch actions. **Why these fit context:** the data is needed broadly, across many depths, and changes relatively infrequently. **Common mistakes:** using context for high-frequency values (causes wide re-renders), or for data that's only needed in a small, shallow part of the tree where props are simpler.",
+    "example": "```tsx\nimport { createContext, useContext, useReducer, type Dispatch } from 'react';\n\ntype Action = { type: 'inc' };\nconst StateContext = createContext(0);\nconst DispatchContext = createContext<Dispatch<Action>>(() => {});\n\nfunction Counter() {\n  const count = useContext(StateContext);\n  const dispatch = useContext(DispatchContext);\n  return <button onClick={() => dispatch({ type: 'inc' })}>count: {count}</button>;\n}\n\nexport default function App() {\n  const [count, dispatch] = useReducer((c: number, a: Action) => a.type === 'inc' ? c + 1 : c, 0);\n  return (\n    <StateContext.Provider value={count}>\n      <DispatchContext.Provider value={dispatch}><Counter /></DispatchContext.Provider>\n    </StateContext.Provider>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Context",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Use cases for context",
+        "url": "https://react.dev/learn/passing-data-deeply-with-context#use-cases-for-context"
+      },
+      {
+        "label": "react.dev — Scaling Up with Reducer and Context",
+        "url": "https://react.dev/learn/scaling-up-with-reducer-and-context"
       }
     ]
   },
@@ -1204,12 +1248,16 @@
     ]
   },
   "react-ctx-005": {
-    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Context can cause broad, unnecessary re-renders. **Why:** every component that calls `useContext` re-renders whenever the provider's `value` changes (by `Object.is`). If you pass a fresh object/array literal as `value`, it's a new reference every render, so *all* consumers re-render even when nothing meaningful changed. **The mitigations:** memoize the `value` with `useMemo` (and callbacks with `useCallback`), and **split** unrelated data into separate contexts so a change in one doesn't re-render consumers of the other. **Common mistakes:** `value={{ user, setUser }}` inline (new object each render), or one giant context for everything.",
+    "example": "```tsx\nimport { createContext, useMemo, useState } from 'react';\n\ntype Ctx = { user: string; setUser: (u: string) => void };\nconst UserContext = createContext<Ctx | null>(null);\n\nexport default function App() {\n  const [user, setUser] = useState('Ada');\n  // Memoized value: stable reference unless `user` changes -> fewer re-renders.\n  const value = useMemo(() => ({ user, setUser }), [user]);\n  return (\n    <UserContext.Provider value={value}>\n      <p>provided user: {user}</p>\n      <button onClick={() => setUser('Linus')}>change</button>\n    </UserContext.Provider>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Context",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Optimizing re-renders with context",
+        "url": "https://react.dev/reference/react/useContext#optimizing-re-renders-when-passing-objects-and-functions"
+      },
+      {
+        "label": "react.dev — useMemo",
+        "url": "https://react.dev/reference/react/useMemo"
       }
     ]
   },
