@@ -459,5 +459,103 @@
         "url": "https://nodejs.org/api/process.html#processexitcode"
       }
     ]
+  },
+  "node-stream-001": {
+    "explanation": "**The problem:** `fs.readFile` loads the **entire** file into memory before your code sees a single byte — fine for small files, fatal for large ones (a 2 GB file needs 2 GB of RAM, and nothing happens until it's all read). **Why a stream is better:** it delivers the file in **chunks**, so memory use stays roughly **constant** regardless of file size, and processing can **start as soon as the first chunk arrives** (lower latency). **Why this matters:** servers handling big files or many concurrent transfers stay healthy. **Common mistakes:** using `readFile` for large/unbounded inputs (uploads, big logs), buffering a whole stream into a string just to process it, or ignoring backpressure when piping.",
+    "example": "```js\nconst fs = require('node:fs');\n\nlet chunks = 0, bytes = 0;\nconst stream = fs.createReadStream(__filename); // delivered in chunks, low memory\nstream.on('data', (chunk) => { chunks++; bytes += chunk.length; });\nstream.on('end', () => console.log(`read ${bytes} bytes in ${chunks} chunk(s)`));\nstream.on('error', (err) => console.error('stream error:', err.message));\n```",
+    "resources": [
+      {
+        "label": "Node.js — Stream",
+        "url": "https://nodejs.org/api/stream.html"
+      },
+      {
+        "label": "Node.js — Backpressuring in Streams",
+        "url": "https://nodejs.org/en/learn/modules/backpressuring-in-streams"
+      }
+    ]
+  },
+  "node-stream-002": {
+    "explanation": "**The problem:** 'Stream' is one word for several roles. **The four types:** **Readable** — a data **source** you read from (`fs.createReadStream`, `http.IncomingMessage`, `process.stdin`). **Writable** — a **sink** you write to (`fs.WriteStream`, `process.stdout`, `http.ServerResponse`). **Duplex** — both readable *and* writable, independent directions (`net.Socket`). **Transform** — a Duplex whose **output is computed from its input** (gzip, encryption, upper-casing). **Why know them:** they compose — read from a Readable, through Transforms, into a Writable. **Common mistakes:** confusing Duplex (two independent channels) with Transform (output derived from input), or trying to write to a Readable / read from a Writable.",
+    "example": "```js\nconst { Readable, Transform } = require('node:stream');\n\nconst source = Readable.from(['a', 'b', 'c']);     // Readable: a source\nconst upper = new Transform({                       // Transform: output from input\n  transform(chunk, _enc, cb) { cb(null, chunk.toString().toUpperCase()); },\n});\nsource.pipe(upper).pipe(process.stdout); // Writable sink: process.stdout -> ABC\n```",
+    "resources": [
+      {
+        "label": "Node.js — Types of streams",
+        "url": "https://nodejs.org/api/stream.html#types-of-streams"
+      },
+      {
+        "label": "Node.js — Transform streams",
+        "url": "https://nodejs.org/api/stream.html#class-streamtransform"
+      }
+    ]
+  },
+  "node-stream-mcq-001": {
+    "explanation": "**The problem:** `a.pipe(b).pipe(c)` vs `pipeline(a, b, c, cb)`. **Why the docs recommend `pipeline()`:** it **propagates errors** across *all* connected streams and **cleans up** (destroys) every stream when any one fails or the pipeline completes. With plain `.pipe()`, if one stream errors, the others are **not** automatically destroyed — leaving dangling streams/file descriptors (a **leak**), and you'd have to wire `'error'` handlers on each stream manually. **Why the others are wrong:** pipeline isn't faster by skipping streams, `.pipe()` isn't deprecated, and `.pipe()` can chain many streams too. **Bonus:** `node:stream/promises` `pipeline` returns a Promise for clean `await`. **Common mistakes:** chaining `.pipe()` without per-stream error handling and leaking on failure.",
+    "example": "```js\nconst { Readable } = require('node:stream');\nconst { pipeline } = require('node:stream/promises');\n\nasync function run() {\n  // pipeline awaits completion, forwards errors, and destroys all streams on failure.\n  await pipeline(\n    Readable.from(['hello\\n', 'world\\n']),\n    process.stdout,\n  );\n  console.log('pipeline finished cleanly');\n}\nrun().catch((err) => console.error('pipeline failed:', err.message));\n```",
+    "resources": [
+      {
+        "label": "Node.js — stream.pipeline()",
+        "url": "https://nodejs.org/api/stream.html#streampipelinesource-transforms-destination-callback"
+      },
+      {
+        "label": "Node.js — pipeline (promises)",
+        "url": "https://nodejs.org/api/stream.html#streampipelinesource-transforms-destination-options"
+      }
+    ]
+  },
+  "node-stream-003": {
+    "explanation": "**The problem:** A fast producer can generate data quicker than a slow consumer (disk/network) can accept it — without throttling, data piles up in memory until it's exhausted. **Backpressure** is the flow-control mechanism that prevents this. **How the API expresses it:** when a Writable's internal buffer grows past its **`highWaterMark`**, `write()` returns **`false`**, signaling 'I'm full — stop'. The producer should **pause** and wait for the **`'drain'`** event before resuming. `pipe()`/`pipeline()` handle this for you automatically. **Why it matters:** it keeps memory bounded under load. **Common mistakes:** ignoring `write()`'s return value in manual loops (unbounded buffering), or hand-rolling piping instead of letting `pipe`/`pipeline` manage backpressure.",
+    "example": "```js\nconst fs = require('node:fs');\nconst out = fs.createWriteStream('/tmp/dd-bp-demo.txt');\n\nfunction writeLots(i = 0) {\n  let ok = true;\n  while (i < 10000 && ok) {\n    ok = out.write(`line ${i}\\n`); // false => buffer past highWaterMark\n    i++;\n  }\n  if (i < 10000) out.once('drain', () => writeLots(i)); // resume when drained\n  else out.end(() => console.log('done writing with backpressure'));\n}\nwriteLots();\n```",
+    "resources": [
+      {
+        "label": "Node.js — Backpressuring in Streams",
+        "url": "https://nodejs.org/en/learn/modules/backpressuring-in-streams"
+      },
+      {
+        "label": "Node.js — writable.write() return value",
+        "url": "https://nodejs.org/api/stream.html#writablewritechunk-encoding-callback"
+      }
+    ]
+  },
+  "node-stream-004": {
+    "explanation": "**The problem:** Event/callback stream code (`.on('data')`, `.on('end')`) is verbose and easy to get wrong. **Modern consumption:** Readables are **async-iterable**, so you can `for await (const chunk of source)` to read chunks with normal control flow and try/catch. **Transforming with pipeline:** `pipeline` from **`node:stream/promises`** accepts **async generator functions** as transform stages — `yield` the transformed chunks — and returns a Promise you can `await`, with full error propagation and cleanup. **Why it's better:** linear, readable async code instead of nested event handlers. **Common mistakes:** mixing `for await` consumption with `.pipe()` on the same stream, or forgetting that the generator receives the source as its argument.",
+    "example": "```js\nconst { Readable } = require('node:stream');\nconst { pipeline } = require('node:stream/promises');\n\nasync function run() {\n  await pipeline(\n    Readable.from(['hello ', 'streams']),\n    async function* (source) {            // async generator transform stage\n      for await (const chunk of source) {\n        yield chunk.toString().toUpperCase();\n      }\n    },\n    process.stdout,                        // -> HELLO STREAMS\n  );\n}\nrun().catch((err) => console.error(err.message));\n```",
+    "resources": [
+      {
+        "label": "Node.js — Streams as async iterators",
+        "url": "https://nodejs.org/api/stream.html#streams-compatibility-with-async-generators-and-async-iterators"
+      },
+      {
+        "label": "Node.js — pipeline with async generators",
+        "url": "https://nodejs.org/api/stream.html#streampipelinesource-transforms-destination-options"
+      }
+    ]
+  },
+  "node-buf-001": {
+    "explanation": "**The problem:** JavaScript strings are for text (UTF-16), but I/O deals in raw **bytes** (images, network packets, compressed data). **What a `Buffer` is:** a fixed-length container of raw binary data living **outside** V8's string/heap world — essentially a `Uint8Array` with extra methods. **Where you meet one:** any time Node hands you I/O **without a declared encoding** — `fs.readFile` *without* `'utf8'`, stream `'data'` chunks, TCP `socket` data. **Working with it:** convert to text with `buf.toString('utf8')`, create with `Buffer.from(...)`, and index bytes directly. **Common mistakes:** assuming chunks are strings (they're Buffers unless you set an encoding), slicing a multi-byte UTF-8 character across chunk boundaries (corrupts it — use `StringDecoder` or decode the whole thing), or using the deprecated `new Buffer()`.",
+    "example": "```js\nconst buf = Buffer.from('hí', 'utf8'); // raw bytes, not a JS string\nconsole.log(buf);             // <Buffer 68 c3 ad> — 3 bytes ('í' is 2 bytes)\nconsole.log(buf.length);      // 3 (bytes, not characters)\nconsole.log(buf[0]);          // 104 (byte value of 'h')\nconsole.log(buf.toString('utf8')); // 'hí' — back to text\n```",
+    "resources": [
+      {
+        "label": "Node.js — Buffer",
+        "url": "https://nodejs.org/api/buffer.html"
+      },
+      {
+        "label": "Node.js — Buffer.from()",
+        "url": "https://nodejs.org/api/buffer.html#static-method-bufferfromstring-encoding"
+      }
+    ]
+  },
+  "node-stream-mcq-002": {
+    "explanation": "**The problem:** Serving a **2 GB** video. Which approach keeps the server healthy? **The answer:** `fs.createReadStream(file).pipe(res)` — it streams the file in **chunks** with automatic **backpressure**, so memory stays bounded and one request can't exhaust RAM. **Why the others fail:** `fs.readFile` (and `readFileSync`) load the **entire 2 GB into memory per request** — a handful of concurrent requests OOMs the server (and sync also blocks the event loop); caching a 2 GB file in memory on startup is even worse and doesn't scale to many files. **Bonus:** `pipe`/`pipeline` also stop reading when the client is slow (backpressure) and clean up on disconnect. **Common mistakes:** buffering large/unbounded responses, or using sync I/O on the request path.",
+    "example": "```js\nconst fs = require('node:fs');\nconst http = require('node:http');\n\nhttp.createServer((req, res) => {\n  // Streams in chunks with backpressure — constant memory, even for huge files.\n  const file = fs.createReadStream('/path/to/video.mp4');\n  file.on('error', () => { res.statusCode = 500; res.end('error'); });\n  file.pipe(res);\n});\n// (.listen() omitted so the snippet doesn't hold the process open)\n```",
+    "resources": [
+      {
+        "label": "Node.js — Streaming responses",
+        "url": "https://nodejs.org/en/learn/modules/backpressuring-in-streams"
+      },
+      {
+        "label": "Node.js — fs.createReadStream",
+        "url": "https://nodejs.org/api/fs.html#fscreatereadstreampath-options"
+      }
+    ]
   }
 }
