@@ -906,92 +906,127 @@
     ]
   },
   "react-dom-001": {
-    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A React component tree needs an entry point into a real DOM node. **The React 18+ API:** import `createRoot` from `react-dom/client`, create a root for a container node, then call `root.render(<App />)`. **Why a root object:** it holds the concurrent renderer for that container and lets you `render` again or `unmount` later. **Why `react-dom/client`:** React 18 split client APIs into that subpath to enable concurrent features. **Common mistakes:** still calling the removed `ReactDOM.render` (gone in 18), importing from `react-dom` instead of `react-dom/client`, or creating a new root on every render instead of once.",
+    "example": "```tsx\nimport { createRoot } from 'react-dom/client';\n\nfunction App() {\n  return <h1>Hello, React 18</h1>;\n}\n\n// Typically in main.tsx: create the root once, then render.\nconst container = document.getElementById('root');\nif (container) createRoot(container).render(<App />);\n```",
     "resources": [
       {
-        "label": "react.dev — React DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — createRoot",
+        "url": "https://react.dev/reference/react-dom/client/createRoot"
+      },
+      {
+        "label": "react.dev — react-dom/client APIs",
+        "url": "https://react.dev/reference/react-dom/client"
       }
     ]
   },
   "react-dom-002": {
-    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A server-rendered (SSR/SSG) page already has HTML in the DOM; recreating it on the client would throw away that markup and flash. **What `hydrateRoot` does:** attaches React to the *existing* server HTML, reusing the DOM nodes and wiring up event handlers and state, instead of rebuilding. **When to use it:** on the client for any page whose HTML came from the server; use `createRoot` only for purely client-rendered apps. **Why:** hydration preserves fast first paint while making the page interactive. **Common mistakes:** using `createRoot` on SSR output (loses the markup benefit), or producing client markup that doesn't match the server's (hydration mismatch).",
+    "example": "```tsx\nimport { hydrateRoot } from 'react-dom/client';\n\nfunction App() {\n  return <h1>Hydrated app</h1>;\n}\n\n// The container already holds server-rendered HTML for <App/>.\nconst container = document.getElementById('root');\nif (container) hydrateRoot(container, <App />);\n```",
     "resources": [
       {
-        "label": "react.dev — React DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — hydrateRoot",
+        "url": "https://react.dev/reference/react-dom/client/hydrateRoot"
+      },
+      {
+        "label": "react.dev — createRoot vs hydrateRoot",
+        "url": "https://react.dev/reference/react-dom/client/hydrateRoot#hydrating-server-rendered-html"
       }
     ]
   },
   "react-dom-003": {
-    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Modals, tooltips, and dropdowns need to escape parent CSS (`overflow: hidden`, `z-index`, `transform`) but should still belong to the component logically. **What `createPortal` does:** renders `children` into a *different* DOM node (e.g. `document.body`) while keeping them in the same React tree — so state, context, and event bubbling work as if they were nested normally. **Why this is the right tool:** you get visual escape from the DOM hierarchy without breaking React semantics. **Common mistakes:** trying to fix stacking issues by mutating the DOM directly, or forgetting that focus/scroll management still needs handling for accessibility.",
+    "example": "```tsx\nimport { useState } from 'react';\nimport { createPortal } from 'react-dom';\n\nexport default function App() {\n  const [open, setOpen] = useState(false);\n  return (\n    <div style={{ overflow: 'hidden' }}>\n      <button onClick={() => setOpen(true)}>open modal</button>\n      {open && createPortal(\n        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)' }}>\n          <button onClick={() => setOpen(false)}>close</button>\n        </div>,\n        document.body, // rendered outside this div, but still in the React tree\n      )}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — React DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — createPortal",
+        "url": "https://react.dev/reference/react-dom/createPortal"
+      },
+      {
+        "label": "react.dev — Rendering a modal with a portal",
+        "url": "https://react.dev/reference/react-dom/createPortal#rendering-a-modal-dialog-with-a-portal"
       }
     ]
   },
   "react-dom-mcq-001": {
-    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A button rendered through a portal into `document.body` is clicked — does an `onClick` on its React-tree parent still fire? **The answer: yes.** **Why:** React events propagate along the **React component tree**, not the actual DOM tree. Even though the portal places the node elsewhere in the DOM, its React parent is still an ancestor in the virtual tree, so the event bubbles up to it. **Why this is by design:** it lets portaled UI (menus, dialogs) participate in the same event/context flow as where it's declared. **Common mistakes:** assuming DOM position dictates event bubbling for React events, or attaching native listeners that won't see this React-tree bubbling.",
+    "example": "```tsx\nimport { createPortal } from 'react-dom';\n\nexport default function App() {\n  // Clicking the portaled button bubbles to this onClick via the React tree.\n  return (\n    <div onClick={() => console.log('parent (React tree) handler fired')}>\n      {createPortal(\n        <button onClick={() => console.log('portal button clicked')}>click me</button>,\n        document.body,\n      )}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — React DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Event bubbling through portals",
+        "url": "https://react.dev/reference/react-dom/createPortal#caveats"
+      },
+      {
+        "label": "react.dev — createPortal",
+        "url": "https://react.dev/reference/react-dom/createPortal"
       }
     ]
   },
   "react-dom-004": {
-    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** React 18 batches updates, so the DOM isn't updated until after your handler finishes — but sometimes you must read the *updated* DOM immediately (measure size, scroll to a new item). **What `flushSync` does:** forces React to apply the wrapped update and re-render **synchronously**, so the DOM is current before the next line runs, bypassing automatic batching. **When to use it:** rarely — only when you need to measure/scroll right after a state change. **Why sparingly:** it defeats batching and hurts performance if overused. **Common mistakes:** reaching for it as a general 'make state sync' tool, or measuring before the flush and getting stale layout.",
+    "example": "```tsx\nimport { useRef, useState } from 'react';\nimport { flushSync } from 'react-dom';\n\nexport default function App() {\n  const [items, setItems] = useState<string[]>([]);\n  const listRef = useRef<HTMLUListElement>(null);\n  function addAndScroll() {\n    flushSync(() => setItems(prev => [...prev, `item ${prev.length + 1}`]));\n    // DOM is already updated here, so the new last item exists to scroll to.\n    listRef.current?.lastElementChild?.scrollIntoView();\n  }\n  return (\n    <div>\n      <button onClick={addAndScroll}>add</button>\n      <ul ref={listRef} style={{ height: 80, overflow: 'auto' }}>\n        {items.map(i => <li key={i}>{i}</li>)}\n      </ul>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — React DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — flushSync",
+        "url": "https://react.dev/reference/react-dom/flushSync"
+      },
+      {
+        "label": "react.dev — Automatic batching",
+        "url": "https://react.dev/blog/2022/03/29/react-v18#new-feature-automatic-batching"
       }
     ]
   },
   "react-dom-005": {
-    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** When embedding React in a larger page or a widget, you need to fully remove a mounted tree and run its cleanup. **What `root.unmount()` does:** on the root returned by `createRoot`, it detaches the React tree from the DOM and runs **every** Effect cleanup and unmount logic (timers cleared, subscriptions removed). **Why you'd do it:** SPA route teardown, removing a micro-frontend, or tests. **Why cleanup matters:** without it, listeners/intervals leak. **Common mistakes:** removing the container DOM node manually without calling `unmount` (cleanups never run → leaks), or unmounting a root you intend to render into again (create a fresh root instead).",
+    "example": "```tsx\nimport { createRoot } from 'react-dom/client';\n\nfunction Widget() {\n  return <p>temporary widget</p>;\n}\n\nconst container = document.getElementById('root');\nif (container) {\n  const root = createRoot(container);\n  root.render(<Widget />);\n  // Later, fully tear it down and run all cleanup:\n  root.unmount();\n}\n```",
     "resources": [
       {
-        "label": "react.dev — React DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — root.unmount()",
+        "url": "https://react.dev/reference/react-dom/client/createRoot#root-unmount"
+      },
+      {
+        "label": "react.dev — createRoot",
+        "url": "https://react.dev/reference/react-dom/client/createRoot"
       }
     ]
   },
   "react-dom-006": {
-    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** React DOM ships two entry points for two very different environments. **`react-dom/client`:** runs in the **browser** to mount/hydrate an interactive app — `createRoot`, `hydrateRoot`. **`react-dom/server`:** runs on the **server** to turn components into HTML — `renderToString` (sync string) and `renderToPipeableStream`/`renderToReadableStream` (streaming). **Why split:** browser and server have different capabilities and bundles; keeping them separate avoids shipping server code to the client. **The typical flow:** server renders HTML with `react-dom/server`, client makes it interactive with `hydrateRoot`. **Common mistakes:** importing a server API in client code (bloats/breaks the bundle) or vice versa.",
     "resources": [
       {
-        "label": "react.dev — React DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — react-dom/server",
+        "url": "https://react.dev/reference/react-dom/server"
+      },
+      {
+        "label": "react.dev — react-dom/client",
+        "url": "https://react.dev/reference/react-dom/client"
       }
     ]
   },
   "react-dom-mcq-002": {
-    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Which import path exposes `createRoot` in React 18+? **The answer:** `react-dom/client`. **Why this path:** React 18 moved the browser entry points (`createRoot`, `hydrateRoot`) into the `react-dom/client` subpath to cleanly separate client rendering from the server APIs and to gate the new concurrent renderer. **Not** `react-dom` (the old `ReactDOM.render` lived there and is removed), not `react` (that's the core library: Hooks, `createElement`), and not `react/client` (doesn't exist). **Common mistakes:** copying pre-18 tutorials that import from `react-dom`, leading to 'createRoot is not a function' style errors.",
+    "example": "```tsx\n// Correct in React 18+:\nimport { createRoot } from 'react-dom/client';\n\nfunction App() {\n  return <p>mounted via react-dom/client</p>;\n}\n\nconst el = document.getElementById('root');\nif (el) createRoot(el).render(<App />);\n```",
     "resources": [
       {
-        "label": "react.dev — React DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — createRoot import",
+        "url": "https://react.dev/reference/react-dom/client/createRoot"
+      },
+      {
+        "label": "React 18 upgrade — new root API",
+        "url": "https://react.dev/blog/2022/03/08/react-18-upgrade-guide#updates-to-client-rendering-apis"
       }
     ]
   },
   "react-dom-007": {
-    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** During hydration React expects the client's first render to produce HTML **identical** to what the server sent. A **hydration mismatch** is when they differ — React warns and may discard and re-render the affected subtree, causing a flash. **Common cause:** non-deterministic output in the initial render — `Date.now()`, `Math.random()`, locale/timezone-dependent formatting, or reading `window`/`localStorage` (which don't exist on the server). **The fix:** render the same thing on both sides, then update client-only values *after* mount in a `useEffect`. **Common mistakes:** branching on `typeof window` during render, or formatting dates with the user's locale on first render.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nexport default function App() {\n  // Render a stable value on server AND first client render (matches),\n  // then fill in the client-only value after mount to avoid a mismatch.\n  const [now, setNow] = useState<string | null>(null);\n  useEffect(() => { setNow(new Date().toLocaleTimeString()); }, []);\n  return <p>Time: {now ?? 'loading…'}</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — React DOM",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Hydration mismatch errors",
+        "url": "https://react.dev/reference/react-dom/client/hydrateRoot#handling-different-client-and-server-content"
+      },
+      {
+        "label": "react.dev — Pitfall: non-deterministic rendering",
+        "url": "https://react.dev/reference/react/useEffect#displaying-different-content-on-the-server-and-the-client"
       }
     ]
   },
