@@ -2006,82 +2006,112 @@
     ]
   },
   "react-sec-001": {
-    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Rendering user-supplied text could let an attacker inject `<script>`/HTML (XSS). **React's default protection:** any string you embed in JSX with `{value}` is **automatically escaped** before it hits the DOM — characters like `<`, `>`, `&` become entities, so the input is rendered as *text*, never parsed as HTML. So `{'<img src=x onerror=alert(1)>'}` shows up as literal characters. **Why it's safe by default:** React inserts text via `textContent`-style assignment, not `innerHTML`. **Where the protection ends:** `dangerouslySetInnerHTML`, `href`/`src` with `javascript:` URLs, and raw DOM access bypass it. **Common mistakes:** assuming *all* React rendering is safe — only text interpolation is auto-escaped.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  // Whatever the user types is escaped and shown as text, not executed.\n  const [value, setValue] = useState('<img src=x onerror=alert(1)>');\n  return (\n    <div>\n      <input value={value} onChange={e => setValue(e.target.value)} />\n      <p>Rendered safely: {value}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Security",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — JSX escapes values (security)",
+        "url": "https://react.dev/reference/react-dom/components/common#dangerously-setting-the-inner-html"
+      },
+      {
+        "label": "OWASP — Cross Site Scripting (XSS)",
+        "url": "https://owasp.org/www-community/attacks/xss/"
       }
     ]
   },
   "react-sec-002": {
-    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Sometimes you must render real HTML (a CMS field, sanitized markdown). **What `dangerouslySetInnerHTML` does:** sets an element's `innerHTML` directly, **bypassing React's automatic escaping** — so any `<script>`/event-handler in that HTML becomes live. The scary name is deliberate: it's an XSS footgun. **The rule before untrusted content:** sanitize the HTML first with a vetted library like **DOMPurify**, never inject raw user input. **Why React makes it awkward (`{{ __html }}`):** to force you to think twice. **Common mistakes:** passing user-controlled HTML unsanitized, trusting 'internal' sources that relay user data, or rolling your own regex 'sanitizer' (use a real one).",
+    "example": "```tsx\nexport default function App() {\n  // In real code: const clean = DOMPurify.sanitize(userHtml);\n  // Only ever pass HTML you've sanitized or fully trust.\n  const trustedHtml = '<strong>Bold</strong> from a trusted source';\n  return <div dangerouslySetInnerHTML={{ __html: trustedHtml }} />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Security",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — dangerouslySetInnerHTML",
+        "url": "https://react.dev/reference/react-dom/components/common#dangerously-setting-the-inner-html"
+      },
+      {
+        "label": "DOMPurify (HTML sanitizer)",
+        "url": "https://github.com/cure53/DOMPurify"
       }
     ]
   },
   "react-sec-mcq-001": {
-    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** `<a href={userUrl}>` is still an XSS risk even though JSX escapes values. **Why:** JSX escaping makes the attribute *value* safe as text, but it doesn't validate the URL *scheme*. A value like `javascript:alert(document.cookie)` is a perfectly valid href, and clicking the link **executes** it. So escaping (which prevents breaking out of the attribute) doesn't stop a malicious protocol. **The fix:** validate the scheme — only allow `http:`/`https:`/`mailto:` (e.g. via `new URL()`), and reject/blank out anything else. **Why the other options are wrong:** React doesn't auto-block unsafe URLs, and non-https URLs aren't the issue — the `javascript:` protocol is. **Common mistakes:** trusting user URLs directly in `href`/`src`.",
+    "example": "```tsx\nfunction safeHref(url: string): string {\n  try {\n    const u = new URL(url, window.location.origin);\n    return ['http:', 'https:', 'mailto:'].includes(u.protocol) ? url : '#';\n  } catch {\n    return '#';\n  }\n}\n\nexport default function App() {\n  const userUrl = 'javascript:alert(1)'; // attacker-controlled\n  return <a href={safeHref(userUrl)}>click (neutralized to #)</a>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Security",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Common pitfalls with URLs",
+        "url": "https://react.dev/reference/react-dom/components/common"
+      },
+      {
+        "label": "OWASP — XSS via javascript: URIs",
+        "url": "https://owasp.org/www-community/attacks/xss/"
       }
     ]
   },
   "react-sec-003": {
-    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** During SSR you often inline initial state with `<script>window.__DATA__ = ${JSON.stringify(data)}</script>`. **Why it's dangerous:** `JSON.stringify` does **not** escape HTML — if `data` contains the string `</script>` (e.g. in user content), it terminates the script tag early and lets the attacker inject arbitrary markup/JS into the page. The `<`/`>` aren't safe inside a `<script>` context. **The fix:** escape `<`, `>`, `&`, and the U+2028/U+2029 line separators in the serialized JSON before embedding (or use a library like `serialize-javascript`). **Common mistakes:** assuming `JSON.stringify` is HTML-safe, or only escaping quotes. The browser parses `</script>` regardless of JSON validity.",
+    "example": "```tsx\n// Escape HTML-significant chars so embedded JSON can't break out of <script>.\nfunction safeJsonForScript(data: unknown): string {\n  return JSON.stringify(data)\n    .replace(/</g, '\\\\u003c')\n    .replace(/>/g, '\\\\u003e')\n    .replace(/&/g, '\\\\u0026')\n    .replace(/\\u2028/g, '\\\\u2028')\n    .replace(/\\u2029/g, '\\\\u2029');\n}\n\nexport default function App() {\n  const data = { comment: '</script><img src=x onerror=alert(1)>' };\n  return <pre>{`window.__DATA__ = ${safeJsonForScript(data)}`}</pre>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Security",
-        "url": "https://react.dev/learn"
+        "label": "OWASP — JSON / HTML context escaping",
+        "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html"
+      },
+      {
+        "label": "serialize-javascript (safe embedding)",
+        "url": "https://github.com/yahoo/serialize-javascript"
       }
     ]
   },
   "react-sec-004": {
-    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Putting an API secret in a client env var like `VITE_API_SECRET` / `REACT_APP_SECRET` feels like 'configuration', but it's a leak. **Why:** the bundler **inlines** those values into the JavaScript at build time, and that bundle is downloaded by every visitor — anyone can open DevTools/View Source and read the secret. The client bundle is 100% public; there's no 'hidden' part. **The rule:** only public, non-sensitive values belong in client env vars (API base URLs, public keys). Real secrets stay on a server/proxy that the client calls. **Common mistakes:** embedding private API keys, DB credentials, or signing secrets in the frontend; assuming minification 'hides' them.",
     "resources": [
       {
-        "label": "react.dev — Security",
-        "url": "https://react.dev/learn"
+        "label": "Vite — Env variables and modes",
+        "url": "https://vite.dev/guide/env-and-mode"
+      },
+      {
+        "label": "OWASP — Secrets management",
+        "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
       }
     ]
   },
   "react-sec-mcq-002": {
-    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Which rendering path bypasses React's automatic output escaping? **The answer:** `dangerouslySetInnerHTML` — it sets raw `innerHTML`, so HTML/scripts in the value become live. **Why the others are safe:** rendering `{userInput}` as JSX text is escaped; passing `userInput` as a string prop to a child is just data (the child must still render it safely, but the value isn't auto-injected as HTML); and a `data-*` attribute value is escaped like any attribute. **The mental model:** text and attribute interpolation are escaped; only `dangerouslySetInnerHTML` (and unsafe URL schemes / manual DOM writes) escape the escaping. **Common mistakes:** fearing normal `{value}` interpolation while trusting `dangerouslySetInnerHTML`.",
+    "example": "```tsx\nexport default function App() {\n  const userInput = '<b>not bold</b>';\n  return (\n    <div>\n      {/* Safe: escaped as text */}\n      <p>{userInput}</p>\n      {/* Bypasses escaping — only use with sanitized/trusted HTML */}\n      <p dangerouslySetInnerHTML={{ __html: '<b>really bold (trusted)</b>' }} />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Security",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — dangerouslySetInnerHTML",
+        "url": "https://react.dev/reference/react-dom/components/common#dangerously-setting-the-inner-html"
+      },
+      {
+        "label": "OWASP — XSS Prevention",
+        "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html"
       }
     ]
   },
   "react-sec-005": {
-    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Most of a React app's code is third-party packages, and they run with your app's **full privileges** — any dependency (or its transitive deps) can read data, make requests, or ship malicious/vulnerable code (supply-chain risk). **Why it's a big surface:** `node_modules` is huge and you didn't write it; a single compromised package executes in your build or users' browsers. **How to manage it:** run `npm audit` / use automated scanners (Dependabot), pin/lock versions (`package-lock.json`), minimize dependencies, prefer well-maintained packages, and keep them updated. **Common mistakes:** adding packages casually, ignoring audit warnings, or never updating (accumulating known CVEs).",
     "resources": [
       {
-        "label": "react.dev — Security",
-        "url": "https://react.dev/learn"
+        "label": "npm — Auditing package dependencies",
+        "url": "https://docs.npmjs.com/auditing-package-dependencies-for-security-vulnerabilities"
+      },
+      {
+        "label": "OWASP — Vulnerable and Outdated Components",
+        "url": "https://owasp.org/Top10/A06_2021-Vulnerable_and_Outdated_Components/"
       }
     ]
   },
   "react-sec-006": {
-    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Hiding a privileged control (a delete button) in the UI feels like access control — it isn't. **Why it's not real authorization:** the client bundle is fully visible and modifiable; a user can read the code, un-hide the button, or just call the underlying API directly with `fetch`/curl. Client-side checks are **UX**, not security. **The rule:** enforce authorization on the **server** — every privileged endpoint must verify the caller's identity and permissions, regardless of what the UI shows. **Use client checks only** to improve experience (don't show actions users can't take). **Common mistakes:** trusting hidden UI, role checks done only in the browser, or assuming an obscure endpoint is safe.",
+    "example": "```tsx\nexport default function App() {\n  const isAdmin = false; // from client state — UX only, NOT security\n  async function handleDelete() {\n    // The server MUST re-check permissions here; hiding the button isn't enough.\n    await fetch('/api/resource/1', { method: 'DELETE' });\n  }\n  return isAdmin ? <button onClick={handleDelete}>Delete</button> : <p>read-only view</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Security",
-        "url": "https://react.dev/learn"
+        "label": "OWASP — Broken Access Control",
+        "url": "https://owasp.org/Top10/A01_2021-Broken_Access_Control/"
+      },
+      {
+        "label": "OWASP — Authorization Cheat Sheet",
+        "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html"
       }
     ]
   },
