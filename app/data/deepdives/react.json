@@ -530,102 +530,142 @@
     ]
   },
   "react-form-001": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Who owns an input's value — React or the DOM? **Controlled:** React owns it. You bind `value={state}` and update via `onChange`, so state is the single source of truth and the input always mirrors it. **Uncontrolled:** the browser owns it; you set only an initial `defaultValue` and read the value later via a ref. **Why prefer controlled:** the value is always available in state for validation, conditional UI, or transforming as you type. **Common mistakes:** mixing the two (passing both `value` and `defaultValue`), or using `value` without `onChange` (makes the field read-only).",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [text, setText] = useState('');\n  // Controlled: state is the source of truth; the input reflects it.\n  return (\n    <div>\n      <input value={text} onChange={e => setText(e.target.value)} />\n      <p>You typed: {text}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Controlled vs uncontrolled components",
+        "url": "https://react.dev/learn/sharing-state-between-components#controlled-and-uncontrolled-components"
+      },
+      {
+        "label": "react.dev — input value",
+        "url": "https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable"
       }
     ]
   },
   "react-form-mcq-001": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Passing `value` without `onChange`. **What happens:** React makes the input effectively read-only and logs a console warning. **Why:** `value` tells React the input is controlled — its displayed value must equal that prop on every render. With no `onChange`, keystrokes can't update state, so React keeps re-applying the fixed `value` and the field never changes. **The fixes:** add `onChange` to make it editable, use `readOnly` to intentionally lock it, or switch to `defaultValue` for an uncontrolled field. **Common mistakes:** binding `value` to a constant and wondering why typing does nothing.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [text, setText] = useState('edit me');\n  return (\n    <div>\n      {/* Editable: value + onChange */}\n      <input value={text} onChange={e => setText(e.target.value)} />\n      {/* Intentionally locked: value + readOnly (no warning) */}\n      <input value=\"locked\" readOnly />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Providing a value without onChange",
+        "url": "https://react.dev/reference/react-dom/components/input#im-getting-an-error-a-component-is-changing-an-uncontrolled-input-to-be-controlled"
+      },
+      {
+        "label": "react.dev — input props",
+        "url": "https://react.dev/reference/react-dom/components/input#props"
       }
     ]
   },
   "react-form-002": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** The warning 'changing an uncontrolled input to be controlled.' **Why it happens:** an input is uncontrolled when its `value` is `undefined`/`null`, and controlled when `value` is a string. If `value={someValue}` and `someValue` starts `undefined` then becomes a string (e.g. after a fetch), the input switches modes mid-life — which React forbids. **The fix:** keep it controlled from the first render by defaulting to a string: `value={someValue ?? ''}`. **Common mistakes:** initializing state to `undefined`/`null` for a text field, or hydrating from data that may be missing without a fallback.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  // Could be null until data loads — coerce to '' so it's controlled from render 1.\n  const [name, setName] = useState<string | null>(null);\n  return (\n    <div>\n      <input value={name ?? ''} onChange={e => setName(e.target.value)} />\n      <button onClick={() => setName(null)}>clear (still controlled)</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — uncontrolled to controlled error",
+        "url": "https://react.dev/reference/react-dom/components/input#im-getting-an-error-a-component-is-changing-an-uncontrolled-input-to-be-controlled"
+      },
+      {
+        "label": "MDN — Nullish coalescing (??)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing"
       }
     ]
   },
   "react-form-mcq-002": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Transforming the value in `onChange` (e.g. `toUpperCase()`) makes the caret jump to the end mid-typing. **Why:** in a controlled input React re-applies `value` from state after each render. If the stored value differs from what the user just typed (because you transformed it), React rewrites the input's contents, and the browser resets the cursor to the end. **The fix:** if you must transform, manage the caret with `setSelectionRange` in a layout effect, or transform on blur/submit instead of every keystroke. **Common mistakes:** blaming async/event pooling — it's purely that the controlled value no longer matches the DOM's typed value.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [raw, setRaw] = useState('');\n  // Store exactly what was typed (no caret jump); transform only for display.\n  return (\n    <div>\n      <input value={raw} onChange={e => setRaw(e.target.value)} />\n      <p>UPPER: {raw.toUpperCase()}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Controlled input caveats",
+        "url": "https://react.dev/reference/react-dom/components/input#my-input-caret-jumps-to-the-end-on-every-keystroke"
+      },
+      {
+        "label": "react.dev — input",
+        "url": "https://react.dev/reference/react-dom/components/input"
       }
     ]
   },
   "react-form-003": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Checkboxes don't have a text 'value' to control. **The difference:** a controlled checkbox binds the boolean `checked` prop (not `value`), and its handler reads `e.target.checked` (not `e.target.value`). **Why:** a checkbox's user-facing state is on/off, so React mirrors that with a boolean. **The same pattern, different attributes:** `checked={isOn}` + `onChange={e => setIsOn(e.target.checked)}`. **Common mistakes:** binding `value` to a checkbox (does nothing useful), reading `e.target.value` (returns the static 'on' string, not the checked state), or forgetting that radio groups also use `checked`.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [agreed, setAgreed] = useState(false);\n  return (\n    <label>\n      <input\n        type=\"checkbox\"\n        checked={agreed}\n        onChange={e => setAgreed(e.target.checked)} // boolean, not value\n      />\n      I agree ({agreed ? 'yes' : 'no'})\n    </label>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — input type=checkbox",
+        "url": "https://react.dev/reference/react-dom/components/input#providing-an-initial-value-for-an-input"
+      },
+      {
+        "label": "react.dev — Controlling a checkbox",
+        "url": "https://react.dev/reference/react-dom/components/input#controlling-a-checkbox-with-a-state-variable"
       }
     ]
   },
   "react-form-004": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Manually toggling DOM elements (enable this, hide that) for every interaction gets brittle as states multiply. **Imperative UI:** you give step-by-step commands for *how* to change the screen — like turn-by-turn driving directions. **Declarative UI (React):** you describe *what* the UI should look like for each state and let React compute the DOM changes — like telling a taxi the destination. **Why declarative scales:** you reason about a finite set of states, not an explosion of transition steps. **Common mistakes:** reaching for refs to manually show/hide/enable elements when rendering from state would express the same thing more reliably.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [loading, setLoading] = useState(false);\n  // Declarative: describe the UI for each state; React updates the DOM.\n  return (\n    <div>\n      <button disabled={loading} onClick={() => setLoading(l => !l)}>\n        {loading ? 'Loading…' : 'Load'}\n      </button>\n      {loading && <p>Please wait…</p>}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Reacting to Input with State",
+        "url": "https://react.dev/learn/reacting-to-input-with-state"
+      },
+      {
+        "label": "react.dev — How declarative UI compares to imperative",
+        "url": "https://react.dev/learn/reacting-to-input-with-state#how-declarative-ui-compares-to-imperative"
       }
     ]
   },
   "react-form-005": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Turning a fuzzy feature idea into reliable stateful UI. **react.dev's 5 steps:** (1) identify the visual states (empty, typing, submitting, success, error); (2) determine what triggers each transition (human inputs like typing/clicking, computer inputs like a response arriving); (3) represent the state with `useState`; (4) remove non-essential/redundant state so impossible combinations can't exist; (5) wire event handlers to set the state. **Why this works:** you design the state machine first, then the rendering follows. **Common mistakes:** skipping step 4 (keeping overlapping booleans), or jumping to handlers before enumerating the states.",
+    "example": "```tsx\nimport { useState } from 'react';\n\ntype Status = 'typing' | 'submitting' | 'success';\n\nexport default function App() {\n  // One status variable captures the visual states (no impossible combos).\n  const [status, setStatus] = useState<Status>('typing');\n  if (status === 'success') return <p>Thanks! ✅</p>;\n  return (\n    <button disabled={status === 'submitting'} onClick={() => {\n      setStatus('submitting');\n      setTimeout(() => setStatus('success'), 600);\n    }}>\n      {status === 'submitting' ? 'Sending…' : 'Submit'}\n    </button>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Reacting to Input with State (5 steps)",
+        "url": "https://react.dev/learn/reacting-to-input-with-state#step-1-identify-your-components-different-visual-states"
+      },
+      {
+        "label": "react.dev — Thinking in React",
+        "url": "https://react.dev/learn/thinking-in-react"
       }
     ]
   },
   "react-form-mcq-003": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Tracking `isTyping`, `isSubmitting`, `isSuccess` as three independent booleans. **The flaw:** they allow *impossible states* — e.g. `isTyping && isSubmitting` both true, or all three true — which your UI never intends and your code must defensively guard against. **The fix:** use one `status` variable with a finite set of values (`'typing' | 'submitting' | 'success' | 'error'`); only one can hold at a time, so impossible combinations are unrepresentable. **Why it's better:** fewer bugs, clearer transitions, simpler rendering. **Common mistakes:** adding another boolean for each new condition instead of extending the single status union.",
+    "example": "```tsx\nimport { useState } from 'react';\n\ntype Status = 'typing' | 'submitting' | 'success' | 'error';\n\nexport default function App() {\n  const [status, setStatus] = useState<Status>('typing');\n  // Impossible to be both 'typing' and 'submitting' — the type forbids it.\n  return (\n    <div>\n      <p>status: {status}</p>\n      <button onClick={() => setStatus('submitting')}>submit</button>\n      <button onClick={() => setStatus('error')}>fail</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Step 4: Remove any non-essential state",
+        "url": "https://react.dev/learn/reacting-to-input-with-state#step-4-remove-any-non-essential-state-variables"
+      },
+      {
+        "label": "react.dev — Avoid contradictions in state",
+        "url": "https://react.dev/learn/choosing-the-state-structure#avoid-contradictions-in-state"
       }
     ]
   },
   "react-form-006": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Submitting a form in React without a full page reload. **What `e.preventDefault()` does:** stops the browser's built-in form submission (which navigates/reloads), so your JS can handle it. **The flow:** prevent default → set status to `submitting` (UI disables itself declaratively) → await the request → on success show success, on failure return to `typing` and store the error. **Why drive it through state:** the UI reacts to the status automatically. **Common mistakes:** forgetting `preventDefault` (page reloads, you lose state), not disabling the button (double submits), or not handling the error branch.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [status, setStatus] = useState<'typing' | 'submitting' | 'success'>('typing');\n  async function handleSubmit(e: React.FormEvent) {\n    e.preventDefault();               // stop the full-page reload\n    setStatus('submitting');\n    await new Promise(r => setTimeout(r, 500)); // pretend network\n    setStatus('success');\n  }\n  if (status === 'success') return <p>Submitted ✅</p>;\n  return (\n    <form onSubmit={handleSubmit}>\n      <input name=\"q\" />\n      <button disabled={status === 'submitting'}>Send</button>\n    </form>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — form onSubmit",
+        "url": "https://react.dev/reference/react-dom/components/form#handling-form-submission-with-a-client-side-handler"
+      },
+      {
+        "label": "react.dev — Reacting to Input with State",
+        "url": "https://react.dev/learn/reacting-to-input-with-state"
       }
     ]
   },
   "react-form-007": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Where does the new value come from inside `onChange`? **The answer:** from the event — `e.target.value`. `e.target` is the DOM input element that fired the event, and `.value` is its current text. **Why:** React passes a synthetic event to your handler; reading `e.target.value` gives you what the user typed so you can store it in state. **TypeScript tip:** type the handler param as `React.ChangeEvent<HTMLInputElement>` to get `.value` typed. **Common mistakes:** reading from `e.value` (undefined — value is on `target`), or trying to read the input's value from state before you've set it.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [value, setValue] = useState('');\n  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {\n    setValue(e.target.value); // the DOM input that fired the event\n  }\n  return (\n    <div>\n      <input value={value} onChange={handleChange} />\n      <p>{value.length} chars</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Responding to the input's change event",
+        "url": "https://react.dev/reference/react-dom/components/input#reading-the-input-values-when-submitting-a-form"
+      },
+      {
+        "label": "react.dev — Responding to Events",
+        "url": "https://react.dev/learn/responding-to-events"
       }
     ]
   },
@@ -1100,22 +1140,30 @@
     ]
   },
   "react-form-008": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Sometimes you don't want React to track every keystroke — you just need the value at submit time. **What an uncontrolled input is:** the DOM owns the value; React doesn't bind `value`/`onChange`. You provide an optional initial value via `defaultValue` and read the final value when needed through a ref. **Why use it:** less re-rendering and simpler code for fire-and-forget forms or integrating non-React widgets. **The trade-off:** the value isn't in state, so you can't easily validate or react as the user types. **Common mistakes:** mixing `value` with `defaultValue`, or reaching into the DOM with a ref when controlled state would be clearer.",
+    "example": "```tsx\nimport { useRef } from 'react';\n\nexport default function App() {\n  const inputRef = useRef<HTMLInputElement>(null);\n  function handleSubmit(e: React.FormEvent) {\n    e.preventDefault();\n    alert(inputRef.current?.value); // read on demand from the DOM\n  }\n  return (\n    <form onSubmit={handleSubmit}>\n      <input ref={inputRef} defaultValue=\"start\" /> {/* uncontrolled */}\n      <button>read value</button>\n    </form>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Uncontrolled with defaultValue",
+        "url": "https://react.dev/reference/react-dom/components/input#providing-an-initial-value-for-an-input"
+      },
+      {
+        "label": "react.dev — Manipulating the DOM with Refs",
+        "url": "https://react.dev/learn/manipulating-the-dom-with-refs"
       }
     ]
   },
   "react-form-mcq-004": {
-    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Why call `e.preventDefault()` in `onSubmit`? **The answer:** to stop the browser's default behavior — submitting a form triggers a full-page navigation/reload. Calling `preventDefault()` cancels that so you can handle the submission in JavaScript (validate, send fetch, update state) without losing your app state. **Why this matters in SPAs:** a reload would blow away the React app and any in-memory state. **It is not** for blocking other handlers or required by React. **Common mistakes:** omitting it (the page reloads and your handler's async work is interrupted), or calling it on the wrong event.",
+    "example": "```tsx\nexport default function App() {\n  function handleSubmit(e: React.FormEvent) {\n    e.preventDefault();          // no full-page reload\n    const data = new FormData(e.currentTarget as HTMLFormElement);\n    alert('searching for: ' + data.get('q'));\n  }\n  return (\n    <form onSubmit={handleSubmit}>\n      <input name=\"q\" defaultValue=\"react\" />\n      <button>Search</button>\n    </form>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Forms",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — preventDefault in form handlers",
+        "url": "https://react.dev/reference/react-dom/components/form#handling-form-submission-with-a-client-side-handler"
+      },
+      {
+        "label": "MDN — Event.preventDefault()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault"
       }
     ]
   },
