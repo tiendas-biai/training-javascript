@@ -1,6 +1,16 @@
 import type { DeepDive as DeepDiveData } from '../types';
 import { RichText } from './RichText';
 
+// Explanations are written as one paragraph with inline bold section labels
+// ("**The problem:**", "**Why it happens:**", …). Put a blank line before each
+// label so the sections read as separate blocks. Purely presentational — the
+// stored content is untouched, so this also tidies every existing card.
+function withSectionBreaks(text: string): string {
+  return text
+    .replace(/\s*(\*\*[^*\n]+?:\*\*)/g, '\n\n$1')
+    .replace(/^\s+/, '');
+}
+
 // Renders a card's deep-dive write-up: prose explanation, an optional runnable
 // code example (the RichText code block carries the existing copy-to-clipboard
 // button), and a list of doc links.
@@ -9,7 +19,7 @@ export function DeepDive({ data }: { data: DeepDiveData }) {
     <details className="deep-dive">
       <summary className="deep-dive-summary">📘 Deep Dive</summary>
       <div className="deep-dive-body">
-        <div className="deep-dive-explanation"><RichText text={data.explanation} /></div>
+        <div className="deep-dive-explanation"><RichText text={withSectionBreaks(data.explanation)} /></div>
 
         {data.example && (
           <div className="deep-dive-example">
