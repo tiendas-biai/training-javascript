@@ -557,5 +557,103 @@
         "url": "https://nodejs.org/api/fs.html#fscreatereadstreampath-options"
       }
     ]
+  },
+  "node-http-001": {
+    "explanation": "**The problem:** You want an HTTP server without a framework, to understand what Express et al. build on. **The minimal recipe:** `http.createServer((request, response) => { … })` registers a handler that runs **for every request**; inside it you set the status (`response.statusCode`), headers (`response.setHeader`), and send the body + finish with `response.end(...)`. Then `server.listen(port)` starts accepting connections. **Why this is the core:** every Node web framework is sugar over this `(req, res)` model. **Common mistakes:** never calling `response.end()` (the request hangs), setting headers *after* writing the body (throws — headers go first on the wire), or doing blocking work in the handler.",
+    "example": "```js\nconst http = require('node:http');\n\nconst server = http.createServer((request, response) => {\n  response.statusCode = 200;\n  response.setHeader('Content-Type', 'text/plain');\n  response.end('Hello'); // must end the response, or the request hangs\n});\n\nserver.listen(8080, () => console.log('listening on http://localhost:8080'));\n```",
+    "resources": [
+      {
+        "label": "Node.js — HTTP transaction anatomy",
+        "url": "https://nodejs.org/en/learn/modules/anatomy-of-an-http-transaction"
+      },
+      {
+        "label": "Node.js — http.createServer()",
+        "url": "https://nodejs.org/api/http.html#httpcreateserveroptions-requestlistener"
+      }
+    ]
+  },
+  "node-http-mcq-001": {
+    "explanation": "**The problem:** Reading a POST body in raw Node requires collecting `'data'` chunks and concatenating on `'end'` — why so manual? **The answer:** the `request` object **is a Readable stream**. The body arrives in **chunks over the network**, not as a single ready value — so Node hands it to you incrementally, and you accumulate the chunks (Buffers) and join them once the stream ends. **Why streamed:** bodies can be large or slow; streaming keeps memory bounded and lets you reject oversized inputs early. **Why the others are wrong:** it's not rate-limiting, `request.body` doesn't exist in core Node (that's a framework/body-parser feature), and Buffers aren't packet-limited. **Common mistakes:** assuming `request.body` exists, not capping body size (DoS risk), or treating chunks as strings (they're Buffers).",
+    "example": "```js\nconst http = require('node:http');\n\nhttp.createServer((request, response) => {\n  const chunks = [];\n  request\n    .on('data', (chunk) => chunks.push(chunk))   // Buffers arrive over time\n    .on('end', () => {\n      const body = Buffer.concat(chunks).toString(); // assemble once complete\n      response.end(`received ${body.length} bytes`);\n    })\n    .on('error', () => { response.statusCode = 400; response.end('bad request'); });\n}).listen(8080);\n```",
+    "resources": [
+      {
+        "label": "Node.js — Reading the request body",
+        "url": "https://nodejs.org/en/learn/modules/anatomy-of-an-http-transaction#request-body"
+      },
+      {
+        "label": "Node.js — http.IncomingMessage (a stream)",
+        "url": "https://nodejs.org/api/http.html#class-httpincomingmessage"
+      }
+    ]
+  },
+  "node-http-002": {
+    "explanation": "**The problem:** Two ways to set the status + headers — when to use which? **`setHeader` + `statusCode`:** stage values individually; they're sent **implicitly** with the first body write (or `end`). Good when you build headers up across some logic. **`writeHead(200, {...})`:** sends the status line and all headers **explicitly, at once**. **The rule that applies to both:** headers must be set **before any body data** — on the wire the status line and headers come first, so once you've written body bytes you can't change them (attempting to throws `ERR_HTTP_HEADERS_SENT`). **Note:** `writeHead` takes precedence and merges with anything previously `setHeader`'d. **Common mistakes:** calling `setHeader` after `write`/`end`, or calling `writeHead` twice.",
+    "example": "```js\nconst http = require('node:http');\n\nhttp.createServer((req, res) => {\n  if (req.url === '/explicit') {\n    res.writeHead(200, { 'Content-Type': 'application/json' }); // status + headers at once\n    res.end(JSON.stringify({ ok: true }));\n  } else {\n    res.statusCode = 404;            // staged...\n    res.setHeader('Content-Type', 'text/plain'); // ...sent with the first write\n    res.end('not found');            // headers MUST be set before this\n  }\n}).listen(8080);\n```",
+    "resources": [
+      {
+        "label": "Node.js — response.writeHead()",
+        "url": "https://nodejs.org/api/http.html#responsewriteheadstatuscode-statusmessage-headers"
+      },
+      {
+        "label": "Node.js — response.setHeader()",
+        "url": "https://nodejs.org/api/http.html#responsesetheadername-value"
+      }
+    ]
+  },
+  "node-err-001": {
+    "explanation": "**The problem:** Errors in Node arrive through **four** different channels, each needing a different handling style — mismatching them means errors slip through. **The four:** (1) **Synchronous throws** → wrap in **`try/catch`**. (2) **Error-first callbacks** → **check the first argument** (`if (err) …`). (3) **Promise rejections** → **`.catch()`** or **`try/catch` with `await`**. (4) **`'error'` events** on EventEmitters (streams, sockets, servers) → attach an **`'error'` listener** (unhandled `'error'` crashes the process). **Why it matters:** a `try/catch` won't catch an async callback error or a stream `'error'` event — you must use the channel that matches. **Common mistakes:** wrapping an async callback API in try/catch (won't catch it), or forgetting `'error'` listeners on streams.",
+    "example": "```js\nconst fs = require('node:fs');\n\n// 1) sync throw\ntry { JSON.parse('{bad'); } catch (e) { console.log('sync:', e.message); }\n\n// 2) error-first callback\nfs.readFile('/nope', (err) => console.log('callback:', err && err.code));\n\n// 3) promise rejection\nPromise.reject(new Error('async')).catch((e) => console.log('promise:', e.message));\n\n// 4) 'error' event\nfs.createReadStream('/nope').on('error', (e) => console.log('event:', e.code));\n```",
+    "resources": [
+      {
+        "label": "Node.js — Error handling",
+        "url": "https://nodejs.org/api/errors.html#error-propagation-and-interception"
+      },
+      {
+        "label": "Node.js — Errors guide",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/javascript-asynchronous-programming-and-callbacks"
+      }
+    ]
+  },
+  "node-err-mcq-001": {
+    "explanation": "**The problem:** Using `process.on('uncaughtException', err => log(err))` and **continuing to run**. **Official guidance:** treat `uncaughtException` as a **last resort** — **log the error, then exit and let a process manager restart** the app. After an uncaught exception, the app reached an unexpected state: resources may be half-released, invariants broken — so **resuming is unsafe** and can cause subtle corruption or leaks. **Proper use:** synchronous cleanup + `process.exit(1)`. **Why the others are wrong:** it's *not* the recommended resilience pattern; it *does* fire for sync throws that escape; and handling `unhandledRejection` too doesn't make continuing safe. **Common mistakes:** swallowing exceptions to 'keep the server up' (zombie process), instead of crashing cleanly and restarting (e.g. via PM2/systemd/k8s).",
+    "example": "```js\nprocess.on('uncaughtException', (err) => {\n  console.error('fatal:', err.message);\n  // Do only synchronous cleanup here, then exit — state may be corrupt.\n  process.exit(1); // a supervisor (pm2/systemd/k8s) restarts a fresh process\n});\n\n// Example of an error that would otherwise be uncaught:\nsetTimeout(() => { throw new Error('boom'); }, 0);\n```",
+    "resources": [
+      {
+        "label": "Node.js — 'uncaughtException'",
+        "url": "https://nodejs.org/api/process.html#event-uncaughtexception"
+      },
+      {
+        "label": "Node.js — Warning: using uncaughtException correctly",
+        "url": "https://nodejs.org/api/process.html#warning-using-uncaughtexception-correctly"
+      }
+    ]
+  },
+  "node-err-002": {
+    "explanation": "**The problem:** Branching on `error.message` to decide what went wrong. **Why use `error.code` instead:** `code` is a **stable, machine-readable** label (e.g. `'ENOENT'`) that's safe to compare against across Node versions and locales; `message` is **human-facing text** that can change between releases or be localized, so matching on it is brittle. **Common system error codes:** **`ENOENT`** = no such file or directory; **`EADDRINUSE`** = the address/port is already in use; **`ECONNREFUSED`** = the target refused the connection (nothing listening / blocked). **Why it matters:** reliable error handling (retry, fallback, user message) keys off `code`. **Common mistakes:** `if (err.message.includes('not found'))` (fragile), or ignoring `code` and treating all errors the same.",
+    "example": "```js\nconst fs = require('node:fs');\n\nfs.readFile('/definitely/missing.txt', (err, data) => {\n  if (err) {\n    // Branch on the STABLE code, not the human-readable message.\n    if (err.code === 'ENOENT') return console.log('file not found — using defaults');\n    return console.error('unexpected:', err.code);\n  }\n  console.log(data.toString());\n});\n```",
+    "resources": [
+      {
+        "label": "Node.js — System errors & error.code",
+        "url": "https://nodejs.org/api/errors.html#class-systemerror"
+      },
+      {
+        "label": "Node.js — Common system errors",
+        "url": "https://nodejs.org/api/errors.html#common-system-errors"
+      }
+    ]
+  },
+  "node-err-003": {
+    "explanation": "**The problem:** A low-level error (e.g. a socket failure) is too detailed for higher layers, but if you replace it with a friendly message you lose the root cause for debugging. **The `cause` option:** `new Error('Request failed', { cause: originalError })` **chains** errors — the new, domain-meaningful error carries the original on its **`error.cause`** property. **Why it's great:** callers see a clear high-level message, while logs/debuggers can still walk down to the underlying error (Node prints the cause chain in stack traces). **Standardized:** `cause` is part of the ES2022 `Error` spec. **Common mistakes:** swallowing the original error (re-throwing only a new message), or stuffing the cause into a custom property instead of the standard `cause` (tools won't display it).",
+    "example": "```js\nasync function loadConfig() {\n  try {\n    JSON.parse('{not valid');\n  } catch (originalError) {\n    // Wrap with a domain message but preserve the root cause for debugging.\n    throw new Error('Failed to load config', { cause: originalError });\n  }\n}\n\nloadConfig().catch((err) => {\n  console.error(err.message);        // 'Failed to load config'\n  console.error('caused by:', err.cause.message); // the original SyntaxError\n});\n```",
+    "resources": [
+      {
+        "label": "MDN — Error: cause",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause"
+      },
+      {
+        "label": "Node.js — Error.cause in traces",
+        "url": "https://nodejs.org/api/errors.html#errorcause"
+      }
+    ]
   }
 }
