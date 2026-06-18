@@ -347,5 +347,117 @@
         "url": "https://nodejs.org/api/events.html#awaiting-multiple-events-emitted-on-processnexttick"
       }
     ]
+  },
+  "node-fs-001": {
+    "explanation": "**The problem:** File I/O has different needs — async in servers, simple scripts, startup config. **`fs` offers three API styles:** (1) **Promise-based** (`node:fs/promises`) — `await readFile(path, 'utf8')`; the modern default for async code. (2) **Callback** (`node:fs`) — `readFile(path, 'utf8', (err, data) => …)`; the classic error-first style. (3) **Synchronous** — `readFileSync(path, 'utf8')`; blocks until done. **Which to use:** prefer the Promises API in app code; sync only for startup/CLI scripts where blocking is fine; callbacks for legacy/hot paths. **Note:** passing an encoding (`'utf8'`) returns a string; omit it to get a `Buffer`. **Common mistakes:** using `readFileSync` in request handlers (blocks the loop), or forgetting the encoding and getting a Buffer.",
+    "example": "```js\nconst { readFile } = require('node:fs/promises'); // promise style\nconst { readFile: readFileCb, readFileSync } = require('node:fs');\n\n// 1) Promises\nreadFile(__filename, 'utf8').then((data) => console.log('promise:', data.length, 'chars'));\n// 2) Callback (error-first)\nreadFileCb(__filename, 'utf8', (err, data) => console.log('callback:', err ?? data.length));\n// 3) Sync (blocks)\nconsole.log('sync:', readFileSync(__filename, 'utf8').length, 'chars');\n```",
+    "resources": [
+      {
+        "label": "Node.js — File system (three APIs)",
+        "url": "https://nodejs.org/api/fs.html"
+      },
+      {
+        "label": "Node.js — fs/promises",
+        "url": "https://nodejs.org/api/fs.html#promises-api"
+      }
+    ]
+  },
+  "node-fs-mcq-001": {
+    "explanation": "**The problem:** Why avoid `readFileSync` inside an HTTP request handler? **The answer: it blocks the event loop** — while the synchronous read runs, the single JS thread can do nothing else, so **no other request is processed** until it finishes. Under load this serializes all requests behind each file read, destroying throughput. **The fix:** use the async `fs.readFile`/`fs.promises.readFile` so the thread keeps serving other requests while the OS does the read. **Why the others are wrong:** there's no 64 KB limit, it's not deprecated, and it returns a string/Buffer that's perfectly sendable. **Where sync IS fine:** one-time startup/config reads before the server starts accepting traffic. **Common mistakes:** any synchronous I/O (sync fs, `execSync`, heavy CPU) on the request path.",
+    "example": "```js\nconst http = require('node:http');\nconst { readFile } = require('node:fs/promises');\n\nhttp.createServer(async (req, res) => {\n  // ❌ readFileSync(__filename) here would block ALL other requests.\n  // ✅ async read keeps the event loop free for concurrent requests:\n  const data = await readFile(__filename, 'utf8');\n  res.end(`file is ${data.length} chars`);\n});\n// (not calling .listen() so this snippet doesn't hold the process open)\n```",
+    "resources": [
+      {
+        "label": "Node.js — Don't Block the Event Loop",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop"
+      },
+      {
+        "label": "Node.js — fs.readFile (async)",
+        "url": "https://nodejs.org/api/fs.html#fsreadfilepath-options-callback"
+      }
+    ]
+  },
+  "node-fs-002": {
+    "explanation": "**The problem:** Node's classic callback APIs need a consistent way to report failures. **The error-first convention:** the callback's **first** parameter is reserved for an error — `(err, data) => …`. On success, `err` is `null`/`undefined` and the remaining args hold the result; on failure, `err` is an `Error` and the other args are **unreliable** (often undefined). So you **check `err` first** before using the data. **Why a convention:** with no exceptions across async boundaries, a uniform signature lets every callback API handle errors the same way. **Common mistakes:** ignoring `err` and using `data` regardless (crashes on null), throwing inside the callback without handling, or assuming a thrown error from async code can be caught with try/catch around the call (it can't).",
+    "example": "```js\nconst { readFile } = require('node:fs');\n\nreadFile('/does/not/exist.txt', 'utf8', (err, data) => {\n  if (err) {                       // check the error FIRST\n    console.error('failed:', err.code); // e.g. 'ENOENT'\n    return;\n  }\n  console.log('contents:', data);  // only safe to use when err is null\n});\n```",
+    "resources": [
+      {
+        "label": "Node.js — Error-first callbacks",
+        "url": "https://nodejs.org/en/learn/asynchronous-work/javascript-asynchronous-programming-and-callbacks#understanding-callbacks"
+      },
+      {
+        "label": "Node.js — Error conventions",
+        "url": "https://nodejs.org/api/errors.html#error-propagation-and-interception"
+      }
+    ]
+  },
+  "node-path-mcq-001": {
+    "explanation": "**The problem:** `path.join('foo','bar')` vs `path.resolve('foo','bar')` from cwd `/home/myself/node`. **The answers:** `join` → **`'foo/bar'`** (just joins the segments with the separator — a *relative* path); `resolve` → **`'/home/myself/node/foo/bar'`** (resolves to an **absolute** path, starting from the current working directory when given relative segments). **Why the difference:** `join` concatenates/normalizes path pieces; `resolve` processes segments right-to-left until it builds an absolute path, prepending `process.cwd()` if needed. **Why the others are wrong:** they don't both return the same thing. **Rule of thumb:** `join` to build a relative sub-path; `resolve` when you need an absolute path. **Common mistakes:** expecting `join` to make paths absolute, or that `resolve` keeps things relative.",
+    "example": "```js\nconst path = require('node:path');\n// Assuming process.cwd() is /home/myself/node:\nconsole.log(path.join('foo', 'bar'));    // 'foo/bar'                (relative)\nconsole.log(path.resolve('foo', 'bar')); // '/home/myself/node/foo/bar' (absolute)\nconsole.log(path.resolve('/a', 'b'));    // '/a/b' (leading / makes it absolute)\n```",
+    "resources": [
+      {
+        "label": "Node.js — path.join()",
+        "url": "https://nodejs.org/api/path.html#pathjoinpaths"
+      },
+      {
+        "label": "Node.js — path.resolve()",
+        "url": "https://nodejs.org/api/path.html#pathresolvepaths"
+      }
+    ]
+  },
+  "node-path-001": {
+    "explanation": "**The problem:** Building paths with string concatenation (`'/foo/bar/' + filename`) breaks across platforms and on edge cases. **Why `path.join` is better:** **cross-platform correctness** — Windows uses `\\` as the separator, POSIX uses `/`. `path.join` picks the right separator for the OS and **normalizes** the result (collapsing duplicate slashes, handling `..`/`.`). String concatenation hard-codes one platform's convention and can produce `//` or wrong separators. **Why it matters:** the same code then runs correctly on Linux servers and Windows dev machines. **Common mistakes:** manual `'/'` concatenation, mixing separators, or not normalizing user-supplied path segments (also a traversal risk — validate those).",
+    "example": "```js\nconst path = require('node:path');\nconst filename = 'report.txt';\n\nconsole.log(path.join('/foo/bar', filename)); // '/foo/bar/report.txt' (right separator)\nconsole.log(path.join('/foo', '', 'baz/', filename)); // normalized, no double slashes\n// vs fragile: '/foo/bar/' + filename — wrong on Windows, easy to double-slash.\n```",
+    "resources": [
+      {
+        "label": "Node.js — path module",
+        "url": "https://nodejs.org/api/path.html"
+      },
+      {
+        "label": "Node.js — path.sep / cross-platform",
+        "url": "https://nodejs.org/api/path.html#pathsep"
+      }
+    ]
+  },
+  "node-path-002": {
+    "explanation": "**The problem:** Pulling the filename, directory, or extension out of a path by hand (splitting on `/`) is error-prone. **The helpers** for `/foo/bar/quux.html`: `path.basename` → **`'quux.html'`** (the last segment; pass a suffix like `'.html'` to strip it → `'quux'`); `path.dirname` → **`'/foo/bar'`** (everything but the last segment); `path.extname` → **`'.html'`** (the extension, including the dot). **Why use them:** correct across separators and edge cases (no extension, trailing slashes, dotfiles). **Common mistakes:** manual string slicing, forgetting `extname` includes the dot, or assuming `basename` strips the extension by default (it doesn't unless you pass the suffix).",
+    "example": "```js\nconst path = require('node:path');\nconst p = '/foo/bar/quux.html';\n\nconsole.log(path.basename(p));         // 'quux.html'\nconsole.log(path.basename(p, '.html'));// 'quux' (suffix stripped)\nconsole.log(path.dirname(p));          // '/foo/bar'\nconsole.log(path.extname(p));          // '.html' (includes the dot)\n```",
+    "resources": [
+      {
+        "label": "Node.js — path.basename/dirname/extname",
+        "url": "https://nodejs.org/api/path.html#pathbasenamepath-suffix"
+      },
+      {
+        "label": "Node.js — path.parse()",
+        "url": "https://nodejs.org/api/path.html#pathparsepath"
+      }
+    ]
+  },
+  "node-proc-001": {
+    "explanation": "**The problem:** Reading inputs from the command line and the environment. **Command-line arguments — `process.argv`:** an array where `[0]` is the **node executable path**, `[1]` is the **script path**, and the **real arguments start at index 2**. So slice from 2 to get user args. **Environment variables — `process.env`:** a plain object mapping variable names to **string** values (everything is a string; `undefined` if unset). **Why:** these are the standard channels for configuring a process at launch. **Common mistakes:** forgetting to skip the first two `argv` entries, treating `process.env` values as non-strings (e.g. `process.env.PORT` is a string — convert with `Number`), or assuming a var exists without a fallback.",
+    "example": "```js\n// Run as:  MY_FLAG=on node file.js alice 42\nconst args = process.argv.slice(2);          // ['alice', '42'] — skip node + script\nconsole.log('args:', args);\n\nconst port = Number(process.env.PORT) || 3000; // env values are strings\nconsole.log('PORT:', port, '| MY_FLAG:', process.env.MY_FLAG ?? '(unset)');\n```",
+    "resources": [
+      {
+        "label": "Node.js — process.argv",
+        "url": "https://nodejs.org/api/process.html#processargv"
+      },
+      {
+        "label": "Node.js — process.env",
+        "url": "https://nodejs.org/api/process.html#processenv"
+      }
+    ]
+  },
+  "node-proc-mcq-001": {
+    "explanation": "**The problem:** `process.exit(1)` vs setting `process.exitCode = 1` and returning. **The difference:** `process.exit()` **terminates immediately** — it can cut off pending async work, including **unflushed stdout/stderr** (since writes to pipes can be async), so logs or output may be lost. Setting `process.exitCode = 1` instead lets the process **finish its work naturally** (drain I/O, run remaining callbacks) and then exit with that code. **Best practice:** prefer setting `exitCode` and letting the event loop empty; reserve `process.exit()` for when you truly must stop right now. **Why the others are wrong:** they're not identical, `exitCode` is cross-platform, and `exit(1)` doesn't restart anything. **Common mistakes:** `process.exit()` right after `console.log` (output may be truncated).",
+    "example": "```js\nfunction failGracefully(reason) {\n  console.error('error:', reason);\n  // ✅ Lets pending output flush, then exits with code 1 when the loop drains.\n  process.exitCode = 1;\n  // ❌ process.exit(1) here could truncate the console.error above.\n}\nfailGracefully('bad input');\nconsole.log('this still runs and flushes before exit');\n```",
+    "resources": [
+      {
+        "label": "Node.js — process.exitCode",
+        "url": "https://nodejs.org/api/process.html#processexitcode"
+      },
+      {
+        "label": "Node.js — process.exit() caveats",
+        "url": "https://nodejs.org/api/process.html#processexitcode"
+      }
+    ]
   }
 }
