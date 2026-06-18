@@ -1094,5 +1094,465 @@
         "url": "https://nodejs.org/api/esm.html"
       }
     ]
+  },
+  "array-at-001": {
+    "explanation": "**The problem:** reading from the end of an array historically needed `arr[arr.length - 1]`, which is verbose and error-prone. **What `at()` does:** it takes an integer index and returns that element, but **negative indices count from the end** — `at(-1)` is the last element, `at(-2)` the second-to-last. **Why it works:** `at()` adds `length` to a negative index before lookup, so `-1` maps to `length - 1`. **Why it's nicer:** no repeated `arr.length` and it reads clearly. **Common mistakes:** thinking bracket notation supports negatives (`arr[-1]` is just a string property `'-1'`, always `undefined`), or that `at()` mutates anything (it's a pure read).",
+    "example": "```js\nconst a = ['a', 'b', 'c'];\nconsole.log(a.at(-1)); // 'c' — last element\nconsole.log(a.at(0));  // 'a'\nconsole.log(a[-1]);    // undefined — bracket notation has no negative indexing\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.at()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at"
+      }
+    ]
+  },
+  "array-at-002": {
+    "explanation": "**The problem:** what does `at()` return for an out-of-range index? **The answer: `undefined`** — just like bracket access, an index past the end yields `undefined`, not an error. **Why:** `at()` is a plain element read; there's no bounds checking that throws. The only thing that throws on arrays is an invalid *length* (e.g. `new Array(-1)`), not an out-of-range read. **Why it matters:** you can safely probe indices without `try/catch`. **Common mistakes:** expecting a `RangeError` for `a.at(5)` on a 3-element array, or confusing `at()` with typed-array/`String` behavior (both also return `undefined` for OOB).",
+    "example": "```js\nconst a = [10, 20, 30];\nconsole.log(a.at(5));  // undefined — out of range, no error\nconsole.log(a.at(2));  // 30\nconsole.log(a.at(-5)); // undefined — too far negative\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.at()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at"
+      }
+    ]
+  },
+  "array-concat-001": {
+    "explanation": "**The problem:** does `concat()` change the arrays it joins? **The answer: no** — `concat()` is **non-mutating**; it returns a **brand-new array** containing the elements of the original plus the arguments, leaving all inputs untouched. **Why it works:** `concat` reads through its inputs and copies element references into a fresh array (a shallow copy). **Why it matters:** it's safe in immutable/functional code, unlike `push`/`splice`. **Common mistakes:** assuming it mutates like `push`, or expecting a **deep** copy — nested objects are shared by reference between the source and the result.",
+    "example": "```js\nconst a = [1, 2];\nconst b = [3, 4];\nconst c = a.concat(b);\nconsole.log(c);       // [1, 2, 3, 4]\nconsole.log(a, b);    // [1, 2] [3, 4] — originals unchanged\nconsole.log(a === c); // false — a new array\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.concat()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat"
+      }
+    ]
+  },
+  "array-concat-002": {
+    "explanation": "**The problem:** how deep does `concat()` flatten its array arguments? **The answer: one level only.** `concat` spreads the **top-level** elements of each array argument into the result; it does **not** recurse into nested arrays. So `[[1]].concat([2, [3]])` keeps `[1]` and `[3]` as nested arrays, giving `[[1], 2, [3]]`. **Why:** `concat` treats each argument that is an array by appending its elements, but those elements (including inner arrays) are copied as-is. **Common mistakes:** expecting full flattening (use `flat()`/`flatMap()` for that), or thinking non-array arguments are spread (a non-array is appended whole).",
+    "example": "```js\nconst a = [[1]];\nconst b = [2, [3]];\nconsole.log(a.concat(b)); // [[1], 2, [3]] — only one level merged\nconsole.log([1].concat(2, [3, 4])); // [1, 2, 3, 4] — array args spread once\nconsole.log([1].concat([[2]]));     // [1, [2]] — inner array kept nested\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.concat()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat"
+      }
+    ]
+  },
+  "array-copyWithin-001": {
+    "explanation": "**The problem:** `copyWithin(target, start)` copies a slice of the array onto another position **within the same array**, in place. **How it works:** it copies elements from `start` (to the end, here) and pastes them beginning at `target`, **overwriting** without changing the array's length. So `[1,2,3,4,5].copyWithin(0, 3)` copies `[4,5]` (from index 3) over indices 0–1 → `[4,5,3,4,5]`. **Why it mutates:** it's an in-place shift-style operation (originally for typed arrays/performance). **Common mistakes:** expecting a new array (it returns the *same*, mutated array), or forgetting the length is fixed — copying never grows or shrinks the array.",
+    "example": "```js\nconst a = [1, 2, 3, 4, 5];\nconst r = a.copyWithin(0, 3); // copy from index 3 onward to index 0\nconsole.log(r);        // [4, 5, 3, 4, 5]\nconsole.log(a === r);  // true — same array, mutated in place\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.copyWithin()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/copyWithin"
+      }
+    ]
+  },
+  "array-copyWithin-002": {
+    "explanation": "**The problem:** with the third argument, `copyWithin(target, start, end)` copies only the slice `[start, end)`. **The walk-through:** `[1,2,3,4,5].copyWithin(0, 3, 4)` copies elements from index 3 up to (not including) 4 — that's just `[4]` — and pastes it at index 0, giving `[4,2,3,4,5]`. **Why only one element changes:** `end` is **exclusive**, so `start=3, end=4` selects a single element. **Why the rest is unchanged:** only the copied range overwrites; everything else stays. **Common mistakes:** treating `end` as inclusive, or expecting the whole tail to be copied when an `end` limits it.",
+    "example": "```js\nconst a = [1, 2, 3, 4, 5];\na.copyWithin(0, 3, 4); // copy [index 3, index 4) = [4] to index 0\nconsole.log(a); // [4, 2, 3, 4, 5]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.copyWithin()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/copyWithin"
+      }
+    ]
+  },
+  "array-entries-001": {
+    "explanation": "**The problem:** you often need both the index and the value while iterating. **What `entries()` returns:** an **array iterator** that yields a two-element array `[index, value]` for each position. **Why it's useful:** combined with `for...of` and destructuring (`for (const [i, v] of arr.entries())`) it gives clean index+value iteration without a manual counter. **A detail:** it's lazy (an iterator), and it visits holes in sparse arrays as `undefined`. **Common mistakes:** expecting a plain array of pairs (it's an iterator — spread it with `[...arr.entries()]` to materialize), or confusing it with `Object.entries` (which returns string keys).",
+    "example": "```js\nconst a = ['x', 'y', 'z'];\nfor (const [i, v] of a.entries()) console.log(i, v); // 0 x | 1 y | 2 z\nconsole.log([...a.entries()]); // [[0,'x'],[1,'y'],[2,'z']]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.entries()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/entries"
+      }
+    ]
+  },
+  "array-entries-002": {
+    "explanation": "**The problem:** how does `entries()` treat empty slots (holes) in a sparse array? **The answer:** it **visits every index**, yielding holes as `undefined`. So `[, 'a']` (a hole at 0, `'a'` at 1) iterates **twice**: `[0, undefined]` then `[1, 'a']`. **Why:** the iterator-producing methods (`entries`, `keys`, `values`) are **not** hole-skipping — unlike `forEach`/`map`/`filter`, which skip holes. **Why this distinction matters:** sparse arrays behave inconsistently across methods, a frequent source of bugs. **Common mistakes:** assuming `entries()` skips holes like `forEach`, or that a leading comma `[, 'a']` creates `undefined` at index 0 (it's a true hole, reported as `undefined` here).",
+    "example": "```js\nconst sparse = [, 'a']; // hole at index 0\nconsole.log([...sparse.entries()]); // [[0, undefined], [1, 'a']] — visits the hole\nconsole.log(sparse.length);         // 2\n// contrast: forEach skips the hole entirely\nsparse.forEach((v, i) => console.log('forEach', i, v)); // only: forEach 1 a\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.entries()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/entries"
+      }
+    ]
+  },
+  "array-every-001": {
+    "explanation": "**The problem:** what does `every()` return for an **empty** array? **The answer: `true`** — vacuously, since there's no element that fails the test. **Why:** `every()` returns `true` unless it finds an element for which the callback is falsy; with zero elements, it never finds one. This mirrors the logician's \"all of an empty set\" being true. **Why it matters:** guard logic like `items.every(valid)` passes for empty inputs — sometimes desired, sometimes a bug. **Common mistakes:** expecting `false` for `[]`, or forgetting the symmetric quirk that `[].some(...)` returns `false`.",
+    "example": "```js\nconsole.log([].every((x) => x > 0));       // true  — vacuously true\nconsole.log([2, 4, 6].every((x) => x % 2 === 0)); // true\nconsole.log([2, 3, 4].every((x) => x % 2 === 0)); // false — 3 fails\nconsole.log([].some((x) => x > 0));        // false — the symmetric case\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.every()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every"
+      }
+    ]
+  },
+  "array-every-002": {
+    "explanation": "**The problem:** how does `every()` behave once an element fails the predicate? **The answer:** it **short-circuits** — the moment the callback returns falsy, `every()` stops iterating and returns `false`, skipping all remaining elements. **Why:** as soon as one element fails, the \"all pass\" result is decided, so continuing would be wasted work. **Why it matters:** side effects in the callback won't run for elements after the first failure, and it's efficient on large arrays. **Common mistakes:** expecting `every()` to visit all elements (it doesn't past the first failure), or relying on it to collect *all* failures (it returns a single boolean).",
+    "example": "```js\nconst seen = [];\nconst result = [2, 4, 5, 6].every((n) => {\n  seen.push(n);\n  return n % 2 === 0; // fails at 5\n});\nconsole.log(result); // false\nconsole.log(seen);   // [2, 4, 5] — stopped after the first failure (6 never visited)\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.every()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every"
+      }
+    ]
+  },
+  "array-fill-001": {
+    "explanation": "**The problem:** `fill(value, start, end)` overwrites a range of an array with a static value, in place. **The walk-through:** `[1,2,3].fill(0, 1, 2)` fills index 1 up to (not including) 2 with `0` → `[1,0,3]`. **Why:** `start` is inclusive, `end` exclusive; omitting them fills the whole array. **Why it mutates:** `fill` writes into the existing array and returns it (handy for initializing, e.g. `Array(n).fill(0)`). **Common mistakes:** treating `end` as inclusive, or using `fill({})`/`fill([])` and not realizing **the same reference** is placed in every slot (see the next card).",
+    "example": "```js\nconsole.log([1, 2, 3].fill(0, 1, 2)); // [1, 0, 3] — index 1 only\nconsole.log([1, 2, 3, 4].fill(9));    // [9, 9, 9, 9] — whole array\nconsole.log(Array(3).fill(0));        // [0, 0, 0] — common init idiom\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.fill()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill"
+      }
+    ]
+  },
+  "array-fill-002": {
+    "explanation": "**The problem:** `Array(3).fill({})` then mutating `arr[0]` changes `arr[1]` too — `arr[1].x` is `42`. **Why it happens:** `fill` places the **same value** in every slot. With an object literal, that value is **one reference**, so all three slots point at the **same object**; mutating it through any index is visible through all. **Why it's a classic bug:** people expect `fill({})` to create independent objects (it doesn't). **The fix:** build distinct objects with `Array.from({length: 3}, () => ({}))`. **Common mistakes:** the same trap with `fill([])` for grids, and assuming `fill` evaluates the argument per slot (it's evaluated once).",
+    "example": "```js\nconst shared = Array(3).fill({});\nshared[0].x = 42;\nconsole.log(shared[1].x); // 42 — all slots are the SAME object\n\nconst distinct = Array.from({ length: 3 }, () => ({}));\ndistinct[0].x = 42;\nconsole.log(distinct[1].x); // undefined — independent objects\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.fill() (objects)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill#using_fill"
+      }
+    ]
+  },
+  "array-filter-001": {
+    "explanation": "**The problem:** what does `filter()` return when nothing passes the test? **The answer: an empty array `[]`** — never `undefined` or `null`. **Why:** `filter()` always returns a **new array** of the elements for which the callback was truthy; if none qualify, that array is simply empty. **Why it matters:** the result is always safely chainable/iterable (`.length`, `.map`, etc.) without null checks. **Common mistakes:** expecting `undefined` for no matches (that's `find()`), or `-1` (that's `findIndex`); and forgetting `filter` always allocates a fresh array even when empty.",
+    "example": "```js\nconst r = [1, 2, 3].filter((n) => n > 10);\nconsole.log(r);         // [] — empty, not undefined\nconsole.log(r.length);  // 0\nconsole.log(Array.isArray(r)); // true — always an array\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.filter()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter"
+      }
+    ]
+  },
+  "array-filter-002": {
+    "explanation": "**The problem:** how does `filter()` treat empty slots in a sparse array? **The answer:** it **skips holes** — the callback is never invoked for an empty slot — and the **returned array is dense** (holes are dropped, not preserved as `undefined`). **Why:** `filter` is one of the hole-skipping iteration methods (with `forEach`, `map`, `some`, `every`), and since holes never pass an un-run test, they simply don't appear in the output. **Why it matters:** `filter(Boolean)` is a common way to compact arrays and remove falsy values and holes at once. **Common mistakes:** expecting holes to surface as `undefined` in the result, or that the callback runs for every index.",
+    "example": "```js\nconst sparse = [1, , 3]; // hole at index 1\nconst r = sparse.filter(() => true); // callback skips the hole\nconsole.log(r);        // [1, 3] — dense, hole removed\nconsole.log(r.length); // 2\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.filter() (sparse arrays)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter#description"
+      }
+    ]
+  },
+  "array-filter-003": {
+    "explanation": "**The problem:** `filter((n, i) => i % 2 === 0)` keeps elements at **even indices**, giving `[1, 3]`, not `[2, 4]`. **Why:** the callback's second parameter is the **index**, and the predicate tests the index, not the value. Indices `0` and `2` satisfy `i % 2 === 0`, whose values are `1` and `3`. **Why people slip:** they read `i % 2 === 0` as \"even values\" and forget the parameter is the position. **Why it matters:** index-based filtering (every other element, pagination) is common. **Common mistakes:** confusing the value and index parameters, or assuming `0`-based indices start at `1`.",
+    "example": "```js\nconst r = [1, 2, 3, 4].filter((n, i) => i % 2 === 0); // keep even INDICES\nconsole.log(r); // [1, 3] — values at indices 0 and 2\n// value-based instead:\nconsole.log([1, 2, 3, 4].filter((n) => n % 2 === 0)); // [2, 4]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.filter()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter"
+      }
+    ]
+  },
+  "array-find-001": {
+    "explanation": "**The problem:** what does `find()` return when no element matches? **The answer: `undefined`.** `find()` returns the **first element** for which the callback is truthy, or `undefined` if none qualify. **Why:** it's designed to retrieve a value, so \"not found\" is the absence-of-value sentinel `undefined`. **Contrast:** `findIndex()` returns `-1` for no match (it deals in positions). **Why it matters:** always handle the `undefined` case before using the result (`?.` or a guard). **Common mistakes:** expecting `null` or `-1`, or treating a falsy *found* value (like `0` or `''`) as \"not found\" — check existence carefully.",
+    "example": "```js\nconst users = [{ id: 1 }, { id: 2 }];\nconsole.log(users.find((u) => u.id === 2)); // { id: 2 }\nconsole.log(users.find((u) => u.id === 9)); // undefined\nconst u = users.find((x) => x.id === 9);\nconsole.log(u?.id ?? 'not found'); // not found\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.find()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find"
+      }
+    ]
+  },
+  "array-find-002": {
+    "explanation": "**The problem:** does `find()` skip holes like `forEach`/`filter`? **The answer: no** — `find()` (and `findIndex`/`findLast`/`findLastIndex`) **visit every index**, treating empty slots as `undefined`. **Why:** these methods must inspect each position to decide a match, so they don't take the hole-skipping shortcut. **Why it matters:** a predicate like `(x) => x === undefined` can \"match\" a hole, which surprises people who assume holes are invisible. **Common mistakes:** assuming all array iterators behave the same about holes — the `find` family does not skip them, unlike `forEach`/`map`/`filter`/`some`/`every`.",
+    "example": "```js\nconst sparse = [1, , 3]; // hole at index 1\nconst found = sparse.find((v) => v === undefined);\nconsole.log(found); // undefined — the hole is visited and matches\nlet visits = 0;\nsparse.find(() => { visits++; return false; });\nconsole.log(visits); // 3 — every index visited, including the hole\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.find() (sparse arrays)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find#description"
+      }
+    ]
+  },
+  "array-find-003": {
+    "explanation": "**The problem:** `find()` and `findIndex()` differ in their \"not found\" sentinel. **The answer:** when nothing matches, **`find()` returns `undefined`** (it yields the element/value) and **`findIndex()` returns `-1`** (it yields a position). **Why two sentinels:** `undefined` is the natural \"no value\", and `-1` is the conventional \"no index\" (matching `indexOf`). **Why it matters:** you must test the right sentinel — `if (idx !== -1)` for `findIndex`, `if (found !== undefined)` (or `?.`) for `find`. **Common mistakes:** checking `find()`'s result against `-1`, or `findIndex()`'s against `undefined` — both silently misbehave.",
+    "example": "```js\nconst a = [1, 2, 3];\nconsole.log(a.find((n) => n > 5));      // undefined\nconsole.log(a.findIndex((n) => n > 5)); // -1\nconsole.log(a.find((n) => n === 2));    // 2\nconsole.log(a.findIndex((n) => n === 2));// 1\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.findIndex()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex"
+      }
+    ]
+  },
+  "array-findIndex-001": {
+    "explanation": "**The problem:** what does `findIndex()` return when no element satisfies the callback? **The answer: `-1`.** `findIndex()` returns the **index** of the first matching element, or `-1` when none match — mirroring `indexOf`'s convention. **Why `-1`:** it's an impossible real index, so it unambiguously signals \"not found\" while staying a number. **Why it matters:** guard with `if (i !== -1)` before using the index; using `-1` as an index (`arr[-1]`) is `undefined`. **Common mistakes:** expecting `undefined` (that's `find()`), or treating `0` (a valid found index) as falsy/not-found in an `if (i)` check.",
+    "example": "```js\nconst a = [5, 12, 8, 130];\nconsole.log(a.findIndex((n) => n > 100)); // 3\nconsole.log(a.findIndex((n) => n > 999)); // -1 — none match\nconst i = a.findIndex((n) => n === 5);\nconsole.log(i, i !== -1 ? a[i] : 'none'); // 0 5 — note: use !== -1, not truthiness\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.findIndex()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex"
+      }
+    ]
+  },
+  "array-findIndex-002": {
+    "explanation": "**The problem:** `[5, 12, 8, 130].findIndex(n => n > 10)` returns `1`, not `12` or `0`. **Why:** `findIndex()` returns the **index** of the **first** element passing the test. The first element greater than 10 is `12`, which sits at **index 1** — so the result is `1`. **Why not `12`:** that's the value; `findIndex` returns the position (use `find` for the value). **Why not `0`:** `5` (index 0) fails the test. **Why it short-circuits:** it stops at the first match. **Common mistakes:** confusing the returned index with the matching value, or expecting it to scan past the first hit.",
+    "example": "```js\nconst a = [5, 12, 8, 130];\nconsole.log(a.findIndex((n) => n > 10)); // 1 — index of 12 (first match)\nconsole.log(a.find((n) => n > 10));      // 12 — the value, for contrast\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.findIndex()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex"
+      }
+    ]
+  },
+  "array-findLast-001": {
+    "explanation": "**The problem:** `find()` searches front-to-back; how do you get the **last** match? **`findLast()`** iterates **right-to-left** and returns the first match from the end. For `[4, 5, 7, 8, 11, 12]` with `n % 2 !== 0` (odd), scanning from the end finds `11` before `7`/`5`, so it returns `11`. **Why it exists (ES2023):** previously you'd `reverse()` (mutates/copies) or compute an index manually; `findLast` does it directly and lazily. **Why it returns `undefined` for no match:** same value-sentinel as `find`. **Common mistakes:** assuming it returns the *largest* matching value (it returns the *last by position*), or that it mutates (it doesn't).",
+    "example": "```js\nconst a = [4, 5, 7, 8, 11, 12];\nconsole.log(a.findLast((n) => n % 2 !== 0)); // 11 — last odd by position\nconsole.log(a.find((n) => n % 2 !== 0));     // 5  — first odd, for contrast\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.findLast()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast"
+      }
+    ]
+  },
+  "array-findLast-002": {
+    "explanation": "**The problem:** which ES version added `findLast()` / `findLastIndex()`? **The answer: ES2023.** They shipped alongside the other ES2023 array additions — the immutable `toSorted`, `toReversed`, `toSpliced`, and `with`. **Why know this:** these are recent, so very old runtimes lack them (modern Node and evergreen browsers have them). **Why they were added:** to search from the end without reversing the array. **Common mistakes:** confusing them with `find`/`findIndex` (ES2015) or assuming they're as universally available as the older methods; in legacy environments you'd polyfill or reverse-and-`find`.",
+    "example": "```js\nconst a = [1, 2, 3, 4, 5];\n// ES2023 family:\nconsole.log(a.findLast((n) => n < 4));      // 3\nconsole.log(a.findLastIndex((n) => n < 4)); // 2\nconsole.log(typeof Array.prototype.findLast); // 'function' in modern runtimes\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.findLast()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast"
+      }
+    ]
+  },
+  "array-findLastIndex-001": {
+    "explanation": "**The problem:** what does `findLastIndex()` return with no match? **The answer: `-1`** — the same \"no index\" sentinel as `findIndex`/`indexOf`. **What it does:** scans **right-to-left** and returns the **index** of the first element (from the end) that passes the test, or `-1` if none do. **Why `-1`:** consistency with the index-returning family. **Why it matters:** guard with `!== -1` before indexing. **Common mistakes:** expecting `undefined` (that's `findLast`), or assuming the returned index is relative to a reversed array — it's the element's **real** index in the original array.",
+    "example": "```js\nconst a = [4, 5, 7, 8, 9, 11, 12];\nconsole.log(a.findLastIndex((n) => n % 2 !== 0)); // 5 — index of 11\nconsole.log(a.findLastIndex((n) => n > 100));     // -1 — none match\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.findLastIndex()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLastIndex"
+      }
+    ]
+  },
+  "array-findLastIndex-002": {
+    "explanation": "**The problem:** `[4,5,7,8,9,11,12].findLastIndex(n => n % 2 !== 0)` returns `5`. **The walk-through:** scanning from the end, the elements are `12`(6, even), `11`(5, odd ✓) — so the first odd from the right is `11` at **index 5**. **Why not `6`:** index 6 holds `12`, which is even. **Why not `11`:** that's the value, not the index — `findLastIndex` returns the position. **Why not `2`:** index 2 (`7`) is odd but it's the match `findIndex` would return going forward, not the last one. **Common mistakes:** confusing value with index, or scanning left-to-right.",
+    "example": "```js\nconst a = [4, 5, 7, 8, 9, 11, 12];\nconsole.log(a.findLastIndex((n) => n % 2 !== 0)); // 5 — index of 11 (last odd)\nconsole.log(a[5]); // 11\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.findLastIndex()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLastIndex"
+      }
+    ]
+  },
+  "array-flat-001": {
+    "explanation": "**The problem:** what's the default flattening depth of `flat()`? **The answer: `1`** — called with no argument, `flat()` removes a **single** level of nesting. **Why a default of 1:** the most common case is un-nesting one layer; deeper flattening is opt-in. **How to go deeper:** pass a number (`flat(2)`) or `Infinity` for any depth. **A bonus:** `flat()` also **removes holes** while flattening. **Common mistakes:** expecting `flat()` to fully flatten nested arrays (it stops at one level), or passing a boolean/expecting recursion by default.",
+    "example": "```js\nconsole.log([1, [2, [3, [4]]]].flat());        // [1, 2, [3, [4]]] — one level\nconsole.log([1, [2, [3, [4]]]].flat(2));       // [1, 2, 3, [4]]\nconsole.log([1, [2, [3, [4]]]].flat(Infinity));// [1, 2, 3, 4]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.flat()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat"
+      }
+    ]
+  },
+  "array-flat-002": {
+    "explanation": "**The problem:** `[1, 2, , 4].flat()` returns `[1, 2, 4]` — the hole vanishes. **Why:** besides flattening one level, `flat()` **drops empty slots** (holes) from the result, producing a dense array. So the hole between `2` and `4` is removed rather than becoming `undefined`. **Why it's handy:** `arr.flat()` is a quick way to compact a sparse array (even with no nesting to flatten). **Why not `[1,2,undefined,4]`:** holes are not the same as `undefined` values — `flat` discards holes but would *keep* an explicit `undefined`. **Common mistakes:** confusing holes with `undefined`, or expecting `flat()` to preserve sparseness.",
+    "example": "```js\nconsole.log([1, 2, , 4].flat());          // [1, 2, 4] — hole removed\nconsole.log([1, 2, undefined, 4].flat()); // [1, 2, undefined, 4] — value kept\nconsole.log([1, 2, , 4].length);          // 4 (sparse) before flat\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.flat() (sparse arrays)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat#flattening_and_array_holes"
+      }
+    ]
+  },
+  "array-flat-003": {
+    "explanation": "**The problem:** how do you fully flatten an array nested to an unknown/arbitrary depth? **The answer: `arr.flat(Infinity)`.** Passing `Infinity` as the depth tells `flat()` to recurse through **every** level, returning a single flat array. **Why `Infinity` works:** the depth argument is compared each level; `Infinity` never runs out, so flattening continues until no nested arrays remain. **Why not a huge number:** `Infinity` is clearer and guaranteed sufficient. **Common mistakes:** using `flat()` (depth 1) and expecting full flattening, or hand-writing recursion when one `flat(Infinity)` call suffices.",
+    "example": "```js\nconst deep = [1, [2, [3, [4, [5]]]]];\nconsole.log(deep.flat(Infinity)); // [1, 2, 3, 4, 5]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.flat()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat"
+      }
+    ]
+  },
+  "array-flatMap-001": {
+    "explanation": "**The problem:** mapping then flattening is a common two-step (`arr.map(fn).flat()`). **What `flatMap()` does:** it runs the callback over each element and **flattens the result by one level** in a **single pass** — equivalent to `map(fn).flat()` but more efficient (no intermediate array) and clearer in intent. **The key limit:** it flattens **exactly one** level, no more. **Why it's useful:** expanding each element into zero, one, or many outputs (tokenizing, one-to-many). **Common mistakes:** expecting deep flattening (it's one level — use `map().flat(Infinity)` for more), or returning a deeply nested array and being surprised it isn't fully flattened.",
+    "example": "```js\nconst words = ['hello world', 'foo bar'];\nconsole.log(words.flatMap((s) => s.split(' '))); // ['hello','world','foo','bar']\n// equivalent but two passes:\nconsole.log(words.map((s) => s.split(' ')).flat());\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.flatMap()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap"
+      }
+    ]
+  },
+  "array-flatMap-002": {
+    "explanation": "**The problem:** `[1,2,3].flatMap(x => [[x*2]])` yields `[[2],[4],[6]]`, not `[2,4,6]`. **Why:** `flatMap` flattens **only one level**. The callback returns `[[2]]` (an array containing an array); flattening once removes the **outer** wrapper, leaving `[2]` per element → `[[2],[4],[6]]`. **Why not `[2,4,6]`:** that would require flattening two levels. **Why not `[[2,4,6]]`:** each element maps independently, then results concatenate. **Common mistakes:** assuming `flatMap` fully flattens, or miscounting the nesting the callback returns.",
+    "example": "```js\nconsole.log([1, 2, 3].flatMap((x) => [[x * 2]])); // [[2], [4], [6]] — one level off\nconsole.log([1, 2, 3].flatMap((x) => [x * 2]));   // [2, 4, 6]       — single-wrapped\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.flatMap()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap"
+      }
+    ]
+  },
+  "array-flatMap-003": {
+    "explanation": "**The problem:** how do you transform *and* filter in one pass with `flatMap()`? **The technique:** return an **empty array `[]`** from the callback for elements to **drop**, and a **single-element array `[value]`** for elements to **keep** (optionally transformed). Because `flatMap` flattens one level, the `[]`s contribute nothing and the `[value]`s unwrap into the result. **Why it's useful:** it's a combined map+filter that avoids two passes, and can also expand one element into many. **Common mistakes:** returning a bare value instead of an array when you also want to sometimes drop (mixing shapes), or returning `null`/`undefined` to drop (those become elements, not removals).",
+    "example": "```js\nconst nums = [1, 2, 3, 4, 5];\nconst doubledEvens = nums.flatMap((n) => (n % 2 === 0 ? [n * 2] : []));\nconsole.log(doubledEvens); // [4, 8] — odds dropped, evens kept & doubled\n```",
+    "resources": [
+      {
+        "label": "MDN — flatMap() (add/remove items)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap#adding_and_removing_items_during_a_map"
+      }
+    ]
+  },
+  "array-forEach-001": {
+    "explanation": "**The problem:** what does `forEach()` return? **The answer: always `undefined`.** `forEach` is for **side effects** — it runs the callback for each element and returns nothing useful. **Why:** it deliberately has no result so you don't chain off it; for transformations use `map`, for accumulation use `reduce`. **Why it matters:** `const x = arr.forEach(...)` always makes `x` undefined — a common confusion. **Common mistakes:** expecting `forEach` to return a new/filtered array (use `map`/`filter`), or trying to chain `.forEach(...).map(...)` (the second call would be on `undefined`).",
+    "example": "```js\nconst r = [1, 2, 3].forEach((n) => n * 2);\nconsole.log(r); // undefined — forEach returns nothing\n\nlet sum = 0;\n[1, 2, 3].forEach((n) => { sum += n; }); // side effect\nconsole.log(sum); // 6\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.forEach()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach"
+      }
+    ]
+  },
+  "array-forEach-002": {
+    "explanation": "**The problem:** `forEach` with an `async` callback doesn't wait for the awaited work. **Why it happens:** `forEach` **ignores the return value** of its callback. An `async` callback returns a promise, but `forEach` neither awaits nor collects it — it just fires every callback synchronously and moves on, so code after the loop runs before any async work finishes (and errors become unhandled rejections). **The fix:** use a `for...of` loop with `await` for sequential work, or `Promise.all(arr.map(asyncFn))` for parallel. **Common mistakes:** putting `await` inside a `forEach` callback and expecting the loop to pause, or trying to `await arr.forEach(...)` (it returns `undefined`).",
+    "example": "```js\nconst wait = (v) => new Promise((r) => setTimeout(() => r(v), 10));\n\n[1, 2].forEach(async (n) => console.log('forEach', await wait(n)));\nconsole.log('runs BEFORE the forEach results — not awaited');\n\nasync function correct() {\n  for (const n of [1, 2]) console.log('for-of', await wait(n)); // sequential\n}\ncorrect();\n```",
+    "resources": [
+      {
+        "label": "MDN — forEach() (async caveat)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach#description"
+      }
+    ]
+  },
+  "array-forEach-003": {
+    "explanation": "**The problem:** can you stop a `forEach()` early with `break` or `return`? **The answer: no.** `return` inside the callback only exits **that one invocation** (like `continue`), not the loop; `break` is a **SyntaxError** because there's no loop statement to break — the iteration lives inside a function call. **Why:** `forEach` is a method that calls your callback per element; control-flow keywords act on the callback, not the iteration. **The fix:** use `for...of`/`for` (support `break`/`continue`), or `some`/`every` to short-circuit, or `find` to stop at the first match. **Common mistakes:** expecting `return` to end the loop, or `throw`ing just to break out (works but abuses exceptions).",
+    "example": "```js\n[1, 2, 3, 4].forEach((n) => {\n  if (n === 3) return; // only skips THIS callback, like continue\n  console.log(n);      // 1, 2, 4\n});\n// to truly short-circuit, use some():\nlet stoppedAt;\n[1, 2, 3, 4].some((n) => (n === 3 ? ((stoppedAt = n), true) : false));\nconsole.log('stopped at', stoppedAt); // 3\n```",
+    "resources": [
+      {
+        "label": "MDN — forEach() (no break)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach#no_way_to_stop_or_break_a_foreach_loop"
+      }
+    ]
+  },
+  "array-includes-001": {
+    "explanation": "**The problem:** `[1, 2, NaN].includes(NaN)` returns `true`, even though `NaN !== NaN`. **Why:** `includes()` compares using the **SameValueZero** algorithm, which treats `NaN` as equal to `NaN` (and `+0` equal to `-0`). So unlike `indexOf` (which uses strict `===` and can't find `NaN`), `includes` *can* detect `NaN`. **Why it matters:** to test for the presence of `NaN`, use `includes`, not `indexOf`. **Common mistakes:** using `indexOf(NaN) !== -1` (always false), or assuming `includes` uses `===` (it uses SameValueZero, the key difference).",
+    "example": "```js\nconsole.log([1, 2, NaN].includes(NaN));   // true  — SameValueZero finds NaN\nconsole.log([1, 2, NaN].indexOf(NaN));    // -1    — === can't match NaN\nconsole.log([0].includes(-0));            // true  — +0 and -0 are equal here\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.includes()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes"
+      }
+    ]
+  },
+  "array-includes-002": {
+    "explanation": "**The problem:** `['1','2','3'].includes(3)` returns `false`. **Why:** `includes()` does **no type coercion** — it uses SameValueZero, which requires the same type and value. The array holds the **string** `'3'`, and you searched for the **number** `3`; different types, so no match. **Why it matters:** membership checks must use matching types, or you'll miss values. **The fix:** search for `'3'`, or normalize types first (`arr.map(Number).includes(3)`). **Common mistakes:** expecting `==`-style coercion from `includes`/`indexOf` (they're strict), or comparing user input (often strings) against numeric data without converting.",
+    "example": "```js\nconsole.log(['1', '2', '3'].includes(3));   // false — number vs string\nconsole.log(['1', '2', '3'].includes('3')); // true  — matching type\nconsole.log(['1', '2', '3'].map(Number).includes(3)); // true — normalized\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.includes()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes"
+      }
+    ]
+  },
+  "array-indexOf-001": {
+    "explanation": "**The problem:** `[1, 2, NaN].indexOf(NaN)` returns `-1` — it can't find `NaN`. **Why:** `indexOf()` compares with **strict equality (`===`)**, and `NaN === NaN` is `false`, so `NaN` is never matched. **Why it matters:** to locate `NaN`, you can't use `indexOf`; use `includes` (SameValueZero) for presence, or `findIndex(Number.isNaN)` for the position. **Common mistakes:** assuming `indexOf` can find `NaN`, or using it for object membership expecting structural equality (it checks reference identity, so it only finds the *same* object).",
+    "example": "```js\nconsole.log([1, 2, NaN].indexOf(NaN)); // -1 — === can't match NaN\nconsole.log([1, 2, NaN].includes(NaN)); // true — use includes for presence\nconsole.log([1, 2, NaN].findIndex(Number.isNaN)); // 2 — for the index\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.indexOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf"
+      }
+    ]
+  },
+  "array-indexOf-002": {
+    "explanation": "**The problem:** `['a','b','a','c'].indexOf('a', 1)` returns `2`, not `0`. **Why:** the second argument is a **start index** — the search begins at index `1`, so the `'a'` at index 0 is skipped, and the next `'a'` (at index 2) is found. **Why it's useful:** you can find subsequent occurrences by passing the previous index + 1, e.g. to collect all matches. **The negative case:** a negative start counts from the end. **Common mistakes:** forgetting the `fromIndex` parameter and expecting `indexOf` to always start at 0, or off-by-one errors when iterating to find all occurrences.",
+    "example": "```js\nconst a = ['a', 'b', 'a', 'c'];\nconsole.log(a.indexOf('a'));    // 0 — first occurrence\nconsole.log(a.indexOf('a', 1)); // 2 — search starts at index 1\n// find all indices of 'a':\nconst all = [];\nfor (let i = a.indexOf('a'); i !== -1; i = a.indexOf('a', i + 1)) all.push(i);\nconsole.log(all); // [0, 2]\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.indexOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf"
+      }
+    ]
+  },
+  "array-join-001": {
+    "explanation": "**The problem:** what separator does `join()` use with no argument? **The answer: a comma `,`** — `['a','b','c'].join()` is `'a,b,c'`. **Why:** the default separator is `,`; pass any string (including `''`) to change it. **A related detail:** `join` coerces elements to strings, and `null`/`undefined`/holes become **empty strings** in the output. **Why it matters:** it's the standard way to build CSV-like strings; `join('')` concatenates with no separator. **Common mistakes:** expecting no separator by default (it's a comma — pass `''` for none), or assuming `null`/`undefined` render as their words (they become empty).",
+    "example": "```js\nconsole.log(['a', 'b', 'c'].join());    // 'a,b,c' — default comma\nconsole.log(['a', 'b', 'c'].join(''));  // 'abc'\nconsole.log(['a', 'b', 'c'].join(' - ')); // 'a - b - c'\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.join()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join"
+      }
+    ]
+  },
+  "array-join-002": {
+    "explanation": "**The problem:** `[1, null, undefined, 2].join('-')` returns `'1---2'` (three dashes), not the words `null`/`undefined`. **Why:** `join()` converts elements to strings, but **`null` and `undefined` (and holes) become empty strings**. Four elements always produce **three** separators, so you get `1` + `-` + `''` + `-` + `''` + `-` + `2` = `'1---2'`. **Why it matters:** missing data silently collapses to empty strings while the separators remain, which can corrupt CSV-style output. **Common mistakes:** expecting `'1-null-undefined-2'`, or miscounting the separators — `n` elements give `n - 1` separators regardless of their values.",
+    "example": "```js\nconsole.log([1, null, undefined, 2].join('-')); // '1---2' — 4 elems, 3 separators; null/undefined → ''\nconsole.log([1, , 2].join('-'));                // '1--2' — holes too (3 elems, 2 separators)\nconsole.log([1, 2].join('-'));                  // '1-2'\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.join()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join"
+      }
+    ]
+  },
+  "array-keys-001": {
+    "explanation": "**The problem:** you want to iterate an array's **indices** lazily. **What `keys()` returns:** an **array iterator** yielding the numeric indices `0, 1, 2, …` (as numbers). **Why useful:** `for (const i of arr.keys())` gives index-only iteration, and unlike `Object.keys` it includes **every** index (holes too) and yields **numbers**, not string keys. **Companions:** `values()` (elements) and `entries()` (`[index, value]`). **Common mistakes:** confusing it with `Object.keys(arr)` (which returns **string** keys and **skips holes**), or expecting `keys()` to return an array (it's an iterator — spread to materialize).",
+    "example": "```js\nconst a = ['x', 'y', 'z'];\nconsole.log([...a.keys()]); // [0, 1, 2] — numeric indices\nfor (const i of a.keys()) console.log(i, a[i]); // 0 x | 1 y | 2 z\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.keys()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/keys"
+      }
+    ]
+  },
+  "array-keys-002": {
+    "explanation": "**The problem:** `Object.keys` and the array `keys()` iterator disagree on holes and value types. **`Object.keys(['a', , 'c'])` → `['0', '2']`:** it returns **string** keys of *existing* (own enumerable) properties, so it **skips the hole** at index 1. **`[...['a', , 'c'].keys()]` → `[0, 1, 2]`:** the array iterator yields **numeric** indices for **every** position `0..length-1`, including holes. **Why the difference:** `Object.keys` reflects actual properties; the array iterator reflects the index range. **Common mistakes:** assuming both skip holes or both return the same key type — they differ on both counts.",
+    "example": "```js\nconst sparse = ['a', , 'c']; // hole at index 1\nconsole.log(Object.keys(sparse));    // ['0', '2'] — string keys, hole skipped\nconsole.log([...sparse.keys()]);     // [0, 1, 2]  — numeric, includes the hole\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.keys()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/keys"
+      }
+    ]
+  },
+  "array-lastIndexOf-001": {
+    "explanation": "**The problem:** `['a','b','a','c'].lastIndexOf('a')` returns `2`. **Why:** `lastIndexOf()` searches **right-to-left** and returns the index of the **last** matching element — the rightmost `'a'` is at index 2. **The contrast:** `indexOf` returns the **first** match (index 0 here). **Comparison:** like `indexOf`, it uses strict `===`, so it can't find `NaN`. **Why it's useful:** finding the most recent occurrence. **Common mistakes:** expecting it to scan forward, confusing its result with `indexOf`, or assuming it can locate `NaN` (it can't).",
+    "example": "```js\nconst a = ['a', 'b', 'a', 'c'];\nconsole.log(a.lastIndexOf('a')); // 2 — rightmost 'a'\nconsole.log(a.indexOf('a'));     // 0 — leftmost, for contrast\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.lastIndexOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/lastIndexOf"
+      }
+    ]
+  },
+  "array-lastIndexOf-002": {
+    "explanation": "**The problem:** `[NaN].lastIndexOf(NaN)` returns `-1`. **Why:** like `indexOf`, `lastIndexOf()` uses **strict equality (`===`)**, and `NaN === NaN` is `false`, so `NaN` can never be matched — returning `-1` (not found). **Why it matters:** neither `indexOf` nor `lastIndexOf` can locate `NaN`; use `includes` for presence or `findLastIndex(Number.isNaN)` for the last index. **Common mistakes:** assuming `lastIndexOf` behaves like `includes` (SameValueZero) regarding `NaN` — it doesn't; the `indexOf`/`lastIndexOf` pair are the strict-equality outliers.",
+    "example": "```js\nconsole.log([NaN].lastIndexOf(NaN));        // -1 — === can't match NaN\nconsole.log([NaN].includes(NaN));           // true — use includes for presence\nconsole.log([1, NaN, NaN].findLastIndex(Number.isNaN)); // 2 — last NaN index\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.lastIndexOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/lastIndexOf"
+      }
+    ]
+  },
+  "array-map-001": {
+    "explanation": "**The problem:** `map()` and `forEach()` look similar but serve different goals. **`map()`:** runs the callback on each element and **returns a new array** of the callback's return values — for **transformation**. **`forEach()`:** runs the callback for **side effects** and returns **`undefined`** — nothing to chain. **Why it matters:** use `map` when you want a transformed array (and you can chain `.filter`/`.reduce`); use `forEach` when you just need to *do* something per element. **Common mistakes:** using `forEach` to build an array via `push` (use `map`), or using `map` purely for side effects and discarding the result (wasteful and misleading).",
+    "example": "```js\nconst nums = [1, 2, 3];\nconst doubled = nums.map((n) => n * 2);\nconsole.log(doubled); // [2, 4, 6] — new array\n\nconst out = nums.forEach((n) => n * 2);\nconsole.log(out); // undefined — forEach returns nothing\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.map()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map"
+      }
+    ]
+  },
+  "array-map-002": {
+    "explanation": "**The problem:** `['1','2','3'].map(parseInt)` gives `[1, NaN, NaN]`, not `[1, 2, 3]`. **Why:** `map` calls the callback with **three** arguments — `(value, index, array)` — and `parseInt` takes **two** — `(string, radix)`. So it runs `parseInt('1', 0)`, `parseInt('2', 1)`, `parseInt('3', 2)`. `radix 0` is treated as 10 → `1`; `radix 1` is invalid → `NaN`; `radix 2` (binary) can't parse `'3'` → `NaN`. **The fix:** wrap it — `map(s => parseInt(s, 10))` or `map(Number)`. **Common mistakes:** passing multi-arg built-ins directly to `map` (the index leaks in as an unexpected argument).",
+    "example": "```js\nconsole.log(['1', '2', '3'].map(parseInt));           // [1, NaN, NaN] — radix leak\nconsole.log(['1', '2', '3'].map((s) => parseInt(s, 10))); // [1, 2, 3]\nconsole.log(['1', '2', '3'].map(Number));             // [1, 2, 3]\n```",
+    "resources": [
+      {
+        "label": "MDN — map() (callback arguments)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map#parameters"
+      }
+    ]
+  },
+  "array-map-003": {
+    "explanation": "**The problem:** does `map()` change the original array? **The answer: no** — `map()` returns a **new array** and leaves the original intact (it's non-mutating). **The caveat:** if your callback **mutates the element objects** themselves (e.g. `obj.x = 1`), those mutations affect the shared objects because `map` copies **references**, not deep clones. So the array isn't replaced, but the objects inside can be changed. **Why it matters:** treat `map` as pure only if the callback is pure. **Common mistakes:** mutating objects inside a `map` callback and being surprised the originals changed, or assuming `map` deep-copies elements (it doesn't).",
+    "example": "```js\nconst nums = [1, 2, 3];\nconst out = nums.map((n) => n + 1);\nconsole.log(nums, out); // [1, 2, 3] [2, 3, 4] — original untouched\n\nconst objs = [{ v: 1 }];\nobjs.map((o) => { o.v = 99; return o; }); // callback mutates shared object\nconsole.log(objs[0].v); // 99 — references, not clones\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.map()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map"
+      }
+    ]
   }
 }

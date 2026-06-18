@@ -961,8 +961,8 @@
       "'1--2'",
       "'1-2'"
     ],
-    "answer": "'1--2'",
-    "explanation": "`null` and `undefined` are both converted to empty strings by `join()`. So the result is `'1' + '-' + '' + '-' + '' + '-' + '2'` = `'1--2'`. This differs from `String(null)` which gives `'null'`.",
+    "answer": "'1---2'",
+    "explanation": "`null` and `undefined` are both converted to empty strings by `join()`, but the separators remain. Four elements always produce three separators, so the result is `'1' + '-' + '' + '-' + '' + '-' + '2'` = `'1---2'`. This differs from `String(null)` which gives `'null'`.",
     "tags": [
       "array-methods",
       "join",
