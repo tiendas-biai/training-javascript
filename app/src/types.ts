@@ -41,6 +41,9 @@ export interface Progress {
   nextDue: number;
   lastReviewed: number | null;
   totalSeen: number;
+  // Personal "study this later" flag, toggled from the session header. Orthogonal
+  // to SM-2 state; undefined/absent means unflagged.
+  flagged?: boolean;
 }
 
 export type ProgressMap = Record<string, Progress>;

@@ -14,9 +14,11 @@ interface Props {
   previews: Record<Rating, string>;
   onGrade: (rating: Rating) => void;
   onExit: () => void;
+  flagged?: boolean;
+  onToggleFlag?: () => void;
 }
 
-export function MCQCard({ card, remaining, done, cardInfo, previews, onGrade, onExit }: Props) {
+export function MCQCard({ card, remaining, done, cardInfo, previews, onGrade, onExit, flagged, onToggleFlag }: Props) {
   const shuffled = useMemo(() => shuffleCopy(card.options), [card]);
   const [picked, setPicked] = useState<string | null>(null);
   const answered = picked !== null;
@@ -24,7 +26,7 @@ export function MCQCard({ card, remaining, done, cardInfo, previews, onGrade, on
 
   return (
     <div className="screen">
-      <SessionHeader remaining={remaining} done={done} onExit={onExit} />
+      <SessionHeader remaining={remaining} done={done} onExit={onExit} flagged={flagged} onToggleFlag={onToggleFlag} />
       <div className="card">
         <CardMeta card={card} cardInfo={cardInfo} />
         <div className="question-text"><RichText text={card.question} /></div>
