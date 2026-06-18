@@ -90,26 +90,18 @@ that aren't in the harness's types; verify the `render`/RTL usage and accept glo
 
 ## Status (update this as you go)
 
-**Done — 13 topics / 128 cards** (genuine content, examples compile clean):
-Components, JSX, State, Effects & Lifecycle, Props & Composition, Forms, Context, Refs,
-React DOM, Hooks, Performance, Typechecking, Virtual DOM. Also fixed 3 originally-broken examples
-(`react-comp-mcq-001`, `react-jsx-004`, `react-jsx-mcq-002`).
+**React — DONE: all 23 topics / 200 cards** have genuine content (problem → why → solution →
+mistakes) and the filler detector reports `0`. Also fixed 3 originally-broken examples
+(`react-comp-mcq-001`, `react-jsx-004`, `react-jsx-mcq-002`) and normalized 4 awkward originals.
 
-**Remaining — 10 topics / 72 cards (still placeholder filler):**
+**Verifier state for React:** 192 of 200 cards have examples; **all type-check clean except 8** that
+import uninstalled Redux packages (`@reduxjs/toolkit`, `react-redux`, `reselect`):
+`react-redux-005`, `react-rr-001/002/003/004/005`, `react-rr-mcq-001`, `react-rax-003`. Their only
+errors are `Cannot find module` + cascaded implicit-`any` — the examples are idiomatic and correct
+for a project with Redux installed (self-reviewed). The Redux *core* cards (reducers, actions, store,
+data flow, thunk mechanics) use plain-TS demos that **do** compile. Conceptual cards (RTK Query,
+sagas, when-to-use, Provider-missing, several Building/SSG/SSR cards) intentionally have no `example`.
 
-| Topic | Cards | Notes for the example |
-|---|---|---|
-| Code Reuse Patterns | 8 | HOCs, render props, custom hooks — pure React, examples compile |
-| Routing | 7 | `react-router-dom` v7 is installed — examples compile (use `MemoryRouter` in snippets) |
-| Redux | 8 | external lib (not installed) — self-review |
-| React Redux | 7 | external lib (not installed) — self-review |
-| Redux Async Flow | 7 | external lib (not installed) — self-review |
-| Security | 8 | mostly React/concept (XSS, `dangerouslySetInnerHTML`) — examples compile |
-| Static Site Rendering | 6 | Next.js/SSG concepts — often conceptual, example optional |
-| Server Rendering | 7 | `react-dom/server` installed; Next concepts conceptual |
-| Testing | 7 | `@testing-library/*` installed; Jest globals not typed in harness |
-| Building | 7 | Vite/bundler concepts — often conceptual, example optional |
-
-When all show `ok` in the detector above, the React bank is fully done. The same workflow applies
-to the other subjects (`javascript`, `typescript`, `node`, `aws`) whose deepdives files are still
-`{}` — use the matching prompt in `documents/prompts/` and `verify-deepdive-examples.mjs <subject>`.
+**Other subjects — not started:** `javascript`, `typescript`, `node`, `aws` deepdives files are
+still `{}`. Use the matching prompt in `documents/prompts/`, the same batch workflow, and
+`verify-deepdive-examples.mjs <subject>`. (JS/TS examples are ```ts``` snippets, not React `App`s.)

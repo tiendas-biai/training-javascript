@@ -36,6 +36,9 @@ await writeFile(join(OUT, 'tsconfig.json'), JSON.stringify({
     target: 'ES2022', lib: ['ES2022', 'DOM', 'DOM.Iterable'], module: 'ESNext',
     moduleResolution: 'bundler', jsx: 'react-jsx', strict: true, noEmit: true,
     skipLibCheck: true, esModuleInterop: true,
+    // Treat every snippet as its own module so import-free script examples
+    // (e.g. plain-TS reducer demos) don't collide on shared top-level names.
+    moduleDetection: 'force',
   },
   include: ['*.tsx'],
 }, null, 2));

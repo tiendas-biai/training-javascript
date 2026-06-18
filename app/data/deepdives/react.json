@@ -1598,152 +1598,209 @@
     ]
   },
   "react-rax-001": {
-    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Reducers must be **pure** (no side effects), but real apps need async work (API calls). Where does it go? **Middleware:** a layer that sits **between dispatching an action and the reducer**, able to intercept, transform, delay, or act on actions — for logging, crash reporting, and especially async. **Why async lives here:** since reducers can't do side effects, middleware (like redux-thunk) handles the API call and dispatches plain actions when it resolves. **The signature:** `store => next => action => …`. **Common mistakes:** doing fetches in reducers or components-only (losing centralization), or forgetting to call `next(action)` in custom middleware (which halts the chain).",
+    "example": "```ts\ntype Action = { type: string };\ntype MiniStore = { getState: () => unknown };\n\n// Logger middleware: intercepts every action, then passes it along.\nconst logger = (store: MiniStore) => (next: (a: Action) => Action) => (action: Action) => {\n  console.log('dispatching', action.type);\n  const result = next(action); // forward to the next middleware / reducer\n  console.log('next state', store.getState());\n  return result;\n};\n\nvoid logger;\n```",
     "resources": [
       {
-        "label": "react.dev — Redux Async Flow",
-        "url": "https://react.dev/learn"
+        "label": "Redux — Middleware",
+        "url": "https://redux.js.org/tutorials/fundamentals/part-4-store#middleware"
+      },
+      {
+        "label": "Redux — Async Logic and Data Fetching",
+        "url": "https://redux.js.org/tutorials/fundamentals/part-6-async-logic"
       }
     ]
   },
   "react-rax-002": {
-    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** You want an action that runs async logic and dispatches results over time, but actions must be plain objects. **A thunk:** an action creator that returns a **function** instead of an action object. The **thunk middleware** detects the function and calls it with `(dispatch, getState)`, so it can run async code (await a fetch) and `dispatch` real actions when things happen. **Why 'thunk':** it's a deferred computation — a function wrapping work to do later. **Why useful:** centralizes async flows in the Redux layer with access to dispatch and current state. **Common mistakes:** forgetting the thunk middleware (dispatching a function then errors), or putting too much component logic in thunks instead of using RTK Query for server data.",
+    "example": "```ts\ntype Dispatch = (a: { type: string; payload?: unknown }) => void;\n\n// Thunk: an action creator returning a function (dispatch, getState) => ...\nfunction loadUser(id: number) {\n  return async (dispatch: Dispatch) => {\n    dispatch({ type: 'user/pending' });\n    const res = await fetch(`/api/users/${id}`);\n    const user = await res.json();\n    dispatch({ type: 'user/fulfilled', payload: user });\n  };\n}\n\nvoid loadUser;\n```",
     "resources": [
       {
-        "label": "react.dev — Redux Async Flow",
-        "url": "https://react.dev/learn"
+        "label": "Redux — Writing Thunks",
+        "url": "https://redux.js.org/usage/writing-logic-thunks"
+      },
+      {
+        "label": "redux-thunk",
+        "url": "https://github.com/reduxjs/redux-thunk"
       }
     ]
   },
   "react-rax-mcq-001": {
-    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** What does the standard async-request lifecycle dispatch? **The answer:** three actions — **pending** (request started → show loading), **fulfilled** (succeeded → store data), and **rejected** (failed → store error). **Why three:** UI needs to represent all three states (loading/success/error), so each transition is its own action the reducer can handle. **Where you see these names:** RTK's `createAsyncThunk` auto-generates exactly `pending`/`fulfilled`/`rejected` action types. **Why the other options are wrong:** open/data/close and subscribe/next/complete are streaming/observable patterns; request/reducer/render aren't action types. **Common mistakes:** tracking only success (no loading/error UI), or representing the three states as separate booleans instead of one status field.",
+    "example": "```ts\ntype Status = 'idle' | 'pending' | 'fulfilled' | 'rejected';\ntype State = { status: Status; data: string | null; error: string | null };\n\nfunction reducer(state: State, action: { type: string; payload?: string }): State {\n  switch (action.type) {\n    case 'user/pending':   return { ...state, status: 'pending', error: null };\n    case 'user/fulfilled': return { status: 'fulfilled', data: action.payload ?? null, error: null };\n    case 'user/rejected':  return { ...state, status: 'rejected', error: action.payload ?? 'error' };\n    default: return state;\n  }\n}\nvoid reducer;\n```",
     "resources": [
       {
-        "label": "react.dev — Redux Async Flow",
-        "url": "https://react.dev/learn"
+        "label": "Redux Toolkit — createAsyncThunk lifecycle",
+        "url": "https://redux-toolkit.js.org/api/createAsyncThunk#promise-lifecycle-actions"
+      },
+      {
+        "label": "Redux — Async request states",
+        "url": "https://redux.js.org/tutorials/essentials/part-5-async-logic"
       }
     ]
   },
   "react-rax-003": {
-    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Writing the pending/fulfilled/rejected actions, their creators, and the thunk by hand is repetitive. **What `createAsyncThunk` does:** you give it a type-prefix string and an async function; it returns a **thunk** that automatically dispatches the `pending`/`fulfilled`/`rejected` actions around your async call (with the resolved value as the `fulfilled` payload, or the error as `rejected`). You handle those generated actions in a slice's **`extraReducers`** to update loading/data/error state. **Why:** removes async boilerplate and standardizes the lifecycle. **Common mistakes:** forgetting to handle the cases in `extraReducers`, not returning the value from the payload creator, or using it for cached server data where RTK Query fits better.",
+    "example": "```ts\n// Requires @reduxjs/toolkit\nimport { createAsyncThunk, createSlice } from '@reduxjs/toolkit';\n\nexport const fetchUser = createAsyncThunk('user/fetch', async (id: number) => {\n  const res = await fetch(`/api/users/${id}`);\n  return (await res.json()) as { name: string };\n});\n\nconst userSlice = createSlice({\n  name: 'user',\n  initialState: { name: '', loading: false },\n  reducers: {},\n  extraReducers: (builder) => {\n    builder\n      .addCase(fetchUser.pending, (s) => { s.loading = true; })\n      .addCase(fetchUser.fulfilled, (s, a) => { s.loading = false; s.name = a.payload.name; })\n      .addCase(fetchUser.rejected, (s) => { s.loading = false; });\n  },\n});\nexport default userSlice.reducer;\n```",
     "resources": [
       {
-        "label": "react.dev — Redux Async Flow",
-        "url": "https://react.dev/learn"
+        "label": "Redux Toolkit — createAsyncThunk",
+        "url": "https://redux-toolkit.js.org/api/createAsyncThunk"
+      },
+      {
+        "label": "Redux Toolkit — extraReducers",
+        "url": "https://redux-toolkit.js.org/api/createSlice#extrareducers"
       }
     ]
   },
   "react-rax-004": {
-    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Plain thunks still leave you hand-writing fetching, caching, loading/error state, dedup, and re-fetching for every endpoint — lots of repetitive reducer/thunk code for *server* data. **What RTK Query solves:** it manages **data fetching and caching declaratively**. You define endpoints once and it **auto-generates React hooks** (e.g. `useGetUserQuery`) that fetch, **cache**, **dedupe** identical requests, track **loading/error**, and **re-fetch**/invalidate when needed — so you rarely write thunks or reducers for API data at all. **Why it matters:** server state has different needs than client state; RTK Query (like React Query) handles caching/freshness for you. **Common mistakes:** putting server cache data in regular slices with manual thunks, or duplicating fetching logic across components.",
     "resources": [
       {
-        "label": "react.dev — Redux Async Flow",
-        "url": "https://react.dev/learn"
+        "label": "Redux Toolkit — RTK Query Overview",
+        "url": "https://redux-toolkit.js.org/rtk-query/overview"
+      },
+      {
+        "label": "RTK Query — Queries & auto-generated hooks",
+        "url": "https://redux-toolkit.js.org/rtk-query/usage/queries"
       }
     ]
   },
   "react-rax-005": {
-    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Two popular ways to handle Redux async — how do they differ in approach? **redux-thunk:** express async as **imperative** functions using promises/`async`-`await` — simple and great for most cases. **redux-saga:** express async as **generator functions** that `yield` **declarative effects** (`call`, `put`, `take`), with a middleware that interprets them. **Why sagas exist:** the declarative, interruptible generator model makes **complex** flows — cancellation, debouncing, racing, concurrency, retries, watching action streams — easier to express and **test** (you assert on yielded effect objects). **The trade-off:** sagas add a learning curve and boilerplate; thunks are simpler for ordinary requests. **Common mistakes:** adopting sagas for simple fetches (overkill), or stretching thunks for intricate concurrency where sagas shine.",
     "resources": [
       {
-        "label": "react.dev — Redux Async Flow",
-        "url": "https://react.dev/learn"
+        "label": "redux-saga — Documentation",
+        "url": "https://redux-saga.js.org/"
+      },
+      {
+        "label": "Redux — Thunks vs Sagas (async logic)",
+        "url": "https://redux.js.org/tutorials/fundamentals/part-6-async-logic#redux-async-data-flow"
       }
     ]
   },
   "react-rax-mcq-002": {
-    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Redux's `dispatch` only accepts plain action objects — so how does dispatching a *function* work? **What the thunk middleware does:** it inspects each dispatched value; if it's a **function**, the middleware **calls it with `(dispatch, getState)`** instead of forwarding it to the reducer. That function (the thunk) can then run async logic and dispatch real action objects over time. Plain objects pass straight through to the reducer as usual. **Why:** reducers must stay pure, so the function form gives async code a hook with access to dispatch and current state. **Why the other options are wrong:** it doesn't throw, serialize, or hand the function to the reducer. **Common mistakes:** dispatching a function without the thunk middleware installed (then it really does reach the reducer and errors).",
+    "example": "```ts\ntype Action = { type: string };\ntype Thunk = (dispatch: (a: Action) => void, getState: () => unknown) => void;\n\n// Minimal thunk middleware: if the dispatched value is a function, call it.\nconst thunk = (getState: () => unknown, baseDispatch: (a: Action) => void) =>\n  (value: Action | Thunk) => {\n    if (typeof value === 'function') return value(baseDispatch, getState); // call the thunk\n    return baseDispatch(value); // plain action -> reducer\n  };\n\nconst dispatch = thunk(() => ({}), (a) => console.log('to reducer:', a.type));\ndispatch((d) => d({ type: 'asyncDone' })); // logs \"to reducer: asyncDone\"\n```",
     "resources": [
       {
-        "label": "react.dev — Redux Async Flow",
-        "url": "https://react.dev/learn"
+        "label": "redux-thunk — source & how it works",
+        "url": "https://github.com/reduxjs/redux-thunk"
+      },
+      {
+        "label": "Redux — Writing Logic with Thunks",
+        "url": "https://redux.js.org/usage/writing-logic-thunks"
       }
     ]
   },
   "react-redux-001": {
-    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Shared, frequently-changing state spread across components gets hard to trace and debug. **Redux's three principles:** (1) **Single source of truth** — all state lives in one store object; (2) **State is read-only** — the only way to change it is to **dispatch an action** (a description of what happened); (3) **Changes are made by pure reducers** — `(state, action) => newState` functions with no side effects or mutation. **Why these constraints:** they make state changes explicit, replayable, and time-travel-debuggable. **Common mistakes:** mutating state directly, putting side effects in reducers, or scattering multiple stores. The example below is plain TS showing the core loop Redux formalizes.",
+    "example": "```ts\ntype Action = { type: 'increment' } | { type: 'decrement' };\n\n// Pure reducer: same inputs -> same output, no mutation.\nfunction counter(state: number, action: Action): number {\n  switch (action.type) {\n    case 'increment': return state + 1;\n    case 'decrement': return state - 1;\n  }\n}\n\nlet state = 0;                 // single source of truth\nstate = counter(state, { type: 'increment' }); // change only via an action\nstate = counter(state, { type: 'increment' });\nconsole.log(state); // 2\n```",
     "resources": [
       {
-        "label": "react.dev — Redux",
-        "url": "https://react.dev/learn"
+        "label": "Redux — Three Principles",
+        "url": "https://redux.js.org/understanding/thinking-in-redux/three-principles"
+      },
+      {
+        "label": "Redux — Core Concepts",
+        "url": "https://redux.js.org/tutorials/essentials/part-1-overview-concepts"
       }
     ]
   },
   "react-redux-002": {
-    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** State changes need to be describable, serializable, and loggable. **A Redux action:** a plain JS object describing *what happened*. The **only required field is `type`** (a string identifying the action); any extra data goes in other fields, conventionally a `payload`. **Why a plain object:** it's serializable (enables logging, time-travel, persistence) and decoupled from how state actually updates (that's the reducer's job). **Action creators** are small functions that build these objects to avoid typos. **Common mistakes:** omitting `type`, putting non-serializable values (functions, class instances) in actions, or doing work in the action instead of the reducer.",
+    "example": "```ts\ntype AddTodo = { type: 'todos/add'; payload: { id: number; text: string } };\n\n// Action creator: builds the plain action object (only `type` is required).\nfunction addTodo(text: string): AddTodo {\n  return { type: 'todos/add', payload: { id: Date.now(), text } };\n}\n\nconsole.log(addTodo('Learn Redux'));\n// { type: 'todos/add', payload: { id: 169…, text: 'Learn Redux' } }\n```",
     "resources": [
       {
-        "label": "react.dev — Redux",
-        "url": "https://react.dev/learn"
+        "label": "Redux — Actions",
+        "url": "https://redux.js.org/tutorials/fundamentals/part-2-concepts-data-flow#actions"
+      },
+      {
+        "label": "Redux — Action conventions (FSA)",
+        "url": "https://redux.js.org/style-guide/#write-action-types-as-domaineventname"
       }
     ]
   },
   "react-redux-mcq-001": {
-    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Which statement about a reducer is correct? **The answer:** it **must be pure** — given the same state and action it returns the same new state, with no side effects and **no mutation** of the existing state. **Why the others are wrong:** it must *not* mutate state in place (Redux detects changes by reference, so mutation breaks updates and time-travel); it must *not* do async/API calls (those belong in middleware/thunks); and it receives `(state, action)`, not the store instance. **Why purity matters:** predictability, testability, and features like time-travel debugging depend on it. **Common mistakes:** `state.x = 1; return state` (mutation), `await fetch()` inside a reducer, or returning `undefined`.",
+    "example": "```ts\ntype Action = { type: 'add'; text: string };\ntype State = { todos: string[] };\n\n// Pure: returns a NEW object, never mutates `state`.\nfunction reducer(state: State, action: Action): State {\n  switch (action.type) {\n    case 'add': return { todos: [...state.todos, action.text] };\n    default: return state;\n  }\n}\n\nconsole.log(reducer({ todos: ['a'] }, { type: 'add', text: 'b' })); // { todos: ['a','b'] }\n```",
     "resources": [
       {
-        "label": "react.dev — Redux",
-        "url": "https://react.dev/learn"
+        "label": "Redux — Reducers",
+        "url": "https://redux.js.org/tutorials/fundamentals/part-3-state-actions-reducers"
+      },
+      {
+        "label": "Redux — Reducers must be pure",
+        "url": "https://redux.js.org/style-guide/#do-not-mutate-state"
       }
     ]
   },
   "react-redux-003": {
-    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Reducers must update state **immutably** — why, and how without a library? **Why:** Redux (and React-Redux) detect changes by **reference equality** (`prevState !== nextState`). If you mutate the existing object/array in place, the reference stays the same, so Redux thinks nothing changed and skips updates. **How without a library:** return **new** objects/arrays using spreads — `{ ...state, count: state.count + 1 }`, `[...list, item]`, `list.map(...)`, `list.filter(...)` — never `push`/`splice`/direct assignment on existing state. **Note:** Redux Toolkit lets you 'mutate' safely via Immer (it produces a new object under the hood). **Common mistakes:** `state.items.push(x)`, sorting in place, or editing a nested object without copying each level.",
+    "example": "```ts\ntype State = { count: number; tags: string[] };\n\n// ✅ New objects/arrays via spread — references change, so updates are detected.\nfunction reducer(state: State, action: { type: 'inc' } | { type: 'addTag'; tag: string }): State {\n  switch (action.type) {\n    case 'inc': return { ...state, count: state.count + 1 };\n    case 'addTag': return { ...state, tags: [...state.tags, action.tag] };\n  }\n}\n\nconsole.log(reducer({ count: 0, tags: [] }, { type: 'addTag', tag: 'x' }));\n```",
     "resources": [
       {
-        "label": "react.dev — Redux",
-        "url": "https://react.dev/learn"
+        "label": "Redux — Immutable Update Patterns",
+        "url": "https://redux.js.org/usage/structuring-reducers/immutable-update-patterns"
+      },
+      {
+        "label": "Redux — Why immutability",
+        "url": "https://redux.js.org/faq/immutable-data"
       }
     ]
   },
   "react-redux-004": {
-    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** What does the store actually expose, and how does state change? **The store API:** `getState()` (read the current state), `dispatch(action)` (the only way to trigger a change), and `subscribe(listener)` (register a callback fired after each change). **How a change happens:** you `dispatch(action)` → the store runs the **root reducer** with `(currentState, action)` to compute the next state → it stores that → it notifies subscribers, which re-read state. **Why this shape:** a tiny, predictable surface that centralizes all updates. The example hand-rolls a minimal store to show the mechanism (real apps use `configureStore`). **Common mistakes:** mutating `getState()` result, or expecting `dispatch` to return the new state (it returns the action).",
+    "example": "```ts\ntype Action = { type: 'inc' };\n\nfunction createStore(reducer: (s: number, a: Action) => number, initial: number) {\n  let state = initial;\n  const listeners: Array<() => void> = [];\n  return {\n    getState: () => state,\n    dispatch: (action: Action) => { state = reducer(state, action); listeners.forEach(l => l()); },\n    subscribe: (l: () => void) => listeners.push(l),\n  };\n}\n\nconst store = createStore((s, a) => (a.type === 'inc' ? s + 1 : s), 0);\nstore.subscribe(() => console.log('state:', store.getState()));\nstore.dispatch({ type: 'inc' }); // logs \"state: 1\"\n```",
     "resources": [
       {
-        "label": "react.dev — Redux",
-        "url": "https://react.dev/learn"
+        "label": "Redux — Store",
+        "url": "https://redux.js.org/api/store"
+      },
+      {
+        "label": "Redux — configureStore (RTK)",
+        "url": "https://redux-toolkit.js.org/api/configureStore"
       }
     ]
   },
   "react-redux-005": {
-    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Hand-written Redux is boilerplate-heavy — action types, action creators, switch reducers, immutable updates, store setup. **What Redux Toolkit (RTK) solves:** it's the official, batteries-included way to write Redux with far less code and good defaults (`configureStore` wires up the store, devtools, and thunk middleware). **`createSlice`:** from one config object it **generates action creators and a reducer**, and lets you write 'mutating' update logic that's actually safe because RTK uses **Immer** to produce immutable updates under the hood. **Why use it:** less boilerplate, fewer mistakes, recommended by the Redux team. **Common mistakes:** still writing manual action constants/creators alongside RTK, or mutating outside Immer's `createSlice`/`createReducer` (where mutation is *not* safe).",
+    "example": "```ts\n// Requires @reduxjs/toolkit (npm i @reduxjs/toolkit)\nimport { createSlice, configureStore } from '@reduxjs/toolkit';\n\nconst counter = createSlice({\n  name: 'counter',\n  initialState: { value: 0 },\n  reducers: {\n    // 'Mutating' code is made immutable by Immer inside createSlice.\n    increment: (state) => { state.value += 1; },\n    addBy: (state, action: { payload: number }) => { state.value += action.payload; },\n  },\n});\n\nexport const { increment, addBy } = counter.actions;\nconst store = configureStore({ reducer: { counter: counter.reducer } });\nstore.dispatch(increment());\nstore.dispatch(addBy(5));\nconsole.log(store.getState().counter.value); // 6\n```",
     "resources": [
       {
-        "label": "react.dev — Redux",
-        "url": "https://react.dev/learn"
+        "label": "Redux Toolkit — createSlice",
+        "url": "https://redux-toolkit.js.org/api/createSlice"
+      },
+      {
+        "label": "Redux Toolkit — Quick Start",
+        "url": "https://redux-toolkit.js.org/tutorials/quick-start"
       }
     ]
   },
   "react-redux-mcq-002": {
-    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** When is Redux actually justified over plain React state/context? **The answer:** when you have **large amounts of app state needed in many places**, with **complex update logic** you want **centralized, predictable, and debuggable** (action log, time-travel, middleware). **Why the others are wrong:** 'more than one component' or 'fetching from an API' don't require Redux (lift state, use context, or a data library like React Query/RTK Query); and avoiding Hooks is never a reason. **The modern caveat:** with Hooks, Context, and server-state libraries, many apps don't need Redux at all. **Common mistakes:** adding Redux by default for small apps (overhead with little benefit), or using it for server cache state better handled by RTK Query/React Query.",
     "resources": [
       {
-        "label": "react.dev — Redux",
-        "url": "https://react.dev/learn"
+        "label": "Redux — When (and when not) to use Redux",
+        "url": "https://redux.js.org/faq/general#when-should-i-use-redux"
+      },
+      {
+        "label": "Redux — Should I use Redux?",
+        "url": "https://redux.js.org/tutorials/fundamentals/part-1-overview#why-should-i-use-redux"
       }
     ]
   },
   "react-redux-006": {
-    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Understanding Redux's strictly **one-way** data flow. **The cycle:** (1) the UI **dispatches** an action; (2) the store runs the **root reducer** with the current state + action; (3) the store **saves** the returned next state; (4) subscribed UI **re-reads** state and **re-renders**. Then it repeats. **Why one direction:** every change goes through the same predictable path (action → reducer → new state → UI), which makes the app easy to reason about, log, and debug. There are no back-channels where the UI mutates state directly. **Common mistakes:** mutating state outside reducers, dispatching during a reducer, or expecting the UI to change state without an action.",
+    "example": "```ts\ntype Action = { type: 'inc' };\n\nfunction createStore(reducer: (s: number, a: Action) => number, initial: number) {\n  let state = initial; const subs: Array<() => void> = [];\n  return {\n    getState: () => state,\n    dispatch: (a: Action) => { state = reducer(state, a); subs.forEach(f => f()); },\n    subscribe: (f: () => void) => subs.push(f),\n  };\n}\n\nconst store = createStore((s, a) => (a.type === 'inc' ? s + 1 : s), 0);\n// UI subscribes (would re-render); dispatch drives the one-way cycle.\nstore.subscribe(() => console.log('render with', store.getState()));\nstore.dispatch({ type: 'inc' }); // action -> reducer -> new state -> subscriber\n```",
     "resources": [
       {
-        "label": "react.dev — Redux",
-        "url": "https://react.dev/learn"
+        "label": "Redux — Data Flow",
+        "url": "https://redux.js.org/tutorials/fundamentals/part-2-concepts-data-flow#redux-application-data-flow"
+      },
+      {
+        "label": "Redux — One-way data flow",
+        "url": "https://redux.js.org/tutorials/essentials/part-1-overview-concepts#redux-application-data-flow"
       }
     ]
   },
@@ -1958,72 +2015,99 @@
     ]
   },
   "react-rr-001": {
-    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Components throughout the tree need access to the single store without prop-drilling it. **What `<Provider store={store}>` does:** it uses React context to make the Redux store available to **every** descendant, so React-Redux Hooks (`useSelector`, `useDispatch`) can reach it. You render it **once** near the root, wrapping your app. **Why:** it's the bridge between the React tree and the Redux store. **Common mistakes:** forgetting `<Provider>` (Hooks throw 'could not find store'), creating the store inside a component (recreates it every render — create it once at module scope), or nesting multiple Providers with different stores unintentionally.",
+    "example": "```tsx\n// Requires @reduxjs/toolkit + react-redux\nimport { Provider } from 'react-redux';\nimport { configureStore, createSlice } from '@reduxjs/toolkit';\n\nconst counter = createSlice({ name: 'counter', initialState: 0, reducers: {} });\nconst store = configureStore({ reducer: counter.reducer }); // created once, at module scope\n\nfunction Page() {\n  return <p>App has access to the store</p>;\n}\n\nexport default function App() {\n  return (\n    <Provider store={store}>\n      <Page />\n    </Provider>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — React Redux",
-        "url": "https://react.dev/learn"
+        "label": "React Redux — Provider",
+        "url": "https://react-redux.js.org/api/provider"
+      },
+      {
+        "label": "React Redux — Quick Start",
+        "url": "https://react-redux.js.org/tutorials/quick-start"
       }
     ]
   },
   "react-rr-002": {
-    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Reading store state inside a component and re-rendering when it changes. **What `useSelector(selector)` does:** runs your `selector(state)` to extract the slice you need, subscribes the component to the store, and re-renders it when the selector's **return value changes by reference equality (`===`)** after a dispatch. **Why select narrowly:** returning the smallest value you need (ideally a primitive) means fewer re-renders. **The reference-equality catch:** returning a *new* object/array each call always fails `===`, causing re-renders every dispatch (see the next card). **Common mistakes:** selecting the whole state, building new objects in the selector, or doing expensive derivation inline instead of with a memoized selector.",
+    "example": "```tsx\n// Requires react-redux + a configured store with state { counter: { value: number } }\nimport { useSelector } from 'react-redux';\n\ntype RootState = { counter: { value: number } };\n\nexport default function CounterValue() {\n  // Selects a primitive -> re-renders only when value actually changes.\n  const value = useSelector((state: RootState) => state.counter.value);\n  return <p>count: {value}</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — React Redux",
-        "url": "https://react.dev/learn"
+        "label": "React Redux — useSelector",
+        "url": "https://react-redux.js.org/api/hooks#useselector"
+      },
+      {
+        "label": "React Redux — useSelector performance",
+        "url": "https://react-redux.js.org/api/hooks#useselector-examples"
       }
     ]
   },
   "react-rr-mcq-001": {
-    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** `const { a, b } = useSelector(state => ({ a: state.a, b: state.b }))` triggers extra re-renders. **Why:** the selector returns a **new object literal every call**, so React-Redux's default `===` equality check always sees a 'different' value and re-renders on **every** dispatch — even when `a` and `b` are unchanged. **Why the other options are wrong:** destructuring is fine; `useSelector` can select objects (just not naively); it doesn't mutate the store. **The fixes:** select primitives in separate `useSelector` calls (`const a = useSelector(s => s.a)`), or pass `shallowEqual` as the second arg, or use a memoized `createSelector`. **Common mistakes:** returning fresh objects/arrays from selectors without `shallowEqual`/memoization.",
+    "example": "```tsx\n// Requires react-redux\nimport { useSelector, shallowEqual } from 'react-redux';\n\ntype RootState = { a: number; b: number };\n\nexport default function Pair() {\n  // ❌ useSelector(s => ({ a: s.a, b: s.b })) -> new object each time, re-renders always.\n  // ✅ Option 1: select primitives separately.\n  const a = useSelector((s: RootState) => s.a);\n  const b = useSelector((s: RootState) => s.b);\n  // ✅ Option 2: const { a, b } = useSelector(s => ({ a: s.a, b: s.b }), shallowEqual);\n  void shallowEqual;\n  return <p>{a} / {b}</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — React Redux",
-        "url": "https://react.dev/learn"
+        "label": "React Redux — useSelector equality",
+        "url": "https://react-redux.js.org/api/hooks#equality-comparisons-and-updates"
+      },
+      {
+        "label": "Reselect — Memoized selectors",
+        "url": "https://github.com/reduxjs/reselect"
       }
     ]
   },
   "react-rr-003": {
-    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Triggering state changes from a component. **What `useDispatch()` returns:** the store's `dispatch` function. You call it with an action — usually produced by an action creator (e.g. an RTK slice action) — to start the update cycle. **Pattern:** `const dispatch = useDispatch();` then `dispatch(increment())` in a handler. **Why a Hook:** it grabs `dispatch` from the `<Provider>` store via context. **Tips:** `dispatch` identity is stable, so it's safe in effect deps. With thunks, you can `dispatch(someThunk())` for async. **Common mistakes:** dispatching plain ad-hoc objects instead of action creators (typo-prone), calling `useDispatch()` outside a `<Provider>`, or dispatching during render instead of in handlers/effects.",
+    "example": "```tsx\n// Requires @reduxjs/toolkit + react-redux\nimport { useDispatch } from 'react-redux';\nimport { createSlice } from '@reduxjs/toolkit';\n\nconst counter = createSlice({\n  name: 'counter', initialState: 0,\n  reducers: { increment: (s) => s + 1 },\n});\nexport const { increment } = counter.actions;\n\nexport default function IncrementButton() {\n  const dispatch = useDispatch();\n  return <button onClick={() => dispatch(increment())}>+1</button>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — React Redux",
-        "url": "https://react.dev/learn"
+        "label": "React Redux — useDispatch",
+        "url": "https://react-redux.js.org/api/hooks#usedispatch"
+      },
+      {
+        "label": "Redux Toolkit — slice actions",
+        "url": "https://redux-toolkit.js.org/api/createSlice#return-value"
       }
     ]
   },
   "react-rr-004": {
-    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Before Hooks, how did components connect to the store? **The `connect` API:** `connect(mapStateToProps, mapDispatchToProps)(Component)` is a **HOC** that subscribes to the store and injects selected state and bound dispatchers as **props** into the wrapped component. **How it relates to Hooks:** `useSelector`/`useDispatch` are the modern replacement that do the same job **without** wrapping a component — flatter tree, less boilerplate, no `mapState`/`mapDispatch` ceremony. **When you'll still see `connect`:** legacy codebases and class components (Hooks need function components). **Common mistakes:** mixing both APIs needlessly, or over-using `connect` in new code where Hooks are simpler.",
+    "example": "```tsx\n// Requires react-redux\nimport { connect } from 'react-redux';\n\ntype RootState = { counter: number };\ntype Props = { count: number; onInc: () => void };\n\nfunction Counter({ count, onInc }: Props) {\n  return <button onClick={onInc}>count: {count}</button>;\n}\n\n// HOC injects store state + dispatchers as props (Hooks API replaces this).\nexport default connect(\n  (state: RootState) => ({ count: state.counter }),\n  (dispatch) => ({ onInc: () => dispatch({ type: 'increment' }) }),\n)(Counter);\n```",
     "resources": [
       {
-        "label": "react.dev — React Redux",
-        "url": "https://react.dev/learn"
+        "label": "React Redux — connect",
+        "url": "https://react-redux.js.org/api/connect"
+      },
+      {
+        "label": "React Redux — Hooks vs connect",
+        "url": "https://react-redux.js.org/api/hooks#hooks"
       }
     ]
   },
   "react-rr-005": {
-    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A selector that *derives* data (filters/sorts/aggregates) recomputes on every call and returns a new reference each time — causing wasted work and extra re-renders. **What `createSelector` (reselect) solves:** it builds **memoized** selectors that only recompute the derived result when their **input selectors' outputs change**, and otherwise return the **previous reference** — so `useSelector` sees `===` equality and skips re-rendering. **Why it matters:** cheap, stable derived data (e.g. `selectVisibleTodos`). **How:** pass input selectors + a result function; reselect caches the last result. **Common mistakes:** doing expensive derivation inline in `useSelector` (no memoization), or writing input selectors that themselves return new references (breaking the cache).",
+    "example": "```ts\n// Requires reselect (bundled with @reduxjs/toolkit as createSelector)\nimport { createSelector } from 'reselect';\n\ntype RootState = { todos: { text: string; done: boolean }[] };\n\nconst selectTodos = (state: RootState) => state.todos;\n\n// Recomputes only when state.todos changes; stable reference otherwise.\nconst selectActiveTodos = createSelector(\n  [selectTodos],\n  (todos) => todos.filter((t) => !t.done),\n);\n\nconsole.log(selectActiveTodos({ todos: [{ text: 'a', done: false }] }));\n```",
     "resources": [
       {
-        "label": "react.dev — React Redux",
-        "url": "https://react.dev/learn"
+        "label": "Reselect — createSelector",
+        "url": "https://github.com/reduxjs/reselect"
+      },
+      {
+        "label": "Redux — Deriving Data with Selectors",
+        "url": "https://redux.js.org/usage/deriving-data-selectors"
       }
     ]
   },
   "react-rr-mcq-002": {
-    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A component using `useSelector` throws **'could not find store'**. **The most likely cause:** the component isn't rendered **inside a `<Provider store={store}>`** — the Hooks read the store from React context that the Provider supplies, so without it there's nothing to read. **Why the other options are wrong:** `useSelector` doesn't take a store argument; `configureStore` (RTK) is the *recommended* way to create the store (not a cause of the error); and selectors don't need `createSelector` to function. **The fix:** wrap your app (or the subtree/test render) in `<Provider store={store}>`. **Common mistakes:** rendering a connected component in a test without a Provider wrapper, or placing the Provider below the component that needs it.",
     "resources": [
       {
-        "label": "react.dev — React Redux",
-        "url": "https://react.dev/learn"
+        "label": "React Redux — Provider",
+        "url": "https://react-redux.js.org/api/provider"
+      },
+      {
+        "label": "React Redux — Hooks require a Provider",
+        "url": "https://react-redux.js.org/api/hooks#using-hooks-in-a-react-redux-app"
       }
     ]
   },
