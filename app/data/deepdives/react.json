@@ -14,12 +14,16 @@
     ]
   },
   "react-comp-mcq-001": {
-    "explanation": "**The problem:** Understanding JSX syntax rules. **Why capitalization matters:** React has a naming convention—lowercase tags are HTML, capital tags are components. **Why it matters:** A lowercase component is treated as a literal HTML element the browser doesn't recognize. **Key insight:** It's not just style; it's how React's compiler distinguishes them. **Common mistakes:** Writing lowercase component names thinking the convention is optional.",
-    "example": "```tsx\nexport default function App() {\n  // Lowercase function — treated as HTML tag\n  function profile() {\n    return <h1>Profile</h1>;\n  }\n  \n  // This renders <profile /> as an unknown HTML element, never calls the function\n  return (\n    <div>\n      <profile />  {/* Wrong — treated as unknown HTML */}\n    </div>\n  );\n}\n\n// Correct version\nfunction Profile() {\n  return <h1>Profile</h1>;\n}\n\nfunction AppFixed() {\n  return <Profile />; // ✓ Capitalized, calls the component\n}\n```",
+    "explanation": "**The problem:** You define `function profile()` (lowercase) and render `<profile />`. **What happens:** React treats `<profile />` as an unknown *HTML tag*, not your component, so it renders an empty `<profile>` element and your function is never called. **Why:** JSX uses capitalization to decide — lowercase = built-in DOM tag (`div`, `span`), Capitalized = a component reference. **The fix:** name components with an initial capital (`Profile`) and render `<Profile />`. **Common mistakes:** lowercasing a component (silently renders nothing useful, no error), or capitalizing a DOM tag.",
+    "example": "```tsx\n// Capitalized: JSX treats <Profile/> as a component reference.\nfunction Profile() {\n  return <p>I am a real component.</p>;\n}\n\nexport default function App() {\n  // <profile/> (lowercase) would render an empty unknown HTML tag instead.\n  return <Profile />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — JSX Rules",
-        "url": "https://react.dev/learn/writing-markup-with-jsx#rules-of-jsx"
+        "label": "react.dev — Capitalization matters",
+        "url": "https://react.dev/learn/your-first-component#step-3-add-markup"
+      },
+      {
+        "label": "react.dev — Components: capitalized names",
+        "url": "https://react.dev/learn/writing-markup-with-jsx"
       }
     ]
   },
@@ -78,12 +82,16 @@
     ]
   },
   "react-jsx-mcq-002": {
-    "explanation": "**The problem:** Which attributes keep dashes in JSX? **The answer:** `aria-*` and `data-*`. **Why:** These are standard attribute names in HTML and must be exact. **All others:** Converted to camelCase because they become JS object keys. **Key insight:** `class` → `className`, `stroke-width` → `strokeWidth`, but `aria-label` and `data-id` stay as-is. **Remember:** The exception proves the camelCase rule.",
-    "example": "```tsx\nexport default function App() {\n  return (\n    <div\n      className=\"button\"  // camelCase\n      id=\"primary\"        // camelCase\n      aria-label=\"Close\"  // keeps dashes (accessibility)\n      data-id=\"123\"       // keeps dashes (custom data)\n      htmlFor=\"input\"     // camelCase (reserved word: for → htmlFor)\n    >\n      <input type=\"checkbox\" />\n    </div>\n  );\n}\n```",
+    "explanation": "**The problem:** Most JSX attributes are camelCase (`className`, `strokeWidth`, `tabIndex`), so which keep HTML-style dashes? **The answer:** `aria-*` and `data-*` attributes — they're written exactly as in HTML, with dashes. **Why:** JSX maps most attributes to DOM properties, which are camelCase in the DOM API; but `aria-*`/`data-*` have no camelCase DOM property form, so React keeps the dashed string names. **Common mistakes:** writing `class`/`for` (use `className`/`htmlFor`), camelCasing `data-id` into `dataId` (won't appear in the DOM), or assuming SVG attributes keep dashes (most become camelCase like `strokeWidth`).",
+    "example": "```tsx\nexport default function App() {\n  return (\n    <div>\n      {/* camelCase for DOM props, but aria-/data- keep their dashes */}\n      <button className=\"btn\" aria-label=\"Close\" data-testid=\"close-btn\">×</button>\n      <label htmlFor=\"email\">Email</label>\n      <input id=\"email\" />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — JSX Attributes",
-        "url": "https://react.dev/learn/writing-markup-with-jsx#applying-css-and-other-attributes-to-elements"
+        "label": "react.dev — aria-* and data-* attributes",
+        "url": "https://react.dev/reference/react-dom/components/common#common-props"
+      },
+      {
+        "label": "react.dev — JSX differs from HTML",
+        "url": "https://react.dev/learn/writing-markup-with-jsx#the-rules-of-jsx"
       }
     ]
   },
@@ -108,12 +116,16 @@
     ]
   },
   "react-jsx-004": {
-    "explanation": "**The problem:** Are JSX and React the same? **The answer:** No. **JSX:** A syntax extension for writing markup in JavaScript. **React:** A library for building UIs. **The relationship:** React and JSX are designed to work together, but they're separate. **Other uses:** Other libraries can consume JSX. React can run without JSX (via `createElement` calls). **Why they pair:** Because markup and logic belong together in components.",
-    "example": "```tsx\n// JSX version\nexport default function App() {\n  return <h1>Hello</h1>;\n}\n\n// Equivalent without JSX (using React.createElement)\nimport React from 'react';\n\nexport default function AppNoJsx() {\n  return React.createElement('h1', {}, 'Hello');\n}\n\n// Both produce the same output\n```",
+    "explanation": "**The problem:** People conflate JSX and React. **They're separate:** JSX is a *syntax extension* for JavaScript that looks like markup; React is a *UI library*. JSX compiles down to plain function calls (`React.createElement` / the `jsx` runtime), so the markup is just sugar for those calls. **Why they're used together:** JSX makes describing React element trees ergonomic, but you could use React without JSX (call the functions directly), and other libraries can use JSX too (it's tooling-level). **Common mistakes:** thinking the `<>` syntax is 'React itself', or that you must use JSX — it's optional, just very convenient.",
+    "example": "```tsx\nimport { createElement } from 'react';\n\nexport default function App() {\n  // These two are equivalent — JSX is sugar for createElement calls.\n  const withJsx = <p>Hello from JSX</p>;\n  const withoutJsx = createElement('p', null, 'Hello without JSX');\n  return (\n    <div>\n      {withJsx}\n      {withoutJsx}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — JSX",
-        "url": "https://react.dev/learn/writing-markup-with-jsx#jsx-is-not-html"
+        "label": "react.dev — Writing Markup with JSX",
+        "url": "https://react.dev/learn/writing-markup-with-jsx"
+      },
+      {
+        "label": "react.dev — createElement",
+        "url": "https://react.dev/reference/react/createElement"
       }
     ]
   },
@@ -940,62 +952,86 @@
     ]
   },
   "react-comp-004": {
-    "explanation": "Understanding components concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Defining a component *inside* another component's body looks convenient but breaks state. **Why it fails:** every render of the parent creates a brand-new function for the inner component. React identifies components by reference, so a new function each render means a new component *type* — it unmounts the old one and remounts the new, throwing away state, inputs, focus, and DOM. **The fix:** declare components at the **top level** of the module; pass data via props. **Common mistakes:** nesting a component to 'capture' a parent variable (pass it as a prop instead), and being confused why a child's state resets every keystroke.",
+    "example": "```tsx\nimport { useState } from 'react';\n\n// Defined at the TOP LEVEL — stable identity across renders.\nfunction Field({ label }: { label: string }) {\n  const [text, setText] = useState('');\n  return <label>{label}: <input value={text} onChange={e => setText(e.target.value)} /></label>;\n}\n\nexport default function App() {\n  const [n, setN] = useState(0);\n  // If Field were declared HERE, every click would remount it and wipe its text.\n  return (\n    <div>\n      <button onClick={() => setN(n + 1)}>re-render parent ({n})</button>\n      <Field label=\"keeps its text\" />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Components",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Never define a component inside another component",
+        "url": "https://react.dev/learn/your-first-component#nesting-and-organizing-components"
+      },
+      {
+        "label": "react.dev — Preserving and Resetting State",
+        "url": "https://react.dev/learn/preserving-and-resetting-state"
       }
     ]
   },
   "react-comp-mcq-002": {
-    "explanation": "Understanding components concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** How does a component render *nothing*? **The answer:** return `null` (and `false`/`undefined` also render nothing). **Why:** React treats `null`/`false`/`undefined` as 'render no output here' — useful for conditional UI. **What's different:** returning `''` renders an empty text node (technically nothing visible, but it *is* a node), and `0` renders the visible character `0`. **Common mistakes:** returning `0` from a `&&` guard and seeing a stray 0 on screen; or thinking `undefined` throws — it doesn't when returned, though *forgetting* a return (implicitly undefined) is usually a bug.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction Banner({ show }: { show: boolean }) {\n  if (!show) return null; // render nothing\n  return <p>🎉 Visible!</p>;\n}\n\nexport default function App() {\n  const [show, setShow] = useState(true);\n  return (\n    <div>\n      <button onClick={() => setShow(s => !s)}>toggle</button>\n      <Banner show={show} />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Components",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Returning null to render nothing",
+        "url": "https://react.dev/learn/conditional-rendering#conditionally-returning-nothing-with-null"
+      },
+      {
+        "label": "react.dev — Conditional Rendering",
+        "url": "https://react.dev/learn/conditional-rendering"
       }
     ]
   },
   "react-comp-005": {
-    "explanation": "Understanding components concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Unpredictable renders and broken optimizations come from impure components. **What 'pure' means:** given the same props and state, a component returns the same JSX and causes no side effects *during render* — it doesn't mutate variables/objects that existed before it rendered. **Why it matters:** React may call your component multiple times, skip or reorder renders, and (in Strict Mode) double-invoke it; purity makes all that safe and enables memoization. **Where side effects go:** event handlers (for interactions) and Effects (for syncing with the outside). **Common mistakes:** mutating a prop or module-level variable while rendering, or writing to the DOM during render.",
+    "example": "```tsx\nlet impureCounter = 0;\n\nexport default function App() {\n  // PURE: derives output only from inputs; no external mutation during render.\n  const items = [1, 2, 3];\n  const doubled = items.map(n => n * 2);\n\n  // ❌ Impure would be: impureCounter++ during render. Avoid it.\n  void impureCounter;\n\n  return <ul>{doubled.map(n => <li key={n}>{n}</li>)}</ul>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Components",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Keeping Components Pure",
+        "url": "https://react.dev/learn/keeping-components-pure"
+      },
+      {
+        "label": "react.dev — Why does React care about purity?",
+        "url": "https://react.dev/learn/keeping-components-pure#why-does-react-care-about-purity"
       }
     ]
   },
   "react-jsx-005": {
-    "explanation": "Understanding jsx concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** `{count && <Badge/>}` renders a stray `0` when `count` is 0. **Why:** `&&` returns its left operand when that operand is falsy. `0` is falsy, so the expression evaluates to the number `0` — and React *renders* numbers, so `0` appears on screen. (Only `null`/`false`/`undefined` render nothing.) **The fix:** make the left side a real boolean: `count > 0 && <Badge/>`, or use a ternary `count ? <Badge/> : null`. **Common mistakes:** guarding on `array.length &&` (renders `0` for empty arrays) or any numeric/possibly-empty-string value without converting to boolean first.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n  return (\n    <div>\n      <button onClick={() => setCount(c => c + 1)}>add</button>\n      {/* ❌ {count && ...} would print 0. ✅ compare to make it boolean: */}\n      {count > 0 && <span> you have {count}</span>}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — JSX",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Pitfall: don't put numbers on the left of &&",
+        "url": "https://react.dev/learn/conditional-rendering#logical-and-operator-"
+      },
+      {
+        "label": "react.dev — Conditional Rendering",
+        "url": "https://react.dev/learn/conditional-rendering"
       }
     ]
   },
   "react-jsx-006": {
-    "explanation": "Understanding jsx concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Relaying many props to a child by hand is tedious. **What spread does:** `<Button {...props} />` forwards every key of `props` as an individual attribute/prop. **The caution:** it hides exactly what's being passed, can forward unintended/unknown props onto DOM elements (React warns), and makes refactors riskier because usage is implicit. **When it's fine:** thin wrappers that genuinely pass through, or controlled design-system components. **Common mistakes:** spreading an entire props bag onto a native element and leaking invalid HTML attributes; prefer naming the props you mean or composing with `children`.",
+    "example": "```tsx\ntype ButtonProps = React.ComponentProps<'button'>;\n\nfunction Button(props: ButtonProps) {\n  // Forward all standard button props (onClick, disabled, type, ...).\n  return <button {...props} />;\n}\n\nexport default function App() {\n  return <Button onClick={() => alert('hi')} disabled={false}>Click</Button>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — JSX",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Forwarding props with JSX spread",
+        "url": "https://react.dev/learn/passing-props-to-a-component#forwarding-props-with-the-jsx-spread-syntax"
+      },
+      {
+        "label": "react.dev — ComponentProps typing",
+        "url": "https://react.dev/learn/typescript#typing-dom-events"
       }
     ]
   },
   "react-jsx-mcq-004": {
-    "explanation": "Understanding jsx concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** What goes between JSX curly braces `{ }`? **The answer:** any JavaScript **expression** — a value, variable, function call, ternary, `map`, template literal. **Why only expressions:** JSX compiles each `{...}` into an argument to `createElement`/`jsx`, which needs a *value*. **What you can't put there:** statements like `if`, `for`, `let` — they don't evaluate to a value. Use a ternary or `&&` for conditionals, `map` for loops, or compute beforehand and reference the result. **Common mistakes:** writing `{if (x) ...}` inside JSX (syntax error), or `{for (...)}` instead of `{items.map(...)}`.",
+    "example": "```tsx\nexport default function App() {\n  const user = { name: 'Ada', admin: true };\n  const items = ['a', 'b', 'c'];\n  return (\n    <div>\n      <h3>{`Hello, ${user.name}`}</h3>           {/* expression: template literal */}\n      <p>{user.admin ? 'Admin' : 'User'}</p>        {/* expression: ternary */}\n      <ul>{items.map(i => <li key={i}>{i}</li>)}</ul> {/* expression: map */}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — JSX",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — JavaScript in JSX with Curly Braces",
+        "url": "https://react.dev/learn/javascript-in-jsx-with-curly-braces"
+      },
+      {
+        "label": "react.dev — Where to use curly braces",
+        "url": "https://react.dev/learn/javascript-in-jsx-with-curly-braces#where-to-use-curly-braces"
       }
     ]
   },
