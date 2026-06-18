@@ -390,102 +390,142 @@
     ]
   },
   "react-props-001": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Components need to be configurable so the same component can render different data. **How props work:** the parent passes values as JSX attributes — `<Avatar person={obj} size={100} />` — and React calls the child with a single `props` object. The child reads them, usually by destructuring: `function Avatar({ person, size })`. **Why this design:** it makes data flow one-way and explicit (parent → child), so you can trace where any value came from. **Common mistakes:** forgetting the curly braces for non-string values (`size={100}`, not `size=100`), or trying to destructure a second argument — function components receive exactly one props object.",
+    "example": "```tsx\nfunction Avatar({ name, size }: { name: string; size: number }) {\n  return <span style={{ fontSize: size }}>{name}</span>;\n}\n\nexport default function App() {\n  // Pass props as attributes; non-strings go in {curly braces}.\n  return (\n    <div>\n      <Avatar name=\"Ada\" size={24} />\n      <Avatar name=\"Linus\" size={40} />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Passing Props to a Component",
+        "url": "https://react.dev/learn/passing-props-to-a-component"
+      },
+      {
+        "label": "react.dev — Passing JSX as children",
+        "url": "https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children"
       }
     ]
   },
   "react-props-mcq-001": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A default value `({ size = 100 })` applies only for `undefined`, not all 'empty' values. **Why:** destructuring defaults trigger when the value is *strictly* `undefined`. `<Avatar />` and `<Avatar size={undefined} />` both pass `undefined`, so both get 100. But `<Avatar size={null} />` passes `null` — which is *not* `undefined`, so the default is skipped and `size` is `null`. **Why it works this way:** JS default parameters are defined to check only `undefined`, keeping `null` as an explicit 'no value' you chose to pass. **Common mistakes:** assuming `null` falls back to the default, then hitting bugs when `null` flows through; if you want `null` to default too, use `??` inside the body.",
+    "example": "```tsx\nfunction Avatar({ size = 100 }: { size?: number | null }) {\n  return <p>size is {String(size)}</p>;\n}\n\nexport default function App() {\n  return (\n    <div>\n      <Avatar />                 {/* undefined -> 100 */}\n      <Avatar size={undefined} /> {/* undefined -> 100 */}\n      <Avatar size={null} />     {/* null -> stays null */}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Specifying a default value for a prop",
+        "url": "https://react.dev/learn/passing-props-to-a-component#specifying-a-default-value-for-a-prop"
+      },
+      {
+        "label": "MDN — Default parameters",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters"
       }
     ]
   },
   "react-props-002": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A wrapper component often just forwards all of its props to a child. **What spread does:** `<Avatar {...props} />` passes every key of `props` as an individual prop, so you don't list them by hand. **Why be cautious:** spreading hides which props are actually used, makes refactoring harder, and can forward unexpected attributes. **The better pattern when it piles up:** if many components only relay props, your tree probably wants `children`-based composition instead of pass-through. **Common mistakes:** spreading arbitrary props onto DOM elements (React warns about unknown attributes), or using spread to avoid thinking about the real component boundaries.",
+    "example": "```tsx\ntype Props = { name: string; size: number };\n\nfunction Avatar({ name, size }: Props) {\n  return <span style={{ fontSize: size }}>{name}</span>;\n}\n\nfunction Profile(props: Props) {\n  // Forward every prop without naming them — handy, but use sparingly.\n  return <Avatar {...props} />;\n}\n\nexport default function App() {\n  return <Profile name=\"Ada\" size={32} />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Forwarding props with the spread syntax",
+        "url": "https://react.dev/learn/passing-props-to-a-component#forwarding-props-with-the-jsx-spread-syntax"
+      },
+      {
+        "label": "react.dev — Extracting layout components",
+        "url": "https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children"
       }
     ]
   },
   "react-props-003": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A component like `Card` needs to wrap *arbitrary* content without knowing what it is. **What `children` is:** whatever JSX you nest between a component's tags arrives as the `children` prop. `<Card><Avatar /></Card>` gives `Card` an `Avatar` element as `children`, which it renders wherever it places `{children}`. **Why this matters:** it's React's core composition tool — containers (cards, modals, layouts) stay generic and reusable. **Common mistakes:** reinventing this with a named prop when `children` is the natural slot, or forgetting to actually render `{children}` so nested content silently disappears.",
+    "example": "```tsx\nimport type { ReactNode } from 'react';\n\nfunction Card({ children }: { children: ReactNode }) {\n  return <div style={{ border: '1px solid #ccc', padding: 12 }}>{children}</div>;\n}\n\nexport default function App() {\n  // Everything between <Card>...</Card> becomes Card's children.\n  return (\n    <Card>\n      <h3>Title</h3>\n      <p>Any nested JSX shows up here.</p>\n    </Card>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Passing JSX as children",
+        "url": "https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children"
+      },
+      {
+        "label": "react.dev — JSX as children (type ReactNode)",
+        "url": "https://react.dev/reference/react/Children"
       }
     ]
   },
   "react-props-mcq-002": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A child wants to change a value it got as a prop. **The React way:** it can't mutate the prop — instead it asks the parent to pass *different* props, typically by calling an event-handler prop that updates the parent's state. **Why:** props flow one way and are read-only; the owner of the data is the only one allowed to change it. Re-rendering the parent then sends fresh props down. **Why this is good:** data has a single source of truth, so the UI stays predictable. **Common mistakes:** copying the prop into local state (now two sources of truth that drift), mutating the prop object, or using a ref to override it.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction Stepper({ value, onIncrement }: { value: number; onIncrement: () => void }) {\n  // Child doesn't own value; it asks the parent to change it.\n  return <button onClick={onIncrement}>value: {value}</button>;\n}\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n  return <Stepper value={count} onIncrement={() => setCount(c => c + 1)} />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Props are read-only",
+        "url": "https://react.dev/learn/passing-props-to-a-component#recap"
+      },
+      {
+        "label": "react.dev — Sharing State Between Components",
+        "url": "https://react.dev/learn/sharing-state-between-components"
       }
     ]
   },
   "react-list-001": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** You have an array and want a UI element per item. **The pattern:** call `.map()` to turn the data array into an array of JSX elements, and embed that array in your markup — React renders each element. **The catch:** give each element a `key` so React can track items across renders. **Why map works:** JSX accepts arrays of elements, so `{items.map(...)}` renders them in order. **Common mistakes:** forgetting `key` (React warns and reconciliation breaks on reorder), using `map` when you meant `forEach` (which returns nothing), or putting non-unique keys.",
+    "example": "```tsx\nexport default function App() {\n  const people = [\n    { id: 1, name: 'Ada' },\n    { id: 2, name: 'Linus' },\n    { id: 3, name: 'Grace' },\n  ];\n  return (\n    <ul>\n      {people.map(person => (\n        <li key={person.id}>{person.name}</li>\n      ))}\n    </ul>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Rendering Lists",
+        "url": "https://react.dev/learn/rendering-lists"
+      },
+      {
+        "label": "react.dev — Keeping list items in order with key",
+        "url": "https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key"
       }
     ]
   },
   "react-list-mcq-001": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Why does React insist on a `key` for list items? **The answer:** keys let React match each rendered item to the same item across renders, so when the list changes — insert, delete, reorder — it can move/keep the right DOM nodes and component state instead of rebuilding everything. **Why it matters:** without stable identity, React falls back to position, and per-item state (input text, focus, animation) gets attached to the wrong row. **Common misconceptions:** keys are *not* passed to the child as a prop, *not* for SEO, and *not* merely to silence a warning — they're the identity React uses for reconciliation.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [items, setItems] = useState([{ id: 'a', t: 'A' }, { id: 'b', t: 'B' }]);\n  // Stable id keys keep each row's identity when we prepend a new item.\n  const prepend = () =>\n    setItems(list => [{ id: crypto.randomUUID(), t: 'new' }, ...list]);\n  return (\n    <div>\n      <button onClick={prepend}>prepend</button>\n      <ul>{items.map(i => <li key={i.id}>{i.t}</li>)}</ul>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Why does React need keys?",
+        "url": "https://react.dev/learn/rendering-lists#why-does-react-need-keys"
+      },
+      {
+        "label": "react.dev — Preserving and Resetting State",
+        "url": "https://react.dev/learn/preserving-and-resetting-state"
       }
     ]
   },
   "react-list-002": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Picking the wrong key source causes subtle state bugs. **The rules:** keys must be **unique among siblings** and **stable across renders** — the same item always gets the same key. **Where they come from:** database IDs for server data; for locally created items, generate an ID once at creation time (a counter or `crypto.randomUUID()`) and store it with the item. **What to avoid:** generating keys during render (`key={Math.random()}` remounts every item every render) and using the array index when the list can reorder or change length. **Common mistakes:** treating keys as throwaway, or deriving them from mutable fields like the item's text.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [todos, setTodos] = useState<{ id: string; text: string }[]>([]);\n  // ID generated ONCE at creation, then stable forever.\n  const add = () =>\n    setTodos(list => [...list, { id: crypto.randomUUID(), text: `todo ${list.length + 1}` }]);\n  return (\n    <div>\n      <button onClick={add}>add</button>\n      <ul>{todos.map(t => <li key={t.id}>{t.text}</li>)}</ul>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Rules of keys",
+        "url": "https://react.dev/learn/rendering-lists#rules-of-keys"
+      },
+      {
+        "label": "react.dev — Where to get your key",
+        "url": "https://react.dev/learn/rendering-lists#where-to-get-your-key"
       }
     ]
   },
   "react-list-mcq-002": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Using `key={index}` on a reorderable list. After typing into the first row's input and sorting, the typed text **stays in the first row** even though a different todo now sits there. **Why:** the input's state is keyed by index, and index `0` is still index `0` after sorting — React thinks it's the 'same' element and keeps its DOM/state, while the *data* underneath swapped. So state and data desync. **The fix:** key by a stable item ID, not the index. **Common mistakes:** assuming index keys are fine because they're unique (they are unique, but not *stable* per item), and only noticing the bug once items move.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [todos, setTodos] = useState([\n    { id: 'a', label: 'A' },\n    { id: 'b', label: 'B' },\n  ]);\n  const reverse = () => setTodos(t => [...t].reverse());\n  return (\n    <div>\n      <button onClick={reverse}>reverse</button>\n      {/* key={todo.id} keeps each input's text with its todo across sorts */}\n      {todos.map(todo => (\n        <div key={todo.id}>\n          {todo.label}: <input placeholder={`type for ${todo.label}`} />\n        </div>\n      ))}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Pitfall: index as a key",
+        "url": "https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key"
+      },
+      {
+        "label": "react.dev — Resetting state with a key",
+        "url": "https://react.dev/learn/preserving-and-resetting-state#resetting-state-with-a-key"
       }
     ]
   },
   "react-props-004": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** If props are immutable, how can a component's props 'change'? **The answer:** the props object isn't mutated — instead the parent re-renders and hands the child a *brand-new* props object. Over time the child sees a sequence of immutable snapshots. **Why this model:** it keeps data flow predictable — a child never edits its inputs; new data always arrives top-down. **The trigger:** the parent's state changes → parent re-renders → child receives different props → child re-renders. **Common mistakes:** trying to mutate `props.x` to 'update' it (React won't react and it breaks the one-way flow), or storing props in state to make them 'mutable'.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction Clock({ time }: { time: string }) {\n  return <p>{time}</p>; // never mutates the prop; just renders the latest one\n}\n\nexport default function App() {\n  const [time, setTime] = useState(new Date().toLocaleTimeString());\n  // Each click re-renders App and passes a NEW time prop down.\n  return (\n    <div>\n      <button onClick={() => setTime(new Date().toLocaleTimeString())}>tick</button>\n      <Clock time={time} />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — How props change over time",
+        "url": "https://react.dev/learn/passing-props-to-a-component#how-props-change-over-time"
+      },
+      {
+        "label": "react.dev — State as a Snapshot",
+        "url": "https://react.dev/learn/state-as-a-snapshot"
       }
     ]
   },
@@ -1004,42 +1044,58 @@
     ]
   },
   "react-props-005": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A prop is optional and you want a sensible fallback. **The idiomatic way:** give it a default in the destructuring — `function Avatar({ size = 40 })`. If the caller omits `size` or passes `undefined`, it becomes `40`. **Why here:** defaults at the destructuring site are concise and visible right where you read the prop. **Important nuance:** the default fires only for `undefined`, not for `null` or other falsy values like `0` or `''`. **Common mistakes:** expecting `null`/`0`/`''` to fall back (they won't), or putting defaults in the body with `||` which wrongly overrides legitimate falsy values like `0`.",
+    "example": "```tsx\nfunction Avatar({ name, size = 40 }: { name: string; size?: number }) {\n  return <span style={{ fontSize: size }}>{name}</span>;\n}\n\nexport default function App() {\n  return (\n    <div>\n      <Avatar name=\"default size\" />     {/* size -> 40 */}\n      <Avatar name=\"big\" size={72} />     {/* size -> 72 */}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Specifying a default value for a prop",
+        "url": "https://react.dev/learn/passing-props-to-a-component#specifying-a-default-value-for-a-prop"
+      },
+      {
+        "label": "MDN — Default parameters",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters"
       }
     ]
   },
   "react-props-mcq-003": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Can a component modify the props it receives? **The answer: no — props are read-only.** To change displayed data, the component that *owns* it updates its own state and passes new props down. **Why React enforces this:** one-way data flow means each value has a single owner; if children could mutate props, you'd lose track of where data changes, and React wouldn't know to re-render. **No exceptions:** object props aren't special (mutating them is a bug that skips re-renders), and `useEffect` doesn't make props writable. **Common mistakes:** mutating an object/array prop in place, or believing the parent will 'see' such a change.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {\n  // Read-only: it reports intent up, it doesn't change `on` itself.\n  return <button onClick={onToggle}>{on ? 'ON' : 'OFF'}</button>;\n}\n\nexport default function App() {\n  const [on, setOn] = useState(false);\n  return <Toggle on={on} onToggle={() => setOn(o => !o)} />;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Props are read-only snapshots in time",
+        "url": "https://react.dev/learn/passing-props-to-a-component#how-props-change-over-time"
+      },
+      {
+        "label": "react.dev — Keeping components pure",
+        "url": "https://react.dev/learn/keeping-components-pure"
       }
     ]
   },
   "react-props-006": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A layout component needs *several* distinct content areas (header, body, footer), not just one. **The two tools:** `children` is the default slot for whatever is nested between the tags; **named props** (`header={<H/>}`) act as additional, explicit slots. **When to use which:** one main content area → `children`; multiple labeled regions → named props (a 'slots' pattern). Both pass JSX, both are valid composition. **Why named slots help:** they make the intended structure obvious and let the parent place each piece independently. **Common mistakes:** stuffing everything into `children` and parsing it, or overusing named slots when a single `children` would read more cleanly.",
+    "example": "```tsx\nimport type { ReactNode } from 'react';\n\nfunction Panel({ header, children }: { header: ReactNode; children: ReactNode }) {\n  return (\n    <section style={{ border: '1px solid #ccc' }}>\n      <div style={{ fontWeight: 'bold' }}>{header}</div>\n      <div>{children}</div>\n    </section>\n  );\n}\n\nexport default function App() {\n  return (\n    <Panel header={<span>Settings</span>}>\n      <p>Body content goes in children.</p>\n    </Panel>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Passing JSX as children",
+        "url": "https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children"
+      },
+      {
+        "label": "react.dev — Extracting components / composition",
+        "url": "https://react.dev/learn/your-first-component#nesting-and-organizing-components"
       }
     ]
   },
   "react-list-003": {
-    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Two common misconceptions about keys. **Uniqueness scope:** keys only need to be unique **among siblings** in the same list — two different lists can reuse the same key values without conflict. They do *not* need to be globally unique across the app. **Access:** `key` is a reserved hint for React's reconciler and is **not** passed to your component as a prop — reading `props.key` gives `undefined`. If the child needs that value, pass it again under a different name (e.g. `id={item.id}`). **Common mistakes:** trying to read `props.key`, or over-engineering globally-unique keys when sibling-uniqueness suffices.",
+    "example": "```tsx\nfunction Item({ id, label }: { id: string; label: string }) {\n  // Note: we pass `id` explicitly — `key` would NOT be readable here.\n  return <li>#{id}: {label}</li>;\n}\n\nexport default function App() {\n  const items = [{ id: 'x', label: 'one' }, { id: 'y', label: 'two' }];\n  return <ul>{items.map(i => <Item key={i.id} id={i.id} label={i.label} />)}</ul>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Props & Composition",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Rules of keys",
+        "url": "https://react.dev/learn/rendering-lists#rules-of-keys"
+      },
+      {
+        "label": "react.dev — Pitfall: key is not passed as a prop",
+        "url": "https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key"
       }
     ]
   },
