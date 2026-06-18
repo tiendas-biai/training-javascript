@@ -138,82 +138,114 @@
     ]
   },
   "react-state-mcq-001": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Hooks have no name or key — `useState` doesn't know *which* piece of state you mean. **Why it works the way it does:** React stores Hook state in an ordered list per component and relies on the call order being identical on every render to line up each call with its slot. **Why the rule exists:** If you call a Hook inside an `if`/loop/nested function, the order can change between renders, so render #2's `useState` reads render #1's *other* state — silent corruption. **Common mistakes:** Early-returning before a Hook, wrapping `useState` in a condition, or calling Hooks in a callback. Always call them unconditionally at the top; put the condition *inside* the Hook or branch on the value afterward.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  // Both Hooks are always called, in the same order, every render.\n  const [count, setCount] = useState(0);\n  const [on, setOn] = useState(false);\n\n  // Branch on the VALUE, not around the Hook call.\n  const label = on ? `count is ${count}` : 'hidden';\n\n  return (\n    <div>\n      <button onClick={() => setCount(count + 1)}>+1</button>\n      <button onClick={() => setOn(!on)}>toggle</button>\n      <p>{label}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Rules of Hooks",
+        "url": "https://react.dev/reference/rules/rules-of-hooks"
+      },
+      {
+        "label": "react.dev — useState",
+        "url": "https://react.dev/reference/react/useState"
       }
     ]
   },
   "react-state-003": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** It looks like two `<Gallery />` tags rendered from the same function might share one `index`. **Why they don't:** State lives in React's tree keyed by the component's *position*, not in the function itself. Each rendered instance gets its own independent state cell. **Why this is the right model:** Components are reusable precisely because each placement is self-contained — like calling a function twice gives two separate sets of locals. **Common mistakes:** Expecting a module-level variable to act as shared state (it leaks across instances and won't trigger re-renders), or assuming sibling components stay in sync automatically. To truly share state, lift it to a common parent and pass it down.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(count + 1)}>count: {count}</button>;\n}\n\nexport default function App() {\n  // Two instances — each keeps its own count, fully independent.\n  return (\n    <div>\n      <Counter />\n      <Counter />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — State Is Isolated and Private",
+        "url": "https://react.dev/learn/state-a-components-memory#state-is-isolated-and-private"
+      },
+      {
+        "label": "react.dev — Sharing State Between Components",
+        "url": "https://react.dev/learn/sharing-state-between-components"
       }
     ]
   },
   "react-state-mcq-002": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Three `setNumber(number + 1)` calls in one handler, yet the result is `1`, not `3`. **Why it happens:** `number` is a constant *snapshot* for this render — it's `0` in all three calls. So you queue `set 0+1`, `set 0+1`, `set 0+1`; React keeps the last, and the next render shows `1`. **Why React does this:** State is fixed per render so your UI is a predictable function of that render's values. **Common mistakes:** Believing each `set` immediately mutates `number`. To accumulate within one handler, use updater functions: `setNumber(n => n + 1)` three times reads the latest *queued* value and yields `3`.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [n, setN] = useState(0);\n  return (\n    <div>\n      <p>n = {n}</p>\n      {/* Reads the snapshot 0 each time -> ends at 1 */}\n      <button onClick={() => { setN(n + 1); setN(n + 1); setN(n + 1); }}>+1 x3 (snapshot)</button>\n      {/* Reads the latest queued value -> ends at +3 */}\n      <button onClick={() => { setN(p => p + 1); setN(p => p + 1); setN(p => p + 1); }}>+1 x3 (updater)</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — State as a Snapshot",
+        "url": "https://react.dev/learn/state-as-a-snapshot"
+      },
+      {
+        "label": "react.dev — Queueing a Series of State Updates",
+        "url": "https://react.dev/learn/queueing-a-series-of-state-updates"
       }
     ]
   },
   "react-state-004": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** An `alert` scheduled for 3 seconds later shows `0` even though the component already re-rendered with `5`. **Why:** The handler closed over *this* render's `number` (which was `0`). A render's state values are frozen constants; the `setTimeout` callback captured that constant, and re-rendering creates a *new* closure with a new `number` — it doesn't reach back and change the old one. **Why it matters:** This is why event handlers and async callbacks see 'stale' values — they see the snapshot from the render that created them. **Common mistakes:** Expecting async callbacks to read 'current' state. To read the latest value, use a ref, or compute from the updater's argument.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [number, setNumber] = useState(0);\n  function handleClick() {\n    setNumber(number + 5);\n    // Captures THIS render's number (0); fires after re-render but still alerts 0.\n    setTimeout(() => alert(number), 2000);\n  }\n  return (\n    <div>\n      <p>number = {number}</p>\n      <button onClick={handleClick}>+5 then alert in 2s</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — State and Time",
+        "url": "https://react.dev/learn/state-as-a-snapshot#state-over-time"
+      },
+      {
+        "label": "react.dev — Referencing Values with Refs",
+        "url": "https://react.dev/learn/referencing-values-with-refs"
       }
     ]
   },
   "react-state-005": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Updating state several times in one event, or basing the next value on the current one, breaks when you pass a plain value because that value is a stale snapshot. **Why an updater fixes it:** `setNumber(n => n + 1)` hands React a *recipe*. React calls each queued updater in order, passing the result of the previous one — so they compose instead of overwriting. **Why prefer it:** It's the only reliable way to read the latest pending state inside a single render's handler. **Common mistakes:** Mutating inside the updater (it must be pure and just return the next value), or mixing a stale `setNumber(number + 1)` with updaters and expecting them to add up.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n  // Each updater sees the previous queued value, so all three apply.\n  const tripleIncrement = () => {\n    setCount(c => c + 1);\n    setCount(c => c + 1);\n    setCount(c => c + 1);\n  };\n  return (\n    <div>\n      <p>count = {count}</p>\n      <button onClick={tripleIncrement}>+3</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Updating state based on previous state",
+        "url": "https://react.dev/reference/react/useState#updating-state-based-on-the-previous-state"
+      },
+      {
+        "label": "react.dev — Queueing a Series of State Updates",
+        "url": "https://react.dev/learn/queueing-a-series-of-state-updates"
       }
     ]
   },
   "react-state-mcq-003": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A mix of value-setters and an updater — `setNumber(number + 5)`, `setNumber(n => n + 1)`, `setNumber(42)` — resolves to `42`. **Why:** React processes the queue in order. `number+5` → 5; the updater → 6; then `42` *replaces* whatever was queued. A plain value ignores prior queued state entirely. **Why this is consistent:** Each queue entry is either 'replace with this value' or 'compute from previous'; the last replacement wins. **Common mistakes:** Assuming the final `42` adds to the running total, or that updaters always 'win'. The last plain value clobbers everything before it.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [number, setNumber] = useState(0);\n  function run() {\n    setNumber(number + 5); // queue: replace with 5\n    setNumber(n => n + 1); // queue: 5 -> 6\n    setNumber(42);         // queue: replace with 42 (wins)\n  }\n  return (\n    <div>\n      <p>number = {number}</p>\n      <button onClick={run}>run</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — What happens if you update state after replacing it",
+        "url": "https://react.dev/learn/queueing-a-series-of-state-updates#what-happens-if-you-update-state-after-replacing-it"
+      },
+      {
+        "label": "react.dev — useState",
+        "url": "https://react.dev/reference/react/useState"
       }
     ]
   },
   "react-state-006": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Calling `set` three times could mean three re-renders — slow and visually janky. **What batching does:** React waits until *all* code in the event handler finishes, then processes the queued updates and re-renders **once**. **Why it works:** State is a snapshot per render, so collecting updates and applying them together is safe and avoids rendering with half-applied state. Since React 18, batching also covers timeouts, promises, and native handlers ('automatic batching'). **Common mistakes:** Expecting the DOM/state to update synchronously *between* two `set` calls in the same handler — it won't; you only see the result on the next render.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [a, setA] = useState(0);\n  const [b, setB] = useState(0);\n  let renders = 0;\n  renders++; // increments once per render — batching keeps it to one per click\n  function bump() {\n    setA(x => x + 1);\n    setB(x => x + 1); // both updates -> a single re-render\n  }\n  return (\n    <div>\n      <p>a={a} b={b}</p>\n      <p>render count this mount cycle: {renders}</p>\n      <button onClick={bump}>bump both</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Batching (Queueing State Updates)",
+        "url": "https://react.dev/learn/queueing-a-series-of-state-updates#react-batches-state-updates"
+      },
+      {
+        "label": "React 18 — Automatic batching",
+        "url": "https://react.dev/blog/2022/03/29/react-v18#new-feature-automatic-batching"
       }
     ]
   },
   "react-state-007": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Reasoning about what a handler 'sees' gets confusing when you think of state as a live variable. **The substitution method:** For a given render, mentally replace every state variable with its literal value for that render. If `number` is `0`, then `setNumber(number + 1)` literally *is* `setNumber(0 + 1)` everywhere in that render's code, including inside callbacks. **Why it works:** State values are constants captured by the render's closures — there are no live references to 'update'. **Common mistakes:** Reading `number` after a `set` call and expecting the new value; within the same render it's still the old literal.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [number, setNumber] = useState(0);\n  function handleClick() {\n    // For this render number === 0, so substitute it literally:\n    setNumber(number + 1); // setNumber(0 + 1)\n    console.log(number);   // logs 0 — still the snapshot, not 1\n  }\n  return (\n    <div>\n      <p>number = {number}</p>\n      <button onClick={handleClick}>+1</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — State as a Snapshot",
+        "url": "https://react.dev/learn/state-as-a-snapshot"
+      },
+      {
+        "label": "react.dev — Rendering takes a snapshot in time",
+        "url": "https://react.dev/learn/state-as-a-snapshot#rendering-takes-a-snapshot-in-time"
       }
     ]
   },
@@ -848,42 +880,58 @@
     ]
   },
   "react-state-008": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** `setCount(count + 1)` can use a stale `count` when updates pile up in one event or run inside async callbacks. **Why the updater form helps:** `setCount(c => c + 1)` is always handed the latest *pending* state by React, so chained or deferred updates compose correctly instead of all reading the same snapshot. **Rule of thumb:** If the next value depends on the previous value, use the updater. **Common mistakes:** Using the value form inside loops/timeouts and losing increments, or putting side effects in the updater — it must be pure and only return the next state.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n  // Three async ticks: updater form survives stale snapshots.\n  function bumpLater() {\n    for (let i = 0; i < 3; i++) {\n      setTimeout(() => setCount(c => c + 1), 100 * i);\n    }\n  }\n  return (\n    <div>\n      <p>count = {count}</p>\n      <button onClick={bumpLater}>+3 (staggered)</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Updating state based on previous state",
+        "url": "https://react.dev/reference/react/useState#updating-state-based-on-the-previous-state"
+      },
+      {
+        "label": "react.dev — Is using an updater always preferred?",
+        "url": "https://react.dev/learn/queueing-a-series-of-state-updates#is-using-an-updater-always-preferred"
       }
     ]
   },
   "react-state-009": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** `useState(expensiveInit())` runs `expensiveInit()` on **every** render, even though React only uses its return value once. **Why:** You're calling the function and passing its *result*; JS evaluates that argument every render. **The fix:** Pass the function itself — `useState(expensiveInit)` or `useState(() => expensiveInit())`. React calls it only during the initial render (lazy initialization). **Common mistakes:** Writing `useState(() => expensiveInit)` (returns the function, not its result), or reaching for lazy init for cheap initializers where it adds noise for no gain.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nfunction createInitialItems() {\n  console.log('computing initial items'); // logs once, not every render\n  return Array.from({ length: 5 }, (_, i) => `item ${i}`);\n}\n\nexport default function App() {\n  const [items] = useState(createInitialItems); // pass the function, don't call it\n  const [, force] = useState(0);\n  return (\n    <div>\n      <button onClick={() => force(n => n + 1)}>re-render</button>\n      <ul>{items.map(it => <li key={it}>{it}</li>)}</ul>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Avoiding recreating the initial state",
+        "url": "https://react.dev/reference/react/useState#avoiding-recreating-the-initial-state"
+      },
+      {
+        "label": "react.dev — useState parameters",
+        "url": "https://react.dev/reference/react/useState#parameters"
       }
     ]
   },
   "react-state-mcq-004": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Updating one field of an object in state. Only `setUser({ ...user, age: 2 })` is correct. **Why:** State must be treated as immutable. `user.age = 2; setUser(user)` mutates the existing object — React compares by reference, sees the same object, and may skip the re-render. `setUser({ age: 2 })` drops `name`. **Why the spread works:** It creates a *new* object (new reference) that copies existing fields and overrides `age`, so React detects the change. **Common mistakes:** Mutating nested objects in place, or forgetting to spread and accidentally deleting other keys.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [user, setUser] = useState({ name: 'A', age: 1 });\n  return (\n    <div>\n      <p>{user.name} is {user.age}</p>\n      {/* New object: keep name, override age */}\n      <button onClick={() => setUser({ ...user, age: user.age + 1 })}>older</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Updating Objects in State",
+        "url": "https://react.dev/learn/updating-objects-in-state"
+      },
+      {
+        "label": "react.dev — Why mutating state is a problem",
+        "url": "https://react.dev/learn/updating-objects-in-state#whats-a-mutation"
       }
     ]
   },
   "react-state-010": {
-    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Storing a value in state that can be computed from existing props/state (e.g. a `fullName` derived from `first` and `last`). **Why it's a trap:** Now you have two sources of truth that can drift apart, so you write an effect to 'sync' them — extra code and an extra render. **The fix:** Compute derived values *during render* from the real state; they're always consistent for free. **Common mistakes:** Mirroring props into state, or using `useEffect` to keep a derived field updated. Reserve state for the minimal raw inputs; calculate the rest inline (memoize only if it's genuinely expensive).",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  const [first, setFirst] = useState('Ada');\n  const [last, setLast] = useState('Lovelace');\n  // Derived during render — no extra state, never out of sync.\n  const fullName = `${first} ${last}`;\n  return (\n    <div>\n      <input value={first} onChange={e => setFirst(e.target.value)} />\n      <input value={last} onChange={e => setLast(e.target.value)} />\n      <p>Full name: {fullName}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — State",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Avoid redundant state",
+        "url": "https://react.dev/learn/choosing-the-state-structure#avoid-redundant-state"
+      },
+      {
+        "label": "react.dev — You Might Not Need an Effect",
+        "url": "https://react.dev/learn/you-might-not-need-an-effect"
       }
     ]
   },
