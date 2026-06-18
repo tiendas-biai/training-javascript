@@ -1214,112 +1214,156 @@
     ]
   },
   "react-hooks-001": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Scattered `setState` calls across many handlers make complex state logic hard to follow. **What `useReducer` gives you:** it returns `[state, dispatch]`. Instead of setting state directly, you `dispatch(action)` — a plain object describing *what happened* — and a pure `reducer(state, action)` function computes the next state in one place. **Why it helps:** all transitions live together and are testable in isolation; components just declare intent. **Common mistakes:** mutating `state` inside the reducer (it must return a new value), putting side effects in the reducer (keep it pure), or forgetting a `default` case.",
+    "example": "```tsx\nimport { useReducer } from 'react';\n\ntype Action = { type: 'inc' } | { type: 'dec' } | { type: 'reset' };\nfunction reducer(count: number, action: Action): number {\n  switch (action.type) {\n    case 'inc': return count + 1;\n    case 'dec': return count - 1;\n    case 'reset': return 0;\n  }\n}\n\nexport default function App() {\n  const [count, dispatch] = useReducer(reducer, 0);\n  return (\n    <div>\n      <button onClick={() => dispatch({ type: 'dec' })}>-</button>\n      <span> {count} </span>\n      <button onClick={() => dispatch({ type: 'inc' })}>+</button>\n      <button onClick={() => dispatch({ type: 'reset' })}>reset</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — useReducer",
+        "url": "https://react.dev/reference/react/useReducer"
+      },
+      {
+        "label": "react.dev — Extracting State Logic into a Reducer",
+        "url": "https://react.dev/learn/extracting-state-logic-into-a-reducer"
       }
     ]
   },
   "react-hooks-002": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** When does `useReducer` beat `useState`? **Use a reducer when:** state logic is complex, several values change together, or the next state is derived from the previous one across many distinct actions. Consolidating those transitions into one reducer keeps handlers thin and makes the logic testable. **Why:** `useState` shines for simple, independent values; once you're juggling interdependent updates and many event types, a reducer centralizes the 'what happens on each action' rules. **Common mistakes:** reaching for a reducer for a single boolean (overkill), or duplicating reducer-like switch logic across multiple `setState` calls instead of consolidating.",
+    "example": "```tsx\nimport { useReducer } from 'react';\n\ntype State = { items: string[]; draft: string };\ntype Action = { type: 'edit'; text: string } | { type: 'add' };\nfunction reducer(s: State, a: Action): State {\n  switch (a.type) {\n    case 'edit': return { ...s, draft: a.text };\n    case 'add': return s.draft ? { items: [...s.items, s.draft], draft: '' } : s;\n  }\n}\n\nexport default function App() {\n  const [state, dispatch] = useReducer(reducer, { items: [], draft: '' });\n  return (\n    <div>\n      <input value={state.draft} onChange={e => dispatch({ type: 'edit', text: e.target.value })} />\n      <button onClick={() => dispatch({ type: 'add' })}>add</button>\n      <ul>{state.items.map((it, i) => <li key={i}>{it}</li>)}</ul>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Comparing useState and useReducer",
+        "url": "https://react.dev/learn/extracting-state-logic-into-a-reducer#comparing-usestate-and-usereducer"
+      },
+      {
+        "label": "react.dev — useReducer",
+        "url": "https://react.dev/reference/react/useReducer"
       }
     ]
   },
   "react-hooks-mcq-001": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Calling `dispatch({ type: 'inc' })` twice in one handler — does count go up by 1 or 2? **The answer: by 2.** **Why:** like updater functions, React queues each dispatch and runs the reducer in order, feeding the result of the previous call into the next. So two `inc` actions compute `count+1` then `(count+1)+1`. **Why it's reliable:** the reducer derives the next state from the *latest* state, not from a render snapshot, so chained dispatches compose. **Common mistakes:** assuming the second dispatch overwrites the first (that's the stale-snapshot intuition from `setState(value)`, which doesn't apply to reducers).",
+    "example": "```tsx\nimport { useReducer } from 'react';\n\nfunction reducer(count: number, action: { type: 'inc' }): number {\n  return action.type === 'inc' ? count + 1 : count;\n}\n\nexport default function App() {\n  const [count, dispatch] = useReducer(reducer, 0);\n  // Two dispatches in one handler -> +2 (each applied to the previous result).\n  const bumpTwice = () => { dispatch({ type: 'inc' }); dispatch({ type: 'inc' }); };\n  return <button onClick={bumpTwice}>count: {count}</button>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Dispatching actions",
+        "url": "https://react.dev/reference/react/useReducer#dispatch"
+      },
+      {
+        "label": "react.dev — Queueing a Series of State Updates",
+        "url": "https://react.dev/learn/queueing-a-series-of-state-updates"
       }
     ]
   },
   "react-hooks-003": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Passing data through many intermediate components ('prop drilling') is tedious. **What `useContext` does:** `useContext(SomeContext)` reads the value of the nearest `<SomeContext.Provider>` above the component in the tree — no props threaded through. **What triggers re-render:** the component re-renders whenever that provider's `value` prop changes (by `Object.is`). **Why:** context broadcasts a value to any depth; consumers subscribe to changes. **Common mistakes:** passing a fresh object/array as `value` every render (forces all consumers to re-render — memoize it), or using context for state that changes very frequently (consider splitting contexts).",
+    "example": "```tsx\nimport { createContext, useContext, useState } from 'react';\n\nconst ThemeContext = createContext<'light' | 'dark'>('light');\n\nfunction Toolbar() {\n  const theme = useContext(ThemeContext); // reads nearest provider above\n  return <p>theme is {theme}</p>;\n}\n\nexport default function App() {\n  const [theme, setTheme] = useState<'light' | 'dark'>('light');\n  return (\n    <ThemeContext.Provider value={theme}>\n      <button onClick={() => setTheme(t => (t === 'light' ? 'dark' : 'light'))}>toggle</button>\n      <Toolbar />\n    </ThemeContext.Provider>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — useContext",
+        "url": "https://react.dev/reference/react/useContext"
+      },
+      {
+        "label": "react.dev — Passing Data Deeply with Context",
+        "url": "https://react.dev/learn/passing-data-deeply-with-context"
       }
     ]
   },
   "react-hooks-004": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A genuinely expensive calculation re-runs on every render even when its inputs didn't change. **What `useMemo` does:** caches the result of a function between renders and only recomputes when one of its dependencies changes. **Why it helps:** skips wasted work; also gives a *stable reference* for objects/arrays passed to memoized children. **The caveat:** it's an optimization, not a semantics tool — React may still recompute, and over-memoizing adds complexity and memory cost. **Common mistakes:** memoizing trivial calculations (the comparison costs more than the work), wrong/missing dependencies (stale results), or relying on it for correctness.",
+    "example": "```tsx\nimport { useMemo, useState } from 'react';\n\nexport default function App() {\n  const [n, setN] = useState(30);\n  const [other, setOther] = useState(0);\n  // Recomputes only when n changes, not when `other` does.\n  const sum = useMemo(() => {\n    let total = 0;\n    for (let i = 0; i <= n; i++) total += i;\n    return total;\n  }, [n]);\n  return (\n    <div>\n      <button onClick={() => setN(n + 1)}>n = {n}</button>\n      <button onClick={() => setOther(other + 1)}>re-render ({other})</button>\n      <p>sum 0..n = {sum}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — useMemo",
+        "url": "https://react.dev/reference/react/useMemo"
+      },
+      {
+        "label": "react.dev — How to memoize a calculation",
+        "url": "https://react.dev/reference/react/useMemo#skipping-expensive-recalculations"
       }
     ]
   },
   "react-hooks-mcq-002": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** How do `useCallback` and `useMemo` relate? **The answer:** `useCallback(fn, deps)` is exactly `useMemo(() => fn, deps)` — it memoizes the *function itself*, returning the same instance until deps change. `useMemo` memoizes the *return value* of calling a function. **Why a dedicated Hook:** memoizing functions for stable identity is so common (passing callbacks to `React.memo` children or as Effect deps) that React provides the shorthand. **Common mistakes:** thinking `useCallback` caches what the function returns (it doesn't — that's `useMemo`), or believing they're interchangeable aliases.",
+    "example": "```tsx\nimport { useCallback, useMemo } from 'react';\n\nexport default function App() {\n  const a = 2;\n  // These two produce the SAME stable function reference across renders.\n  const viaCallback = useCallback(() => a * 2, [a]);\n  const viaMemo = useMemo(() => () => a * 2, [a]);\n  return <p>{viaCallback()} and {viaMemo()}</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — useCallback",
+        "url": "https://react.dev/reference/react/useCallback"
+      },
+      {
+        "label": "react.dev — useCallback vs useMemo",
+        "url": "https://react.dev/reference/react/useCallback#how-is-usecallback-related-to-usememo"
       }
     ]
   },
   "react-hooks-005": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Wrapping a child in `React.memo` should skip re-renders when props are unchanged — but an inline `onClick={() => …}` breaks it. **Why:** a new arrow function is created on every parent render, so its identity differs each time; `React.memo` does a shallow prop compare, sees a 'changed' function prop, and re-renders the child anyway. **The fix:** `useCallback(fn, deps)` returns the same function instance until deps change, so the memoized child's prop stays referentially equal. **Common mistakes:** memoizing the child but not the callback (no benefit), or adding `useCallback` everywhere without a `React.memo` child that actually compares props.",
+    "example": "```tsx\nimport { memo, useCallback, useState } from 'react';\n\nconst Child = memo(function Child({ onClick }: { onClick: () => void }) {\n  console.log('Child render');\n  return <button onClick={onClick}>child</button>;\n});\n\nexport default function App() {\n  const [n, setN] = useState(0);\n  // Stable identity -> memoized Child skips re-render when only n changes.\n  const handleClick = useCallback(() => console.log('clicked'), []);\n  return (\n    <div>\n      <button onClick={() => setN(n + 1)}>parent n = {n}</button>\n      <Child onClick={handleClick} />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Skipping re-rendering with useCallback",
+        "url": "https://react.dev/reference/react/useCallback#skipping-re-rendering-of-components"
+      },
+      {
+        "label": "react.dev — memo",
+        "url": "https://react.dev/reference/react/memo"
       }
     ]
   },
   "react-hooks-006": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** You want to reuse *stateful logic* (not UI) across components. **What a custom Hook is:** a function whose name starts with `use` and that calls other Hooks. By following the naming convention, it participates in the Rules of Hooks and the linter checks it. **What's shared:** two components calling the same custom Hook share the *logic*, not the *state* — each call gets its own independent state and Effects, exactly like calling `useState` directly. **Why:** Hooks are about reusing behavior; isolation per call keeps components independent. **Common mistakes:** expecting two components to share state via a custom Hook (use lifted state/context for that), or naming it without `use`.",
+    "example": "```tsx\nimport { useState, useCallback } from 'react';\n\nfunction useCounter(start: number) {\n  const [count, setCount] = useState(start);\n  const inc = useCallback(() => setCount(c => c + 1), []);\n  return { count, inc };\n}\n\nexport default function App() {\n  const a = useCounter(0);\n  const b = useCounter(100); // independent state from `a`\n  return (\n    <div>\n      <button onClick={a.inc}>A: {a.count}</button>\n      <button onClick={b.inc}>B: {b.count}</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Reusing Logic with Custom Hooks",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks"
+      },
+      {
+        "label": "react.dev — Custom Hooks share logic, not state",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks#custom-hooks-let-you-share-stateful-logic-not-state-itself"
       }
     ]
   },
   "react-hooks-mcq-003": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Why is calling a Hook inside a condition or loop forbidden? **The answer:** React has no names for Hooks — it identifies each Hook call by its **order** within the component and uses that order to match each call to its stored state slot. A conditional/looped call can change the number or order of Hooks between renders, so React lines up the wrong state with the wrong Hook — silent corruption. **Why the fixed order works:** identical call order every render guarantees a stable mapping. **Common mistakes:** early-returning before a Hook, wrapping `useState`/`useEffect` in `if`, or calling Hooks in a `.map`. Always call them unconditionally at the top level.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  // ✅ Always called, same order every render.\n  const [open, setOpen] = useState(false);\n  const [count, setCount] = useState(0);\n  // ❌ if (open) { const [x] = useState(0); } would shift Hook order — never do this.\n  return (\n    <div>\n      <button onClick={() => setOpen(o => !o)}>toggle</button>\n      {open && <button onClick={() => setCount(c => c + 1)}>count {count}</button>}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Rules of Hooks",
+        "url": "https://react.dev/reference/rules/rules-of-hooks"
+      },
+      {
+        "label": "react.dev — Why do Hooks rely on call order?",
+        "url": "https://react.dev/learn/state-a-components-memory#giving-a-component-multiple-state-variables"
       }
     ]
   },
   "react-hooks-007": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** You need a unique ID to wire `label htmlFor` to an input `id`, but hardcoding or `Math.random()` breaks accessibility, duplicates across instances, or mismatches between server and client render (hydration errors). **What `useId` does:** generates a unique, stable string that's consistent across server and client. **Use it for:** associating related elements (label/input, aria-describedby). **Don't use it for:** list keys — keys must come from your data, and `useId` isn't tied to a list item. **Common mistakes:** calling `useId` inside a loop to make keys, or concatenating without a prefix when you need several related IDs (use one base ID + suffixes).",
+    "example": "```tsx\nimport { useId } from 'react';\n\nexport default function App() {\n  const id = useId(); // stable, unique, SSR-safe\n  return (\n    <div>\n      <label htmlFor={id}>Email</label>\n      <input id={id} type=\"email\" />\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — useId",
+        "url": "https://react.dev/reference/react/useId"
+      },
+      {
+        "label": "react.dev — Pitfall: useId is not for keys",
+        "url": "https://react.dev/reference/react/useId#caveats"
       }
     ]
   },
   "react-hooks-008": {
-    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A heavy update (filtering a big list while typing) blocks the UI and makes input feel laggy. **Both Hooks** mark work as non-urgent so React can keep the UI responsive and interrupt the slow render. **The difference:** `useTransition` wraps the *state update you trigger* — `startTransition(() => setState(...))` — and gives you an `isPending` flag. `useDeferredValue` wraps a *value you receive* and returns a version that may lag behind, so derived UI updates at lower priority. **Rule of thumb:** you control the setter → `useTransition`; you only have the value (e.g. a prop) → `useDeferredValue`. **Common mistakes:** using them for genuinely urgent updates, or expecting them to make the work itself faster.",
+    "example": "```tsx\nimport { useState, useTransition } from 'react';\n\nexport default function App() {\n  const [text, setText] = useState('');\n  const [list, setList] = useState<string[]>([]);\n  const [isPending, startTransition] = useTransition();\n  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {\n    setText(e.target.value);                 // urgent: keep input snappy\n    startTransition(() => {                   // non-urgent: heavy derived work\n      setList(Array.from({ length: 5000 }, (_, i) => `${e.target.value} ${i}`));\n    });\n  }\n  return (\n    <div>\n      <input value={text} onChange={handleChange} />\n      {isPending ? <p>updating…</p> : <p>{list.length} rows</p>}\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Hooks",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — useTransition",
+        "url": "https://react.dev/reference/react/useTransition"
+      },
+      {
+        "label": "react.dev — useDeferredValue",
+        "url": "https://react.dev/reference/react/useDeferredValue"
       }
     ]
   },
