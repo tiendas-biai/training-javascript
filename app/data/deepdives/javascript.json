@@ -1934,5 +1934,325 @@
         "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/with"
       }
     ]
+  },
+  "string-at-001": {
+    "explanation": "**The problem:** getting the last character used to need `str[str.length - 1]`. **What `at()` does:** it takes an integer index and returns the character there, but **negative indices count from the end** — `at(-1)` is the last character. **Why it works:** `at()` adds the string's length to a negative index before reading. **Why it's nicer:** no repeated `str.length`. **A caveat:** like bracket access it works on **UTF-16 code units**, so an emoji (surrogate pair) counts as two — `at(-1)` may return half of it. **Common mistakes:** expecting `str[-1]` to work (it returns `undefined`), or assuming `at` is code-point-aware.",
+    "example": "```js\nconst s = 'hello';\nconsole.log(s.at(-1)); // 'o' — last character\nconsole.log(s.at(0));  // 'h'\nconsole.log(s[-1]);    // undefined — bracket notation has no negative indexing\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.at()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/at"
+      }
+    ]
+  },
+  "string-at-002": {
+    "explanation": "**The problem:** what does `at()` return for an out-of-range index? **The answer: `undefined`** — reading past the end yields `undefined`, not an error and not an empty string. **Why it matters:** this is the key difference from `charAt()`, which returns `''` (empty string) for out-of-range indices. **Why no throw:** `at()` is a plain read with no bounds error. **Common mistakes:** confusing `at()` (returns `undefined` OOB) with `charAt()` (returns `''` OOB), or expecting a `RangeError`.",
+    "example": "```js\nconsole.log('abc'.at(5));    // undefined — out of range\nconsole.log('abc'.charAt(5)); // ''       — charAt returns empty string instead\nconsole.log('abc'.at(2));    // 'c'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.at()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/at"
+      }
+    ]
+  },
+  "string-charAt-001": {
+    "explanation": "**The problem:** what does `charAt()` return for an index past the string's end? **The answer: `''`** (an empty string), not `undefined`. **Why:** `charAt()` is specified to return the empty string for any index outside `0..length-1`. **Why it matters:** this differs from bracket access and `at()`, which return `undefined` out of range — so an `if (str.charAt(i))` check treats OOB as falsy via `''`. **Common mistakes:** expecting `undefined` (that's `at()`/brackets), or assuming a throw.",
+    "example": "```js\nconsole.log('hello'.charAt(10)); // '' — out of range\nconsole.log('hello'.charAt(0));  // 'h'\nconsole.log('hello'.at(10));     // undefined — contrast with at()\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.charAt()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt"
+      }
+    ]
+  },
+  "string-charAt-002": {
+    "explanation": "**The problem:** `'hello'.charAt(-1)` returns `''`, not the last character. **Why:** `charAt()` does **not** support negative indexing — any index outside `0..length-1` (including negatives) yields the **empty string** `''`. **The contrast:** `at(-1)` *does* count from the end and returns `'o'`. **Why it matters:** to read from the end, use `at()` or `str[str.length - 1]`; `charAt` won't do it. **Common mistakes:** assuming `charAt` behaves like `at` for negatives, or expecting `undefined`/an error.",
+    "example": "```js\nconsole.log('hello'.charAt(-1)); // '' — charAt has no negative indexing\nconsole.log('hello'.at(-1));     // 'o' — at() counts from the end\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.charAt()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt"
+      }
+    ]
+  },
+  "string-charCodeAt-001": {
+    "explanation": "**The problem:** what does `charCodeAt()` return for an out-of-range index? **The answer: `NaN`.** `charCodeAt(i)` returns the UTF-16 **code unit** (0–65535) at index `i`, but for an index outside the string it returns `NaN` — not `0`, `undefined`, or `''`. **Why it matters:** guard with `Number.isNaN` before using the result, and remember each return value is a code *unit*, so surrogate-pair characters span two indices. **Common mistakes:** expecting `0`/`undefined` for OOB, or treating the returned value as a full code point for emoji (it's only one surrogate — use `codePointAt`).",
+    "example": "```js\nconsole.log('A'.charCodeAt(0)); // 65\nconsole.log('A'.charCodeAt(5)); // NaN — out of range\nconsole.log(Number.isNaN('A'.charCodeAt(5))); // true\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.charCodeAt()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charCodeAt"
+      }
+    ]
+  },
+  "string-charCodeAt-002": {
+    "explanation": "**The problem:** for `'😄'`, `charCodeAt(0)` returns `55357`, not the emoji's code point. **Why:** JS strings are **UTF-16**, and characters above U+FFFF (like most emoji) are stored as a **surrogate pair** — two code units. `charCodeAt(0)` returns only the **leading (high) surrogate** (`55357` / `0xD83D`); index 1 holds the trailing surrogate. **Why it matters:** `'😄'.length` is `2`, and per-code-unit operations split the emoji. **The fix:** `codePointAt(0)` returns the full code point (`128516`). **Common mistakes:** assuming one visible character is one code unit, or using `charCodeAt` on astral characters.",
+    "example": "```js\nconst s = '😄';\nconsole.log(s.length);          // 2 — surrogate pair\nconsole.log(s.charCodeAt(0));   // 55357 — leading surrogate only\nconsole.log(s.charCodeAt(1));   // 56836 — trailing surrogate\nconsole.log(s.codePointAt(0));  // 128516 — full code point\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.charCodeAt()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charCodeAt"
+      }
+    ]
+  },
+  "string-codePointAt-001": {
+    "explanation": "**The problem:** `charCodeAt` and `codePointAt` agree on ASCII but differ on emoji. **The difference:** for a character made of a **surrogate pair** (code point above U+FFFF), `codePointAt(0)` returns the **full Unicode code point** (e.g. `128516`), while `charCodeAt(0)` returns only the **leading surrogate** code unit (e.g. `55357`). **Why:** `codePointAt` understands surrogate pairs and combines them; `charCodeAt` works one UTF-16 unit at a time. **Why it matters:** use `codePointAt` (and `String.fromCodePoint`) for correct handling of emoji/astral characters. **Common mistakes:** mixing the two, or assuming `codePointAt(1)` is the \"next character\" (it's the trailing surrogate).",
+    "example": "```js\nconst s = '😄';\nconsole.log(s.codePointAt(0)); // 128516 — full code point\nconsole.log(s.charCodeAt(0));  // 55357  — leading surrogate only\nconsole.log(String.fromCodePoint(128516)); // '😄' — round-trip\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.codePointAt()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt"
+      }
+    ]
+  },
+  "string-codePointAt-002": {
+    "explanation": "**The problem:** how do you iterate characters correctly when the string may contain emoji? **The answer: a `for...of` loop or spread `[...str]`** — both iterate by **code point** (the string iterator is Unicode-aware), so a surrogate-pair emoji is one iteration/element. **Why the others fail:** indexing with `str.length` + `charCodeAt(i)` walks **code units**, splitting emoji; `str.split('')` also splits by code unit, breaking surrogate pairs. **Why it matters:** counting or reversing strings with emoji needs code-point iteration. **Common mistakes:** using `.length` as a character count, or `split('')` to get \"characters\".",
+    "example": "```js\nconst s = 'a😄b';\nconsole.log(s.length);        // 4 — code units (emoji is 2)\nconsole.log([...s]);          // ['a', '😄', 'b'] — code points\nconsole.log([...s].length);   // 3 — correct character count\nfor (const ch of s) console.log(ch); // a | 😄 | b\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.codePointAt()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt"
+      }
+    ]
+  },
+  "string-concat-001": {
+    "explanation": "**The problem:** `concat()` joins strings — `'Hello'.concat(' ', 'World')` is `'Hello World'`. **How it works:** it appends each argument (coerced to a string) to the receiver and returns a **new** string (strings are immutable, so nothing is mutated). It accepts any number of arguments. **Why it's rarely used:** the `+` / `+=` operators and template literals are more readable and at least as fast, so `concat` is uncommon in practice. **Common mistakes:** expecting `concat` to mutate (it can't — strings are immutable), or reaching for it when `+`/template literals are clearer.",
+    "example": "```js\nconsole.log('Hello'.concat(' ', 'World')); // 'Hello World'\nconst greeting = 'Hi';\nconsole.log(greeting.concat('!'), greeting); // 'Hi!' 'Hi' — original unchanged\nconsole.log(`${greeting} there`);            // 'Hi there' — usually preferred\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.concat()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/concat"
+      }
+    ]
+  },
+  "string-concat-002": {
+    "explanation": "**The problem:** do `''.concat(null)` and `'' + null` behave the same? **The result is identical (`'null'`), but the coercion path differs.** `String.prototype.concat` converts each argument **directly to a string** (via ToString). The `+` operator first converts operands **to primitives** (via ToPrimitive), and only then — because one side is a string — converts the other to a string. For `null` (already a primitive), both reach `'null'`. **Why it matters:** for **objects** the difference can surface, since `+` consults `valueOf`/`Symbol.toPrimitive` first. **Common mistakes:** assuming `concat` throws on `null`, or that the two are coercion-identical for all inputs.",
+    "example": "```js\nconsole.log(''.concat(null)); // 'null' — ToString(null)\nconsole.log('' + null);       // 'null' — ToPrimitive then ToString\n\n// the paths DIVERGE for an object with valueOf:\nconst o = { valueOf: () => 7, toString: () => 'obj' };\nconsole.log(''.concat(o)); // 'obj' — concat calls ToString → toString()\nconsole.log('' + o);       // '7'   — + calls ToPrimitive → valueOf() runs first\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.concat()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/concat"
+      }
+    ]
+  },
+  "string-endsWith-001": {
+    "explanation": "**The problem:** `'Hello World'.endsWith('world')` returns `false`. **Why:** `endsWith()` is **case-sensitive** and does an exact substring comparison — `'world'` (lowercase) doesn't match the actual ending `'World'`. **Why it matters:** for case-insensitive checks, normalize both sides first (`str.toLowerCase().endsWith('world')`). **Also note:** `endsWith` returns a **boolean**, and passing a **regex** throws a `TypeError`. **Common mistakes:** expecting case-insensitive matching, or passing a regex.",
+    "example": "```js\nconsole.log('Hello World'.endsWith('world')); // false — case-sensitive\nconsole.log('Hello World'.endsWith('World')); // true\nconsole.log('Hello World'.toLowerCase().endsWith('world')); // true — normalized\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.endsWith()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith"
+      }
+    ]
+  },
+  "string-endsWith-002": {
+    "explanation": "**The problem:** `'Hello World'.endsWith('Hello', 5)` returns `true` — surprising at first. **Why:** the second argument is an **end position** — `endsWith` pretends the string is only that many characters long. With `5`, it checks whether the first 5 characters (`'Hello'`) end with `'Hello'` — they do. **Why it's useful:** test the ending of a prefix without slicing. **Common mistakes:** reading the second argument as a *start* index (it's the **length to consider** / end position), or expecting it to check the real end of the full string.",
+    "example": "```js\nconst s = 'Hello World';\nconsole.log(s.endsWith('Hello', 5)); // true — consider only first 5 chars 'Hello'\nconsole.log(s.endsWith('World'));    // true — default end is full length\nconsole.log(s.endsWith('Hello'));    // false — full string ends with 'World'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.endsWith()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith"
+      }
+    ]
+  },
+  "string-endsWith-003": {
+    "explanation": "**The problem:** passing a **regex** to `endsWith()` throws a `TypeError`. **Why:** `endsWith` (like `startsWith` and `includes`) only accepts a **string** search value; the spec explicitly rejects regexes to avoid ambiguity with regex-based methods. **Why it matters:** for pattern-based end checks, use a regex method instead — e.g. `/World$/.test(str)`. **Common mistakes:** passing `/pattern/` to `endsWith`/`startsWith`/`includes` (all throw), or expecting it to coerce the regex to its source string.",
+    "example": "```js\ntry {\n  'Hello World'.endsWith(/World/); // regex not allowed\n} catch (e) {\n  console.log(e.constructor.name); // TypeError\n}\nconsole.log(/World$/.test('Hello World')); // true — use a regex method instead\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.endsWith()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith"
+      }
+    ]
+  },
+  "string-includes-001": {
+    "explanation": "**The problem:** `'Blue Whale'.includes('blue')` returns `false`. **Why:** `includes()` is **case-sensitive** — `'blue'` doesn't match `'Blue'`. It returns a **boolean** indicating whether the substring occurs anywhere. **Why it matters:** for case-insensitive search, lowercase both sides (`str.toLowerCase().includes('blue')`). **Also:** passing a **regex** throws a `TypeError` (use a regex method for patterns). **Common mistakes:** expecting case-insensitive matching, or passing a regex to `includes`.",
+    "example": "```js\nconsole.log('Blue Whale'.includes('blue')); // false — case-sensitive\nconsole.log('Blue Whale'.includes('Blue')); // true\nconsole.log('Blue Whale'.toLowerCase().includes('blue')); // true\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.includes()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/includes"
+      }
+    ]
+  },
+  "string-includes-002": {
+    "explanation": "**The problem:** `'foobar'.includes('foo', 1)` returns `false`. **Why:** the second argument is a **start position** — the search begins at index `1`, so `'foo'` (which only occurs starting at index 0) is no longer found. **Why it matters:** the position lets you search a tail of the string. **Common mistakes:** ignoring the `position` argument, or thinking it's an end index. From index 1, `'oobar'` is what's searched, which doesn't contain `'foo'`.",
+    "example": "```js\nconsole.log('foobar'.includes('foo', 1)); // false — search starts at index 1\nconsole.log('foobar'.includes('foo'));    // true  — from index 0\nconsole.log('foobar'.includes('bar', 1)); // true  — 'bar' is at index 3\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.includes()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/includes"
+      }
+    ]
+  },
+  "string-includes-003": {
+    "explanation": "**The problem:** `'hello'.includes('')` returns `true`. **Why:** the **empty string is a substring of every string** (it occurs at every position, including the start), so `includes('')` is always `true` for any receiver — even `''.includes('')`. **Why it matters:** if a search term can be empty (e.g. an empty filter box), `includes` will match everything — guard against empty queries if that's not desired. **Common mistakes:** assuming an empty search returns `false`, or that it depends on the receiver's length.",
+    "example": "```js\nconsole.log('hello'.includes(''));   // true — '' is in every string\nconsole.log(''.includes(''));        // true\nconsole.log('hello'.startsWith(''));  // true — same logic\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.includes()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/includes"
+      }
+    ]
+  },
+  "string-indexOf-001": {
+    "explanation": "**The problem:** what does `indexOf()` return when the substring isn't found? **The answer: `-1`.** `indexOf(search)` returns the index of the **first** occurrence, or `-1` if the substring never appears. **Why `-1`:** it's an impossible real index, signaling \"not found\" while staying a number. **Why it matters:** the classic test is `if (str.indexOf(x) !== -1)` — though `includes()` is clearer for a pure presence check. **Common mistakes:** using the result in a truthy check (`if (str.indexOf(x))`) — index `0` is a valid match but falsy, so always compare against `-1`.",
+    "example": "```js\nconst s = 'hello world';\nconsole.log(s.indexOf('world')); // 6\nconsole.log(s.indexOf('xyz'));   // -1 — not found\nconsole.log(s.indexOf('hello')); // 0 — beware: 0 is falsy, use !== -1\nconsole.log(s.indexOf('xyz') !== -1); // false\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.indexOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/indexOf"
+      }
+    ]
+  },
+  "string-indexOf-002": {
+    "explanation": "**The problem:** `'hello world'.indexOf('o', 6)` returns `7`, not `4`. **Why:** the second argument is a **start index** — the search begins at index 6, skipping the first `'o'` (at index 4) and finding the next `'o'` (in `'world'`, at index 7). **Why it's useful:** find subsequent occurrences by passing the previous index + 1. **Common mistakes:** forgetting the `fromIndex` and expecting the first match, or off-by-one errors when scanning for all occurrences.",
+    "example": "```js\nconst s = 'hello world';\nconsole.log(s.indexOf('o'));    // 4 — first 'o'\nconsole.log(s.indexOf('o', 6)); // 7 — search starts at index 6\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.indexOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/indexOf"
+      }
+    ]
+  },
+  "string-indexOf-003": {
+    "explanation": "**The problem:** `'hello world'.indexOf('', 15)` returns `11`, the string's length, even though 15 is past the end. **Why:** searching for the **empty string** matches at any position, and the `fromIndex` is **clamped** to the string length (11). So the empty match is reported at index `length` = `11`. **The rule:** `''.indexOf('')`-style searches return `min(fromIndex, length)`. **Why it matters:** edge cases with empty searches and large positions, common in parsing loops. **Common mistakes:** expecting `-1` (an empty string is always \"found\") or `15` (the position is clamped to length).",
+    "example": "```js\nconsole.log('hello world'.indexOf('', 15)); // 11 — clamped to length\nconsole.log('hello world'.indexOf('', 3));  // 3  — empty matches at the position\nconsole.log('hello world'.length);          // 11\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.indexOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/indexOf"
+      }
+    ]
+  },
+  "string-isWellFormed-001": {
+    "explanation": "**The problem:** strings can contain **lone surrogates** — unpaired UTF-16 surrogate code units that don't form a valid character. **What `isWellFormed()` does (ES2024):** it returns `true` if the string has **no** lone surrogates (every surrogate is part of a valid pair), and `false` otherwise. **Why it matters:** ill-formed strings break operations that require valid Unicode, like `encodeURI` (which throws). **The companion:** `toWellFormed()` replaces lone surrogates with U+FFFD. **Common mistakes:** assuming all JS strings are valid Unicode (they can hold lone surrogates), or confusing well-formedness with normalization.",
+    "example": "```js\nconsole.log('abc'.isWellFormed());        // true — valid\nconsole.log('a\\uD800b'.isWellFormed());   // false — lone high surrogate\nconsole.log('😄'.isWellFormed());          // true — a proper surrogate pair\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.isWellFormed()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/isWellFormed"
+      }
+    ]
+  },
+  "string-isWellFormed-002": {
+    "explanation": "**The problem:** why check `isWellFormed()` before `encodeURI()`? **The answer: `encodeURI()` throws a `URIError` if the string contains lone surrogates** — it can't percent-encode an invalid Unicode sequence. **Why it matters:** strings from untrusted input (e.g. truncated data) may hold lone surrogates; guarding with `isWellFormed()` (or sanitizing with `toWellFormed()`) prevents a crash. **Why the other options are wrong:** `encodeURI` doesn't silently encode or return `null`, and `isWellFormed` only *checks* — it doesn't normalize or fix. **Common mistakes:** assuming `encodeURI` tolerates any string, or conflating well-formedness checks with normalization.",
+    "example": "```js\nconst bad = 'a\\uD800';\nconsole.log(bad.isWellFormed()); // false\ntry {\n  encodeURI(bad);\n} catch (e) {\n  console.log(e.constructor.name); // URIError\n}\nconsole.log(encodeURI(bad.toWellFormed())); // safe — lone surrogate → %EF%BF%BD\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.isWellFormed()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/isWellFormed"
+      }
+    ]
+  },
+  "string-lastIndexOf-001": {
+    "explanation": "**The problem:** `'canal'.lastIndexOf('a')` returns `3`. **Why:** `lastIndexOf()` searches **backward** and returns the index of the **last** occurrence — the `'a'`s in `'canal'` are at indices 1 and 3, so the last is `3`. **The contrast:** `indexOf('a')` returns `1` (first). **Like `indexOf`,** it returns `-1` when not found and is case-sensitive. **Common mistakes:** confusing its result with `indexOf`, or misreading the optional second argument as a start-from-left index (it's the position to search **backward** from).",
+    "example": "```js\nconsole.log('canal'.lastIndexOf('a')); // 3 — last 'a'\nconsole.log('canal'.indexOf('a'));     // 1 — first 'a', for contrast\nconsole.log('canal'.lastIndexOf('z')); // -1 — not found\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.lastIndexOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/lastIndexOf"
+      }
+    ]
+  },
+  "string-lastIndexOf-002": {
+    "explanation": "**The problem:** `'hello world hello'.lastIndexOf('hello', 5)` returns `0`, not `12`. **Why:** `lastIndexOf(search, fromIndex)` searches **backward** starting at `fromIndex` — it finds the last occurrence whose start index is **≤ 5**. The `'hello'` at index 12 starts after 5, so it's excluded; the only candidate at or before 5 is the one at index `0`. **Why it matters:** the `fromIndex` here is an **upper bound on the match's start**, not a left starting point. **Common mistakes:** expecting `12`, or reading `fromIndex` as a forward start position.",
+    "example": "```js\nconst s = 'hello world hello';\nconsole.log(s.lastIndexOf('hello', 5)); // 0  — only the match starting ≤ 5\nconsole.log(s.lastIndexOf('hello'));    // 12 — default searches the whole string\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.lastIndexOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/lastIndexOf"
+      }
+    ]
+  },
+  "string-localeCompare-001": {
+    "explanation": "**The problem:** how do you compare strings for **sorting** in a locale-aware way? **`localeCompare()`** returns a **negative** number if the reference string sorts **before** the argument, **`0`** if they're equivalent, and a **positive** number if it sorts **after** — mirroring a comparator's contract. **Why use it over `<`/`>`:** `<`/`>` compare raw UTF-16 code units (so accented/uppercase letters sort \"wrong\"); `localeCompare` follows human collation rules and accepts a locale and options (e.g. `sensitivity`, `numeric`). **Why it matters:** it's the right comparator for `arr.sort((a, b) => a.localeCompare(b))`. **Common mistakes:** relying on the exact magnitude (only the **sign** is defined), or using `<`/`>` for user-facing sorts.",
+    "example": "```js\nconsole.log('apple'.localeCompare('banana')); // negative — apple sorts first\nconsole.log('a'.localeCompare('a'));          // 0 — equivalent\nconsole.log(['Zebra', 'apple', 'Banana'].sort((a, b) => a.localeCompare(b)));\n// ['apple', 'Banana', 'Zebra'] — human-friendly order\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.localeCompare()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare"
+      }
+    ]
+  },
+  "string-localeCompare-002": {
+    "explanation": "**The problem:** `'ä'.localeCompare('z', ...)` gives different signs in Swedish vs German. **Why:** collation order is **locale-specific**. In **Swedish (`sv`)**, `ä` is a distinct letter near the **end** of the alphabet (after `z`), so `'ä'.localeCompare('z', 'sv')` is **positive** (ä sorts after z). In **German (`de`)**, `ä` collates near `a` (before `z`), so the result is **negative**. **Why it matters:** the same data sorts differently per locale — pass the right locale for user-facing order. **Common mistakes:** assuming one universal alphabetical order, or that accented letters always sort adjacent to their base letter.",
+    "example": "```js\nconsole.log('ä'.localeCompare('z', 'sv')); // 1  (positive) — ä after z in Swedish\nconsole.log('ä'.localeCompare('z', 'de')); // -1 (negative) — ä before z in German\n```",
+    "resources": [
+      {
+        "label": "MDN — localeCompare() (locales)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare#using_locales"
+      }
+    ]
+  },
+  "string-match-001": {
+    "explanation": "**The problem:** what does `match()` return when the regex doesn't match? **The answer: `null`** (not `undefined` or `[]`). **Why:** without the global flag, `match` returns an array-like result for a match or `null` for no match — so you must null-check before reading `[0]`/`.index`. **Why it matters:** `'hello'.match(/xyz/)[0]` throws because the result is `null`; guard with `?.` or an `if`. **Common mistakes:** expecting an empty array on no match (it's `null`), or destructuring the result without a guard.",
+    "example": "```js\nconst m = 'hello'.match(/xyz/);\nconsole.log(m); // null — no match\nconsole.log(m?.[0] ?? 'no match'); // 'no match' — guard before indexing\nconsole.log('hello'.match(/l+/)[0]); // 'll' — match found\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.match()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match"
+      }
+    ]
+  },
+  "string-match-002": {
+    "explanation": "**The problem:** `match()` returns very different shapes with and without the **`g`** flag. **Without `g`:** it returns the details of the **first** match — an array of `[fullMatch, ...captureGroups]` plus `index`, `input`, and `groups` properties. **With `g`:** it returns an array of **all full-match strings** and **discards capture groups, index, and input**. **Why:** global mode collects every match but only the matched text. **The modern alternative:** `matchAll(/.../g)` gives all matches *with* their groups and indices. **Common mistakes:** expecting capture groups from a global `match` (they're lost — use `matchAll`), or `index` on a global result.",
+    "example": "```js\nconsole.log('test1test2'.match(/t(e)st/));\n// ['test', 'e', index: 0, input: 'test1test2', groups: undefined] — first match + group\nconsole.log('test1test2'.match(/t(e)st/g));\n// ['test', 'test'] — all full matches, capture group lost\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.match()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match"
+      }
+    ]
+  },
+  "string-match-003": {
+    "explanation": "**The problem:** `'hello'.match()` with **no argument** returns `['']`. **Why:** a missing argument is treated as `undefined`, which `match` converts to an **empty regex** `/(?:)/`. An empty pattern matches the empty string at position 0, so the result is a match array containing one empty string (`['']`) with `index: 0`. **Why it matters:** it's an edge case — `match()` never throws on no argument; it quietly matches empty. **Common mistakes:** expecting `null` or an error, or assuming the argument is required.",
+    "example": "```js\nconsole.log('hello'.match());      // [''] — empty regex matches empty string at 0\nconsole.log('hello'.match(/(?:)/)); // [''] — same as the empty pattern\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.match()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match"
+      }
+    ]
+  },
+  "string-matchAll-001": {
+    "explanation": "**The problem:** `matchAll()` with a **non-global** regex throws a `TypeError`. **Why:** `matchAll` is designed to return **every** match, which only makes sense with the **`g`** flag; requiring `g` prevents the silent confusion that plagued global `match`/`exec`. **The fix:** add the `g` flag (`/pattern/g`). **Why it matters:** unlike global `match`, `matchAll` yields each match **with its capture groups and index**, making it the modern way to extract all matches. **Common mistakes:** forgetting the `g` flag, or expecting `matchAll` to silently behave like a single match without it (it throws).",
+    "example": "```js\ntry {\n  [...'a1b2'.matchAll(/\\d/)]; // missing g flag\n} catch (e) {\n  console.log(e.constructor.name); // TypeError\n}\nconsole.log([...'a1b2'.matchAll(/\\d/g)].map((m) => m[0])); // ['1', '2']\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.matchAll()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/matchAll"
+      }
+    ]
+  },
+  "string-matchAll-002": {
+    "explanation": "**The problem:** what does `matchAll()` return — an array? **The answer: a `RegExpStringIterator`** (an iterable iterator), **not** an array. **Why:** it yields matches lazily; each yielded item is a full match array (with groups and `index`), like a non-global `match` result. **How to use it:** spread into an array (`[...str.matchAll(re)]`) or loop with `for...of`. **Why it matters:** you can't index `matchAll(...)[0]` directly — materialize it first. **Common mistakes:** treating the return value as an array, or reusing the iterator twice (it's single-use, like all iterators).",
+    "example": "```js\nconst it = 'a1b2'.matchAll(/([a-z])(\\d)/g);\nconsole.log(typeof it[Symbol.iterator]); // 'function' — it's an iterator\nfor (const m of it) console.log(m[0], 'letter:', m[1], 'digit:', m[2]);\n// a1 letter: a digit: 1 | b2 letter: b digit: 2\nconsole.log([...'a1b2'.matchAll(/\\d/g)].length); // 2 — materialize with spread\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.matchAll()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/matchAll"
+      }
+    ]
+  },
+  "string-normalize-001": {
+    "explanation": "**The problem:** two visually identical strings compare `!==` because Unicode lets the same glyph be encoded **differently** — e.g. `é` as one precomposed code point (U+00E9) or as `e` + a combining accent (U+0065 U+0301). **What `normalize()` does:** it converts a string to a canonical Unicode form so equivalent sequences become **byte-identical**, making `===` work. **Forms:** `NFC` (composed, the usual choice) and `NFD` (decomposed); `NFKC`/`NFKD` also fold compatibility variants. **Why it matters:** always normalize before comparing, sorting, or storing user text. **Common mistakes:** comparing un-normalized Unicode, or assuming `.length` equality implies visual equality.",
+    "example": "```js\nconst precomposed = '\\u00e9';        // é\nconst decomposed = 'e\\u0301';        // e + combining acute\nconsole.log(precomposed === decomposed); // false — different code points\nconsole.log(precomposed.normalize('NFC') === decomposed.normalize('NFC')); // true\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.normalize()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/normalize"
+      }
+    ]
+  },
+  "string-normalize-002": {
+    "explanation": "**The problem:** `'\\uFB00'.normalize('NFKD')` produces `'ff'` (two characters). **Why:** U+FB00 is the **ligature ﬀ**, a single \"compatibility\" character. The **NFKD** form applies **compatibility decomposition**, which breaks such ligatures/compatibility characters into their plain components — here `'f'` + `'f'`. **The contrast:** `NFD`/`NFC` (canonical forms) would leave the ligature intact, since it's not *canonically* equivalent to `ff`. **Why it matters:** NFKC/NFKD are for search/indexing where you want ﬀ to match `ff`; they can change visual appearance, so don't use them for display. **Common mistakes:** confusing canonical (NFC/NFD) with compatibility (NFKC/NFKD) normalization.",
+    "example": "```js\nconsole.log('\\uFB00'.normalize('NFKD')); // 'ff' — ligature decomposed\nconsole.log('\\uFB00'.normalize('NFKD').length); // 2\nconsole.log('\\uFB00'.normalize('NFC'));  // 'ﬀ' — canonical form keeps the ligature\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.normalize() (forms)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/normalize#description"
+      }
+    ]
   }
 }
