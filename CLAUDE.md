@@ -240,12 +240,12 @@ Sections:
 
 ### Deep dives
 
-An optional teaching-grade write-up per card: a prose explanation, a copy-pasteable code example, and links to official docs. Shown as a **collapsible "📘 Deep Dive" section** at the bottom of the card detail page (`DeepDive.tsx`), and absent when a card has no entry.
+An optional teaching-grade write-up per card: a prose explanation, a copy-pasteable code example, and links to official docs. Shown as a **collapsible "📘 Deep Dive" section** by the `DeepDive.tsx` component — at the bottom of the card detail page **and inside study sessions** (after the answer is revealed, in all three card types), absent when a card has no entry.
 
-- **Source of truth / storage** — kept out of the bank files to keep session/library loads lean. One file per subject, `app/data/deepdives/<subject>.json`, keyed by card id (`{ explanation, example?, resources? }` — the `DeepDive` type in `types.ts`). Dynamic-imported per subject by `lib/deepdives.ts` (cached in `hooks/useDeepDives.ts`, mirroring `useSubjectData`), so each subject's deep dives are their own chunk fetched only on the detail page.
+- **Source of truth / storage** — kept out of the bank files to keep session/library loads lean. One file per subject, `app/data/deepdives/<subject>.json`, keyed by card id (`{ explanation, example?, resources? }` — the `DeepDive` type in `types.ts`). Dynamic-imported per subject by `lib/deepdives.ts` (cached in `hooks/useDeepDives.ts`, mirroring `useSubjectData`), so each subject's deep dives are their own chunk. `SubjectHome` loads the map and threads it through `Session` → the card components.
 - **Rendering** — explanation + example go through `RichText`, so the example's fenced code block reuses the existing **Copy** button (now with `ts`/`tsx` Prism grammars). Resources render as an external link list.
-- **API path** — `useProgress`-style: `CardDetail` resolves `card.deepDive ?? deepDives[card.id]`, so when `VITE_CARDS_FROM_API=true` the deep dive rides along on the card (see Part 3); otherwise it comes from the bundled file.
-- **Authoring** — run the per-subject prompt in `documents/prompts/` against a card, paste the returned JSON object into `app/data/deepdives/<subject>.json` under the card's id. See `documents/prompts/README.md`.
+- **API path** — `useProgress`-style: `CardDetail`/`Session` resolve `card.deepDive ?? deepDives[card.id]`, so when `VITE_CARDS_FROM_API=true` the deep dive rides along on the card (see Part 3); otherwise it comes from the bundled file.
+- **Authoring** — run the per-subject prompt in `documents/prompts/` against a card, then merge the result via `app/scripts/dd-batch.mjs` and verify the example compiles with `app/scripts/verify-deepdive-examples.mjs <subject>`. **Author in small per-topic batches, never one giant pass** (a one-shot agent attempt faked 187/200 cards). Full runbook + current content status (React: 13/23 topics done, 72 cards still placeholder) in **`documents/DEEP_DIVES.md`**.
 
 ### Card library (`/:subject/card-library`)
 
@@ -278,6 +278,8 @@ Question, answer, and explanation text supports markdown-like formats via the `<
 - `REACT_REFACTOR_PLAN.md` — the vanilla-JS → React/TypeScript refactor plan (phases, test scenarios, invariants)
 - `documents/AUTH0_AND_BACKEND_PLAN.md` — Auth0 + cloud-progress + cards-API plan (Phases 0–6)
 - `documents/INFRA_PLAN.md` — AWS infra: audit of the shared `entorno-biai` API + how this repo's backend integrates
+- `documents/DEEP_DIVES.md` — deep-dive content status + per-topic authoring runbook (scripts, verifier, what's done/remaining)
+- `documents/prompts/` — per-subject deep-dive authoring prompts (one per subject + README)
 
 ---
 
