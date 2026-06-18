@@ -16,13 +16,17 @@ concept.
 
 ## Code requirements
 
-- Fully working and ready to copy-paste directly into `src/App.tsx`.
-- Start with `export default function App() {`.
-- Include all required imports; keep everything in a single file; use TypeScript.
+- Fully working and ready to copy-paste directly into `src/App.tsx` of a standard Vite React+TS project.
+- Start with `export default function App() {` (default-export a component named `App`).
+- Include **all imports actually used** (e.g. `import { useState } from 'react'`). Do NOT add
+  `import React` — the automatic JSX runtime makes it unnecessary; hook-free examples have no import line.
+- Keep everything in a single file; use TypeScript.
 - Use modern React with hooks. Prefer the simplest solution that demonstrates the concept.
-- Make it interactive when appropriate so the behavior can be observed.
+- A **single clean runnable demo**: no unreachable code after `return`, no unused helper components,
+  no placeholders or `// ...` elisions. Make it interactive when appropriate so the behavior can be observed.
 - No CSS/styling unless necessary for understanding. Favor clarity over cleverness.
-- Avoid custom hooks/helpers/abstractions unless essential. The code must compile without errors.
+- Avoid custom hooks/helpers/abstractions unless essential. The code must compile without errors
+  (verify with `app/scripts/verify-deepdive-examples.mjs`).
 
 ## Output format
 

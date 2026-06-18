@@ -29,7 +29,7 @@
   },
   "react-comp-002": {
     "explanation": "**The problem:** Nested component definitions cause state loss and performance issues. **Why it happens:** React identifies components by their function reference. A nested definition gets a new reference every render. **Why it breaks:** React sees a different component each render and unmounts/remounts it. **Result:** State is lost, DOM is destroyed/recreated, and it's slow. **Solution:** Always define components at module scope.",
-    "example": "```tsx\n// ❌ WRONG — nested component\nfunction Gallery() {\n  function Profile() {\n    return <div>Profile</div>;\n  }\n  return <Profile />;  // Remounts every render!\n}\n\n// ✓ CORRECT — top-level component\nfunction Profile() {\n  return <div>Profile</div>;\n}\n\nexport default function App() {\n  return <Profile />; // Stable identity\n}\n```",
+    "example": "```tsx\nimport { useState } from 'react';\n\n// ✅ Define components at the TOP LEVEL so they keep a stable identity.\nfunction Profile() {\n  const [likes, setLikes] = useState(0);\n  return <button onClick={() => setLikes(likes + 1)}>♥ {likes}</button>;\n}\n\nexport default function App() {\n  // ❌ If Profile were defined INSIDE App, React would create a new function\n  //    every render, remount it, and reset its `likes` on each App re-render.\n  return (\n    <div>\n      <Profile />\n      <Profile />\n    </div>\n  );\n}\n```",
     "resources": [
       {
         "label": "react.dev — Keeping Components Pure",
@@ -107,7 +107,7 @@
   },
   "react-jsx-mcq-003": {
     "explanation": "**The problem:** What does `{{ backgroundColor: 'black' }}` mean? **The answer:** The outer braces are JSX expression syntax; the inner braces are a JavaScript object literal. **Why double braces:** The `style` prop takes an object, so you nest an object literal. **CSS properties:** Must be camelCase (`backgroundColor`, not `background-color`). **Key insight:** It's not special React syntax, just layered braces.",
-    "example": "```tsx\nexport default function App() {\n  // Double curly braces: JSX braces + object literal\n  return (\n    <div style={{ backgroundColor: \"blue\", color: \"white\", padding: \"10px\" }}>\n      Styled div\n    </div>\n  );\n  \n  // More readable as a variable\n  const styles = {\n    container: { backgroundColor: \"blue\", color: \"white\", padding: \"10px\" }\n  };\n  \n  return <div style={styles.container}>Styled div</div>;\n}\n```",
+    "example": "```tsx\nexport default function App() {\n  // Double braces = JSX expression braces { } wrapping a style OBJECT { }.\n  // Inner object is camelCased CSS; numbers are treated as px.\n  return (\n    <div style={{ backgroundColor: 'navy', color: 'white', padding: 10 }}>\n      Styled with an inline style object\n    </div>\n  );\n}\n```",
     "resources": [
       {
         "label": "react.dev — Inline Styles",
@@ -131,7 +131,7 @@
   },
   "react-state-001": {
     "explanation": "**The problem:** Local variables reset on every render and don't trigger re-renders. **Why:** React calls the component function from scratch each render; local variables don't persist. **Why changing doesn't update the screen:** React doesn't know to re-render; the value exists only in memory. **`useState` fixes both:** State persists between renders *and* calling the setter triggers a re-render. **Key insight:** Rendering isn't about running code once; it's a process where React calls your function repeatedly as state changes.",
-    "example": "```tsx\nimport { useState } from 'react';\n\n// ❌ WRONG — local variable approach\nfunction WrongCounter() {\n  let count = 0;  // Resets to 0 every render!\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => { count++; }}>  {/* No re-render! */}\n        Increment\n      </button>\n    </div>\n  );\n}\n\n// ✓ CORRECT — useState approach\nexport default function Counter() {\n  const [count, setCount] = useState(0);\n  \n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>\n        Increment\n      </button>\n    </div>\n  );\n}\n```",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  // ❌ `let count = 0` here would reset to 0 every render and never re-render.\n  // ✅ useState persists the value across renders AND triggers a re-render.\n  const [count, setCount] = useState(0);\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>Increment</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
         "label": "react.dev — State: A Component's Memory",
@@ -141,7 +141,7 @@
   },
   "react-state-002": {
     "explanation": "**What `useState` returns:** An array with two items: [currentValue, setterFunction]. **The destructuring:** `const [index, setIndex] = useState(0)` unpacks the array. **The argument:** `0` is the initial value on first render. **On subsequent renders:** `useState` ignores the argument and returns the stored value. **Naming convention:** `count`/`setCount`, `name`/`setName`—not required, but makes intent clear.",
-    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function TextInput() {\n  // Destructure: [current value, setter function] = useState(initial value)\n  const [text, setText] = useState('');  // Starts as empty string\n  const [isVisible, setIsVisible] = useState(true);  // Starts as true\n  \n  return (\n    <div>\n      <input\n        value={text}\n        onChange={(e) => setText(e.target.value)}  // Update on change\n        placeholder=\"Type something\"\n      />\n      <p>You typed: {text}</p>\n      \n      <button onClick={() => setIsVisible(!isVisible)}>\n        Toggle visibility\n      </button>\n      {isVisible && <p>Visible!</p>}\n    </div>\n  );\n}\n```",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function App() {\n  // useState returns a pair: [current value, setter]. '' is the initial value.\n  const [text, setText] = useState('');\n  return (\n    <div>\n      <input value={text} onChange={e => setText(e.target.value)} placeholder=\"Type something\" />\n      <p>You typed: {text}</p>\n    </div>\n  );\n}\n```",
     "resources": [
       {
         "label": "react.dev — Using the State Hook",

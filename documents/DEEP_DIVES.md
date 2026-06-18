@@ -12,12 +12,26 @@ card id in `app/data/deepdives/<subject>.json`. Shown collapsibly on the card de
 
 Quality bar for each entry:
 - **explanation** — markdown, ~4–6 sentences, structured **problem → why it happens → why the
-  solution works → common mistakes**. Uses `**bold**`, `` `inline code` ``, fenced blocks.
-- **example** — one fenced ```` ```tsx ```` block, **complete and compilable**, starting with
-  `export default function App() {` where it's a full component (mounting/infra snippets may
-  differ). Optional for purely conceptual cards (e.g. "what is the Virtual DOM", "Fiber").
+  solution works → common mistakes**. Write the section labels as inline bold ending in a colon
+  (`**The problem:** …`, `**Why it happens:** …`); the `DeepDive` component automatically inserts
+  a blank line before each such label, so do **not** add manual line breaks. Uses `**bold**`,
+  `` `inline code` ``, fenced blocks.
+- **example** — one fenced ```` ```tsx ```` block that is a **complete, copy-paste-ready file** for
+  a standard Vite React+TS project:
+  - Include **all imports actually used** (e.g. `import { useState } from 'react'`). You do **not**
+    need `import React` — Vite/React 17+ uses the automatic JSX runtime, so hook-free examples
+    legitimately have no import line.
+  - Default-export a component named `App`: start with `export default function App() {` (mounting/
+    infra snippets like `createRoot` are the exception and may be `main.tsx`-style instead).
+  - A **single clean runnable demo** — no unreachable code after `return`, no unused helper
+    components, no placeholders. Make it interactive when it helps show the behavior.
+  - Optional only for purely conceptual cards (e.g. "what is the Virtual DOM", "Fiber", "is the
+    VDOM always faster") — omit the `example` key entirely rather than forcing one.
 - **resources** — 1–3 links, prefer official docs (react.dev, typescriptlang.org, MDN, the
   library's own docs).
+
+The `verify-deepdive-examples.mjs` harness is the source of truth for "compilable": every example
+must type-check there (against the app's installed libs — see caveats below).
 
 ## How this content was created (and a warning)
 
