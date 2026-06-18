@@ -152,5 +152,159 @@
         "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol"
       }
     ]
+  },
+  "ts-arr-001": {
+    "explanation": "**The problem:** Two syntaxes for array types look different but aren't. **The answer:** `string[]` (shorthand) and `Array<string>` (the generic form) mean **exactly the same thing** — an array whose elements are `string`. Pick one for consistency; `T[]` is the common house style. **Why two forms:** `Array<T>` is the underlying generic interface; `T[]` is sugar. The generic form can read better for complex element types (e.g. `Array<{ id: number }>` vs `{ id: number }[]`). **Common mistakes:** mixing both styles in one codebase (cosmetic, but lint rules often enforce one), or confusing `string[]` (array of strings) with a tuple `[string]` (a one-element tuple).",
+    "example": "```ts\nconst a: string[] = ['x', 'y'];        // shorthand\nconst b: Array<string> = ['z'];        // generic — identical meaning\n\na.push('w');\nconsole.log(a.length, b.length);\n// @ts-expect-error number is not assignable to string element\na.push(42);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Arrays",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#arrays"
+      },
+      {
+        "label": "TypeScript Handbook — Generic Array<T>",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#the-array-type"
+      }
+    ]
+  },
+  "ts-arr-mcq-001": {
+    "explanation": "**The problem:** Which line errors when `values` is `ReadonlyArray<string>`? **The answer: C — `values.push('hello!')`** — `push` (and other mutating methods like `pop`, `splice`, `sort`) **does not exist** on `ReadonlyArray`, because the type only exposes non-mutating operations. **Why the others are fine:** `slice()` (A) returns a *new* array without mutating, indexed *reads* (B) are allowed, and `length` (D) is a read. **Why it's useful:** declaring a parameter `ReadonlyArray<string>` (or `readonly string[]`) documents and enforces that your function won't mutate the caller's array. **Common mistakes:** trying to `push`/`sort` a readonly array, or assuming `readonly` blocks reads (it only blocks mutation).",
+    "example": "```ts\nfunction doStuff(values: ReadonlyArray<string>) {\n  const copy = values.slice();   // A: ok (returns a new array)\n  console.log(values[0]);        // B: ok (read by index)\n  // @ts-expect-error 'push' does not exist on a readonly array\n  values.push('hello!');         // C: error\n  return values.length;          // D: ok (read)\n}\ndoStuff(['a', 'b']);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — ReadonlyArray",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#the-readonlyarray-type"
+      },
+      {
+        "label": "TypeScript Handbook — readonly arrays",
+        "url": "https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#readonlyarray-and-readonly-tuples"
+      }
+    ]
+  },
+  "ts-tuple-001": {
+    "explanation": "**The problem:** Sometimes you want an array with a **fixed length** and a **specific type at each position** (like a coordinate pair or a `[key, value]` entry). **A tuple type** does exactly that: `[string, number]` is an array that must have **exactly two** elements — a `string` at index 0 and a `number` at index 1. **How it differs from an array type:** `string[]` is any number of strings (all the same type); a tuple pins down both the **count** and the **per-index types**. **Why useful:** function returns of mixed pairs (like React's `useState`), `Object.entries` results, fixed records. **Common mistakes:** confusing `[string]` (a 1-tuple) with `string[]` (an array), or indexing a tuple out of bounds (TypeScript flags it).",
+    "example": "```ts\ntype Pair = [string, number];\nconst p: Pair = ['age', 30];\nconst label = p[0]; // typed as string\nconst value = p[1]; // typed as number\n\n// @ts-expect-error position 1 must be a number, not a string\nconst bad: Pair = ['age', 'thirty'];\nconsole.log(label, value);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Tuple Types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types"
+      },
+      {
+        "label": "TypeScript Handbook — Tuples vs arrays",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types"
+      }
+    ]
+  },
+  "ts-tuple-002": {
+    "explanation": "**The problem:** Tuples sometimes need flexibility — a trailing element that may be absent, or a variable number of trailing elements. **Optional element:** add `?` to a (trailing) element type — `[number, number, number?]` accepts 2 or 3 numbers. **Rest element:** spread an array type — `[string, number, ...boolean[]]` means a `string`, a `number`, then **any number** of `boolean`s. **Why useful:** model function arg lists, CSV rows, or `[label, ...values]` shapes precisely. **Rules:** optional elements must come after required ones; a rest element captures the remaining positions. **Common mistakes:** putting an optional/rest element before required ones (not allowed), or forgetting that an optional element makes the tuple's `length` a union (e.g. `2 | 3`).",
+    "example": "```ts\ntype Coord = [number, number, number?]; // z is optional\nconst xy: Coord = [1, 2];\nconst xyz: Coord = [1, 2, 3];\n\ntype Labeled = [string, ...number[]]; // a label then any number of numbers\nconst scores: Labeled = ['math', 90, 85, 100];\nconsole.log(xy, xyz, scores);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Optional tuple elements",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types"
+      },
+      {
+        "label": "TypeScript Handbook — Rest elements in tuples",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types"
+      }
+    ]
+  },
+  "ts-tuple-mcq-001": {
+    "explanation": "**The problem:** Assigning `pair[0] = 'hello!'` when `pair` is `readonly [string, number]`. **The result: a compile error** — index 0 of a **readonly tuple** cannot be assigned to; its positions are read-only. **Why:** the `readonly` modifier on a tuple type forbids writes to any element (just like `ReadonlyArray` forbids mutation), so the assignment is rejected at compile time (it never reaches runtime). **Why the others are wrong:** it's not a runtime TypeError (it won't compile), it doesn't mutate, and tuples *can* be indexed by literal numbers (reads are fine). **Why useful:** `readonly` tuples document that a function won't mutate a passed-in pair. **Common mistakes:** trying to mutate a readonly tuple, or thinking `readonly` only applies to objects/arrays and not tuples.",
+    "example": "```ts\nfunction doSomething(pair: readonly [string, number]) {\n  console.log(pair[0], pair[1]); // reads are fine\n  // @ts-expect-error cannot assign to '0' — it is a read-only property\n  pair[0] = 'hello!';\n}\ndoSomething(['a', 1]);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — readonly tuple types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#readonly-tuple-types"
+      },
+      {
+        "label": "TypeScript 3.4 — readonly tuples",
+        "url": "https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#readonlyarray-and-readonly-tuples"
+      }
+    ]
+  },
+  "ts-obj-001": {
+    "explanation": "**The problem:** Not every object property is always present. **The `?` modifier** marks a property **optional** — objects of the type may include it or omit it entirely. **The catch under `strictNullChecks`:** when you *read* an optional property, its type includes **`undefined`** (it might not be there), so you must handle that before using it. **Why:** the compiler tracks 'this might be missing' and forces you to account for it. **How to handle:** a default (`opts.xPos ?? 0`), optional chaining, or a presence check. **Common mistakes:** using an optional property as if it's always set (error under strictNullChecks), or confusing optional (`xPos?: number`) with `xPos: number | undefined` (the latter requires the key to be present, possibly set to `undefined`).",
+    "example": "```ts\ninterface PaintOptions { shape: string; xPos?: number; yPos?: number; }\n\nfunction paint(opts: PaintOptions) {\n  // @ts-expect-error 'opts.xPos' is possibly 'undefined'\n  const x: number = opts.xPos;\n  const safeX = opts.xPos ?? 0; // provide a default\n  return safeX;\n}\npaint({ shape: 'circle' });        // xPos omitted — allowed\npaint({ shape: 'square', xPos: 10 });\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Optional Properties",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#optional-properties"
+      },
+      {
+        "label": "TypeScript Handbook — strictNullChecks",
+        "url": "https://www.typescriptlang.org/tsconfig#strictNullChecks"
+      }
+    ]
+  },
+  "ts-obj-002": {
+    "explanation": "**The problem:** `readonly` on a property — what exactly does it stop? **What it prevents:** **reassigning** the property — `obj.prop = 'x'` is a compile error. **What it does NOT prevent:** deep mutation. `readonly` is *shallow* — if the property holds an object or array, that value's **own contents can still be changed** (you just can't swap the whole reference). **Why:** `readonly` controls the binding, not the referenced value's internals. **For deep immutability:** use `readonly` recursively, `as const`, or `ReadonlyArray`/`Readonly<T>`. **Why useful:** signal 'this field is set once' and catch accidental reassignment. **Common mistakes:** assuming `readonly` deeply freezes (it doesn't — nested mutation compiles), or expecting a runtime guarantee (it's compile-time only).",
+    "example": "```ts\ninterface Config { readonly id: string; readonly tags: string[] }\nconst c: Config = { id: 'a1', tags: ['x'] };\n\n// @ts-expect-error cannot assign to 'id' because it is read-only\nc.id = 'b2';\n\nc.tags.push('y'); // ✅ allowed — readonly is shallow, the array's contents can change\nconsole.log(c.tags);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — readonly Properties",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#readonly-properties"
+      },
+      {
+        "label": "TypeScript — Readonly<T> utility",
+        "url": "https://www.typescriptlang.org/docs/handbook/utility-types.html#readonlytype"
+      }
+    ]
+  },
+  "ts-obj-003": {
+    "explanation": "**The problem:** Sometimes you don't know a type's property names ahead of time — only the *shape* of the keys and values (e.g. a dictionary). **An index signature** describes that: `[index: number]: string` means 'any `number` key maps to a `string` value'. The key type can be `string`, `number`, or `symbol`. **Why use one:** model dictionaries/maps, arrays-by-number, or config bags where keys are dynamic. **The constraint:** every *named* property must also be compatible with the index signature's value type. **Better alternatives often:** `Record<string, T>` (same idea, more readable) or a `Map` for true dynamic keys. **Common mistakes:** over-using index signatures where a precise interface or `Record` fits, or mixing incompatible named properties with the index value type.",
+    "example": "```ts\ninterface StringArray {\n  [index: number]: string; // any number key -> string value\n}\n\nconst arr: StringArray = ['a', 'b', 'c'];\nconst first: string = arr[0]; // typed as string\nconsole.log(first, arr[2]);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Index Signatures",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#index-signatures"
+      },
+      {
+        "label": "TypeScript — Record<Keys, Type>",
+        "url": "https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type"
+      }
+    ]
+  },
+  "ts-obj-mcq-001": {
+    "explanation": "**The problem:** `createSquare({ colour: 'red', width: 100 })` fails even though `SquareConfig`'s properties are all optional. **Why: excess property checks.** When you pass an **object literal** directly to a typed slot, TypeScript checks for **unknown properties** and rejects them — `colour` isn't a known key of `SquareConfig` (it's a typo for `color`), so it errors *at the call site*. **Why this exists:** object literals are usually fresh and typos like `colour` are almost always bugs. **The escapes:** fix the typo, assign the literal to a **variable** first (excess checks only apply to literals), or add an index signature. **Why the others are wrong:** optional stays optional, all-optional interfaces *do* accept known properties, and the value types are fine. **Common mistakes:** misspelling a property and being confused by the 'optional' framing.",
+    "example": "```ts\ninterface SquareConfig { color?: string; width?: number; }\nfunction createSquare(config: SquareConfig) { return config; }\n\n// @ts-expect-error 'colour' is not a known property (excess property check on a literal)\ncreateSquare({ colour: 'red', width: 100 });\n\ncreateSquare({ color: 'red', width: 100 }); // ✅ correct key\nconst opts = { colour: 'red', width: 100 };\ncreateSquare(opts); // ✅ via a variable, excess checks don't apply\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Excess Property Checks",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#excess-property-checks"
+      },
+      {
+        "label": "TypeScript Handbook — Object Types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html"
+      }
+    ]
+  },
+  "ts-obj-004": {
+    "explanation": "**The problem:** Two ways to combine object types — and they behave differently on conflicts. **`interface X extends A, B {}`:** inheritance-style composition; `X` gets all members of `A` and `B`. **`type X = A & B`:** an **intersection** type — a value must satisfy both. **The conflict difference:** if `A` and `B` declare the **same property with incompatible types**, `extends` is a **hard compile error at the interface declaration** (you must resolve it), whereas the **intersection silently types that property as `never`** (the impossible type — you only discover it when you try to use the property). **Which to use:** `interface extends` for object hierarchies you control; `&` for ad-hoc combination of types. **Common mistakes:** intersecting conflicting types and getting a confusing `never` later, instead of catching it at declaration.",
+    "example": "```ts\ninterface Colorful { color: string }\ninterface Circle { radius: number }\n\ninterface ColorfulCircle extends Colorful, Circle {} // inheritance\nconst a: ColorfulCircle = { color: 'red', radius: 1 };\ntype CC = Colorful & Circle;                          // intersection\nconst b: CC = { color: 'blue', radius: 2 };\n\ninterface A { id: string }\ninterface B { id: number }\n// @ts-expect-error extends with conflicting 'id' is a declaration error\ninterface Bad extends A, B {}\ntype Inter = A & B; // compiles, but Inter['id'] is `never` (string & number)\nconsole.log(a, b);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Extending Interfaces",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#extending-types"
+      },
+      {
+        "label": "TypeScript Handbook — Intersection Types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types"
+      }
+    ]
+  },
+  "ts-rec-001": {
+    "explanation": "**The problem:** You want an object type with a **known set of keys**, each mapping to the **same value type** (e.g. a lookup keyed by a union of names). **`Record<Keys, Type>`:** a built-in utility that constructs exactly that — keys of type `Keys`, values of type `Type`. With `Keys` as a literal union like `'miffy' | 'boris' | 'mordred'`, the resulting object must have **all** those keys (and no others), each holding a `Type`. **Why use it:** concise, enforced lookups/maps; missing a key is a compile error. **`Record<string, T>`:** allows *any* string key (like an index signature). **Common mistakes:** omitting a required key (error), or using `Record` when a precise interface with distinct value types is more appropriate.",
+    "example": "```ts\ntype CatName = 'miffy' | 'boris' | 'mordred';\ninterface CatInfo { age: number; breed: string }\n\n// Must include every CatName key, each a CatInfo:\nconst cats: Record<CatName, CatInfo> = {\n  miffy: { age: 10, breed: 'Persian' },\n  boris: { age: 5, breed: 'Maine Coon' },\n  mordred: { age: 16, breed: 'British Shorthair' },\n};\nconsole.log(cats.boris.age);\n```",
+    "resources": [
+      {
+        "label": "TypeScript — Record<Keys, Type>",
+        "url": "https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type"
+      },
+      {
+        "label": "TypeScript Handbook — Utility Types",
+        "url": "https://www.typescriptlang.org/docs/handbook/utility-types.html"
+      }
+    ]
   }
 }
