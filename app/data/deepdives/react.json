@@ -1726,82 +1726,114 @@
     ]
   },
   "react-reuse-001": {
-    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Older reuse patterns (HOCs, render props) share logic by adding *wrapper components* — leading to deeply nested 'wrapper hell' and indirect data flow. **Why custom Hooks win:** a custom Hook extracts stateful logic (state, effects, other Hooks) into a plain function you *call*, so two components share the logic without any extra components in the tree and with explicit, readable data flow (`const { x } = useThing()`). **Why this is the modern default:** Hooks compose like functions and keep the component hierarchy flat. **Common mistakes:** expecting two callers to share *state* (each call is independent — they share logic, not state), or naming the function without the `use` prefix.",
+    "example": "```tsx\nimport { useState } from 'react';\n\n// Reusable stateful logic — no wrapper components added to the tree.\nfunction useToggle(initial: boolean) {\n  const [on, setOn] = useState(initial);\n  const toggle = () => setOn(o => !o);\n  return { on, toggle };\n}\n\nexport default function App() {\n  const menu = useToggle(false);\n  const modal = useToggle(false); // independent state from `menu`\n  return (\n    <div>\n      <button onClick={menu.toggle}>menu: {menu.on ? 'open' : 'closed'}</button>\n      <button onClick={modal.toggle}>modal: {modal.on ? 'open' : 'closed'}</button>\n    </div>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Code Reuse Patterns",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Reusing Logic with Custom Hooks",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks"
+      },
+      {
+        "label": "react.dev — Custom Hooks: sharing logic",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks#custom-hooks-let-you-share-stateful-logic-not-state-itself"
       }
     ]
   },
   "react-reuse-002": {
-    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Before Hooks, how do you inject shared behavior/props into many components? **A Higher-Order Component (HOC):** a function that takes a component and returns a *new* component wrapping it — e.g. `withAuth(Profile)` returns a component that adds auth props/behavior. **Why it worked:** it's just composition at the component level; the wrapper handles the cross-cutting concern and renders the original with extra props. **Why it's largely superseded:** HOCs add wrapper layers, can collide on prop names, and obscure where props come from — custom Hooks usually do the same job without nesting. **Common mistakes:** mutating the wrapped component, forgetting to forward props/refs, or stacking many HOCs into wrapper hell.",
+    "example": "```tsx\nimport type { ComponentType } from 'react';\n\ntype InjectedProps = { greeting: string };\n\n// Base component needs a greeting prop.\nfunction Profile({ name, greeting }: { name: string } & InjectedProps) {\n  return <p>{greeting}, {name}!</p>;\n}\n\n// HOC: wraps a component and injects the greeting prop for it.\nfunction withGreeting(Wrapped: ComponentType<{ name: string } & InjectedProps>) {\n  return (props: { name: string }) => <Wrapped {...props} greeting=\"Hello\" />;\n}\n\nconst ProfileWithGreeting = withGreeting(Profile);\n\nexport default function App() {\n  return <ProfileWithGreeting name=\"Ada\" />; // greeting is injected by the HOC\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Code Reuse Patterns",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Higher-order components (legacy patterns)",
+        "url": "https://react.dev/reference/react/Component#alternatives"
+      },
+      {
+        "label": "legacy React — Higher-Order Components",
+        "url": "https://legacy.reactjs.org/docs/higher-order-components.html"
       }
     ]
   },
   "react-reuse-003": {
-    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A component owns some logic/state, but the *consumer* needs to decide how to render it. **The render props pattern:** the component accepts a **function** as a prop (often `children`) and calls it with its internal state, letting the caller render whatever they want with that data. **Why it works:** it inverts control — the stateful component stays generic, the caller supplies the UI. **Why custom Hooks usually replace it now:** a Hook shares the same logic without the extra component and the nesting that render props create. **Common mistakes:** creating a new inline render function each render (fine, but can defeat memoization), or reaching for render props where a Hook is cleaner.",
+    "example": "```tsx\nimport { useState, type ReactNode } from 'react';\n\nfunction Counter({ children }: { children: (count: number, inc: () => void) => ReactNode }) {\n  const [count, setCount] = useState(0);\n  // The component owns the state; the caller decides how to render it.\n  return <>{children(count, () => setCount(c => c + 1))}</>;\n}\n\nexport default function App() {\n  return (\n    <Counter>\n      {(count, inc) => <button onClick={inc}>clicked {count} times</button>}\n    </Counter>\n  );\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Code Reuse Patterns",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Passing a render prop",
+        "url": "https://react.dev/reference/react/cloneElement#alternatives"
+      },
+      {
+        "label": "legacy React — Render Props",
+        "url": "https://legacy.reactjs.org/docs/render-props.html"
       }
     ]
   },
   "react-reuse-mcq-001": {
-    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Custom Hook vs HOC for sharing logic — what's the key advantage of the Hook? **The answer:** it adds **no extra components** to the tree and makes data flow **explicit** — you call `const data = useThing()` and see exactly what you get, instead of an opaque wrapper injecting props. **Why HOCs fall short:** they nest wrappers (wrapper hell), can clash on prop names, and hide where injected props originate. **Why the wrong options are wrong:** Hooks must still obey the Rules of Hooks (no conditional calls), work in function components (not class-only), and don't auto-memoize anything. **Common mistakes:** assuming Hooks relax the call-order rules — they don't.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\n// Custom Hook: shared logic, flat tree, explicit return — no wrapper component.\nfunction useWindowWidth() {\n  const [width, setWidth] = useState(window.innerWidth);\n  useEffect(() => {\n    const onResize = () => setWidth(window.innerWidth);\n    window.addEventListener('resize', onResize);\n    return () => window.removeEventListener('resize', onResize);\n  }, []);\n  return width;\n}\n\nexport default function App() {\n  const width = useWindowWidth();\n  return <p>window width: {width}px</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Code Reuse Patterns",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Custom Hooks vs other patterns",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks#when-to-use-custom-hooks"
+      },
+      {
+        "label": "react.dev — Rules of Hooks",
+        "url": "https://react.dev/reference/rules/rules-of-hooks"
       }
     ]
   },
   "react-reuse-004": {
-    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A widget like tabs or an accordion has several related parts that must share state, but you don't want consumers to wire props between them. **Compound components:** a set of components designed to work together that share *implicit* state via context (e.g. `<Tabs>`, `<TabList>`, `<Tab>`, `<TabPanel>`). The parent holds the state; the children read it from context. **Why it's nice:** consumers get a flexible, declarative API (`<Tabs><Tab/>…`) with no prop drilling and freedom to arrange the parts. **Common mistakes:** using a child outside its parent (guard the context with a clear error), or over-engineering simple components into compound APIs.",
+    "example": "```tsx\nimport { createContext, useContext, useState, type ReactNode } from 'react';\n\nconst TabsContext = createContext<{ active: number; setActive: (i: number) => void } | null>(null);\n\nfunction Tabs({ children }: { children: ReactNode }) {\n  const [active, setActive] = useState(0);\n  return <TabsContext.Provider value={{ active, setActive }}>{children}</TabsContext.Provider>;\n}\nfunction Tab({ index, label }: { index: number; label: string }) {\n  const ctx = useContext(TabsContext)!;\n  return <button onClick={() => ctx.setActive(index)} disabled={ctx.active === index}>{label}</button>;\n}\n\nexport default function App() {\n  return <Tabs><Tab index={0} label=\"One\" /><Tab index={1} label=\"Two\" /></Tabs>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Code Reuse Patterns",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Passing Data Deeply with Context",
+        "url": "https://react.dev/learn/passing-data-deeply-with-context"
+      },
+      {
+        "label": "react.dev — useContext",
+        "url": "https://react.dev/reference/react/useContext"
       }
     ]
   },
   "react-reuse-005": {
-    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Many components need the same shared state (current user, theme), and you want a clean API for reading it. **The provider pattern:** wrap a subtree in a context **Provider** that holds the shared state, then expose a **custom Hook** (e.g. `useAuth()`) that calls `useContext` internally — so consumers read the value without importing the context object or touching `useContext`, and you can add a 'must be inside provider' guard in one place. **Why combine them:** the provider centralizes the state; the Hook gives a tidy, typed, guarded read API. **Common mistakes:** exposing the raw context instead of a Hook, or passing a fresh `value` object each render (memoize it).",
+    "example": "```tsx\nimport { createContext, useContext, useState, type ReactNode } from 'react';\n\ntype Auth = { user: string; login: (u: string) => void };\nconst AuthContext = createContext<Auth | null>(null);\n\nfunction AuthProvider({ children }: { children: ReactNode }) {\n  const [user, setUser] = useState('guest');\n  return <AuthContext.Provider value={{ user, login: setUser }}>{children}</AuthContext.Provider>;\n}\nfunction useAuth() {\n  const ctx = useContext(AuthContext);\n  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');\n  return ctx;\n}\nfunction Navbar() {\n  const { user, login } = useAuth();\n  return <button onClick={() => login('Ada')}>signed in as {user}</button>;\n}\n\nexport default function App() {\n  return <AuthProvider><Navbar /></AuthProvider>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Code Reuse Patterns",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Scaling Up with Reducer and Context",
+        "url": "https://react.dev/learn/scaling-up-with-reducer-and-context"
+      },
+      {
+        "label": "react.dev — Extracting a custom Hook around context",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks"
       }
     ]
   },
   "react-reuse-mcq-002": {
-    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** Two components both need mouse-tracking logic — which approach shares it **without adding a component** to the render tree? **The answer:** a **custom Hook** — `const { x, y } = useMousePosition()`. It's just a function call; no wrapper element appears in the tree, and data flow is explicit. **Why the others add nodes:** a render-prop component (`<MouseTracker>`) and an HOC (`withMouse(...)`) both introduce a wrapper component; a compound-component set is for grouping related UI, not sharing arbitrary logic. **Common mistakes:** reaching for render props/HOCs out of habit when a Hook is simpler and flatter.",
+    "example": "```tsx\nimport { useState, useEffect } from 'react';\n\nfunction useMousePosition() {\n  const [pos, setPos] = useState({ x: 0, y: 0 });\n  useEffect(() => {\n    const onMove = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });\n    window.addEventListener('mousemove', onMove);\n    return () => window.removeEventListener('mousemove', onMove);\n  }, []);\n  return pos;\n}\n\nexport default function App() {\n  const { x, y } = useMousePosition(); // no wrapper component added\n  return <p>mouse at ({x}, {y})</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Code Reuse Patterns",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Reusing Logic with Custom Hooks",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks"
+      },
+      {
+        "label": "react.dev — Extracting your own custom Hook",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks#extracting-your-own-custom-hook-from-a-component"
       }
     ]
   },
   "react-reuse-006": {
-    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
-    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "explanation": "**The problem:** A misconception that a custom Hook must return state. **The reality:** a custom Hook can return **anything** — state, setter functions, derived values, an object, or **nothing at all** (some Hooks only run an effect). And yes, it can call **any** Hooks internally, including `useEffect` — encapsulating effect setup/cleanup is one of the best uses (e.g. `useDocumentTitle`, `useEventListener`). **Why this flexibility matters:** custom Hooks are just functions that use Hooks; their signature is whatever is convenient for callers. **Common mistakes:** forcing a `[value, setValue]` shape when an object or void return reads better, or putting an effect in the component when a reusable Hook would centralize it.",
+    "example": "```tsx\nimport { useEffect } from 'react';\n\n// Returns nothing — it only runs an effect (sets the document title).\nfunction useDocumentTitle(title: string) {\n  useEffect(() => {\n    const prev = document.title;\n    document.title = title;\n    return () => { document.title = prev; };\n  }, [title]);\n}\n\nexport default function App() {\n  useDocumentTitle('Custom Hook demo');\n  return <p>Check the browser tab title.</p>;\n}\n```",
     "resources": [
       {
-        "label": "react.dev — Code Reuse Patterns",
-        "url": "https://react.dev/learn"
+        "label": "react.dev — Custom Hooks can return anything",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks#custom-hooks-let-you-share-stateful-logic-not-state-itself"
+      },
+      {
+        "label": "react.dev — Effects inside custom Hooks",
+        "url": "https://react.dev/learn/reusing-logic-with-custom-hooks#when-to-use-custom-hooks"
       }
     ]
   },
