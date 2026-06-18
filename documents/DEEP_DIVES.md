@@ -120,7 +120,30 @@ leaking `null`); those are intentional and the verifier passes because the error
 - `verify-node-examples.mjs <subject>` — `node --check` syntax pass (Node/JS snippets). ESM detected
   via top-level `import`/`export`/`await` (written as `.mjs`), else CommonJS (`.cjs`).
 
-**Remaining subjects — not started:** `javascript` and `aws` deepdives files are still
-`{}`. Use the matching prompt in `documents/prompts/`, the same batch workflow. JS uses ```js```
-snippets — verify with `verify-node-examples.mjs javascript`. AWS cards are scenario-based — examples
-optional.
+**JavaScript — IN PROGRESS: 146 / 267 cards** done (all have an `example`; verified with
+**`verify-node-examples.mjs javascript`**, all 146 parse clean). Examples are runnable `js` snippets.
+Authored with colon-ending bold labels (`**The problem:** …`) so the `DeepDive` spacing regex fires —
+the one pre-existing `types-prim-001` used periods and was rewritten. Also **fixed a wrong card answer**
+while authoring: `array-join-002` claimed `[1,null,undefined,2].join('-')` is `'1--2'`; it's `'1---2'`
+(4 elements → 3 separators) — corrected in `data/javascript.json` too.
+
+- **DONE topics (146):** Types (20), Coercion (8), Scope (11), Execution (10), this (7), Prototypes (6),
+  Async (11), Functions (9), Error Handling (6), Modern JS (12), **Arrays — Batch A only (46): methods
+  `at` through `map`** (at, concat, copyWithin, entries, every, fill, filter, find, findIndex, findLast,
+  findLastIndex, flat, flatMap, forEach, includes, indexOf, join, keys, lastIndexOf, map).
+- **REMAINING (121):**
+  - **Arrays — Batch B (38): methods `pop` through `with`** — pop, push, reduce, reduceRight, reverse,
+    shift, slice, some, sort, splice, toReversed, toSorted, toSpliced, unshift, values, with.
+  - **Strings — all 83** (34 methods × 2–3 cards each: at, charAt, charCodeAt, codePointAt, concat,
+    endsWith, includes, indexOf, isWellFormed, lastIndexOf, localeCompare, match, matchAll, normalize,
+    padEnd, padStart, repeat, replace, replaceAll, search, slice, split, startsWith, substr, substring,
+    toLocaleLowerCase, toLocaleUpperCase, toLowerCase, toString, toUpperCase, toWellFormed, trim,
+    trimEnd, trimStart, valueOf).
+  - **Next-batch recipe:** `cd app` → fill `scripts/dd-batch.mjs` (`subject = 'javascript'`) with the
+    batch object → `node scripts/dd-batch.mjs` → `node scripts/verify-node-examples.mjs javascript` →
+    runtime-spot-check tricky output comments with `node -e` → commit `data/deepdives/javascript.json`.
+    Read a topic's cards first:
+    `node -e "require('./data/javascript.json').filter(c=>c.topic==='Strings').forEach(c=>console.log(c.id,c.question))"`.
+
+**Remaining subject — not started:** `aws` deepdives file is still `{}`. AWS cards are scenario-based —
+examples optional.
