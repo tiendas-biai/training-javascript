@@ -2254,5 +2254,515 @@
         "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/normalize#description"
       }
     ]
+  },
+  "string-padEnd-001": {
+    "explanation": "**The problem:** you need a string padded to a fixed width on the **right**. **What `padEnd(targetLength, padString)` does:** appends copies of `padString` to the **end** until the string reaches `targetLength`, returning a new string. So `'abc'.padEnd(6, '.')` adds three dots → `'abc...'`. **Why it's useful:** aligning columns in console/table output. **Defaults:** `padString` defaults to a space. **Common mistakes:** thinking it pads the start (that's `padStart`), or expecting it to truncate when the string is already long enough (it doesn't — see the next card).",
+    "example": "```js\nconsole.log('abc'.padEnd(6, '.')); // 'abc...'\nconsole.log('abc'.padEnd(6));      // 'abc   ' — default pad is space\nconsole.log('1'.padEnd(4, '0'));   // '1000'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.padEnd()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padEnd"
+      }
+    ]
+  },
+  "string-padEnd-002": {
+    "explanation": "**The problem:** `'abcdef'.padEnd(4, '.')` returns `'abcdef'` unchanged. **Why:** padding only happens when the string is **shorter** than `targetLength`. Since `'abcdef'` is already length 6 (≥ 4), there's nothing to add and **no truncation** occurs — `padEnd` never shortens a string. **Why it matters:** don't expect `padEnd`/`padStart` to clip overflow; use `slice` if you need a hard max width. **Common mistakes:** assuming a smaller target truncates (it returns the original), or that it throws on too-small targets.",
+    "example": "```js\nconsole.log('abcdef'.padEnd(4, '.')); // 'abcdef' — already longer, unchanged\nconsole.log('abcdef'.padEnd(8, '.')); // 'abcdef..'\n// to enforce a max width, truncate explicitly:\nconsole.log('abcdef'.slice(0, 4));    // 'abcd'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.padEnd()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padEnd"
+      }
+    ]
+  },
+  "string-padEnd-003": {
+    "explanation": "**The problem:** `'abc'.padEnd(8, '12345')` returns `'abc12345'`. **Why:** the pad string is **repeated and then truncated** to fill exactly the needed width. The target is 8 and `'abc'` is 3, so 5 pad characters are needed; `'12345'` supplies exactly 5 → `'abc12345'`. If more were needed, the pad would repeat (`'12345123...'`) and be cut to length. **Why it matters:** multi-character pads tile to fit, never overshooting the target. **Common mistakes:** expecting the whole pad string to be appended once regardless of length, or that it overshoots `targetLength`.",
+    "example": "```js\nconsole.log('abc'.padEnd(8, '12345'));  // 'abc12345' — exactly 5 pad chars\nconsole.log('abc'.padEnd(10, '12345')); // 'abc1234512' — pad repeats then truncates\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.padEnd()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padEnd"
+      }
+    ]
+  },
+  "string-padStart-001": {
+    "explanation": "**The problem:** you need a string padded to a fixed width on the **left** — classic for zero-padding numbers. **What `padStart(targetLength, padString)` does:** prepends copies of `padString` until the string reaches `targetLength`. So `'5'.padStart(3, '0')` → `'005'`. **Why it's useful:** formatting times (`'9'.padStart(2,'0')` → `'09'`), IDs, and right-aligned columns. **Defaults:** `padString` is a space. **Common mistakes:** confusing it with `padEnd` (which pads the right), or expecting truncation when the string is already long enough (it isn't shortened).",
+    "example": "```js\nconsole.log('5'.padStart(3, '0'));  // '005'\nconsole.log('9'.padStart(2, '0'));  // '09' — time formatting\nconsole.log('42'.padStart(5));      // '   42' — default space pad\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.padStart()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padStart"
+      }
+    ]
+  },
+  "string-padStart-002": {
+    "explanation": "**The problem:** `'hello'.padStart(3)` returns `'hello'` unchanged. **Why:** the string (length 5) is already **longer** than the target (3), so no padding is added and **nothing is truncated** — `padStart` never shortens. **Why it matters:** `padStart`/`padEnd` only grow strings up to a minimum width; they're not a max-width clamp. **Common mistakes:** expecting `padStart(3)` to clip `'hello'` to `'hel'` (use `slice(0, 3)` for that), or that a target smaller than the length errors.",
+    "example": "```js\nconsole.log('hello'.padStart(3));   // 'hello' — already longer, unchanged\nconsole.log('hello'.padStart(8));   // '   hello'\nconsole.log('hello'.slice(0, 3));   // 'hel' — explicit truncation\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.padStart()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padStart"
+      }
+    ]
+  },
+  "string-padStart-003": {
+    "explanation": "**The problem:** `'abc'.padStart(10, 'foo')` returns `'foofoofabc'`. **Why:** 7 pad characters are needed (target 10 minus length 3). The pad string `'foo'` is **repeated and truncated** to exactly 7 characters: `'foofoof'` (foo + foo + f), then placed before `'abc'`. **Why it matters:** multi-character pads tile to fill the gap precisely, which can cut the pad mid-word. **Common mistakes:** expecting whole copies of `'foo'` only (it truncates to fit), or miscounting the pad length.",
+    "example": "```js\nconsole.log('abc'.padStart(10, 'foo')); // 'foofoofabc' — 7 pad chars: foo+foo+f\nconsole.log('abc'.padStart(6, 'foo'));  // 'fooabc'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.padStart()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padStart"
+      }
+    ]
+  },
+  "string-repeat-001": {
+    "explanation": "**The problem:** how do you build a string of N repetitions? **`repeat(count)`** returns a new string consisting of `count` copies concatenated — `'ha'.repeat(3)` → `'hahaha'`. **Why it's useful:** building separators (`'-'.repeat(40)`), indentation, or test fixtures, far cleaner than a loop. **Edge cases:** `repeat(0)` returns `''`; a negative or `Infinity` count throws `RangeError`; a fractional count is floored. **Common mistakes:** passing a negative/`Infinity` count (throws), or expecting `repeat` to insert a separator between copies (it doesn't — use `Array(n).join(sep)` for that).",
+    "example": "```js\nconsole.log('ha'.repeat(3)); // 'hahaha'\nconsole.log('-'.repeat(10)); // '----------'\nconsole.log('x'.repeat(0));  // '' — zero copies\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.repeat()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/repeat"
+      }
+    ]
+  },
+  "string-repeat-002": {
+    "explanation": "**The problem:** which `repeat()` calls throw a `RangeError`? **The answer: `'x'.repeat(Infinity)`** (and any **negative** count). **Why:** the count must be a finite, non-negative number; `Infinity` and negatives are out of range and throw. **Why the others are fine:** `repeat(0)` → `''`; `repeat(3.5)` is **floored to 3** → `'xxx'` (no throw); `repeat(1)` → the string itself. **Why it matters:** validate user-supplied counts before calling `repeat`. **Common mistakes:** assuming a fractional count throws (it floors), or that `repeat(0)` errors (it returns `''`).",
+    "example": "```js\nconsole.log('x'.repeat(0));   // ''\nconsole.log('x'.repeat(3.5)); // 'xxx' — floored to 3\ntry {\n  'x'.repeat(Infinity);       // out of range\n} catch (e) {\n  console.log(e.constructor.name); // RangeError\n}\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.repeat()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/repeat"
+      }
+    ]
+  },
+  "string-replace-001": {
+    "explanation": "**The problem:** `'aabbcc'.replace('b', 'X')` replaces only the **first** `'b'` → `'aaXbcc'`. **Why:** with a **string** first argument, `replace` substitutes only the **first** occurrence. To replace all, use a **global regex** (`/b/g`) or `replaceAll`. **Why it's a trap:** people expect a string pattern to replace every match. **Also note:** `replace` returns a **new** string (strings are immutable). **Common mistakes:** expecting all matches replaced with a string pattern, or forgetting the `g` flag when using a regex for global replacement.",
+    "example": "```js\nconsole.log('aabbcc'.replace('b', 'X'));   // 'aaXbcc' — first 'b' only\nconsole.log('aabbcc'.replace(/b/g, 'X'));  // 'aaXXcc' — global regex\nconsole.log('aabbcc'.replaceAll('b', 'X')); // 'aaXXcc' — replaceAll\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.replace()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace"
+      }
+    ]
+  },
+  "string-replace-002": {
+    "explanation": "**The problem:** `'Maria Cruz'.replace(/(\\w+)\\s(\\w+)/, '$2, $1')` returns `'Cruz, Maria'` — it swaps the words. **Why:** the regex captures two groups — `(\\w+)` (first word) and `(\\w+)` (second word). In the replacement string, **`$1` and `$2` are backreferences** to those captured groups, so `'$2, $1'` reconstructs `'<group2>, <group1>'` = `'Cruz, Maria'`. **Why it's powerful:** capture-group references let you reorder/reformat matched text. **Common mistakes:** forgetting that `$1`/`$2` refer to capture groups (not arguments), or escaping `$` unintentionally; use `$$` for a literal dollar sign.",
+    "example": "```js\nconsole.log('Maria Cruz'.replace(/(\\w+)\\s(\\w+)/, '$2, $1')); // 'Cruz, Maria'\nconsole.log('2026-06-18'.replace(/(\\d{4})-(\\d{2})-(\\d{2})/, '$3/$2/$1')); // '18/06/2026'\n```",
+    "resources": [
+      {
+        "label": "MDN — replace() (specifying a string as the replacement)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement"
+      }
+    ]
+  },
+  "string-replace-003": {
+    "explanation": "**The problem:** what does `$&` mean in a `replace` replacement string? **The answer: the matched substring itself** — the whole text that the pattern matched. **Why it's useful:** wrap or annotate matches without retyping them, e.g. `replace(/\\d+/g, '[$&]')` brackets every number. **Other special patterns:** `$1`–`$n` (capture groups), `` $` `` (text before the match), `$'` (text after), `$$` (a literal `$`). **Why it matters:** these tokens only have meaning in the **string** replacement; a replacer **function** receives the match as its first argument instead. **Common mistakes:** expecting `$&` to work inside a replacer function (use the argument), or forgetting `$$` for a literal dollar.",
+    "example": "```js\nconsole.log('price: 42'.replace(/\\d+/, '[$&]'));    // 'price: [42]' — $& = the match\nconsole.log('abc'.replace(/b/, '$&$&'));            // 'abbc' — duplicate the match\nconsole.log('5'.replace(/\\d/, '$$$&'));             // '$5' — $$ is a literal $\n```",
+    "resources": [
+      {
+        "label": "MDN — replace() (special replacement patterns)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement"
+      }
+    ]
+  },
+  "string-replaceAll-001": {
+    "explanation": "**The problem:** how do you replace **every** occurrence with a plain string pattern? **`replaceAll(search, replacement)`** replaces **all** matches — `'aabbcc'.replaceAll('b', 'X')` → `'aaXXcc'`. **Why it exists:** `replace('b', ...)` only swaps the first occurrence with a string pattern; before `replaceAll` (ES2021) you needed a global regex (`/b/g`). **Why it's clearer:** no regex escaping for literal text. **Common mistakes:** passing a **non-global** regex to `replaceAll` (throws — see the next card), or reaching for a regex when a literal string is simpler.",
+    "example": "```js\nconsole.log('aabbcc'.replaceAll('b', 'X')); // 'aaXXcc' — all matches\nconsole.log('a.b.c'.replaceAll('.', '-'));  // 'a-b-c' — no regex escaping needed\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.replaceAll()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll"
+      }
+    ]
+  },
+  "string-replaceAll-002": {
+    "explanation": "**The problem:** `'aabbcc'.replaceAll(/b/, 'X')` (a regex **without** `g`) throws a `TypeError`. **Why:** when given a **regex**, `replaceAll` requires the **global (`g`) flag** — replacing \"all\" with a non-global regex would be contradictory, so the spec rejects it. **The fix:** add `g` (`/b/g`) or pass a plain string (`'b'`). **Why it matters:** it's a guardrail against the silent first-only behavior of `replace`. **Common mistakes:** forgetting the `g` flag on a regex passed to `replaceAll`, or assuming it silently behaves like `replace`.",
+    "example": "```js\ntry {\n  'aabbcc'.replaceAll(/b/, 'X'); // regex without g flag\n} catch (e) {\n  console.log(e.constructor.name); // TypeError\n}\nconsole.log('aabbcc'.replaceAll(/b/g, 'X')); // 'aaXXcc' — g flag present\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.replaceAll()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll"
+      }
+    ]
+  },
+  "string-replaceAll-003": {
+    "explanation": "**The problem:** `'xxx'.replaceAll('', '_')` returns `'_x_x_x_'`. **Why:** the **empty string matches at every boundary** — before each character and at the very end. There are 4 such positions in `'xxx'` (before each `x` plus after the last), so a `'_'` is inserted at each → `'_x_x_x_'`. **Why it matters:** replacing the empty string interleaves the replacement between every character (a niche trick, e.g. spacing out letters). **Common mistakes:** expecting no change (the empty string \"matches nothing\"), or miscounting the insertion positions (`length + 1`).",
+    "example": "```js\nconsole.log('xxx'.replaceAll('', '_')); // '_x_x_x_' — inserts at every boundary\nconsole.log('ab'.replaceAll('', '-'));  // '-a-b-'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.replaceAll()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll"
+      }
+    ]
+  },
+  "string-search-001": {
+    "explanation": "**The problem:** `'hey JudE'.search(/[A-Z]/)` returns `4`. **Why:** `search(regex)` returns the **index of the first match** of the pattern, or `-1` if none. The pattern `[A-Z]` (any uppercase letter) first matches `'J'` at index 4. **Why it's useful:** quick regex-based position lookup. **Note:** `search` **ignores** the regex's `g` flag (it only finds the first match) and has **no** `fromIndex` parameter (unlike `indexOf`). **Common mistakes:** expecting a boolean (use `test` for that), or a `fromIndex` argument (not supported).",
+    "example": "```js\nconsole.log('hey JudE'.search(/[A-Z]/)); // 4 — first uppercase ('J')\nconsole.log('abc'.search(/\\d/));         // -1 — no digit\nconsole.log('a1b2'.search(/\\d/));        // 1 — first digit\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.search()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/search"
+      }
+    ]
+  },
+  "string-search-002": {
+    "explanation": "**The problem:** how does `search()` differ from `indexOf()`? **The key difference: `search()` accepts a regex; `indexOf()` accepts only a string.** Both return the index of the first match (or `-1`), but `search` matches a **pattern** while `indexOf` matches a **literal substring**. **The trade-offs:** `indexOf` supports a `fromIndex` (start position) which `search` lacks; `search` coerces a string argument to a regex. **When to use which:** `indexOf` for exact substrings (faster, simpler), `search` when you need a pattern. **Common mistakes:** passing a regex to `indexOf` (it's coerced to a string), or expecting a `fromIndex` on `search`.",
+    "example": "```js\nconsole.log('a1b2'.search(/\\d/));   // 1 — regex pattern\nconsole.log('a1b2'.indexOf('b'));   // 2 — literal substring\nconsole.log('a.b'.indexOf('.'));    // 1 — '.' is literal here\nconsole.log('a.b'.search(/./));     // 0 — '.' is 'any char' in regex\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.search()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/search"
+      }
+    ]
+  },
+  "string-slice-001": {
+    "explanation": "**The problem:** extract a substring from an index to the end. **`slice(start)`** returns the portion from `start` to the end of the string — `'Hello World'.slice(6)` → `'World'`. **Why it's the go-to:** it's non-mutating (strings are immutable anyway), supports **negative** indices (from the end), and never swaps arguments (unlike `substring`). **Common mistakes:** confusing it with `splice` (an array method that mutates), or expecting `slice` to modify the original string.",
+    "example": "```js\nconsole.log('Hello World'.slice(6));   // 'World'\nconsole.log('Hello World'.slice(0, 5)); // 'Hello'\nconsole.log('Hello World'.slice(-5));   // 'World' — from the end\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.slice()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/slice"
+      }
+    ]
+  },
+  "string-slice-002": {
+    "explanation": "**The problem:** `'Hello World'.slice(-5)` returns `'World'`. **Why:** a **negative `start`** counts from the **end** of the string — `-5` means \"5 characters before the end\", i.e. the last 5 characters. **Why it's handy:** grab a suffix without computing `length - 5`. **The contrast:** `substring` does **not** support negatives (it treats them as `0`), so this is a `slice`-only convenience. **Common mistakes:** expecting `substring(-5)` to behave the same (it returns the whole string), or off-by-one when counting from the end.",
+    "example": "```js\nconsole.log('Hello World'.slice(-5));     // 'World' — last 5 chars\nconsole.log('Hello World'.slice(-5, -1));  // 'Worl'\nconsole.log('Hello World'.substring(-5));  // 'Hello World' — negatives → 0\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.slice()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/slice"
+      }
+    ]
+  },
+  "string-slice-003": {
+    "explanation": "**The problem:** `'Hello'.slice(3, 1)` returns `''`, but `'Hello'.substring(3, 1)` returns `'el'`. **Why they differ:** `slice` returns `''` when `start > end` (it never reorders). `substring` **swaps** its arguments when `start > end`, so `substring(3, 1)` becomes `substring(1, 3)` → `'el'`. **Plus:** `slice` honors **negative** indices; `substring` clamps negatives to `0`. **Why it matters:** the two look interchangeable but diverge on out-of-order and negative arguments. **Common mistakes:** assuming both behave identically, or relying on argument-swapping from `slice` (it doesn't swap).",
+    "example": "```js\nconsole.log('Hello'.slice(3, 1));     // '' — start > end, no swap\nconsole.log('Hello'.substring(3, 1)); // 'el' — substring swaps to (1, 3)\n```",
+    "resources": [
+      {
+        "label": "MDN — slice() vs substring()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substring#differences_between_substring_and_slice"
+      }
+    ]
+  },
+  "string-split-001": {
+    "explanation": "**The problem:** turn a delimited string into an array. **`split(separator)`** breaks the string at each occurrence of `separator` and returns the pieces as an array — `'a,b,c'.split(',')` → `['a', 'b', 'c']`. **Variations:** `split('')` splits into characters (by **code unit** — careful with emoji); `split(' ')` by spaces; a **regex** separator allows pattern splitting; an optional second `limit` argument caps the count. **Edge cases:** `''.split(',')` → `['']`; `'abc'.split('')` → `['a','b','c']`. **Common mistakes:** using `split('')` on strings with emoji (breaks surrogate pairs), or forgetting that no-match returns a single-element array `[whole]`.",
+    "example": "```js\nconsole.log('a,b,c'.split(','));   // ['a', 'b', 'c']\nconsole.log('a-b_c'.split(/[-_]/)); // ['a', 'b', 'c'] — regex separator\nconsole.log('abc'.split(''));      // ['a', 'b', 'c']\nconsole.log('nope'.split(','));    // ['nope'] — no match\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.split()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split"
+      }
+    ]
+  },
+  "string-split-002": {
+    "explanation": "**The problem:** `'Hello World How'.split(' ', 2)` returns `['Hello', 'World']`, dropping `'How'`. **Why:** the second argument is a **limit** — the maximum number of elements in the result. `split` still splits on every space, but only the **first 2** pieces are kept; the remainder is **discarded** (not joined into the last element). **Why it matters:** the limit truncates rather than merging the tail — a common surprise. **Common mistakes:** expecting `'World How'` as the last element (the rest is dropped), or thinking the limit counts separators rather than result elements.",
+    "example": "```js\nconsole.log('Hello World How'.split(' ', 2)); // ['Hello', 'World'] — rest dropped\nconsole.log('Hello World How'.split(' '));    // ['Hello', 'World', 'How']\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.split() (limit)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split#parameters"
+      }
+    ]
+  },
+  "string-split-003": {
+    "explanation": "**The problem:** `'😄😄'.split('')` produces **4 lone surrogate** code units, not 2 emoji. **Why:** `split('')` splits by **UTF-16 code unit**, and each emoji is a **surrogate pair** (2 units), so each is torn into its high and low surrogate — `['\\uD83D', '\\uDE04', '\\uD83D', '\\uDE04']`. Those halves are invalid on their own and render as �. **The fix:** use spread `[...str]` or `Array.from(str)`, which iterate by **code point** and keep emoji intact. **Common mistakes:** using `split('')` to get \"characters\" from text that may contain emoji/astral characters.",
+    "example": "```js\nconsole.log('😄😄'.split(''));    // ['\\uD83D','\\uDE04','\\uD83D','\\uDE04'] — 4 broken halves\nconsole.log('😄😄'.split('').length); // 4\nconsole.log([...'😄😄']);          // ['😄', '😄'] — code-point aware\nconsole.log([...'😄😄'].length);   // 2 — correct\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.split()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split"
+      }
+    ]
+  },
+  "string-startsWith-001": {
+    "explanation": "**The problem:** test whether a string begins with a given prefix. **`startsWith(prefix)`** returns a **boolean** — `'Saturday night'.startsWith('Sat')` → `true`. **Why it's clearer than `indexOf`:** `str.startsWith(p)` reads better than `str.indexOf(p) === 0`. **Notes:** it's **case-sensitive**, accepts an optional **start position** as a second argument, and throws a `TypeError` if you pass a **regex**. **Common mistakes:** expecting case-insensitive matching (normalize first), or passing a regex (use `/^.../.test(str)` instead).",
+    "example": "```js\nconsole.log('Saturday night'.startsWith('Sat')); // true\nconsole.log('Saturday night'.startsWith('sat')); // false — case-sensitive\nconsole.log('Saturday night'.startsWith('day', 5)); // false ('day' isn't at index 5)\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.startsWith()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith"
+      }
+    ]
+  },
+  "string-startsWith-002": {
+    "explanation": "**The problem:** `'Saturday night'.startsWith('night', 9)` returns `true`. **Why:** the second argument is a **start position** — the check begins at index 9, and the substring from index 9 is `'night'`, which indeed starts with `'night'`. **Why it's useful:** test a prefix at an arbitrary offset without slicing. **Common mistakes:** miscounting the index (`'Saturday '` is 9 characters, so index 9 is `'n'`), or reading the second argument as a length/end position (it's the start).",
+    "example": "```js\nconst s = 'Saturday night';\nconsole.log(s.startsWith('night', 9)); // true — index 9 begins 'night'\nconsole.log(s.slice(9));               // 'night' — what's checked\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.startsWith()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith"
+      }
+    ]
+  },
+  "string-substr-001": {
+    "explanation": "**The problem:** why avoid `substr()` in new code? **The answer:** `substr(start, length)` is a **deprecated legacy (Annex B)** feature — kept only for web compatibility and not guaranteed in non-browser environments. Its `(start, length)` signature also differs from the more standard `slice`/`substring` `(start, end)`, inviting bugs. **The replacements:** `slice(start, end)` (supports negatives) or `substring(start, end)`. **Why it matters:** linters flag `substr`; prefer the standard methods. **Common mistakes:** mixing up `substr`'s length-based second argument with `slice`/`substring`'s end-index second argument.",
+    "example": "```js\nconsole.log('Mozilla'.substr(2, 3));    // 'zil' — (start, LENGTH), deprecated\nconsole.log('Mozilla'.slice(2, 5));     // 'zil' — (start, end) — preferred\nconsole.log('Mozilla'.substring(2, 5)); // 'zil' — (start, end)\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.substr() (deprecated)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substr"
+      }
+    ]
+  },
+  "string-substr-002": {
+    "explanation": "**The problem:** `'Mozilla'.substr(1, -1)` returns `''`. **Why:** `substr`'s second argument is a **length**, and a **negative or zero length** yields an **empty string** — there's nothing to extract. (A negative *start*, by contrast, would count from the end.) So `substr(1, -1)` asks for −1 characters → `''`. **Why it matters:** it's another reason `substr` is error-prone; `slice`/`substring` interpret the second argument as an **end index** instead. **Common mistakes:** treating `substr`'s second argument as an end index (it's a length), or expecting negative length to count backward.",
+    "example": "```js\nconsole.log('Mozilla'.substr(1, -1)); // '' — negative length\nconsole.log('Mozilla'.substr(1, 3));  // 'ozi' — start 1, length 3\nconsole.log('Mozilla'.slice(1, -1));  // 'ozill' — slice's -1 is an end index\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.substr()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substr"
+      }
+    ]
+  },
+  "string-substring-001": {
+    "explanation": "**The problem:** `'Mozilla'.substring(5, 2)` returns `'zil'`, even though start (5) is after end (2). **Why:** `substring` **swaps** its arguments when `start > end`, so `substring(5, 2)` is treated as `substring(2, 5)` → characters at indices 2, 3, 4 → `'zil'`. **Why it's surprising:** unlike `slice`, which returns `''` for `start > end`, `substring` silently reorders. **Also:** `substring` clamps negative arguments to `0`. **Common mistakes:** relying on order to produce an empty result (use `slice` for that), or expecting negative-index support (use `slice`).",
+    "example": "```js\nconsole.log('Mozilla'.substring(5, 2)); // 'zil' — swapped to (2, 5)\nconsole.log('Mozilla'.substring(2, 5)); // 'zil' — same result\nconsole.log('Mozilla'.slice(5, 2));     // '' — slice does NOT swap\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.substring()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substring"
+      }
+    ]
+  },
+  "string-substring-002": {
+    "explanation": "**The problem:** `'Mozilla'.substring(-3, 4)` returns `'Mozi'`. **Why:** `substring` **clamps negative arguments to `0`**, so `-3` becomes `0`, making the call `substring(0, 4)` → characters 0–3 → `'Mozi'`. **The contrast:** `slice(-3, 4)` would treat `-3` as \"3 from the end\". **Why it matters:** `substring` has no concept of negative (from-the-end) indices — they all collapse to `0`. **Common mistakes:** expecting `-3` to count from the end with `substring` (use `slice` for that), or that it returns `''`.",
+    "example": "```js\nconsole.log('Mozilla'.substring(-3, 4)); // 'Mozi' — -3 clamped to 0 → (0, 4)\nconsole.log('Mozilla'.slice(-3, 4));     // '' — slice: -3 is index 4, start≥end\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.substring()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substring"
+      }
+    ]
+  },
+  "string-toLocaleLowerCase-001": {
+    "explanation": "**The problem:** lowercasing the Turkish capital dotted I (`İ`, U+0130) gives different results by method. **`toLocaleLowerCase('tr')`** applies **Turkish** case rules → `'i'` (a plain dotless... actually dotted-i mapping per locale), whereas **`toLowerCase()`** uses the **locale-independent** Unicode default → `'i̇'` (`i` + a combining dot above, length 2). **Why:** Turkish/Azerbaijani have a distinct dotted/dotless-I system, so correct casing is **locale-dependent**. **Why it matters:** for these languages, `toLowerCase` produces linguistically wrong text; pass the locale. **Common mistakes:** assuming case conversion is locale-neutral, or that input and output always have the same length.",
+    "example": "```js\nconst I = '\\u0130'; // İ — Turkish capital dotted I\nconsole.log(I.toLocaleLowerCase('tr')); // 'i'\nconst def = I.toLowerCase();\nconsole.log(def.length);                // 2 — 'i' + combining dot above\nconsole.log(I.toLocaleLowerCase('tr') === def); // false — different mappings\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toLocaleLowerCase()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toLocaleLowerCase"
+      }
+    ]
+  },
+  "string-toLocaleLowerCase-002": {
+    "explanation": "**The problem:** for most Western European text, does `toLocaleLowerCase()` differ from `toLowerCase()`? **The answer:** they produce the **same result in most cases**; differences appear only for **locale-specific** characters (notably Turkish/Azerbaijani dotted/dotless I). **Why:** `toLowerCase` uses the default Unicode case mapping, which already handles accented Latin letters correctly; only a few locales override those defaults. **Why it matters:** you only need `toLocaleLowerCase` (with a locale) when your text involves those special-casing languages — otherwise `toLowerCase` is fine and faster. **Common mistakes:** assuming they always differ, or that `toLocaleLowerCase` requires a locale argument (it defaults to the runtime locale).",
+    "example": "```js\nconsole.log('CAFÉ'.toLowerCase());           // 'café'\nconsole.log('CAFÉ'.toLocaleLowerCase('fr'));  // 'café' — same for French\nconsole.log('CAFÉ'.toLowerCase() === 'CAFÉ'.toLocaleLowerCase('fr')); // true\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toLocaleLowerCase()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toLocaleLowerCase"
+      }
+    ]
+  },
+  "string-toLocaleUpperCase-001": {
+    "explanation": "**The problem:** `'istanbul'.toLocaleUpperCase('TR')` returns `'İSTANBUL'` (dotted capital İ), while `toUpperCase()` returns `'ISTANBUL'` (plain I). **Why:** in **Turkish**, lowercase dotted `i` uppercases to **dotted** `İ` (U+0130), preserving the dot; the locale-independent default maps `i` → plain `I`. **Why it matters:** uppercasing Turkish text with `toUpperCase` loses the dot and changes meaning; pass the `'TR'` locale. **Common mistakes:** assuming `i` always uppercases to `I`, or that case conversion is locale-neutral.",
+    "example": "```js\nconsole.log('istanbul'.toLocaleUpperCase('TR')); // 'İSTANBUL' — dotted İ\nconsole.log('istanbul'.toUpperCase());           // 'ISTANBUL' — plain I\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toLocaleUpperCase()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toLocaleUpperCase"
+      }
+    ]
+  },
+  "string-toLocaleUpperCase-002": {
+    "explanation": "**The problem:** is `x.toLocaleLowerCase() === x.toLocaleUpperCase().toLocaleLowerCase()` always `true`? **The answer: no** — locale-aware case conversion is **not always stable** (round-tripping through upper then lower can change the string). **Why:** some characters have asymmetric or many-to-one case mappings (ligatures, special-casing like German ß, Turkish I variants), so uppercasing then lowercasing doesn't always return the original. **Why it matters:** never assume case conversion is reversible — for case-insensitive comparison use a single normalization (or `localeCompare` with `sensitivity: 'accent'/'base'`). **Common mistakes:** treating upper/lower as perfect inverses.",
+    "example": "```js\nconst s = 'Gesäß';\nconst round = s.toUpperCase().toLowerCase();\nconsole.log(s.toUpperCase()); // 'GESÄSS' — ß → SS\nconsole.log(round);           // 'gesäss' — not the original 'gesäß'\nconsole.log(s.toLowerCase() === round); // false — not stable\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toLocaleUpperCase()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toLocaleUpperCase"
+      }
+    ]
+  },
+  "string-toLowerCase-001": {
+    "explanation": "**The problem:** does `toLowerCase()` change the original string? **The answer: no** — JavaScript strings are **immutable**, so `toLowerCase()` returns a **new** string and the original is unchanged. The same is true of every string method (`toUpperCase`, `trim`, `replace`, `slice`, …). **Why it matters:** you must **use the return value** (`s = s.toLowerCase()`); calling it without assigning does nothing useful. **Common mistakes:** expecting `s.toLowerCase()` to mutate `s` in place, or discarding the returned string.",
+    "example": "```js\nconst s = 'HELLO';\nconst lower = s.toLowerCase();\nconsole.log(lower); // 'hello' — new string\nconsole.log(s);     // 'HELLO' — original unchanged (strings are immutable)\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toLowerCase()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toLowerCase"
+      }
+    ]
+  },
+  "string-toLowerCase-002": {
+    "explanation": "**The problem:** how do you do a **case-insensitive** `includes` check? **The answer: lowercase both sides** — `str.toLowerCase().includes(sub.toLowerCase())`. **Why both:** `includes` is case-sensitive, so normalizing only one side still mismatches when the other has different casing. **Why the others fail:** `includes` has no `{ ignoreCase: true }` option; lowercasing just the substring (or just the haystack) misses mixed-case matches. **For locale correctness** you might use `localeCompare`/`Intl.Collator` with `sensitivity: 'base'`, but lowercasing both is the common idiom. **Common mistakes:** normalizing only one operand, or inventing an options argument that doesn't exist.",
+    "example": "```js\nconst str = 'Hello World';\nconst sub = 'WORLD';\nconsole.log(str.includes(sub));                          // false\nconsole.log(str.toLowerCase().includes(sub.toLowerCase())); // true\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.includes()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/includes"
+      }
+    ]
+  },
+  "string-toLowerCase-003": {
+    "explanation": "**The problem:** when should you reach for `toLocaleLowerCase()` instead of `toLowerCase()`? **The answer:** when your app handles languages with **locale-specific case mappings** — most notably **Turkish/Azerbaijani**, where the dotted/dotless I makes the default Unicode mapping wrong. **Why:** `toLowerCase` uses locale-independent rules that mis-case those letters; `toLocaleLowerCase('tr')` applies the correct ones. **Otherwise:** for the vast majority of text, `toLowerCase` is correct and faster. **Common mistakes:** always using the locale variant (unneeded overhead), or never using it and corrupting Turkish text.",
+    "example": "```js\n// Default is fine for most text:\nconsole.log('HELLO'.toLowerCase()); // 'hello'\n\n// Turkish needs the locale-aware variant:\nconsole.log('\\u0130'.toLowerCase());            // 'i̇' (i + combining dot)\nconsole.log('\\u0130'.toLocaleLowerCase('tr'));  // 'i'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toLocaleLowerCase()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toLocaleLowerCase"
+      }
+    ]
+  },
+  "string-toString-001": {
+    "explanation": "**The problem:** what does `new String('hello').toString()` return? **The answer: the primitive string `'hello'`.** A `String` **object** (created with `new String`) wraps a primitive; its `toString()` (and `valueOf()`) returns that underlying **primitive** value. **Why you'd see it:** rarely on purpose — `String(x)` (without `new`) already returns a primitive, which is what you almost always want. **Why it matters:** `typeof new String('x')` is `'object'`, but `.toString()` gives back a `'string'`. **Common mistakes:** using `new String` and being surprised it's an object (`new String('a') === 'a'` is `false`); prefer `String(x)` or a literal.",
+    "example": "```js\nconst obj = new String('hello');\nconsole.log(typeof obj);            // 'object' — a wrapper\nconsole.log(obj.toString());        // 'hello'\nconsole.log(typeof obj.toString()); // 'string' — primitive\nconsole.log(obj === 'hello');       // false — object vs primitive\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toString()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toString"
+      }
+    ]
+  },
+  "string-toString-002": {
+    "explanation": "**The problem:** if you override `String.prototype.toString`, does it affect **string primitives** in template literals? **The answer: no** — string **primitives** are not coerced via `toString()`; the engine returns their value directly. Only **String objects** (rare) would consult the overridden method. **Why:** ToString of a value that's already a primitive string is the identity operation — no prototype method lookup happens. **Why it matters:** you can't hook string-primitive coercion by patching `String.prototype.toString` (and you shouldn't try). **Common mistakes:** assuming all strings route through `toString`, or that template-literal interpolation calls it for primitives.",
+    "example": "```js\nconst orig = String.prototype.toString;\nString.prototype.toString = () => 'HACKED';\nconsole.log(`${'abc'}`);            // 'abc' — primitive ignores the override\nconsole.log(`${new String('abc')}`); // 'HACKED' — String object uses it\nString.prototype.toString = orig;   // restore\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toString()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toString"
+      }
+    ]
+  },
+  "string-toUpperCase-001": {
+    "explanation": "**The problem:** uppercase a string. **`toUpperCase()`** returns a **new** string with all characters converted to upper case — `'hello world'.toUpperCase()` → `'HELLO WORLD'`. **Notes:** strings are immutable, so the original is unchanged; for locale-specific languages (Turkish) use `toLocaleUpperCase`; and some characters change length when uppercased (e.g. ß → SS). **Why it matters:** the everyday casing method, but be aware of the locale and length caveats. **Common mistakes:** expecting it to mutate in place, or assuming output length always equals input length.",
+    "example": "```js\nconsole.log('hello world'.toUpperCase()); // 'HELLO WORLD'\nconst s = 'abc';\nconsole.log(s.toUpperCase(), s);          // 'ABC' 'abc' — original unchanged\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toUpperCase()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toUpperCase"
+      }
+    ]
+  },
+  "string-toUpperCase-002": {
+    "explanation": "**The problem:** `'Gesäß'.toUpperCase()` returns `'GESÄSS'` — one character longer than the input. **Why:** the German sharp s **ß** has no single uppercase form, so the default Unicode mapping expands it to **two** letters `SS`. The `ä` simply becomes `Ä`. **Why it matters:** uppercasing can **change a string's length**, which breaks assumptions like \"upper-casing preserves character count\" (and makes the operation non-reversible). **Common mistakes:** assuming a 1:1 character mapping, or that `toUpperCase().toLowerCase()` round-trips to the original (ß → SS → ss).",
+    "example": "```js\nconsole.log('Gesäß'.toUpperCase());        // 'GESÄSS'\nconsole.log('Gesäß'.length, 'Gesäß'.toUpperCase().length); // 5 6 — grew by one\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toUpperCase()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toUpperCase"
+      }
+    ]
+  },
+  "string-toUpperCase-003": {
+    "explanation": "**The problem:** why can `toUpperCase()` produce a string of **different length** than the original? **The answer:** some Unicode characters have case mappings that **expand to multiple characters**. The classic case is German **ß → SS** (one char becomes two); certain ligatures and accented forms behave similarly. **Why:** uppercase forms don't always exist as a single code point, so the standard mapping substitutes a multi-character equivalent. **Why it matters:** never assume case conversion preserves length or is reversible. **Common mistakes:** indexing/aligning based on pre-conversion positions, or treating upper/lower as exact inverses.",
+    "example": "```js\nconsole.log('ß'.toUpperCase());          // 'SS' — one char → two\nconsole.log('ﬁle'.toUpperCase());        // 'FILE' — ﬁ ligature expands to FI\nconsole.log('ß'.length, 'ß'.toUpperCase().length); // 1 2\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toUpperCase()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toUpperCase"
+      }
+    ]
+  },
+  "string-toWellFormed-001": {
+    "explanation": "**The problem:** a string may contain **lone surrogates** (unpaired UTF-16 units) that break Unicode-sensitive APIs. **What `toWellFormed()` does (ES2024):** returns a new string with **each lone surrogate replaced by U+FFFD** (the replacement character �), leaving valid characters untouched. **Why it matters:** sanitizing before `encodeURI`, sending over the network, or writing to a system that requires valid UTF-8 avoids errors/corruption. **The companion:** `isWellFormed()` just *checks* (returns a boolean) without altering. **Common mistakes:** assuming all strings are already well-formed, or confusing this with normalization (it fixes surrogates, not composition).",
+    "example": "```js\nconst bad = 'a\\uD800b'; // lone high surrogate\nconst fixed = bad.toWellFormed();\nconsole.log(fixed.length);          // 3 — same length\nconsole.log(fixed === 'a\\uFFFDb');   // true — lone surrogate → �\nconsole.log(fixed.isWellFormed());  // true\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toWellFormed()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toWellFormed"
+      }
+    ]
+  },
+  "string-toWellFormed-002": {
+    "explanation": "**The problem:** what does `'abc'.toWellFormed()` return? **The answer: `'abc'`** unchanged. **Why:** the string has **no lone surrogates**, so there's nothing to replace — `toWellFormed()` returns an equivalent well-formed string (here, identical content). **Why it matters:** calling it on already-valid strings is safe and a no-op contentwise; it only alters strings containing unpaired surrogates. **Common mistakes:** expecting `null`/`undefined`/a throw for valid input, or thinking it normalizes or trims (it only fixes surrogates).",
+    "example": "```js\nconsole.log('abc'.toWellFormed());     // 'abc' — already well-formed\nconsole.log('😄'.toWellFormed());       // '😄' — valid surrogate pair kept\nconsole.log('a\\uD800'.toWellFormed()); // 'a�' — only lone surrogates change\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.toWellFormed()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toWellFormed"
+      }
+    ]
+  },
+  "string-trim-001": {
+    "explanation": "**The problem:** remove surrounding whitespace from user input. **`trim()`** returns a new string with whitespace removed from **both ends** (interior whitespace is untouched) — `'  hello world  '.trim()` → `'hello world'`. **Why it's essential:** sanitizing form fields, parsed tokens, and file lines. **What counts as whitespace:** spaces, tabs, newlines, and other Unicode whitespace/line terminators. **Common mistakes:** expecting `trim` to collapse internal spaces (it doesn't — use a regex `replace(/\\s+/g, ' ')`), or that it mutates the original (strings are immutable).",
+    "example": "```js\nconsole.log('  hello world  '.trim()); // 'hello world' — ends trimmed\nconsole.log('\\t\\n  hi  \\n'.trim());     // 'hi' — tabs/newlines too\nconsole.log('a  b'.trim());            // 'a  b' — interior spaces kept\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.trim()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/trim"
+      }
+    ]
+  },
+  "string-trim-002": {
+    "explanation": "**The problem:** which characters does `trim()` strip? **The answer: all whitespace characters and line terminators** as defined by the ECMAScript grammar — not just the ASCII space. That includes space, tab (`\\t`), CR/LF (`\\r`, `\\n`), vertical tab, form feed, no-break space (U+00A0), the BOM, and other Unicode space separators. **Why it matters:** input can contain exotic whitespace (e.g. pasted non-breaking spaces) that `trim` still removes. **Common mistakes:** assuming `trim` only removes the literal space character, or that it touches whitespace **inside** the string (it only trims the ends).",
+    "example": "```js\nconsole.log('\\u00A0\\t hi \\n'.trim());        // 'hi' — NBSP, tab, space, newline all removed\nconsole.log('\\u00A0'.trim().length);         // 0 — a no-break space is whitespace\nconsole.log(' a b '.trim());                 // 'a b' — interior space preserved\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.trim()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/trim"
+      }
+    ]
+  },
+  "string-trim-003": {
+    "explanation": "**The problem:** the three trim variants differ by **which end** they clean. **`trim()`** removes whitespace from **both** ends; **`trimStart()`** removes it from the **beginning** (left) only; **`trimEnd()`** removes it from the **end** (right) only. All return new strings and leave the interior untouched. **Aliases:** `trimStart`/`trimEnd` have legacy aliases `trimLeft`/`trimRight`. **Why it matters:** preserve indentation while cleaning trailing newlines (`trimEnd`), or vice versa. **Common mistakes:** mixing up start/end, or using the deprecated alias names in new code.",
+    "example": "```js\nconst s = '  hi  ';\nconsole.log(JSON.stringify(s.trim()));      // 'hi'\nconsole.log(JSON.stringify(s.trimStart())); // 'hi  '\nconsole.log(JSON.stringify(s.trimEnd()));   // '  hi'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.trim()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/trim"
+      }
+    ]
+  },
+  "string-trimEnd-001": {
+    "explanation": "**The problem:** remove only **trailing** whitespace. **`trimEnd()`** returns a new string with whitespace stripped from the **end** (right side) only; leading whitespace is preserved. So `'  hello  '.trimEnd()` → `'  hello'`. **Why it's useful:** cleaning trailing spaces/newlines from lines while keeping indentation. **Alias:** `trimRight` is a legacy synonym. **Common mistakes:** confusing it with `trimStart` (left), or expecting it to also remove leading whitespace.",
+    "example": "```js\nconsole.log(JSON.stringify('  hello  '.trimEnd())); // '  hello'\nconsole.log(JSON.stringify('line\\n'.trimEnd()));    // 'line'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.trimEnd()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/trimEnd"
+      }
+    ]
+  },
+  "string-trimEnd-002": {
+    "explanation": "**The problem:** which name is an alias for `trimEnd()`? **The answer: `trimRight()`.** When `trimStart`/`trimEnd` were standardized, the older names `trimLeft`/`trimRight` were kept as **aliases** for web compatibility — `trimRight` is literally the same function as `trimEnd`. **Why the standard names:** `Start`/`End` are direction-neutral (correct for right-to-left scripts), so they're preferred in new code. **Why the others are wrong:** `trimLeft` aliases `trimStart`, and `rtrim`/`chompRight` aren't JS methods. **Common mistakes:** using `trimRight`/`trimLeft` in new code instead of the canonical `trimEnd`/`trimStart`.",
+    "example": "```js\nconsole.log(String.prototype.trimRight === String.prototype.trimEnd); // true — same fn\nconsole.log('  hi  '.trimRight()); // '  hi' — alias of trimEnd\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.trimEnd()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/trimEnd"
+      }
+    ]
+  },
+  "string-trimStart-001": {
+    "explanation": "**The problem:** remove only **leading** whitespace. **`trimStart()`** returns a new string with whitespace stripped from the **beginning** (left side) only; trailing whitespace is preserved. So `'  hello  '.trimStart()` → `'hello  '`. **Why it's useful:** dropping indentation while keeping trailing content. **Alias:** `trimLeft` is a legacy synonym. **Common mistakes:** confusing it with `trimEnd` (right), or expecting it to also strip trailing whitespace.",
+    "example": "```js\nconsole.log(JSON.stringify('  hello  '.trimStart())); // 'hello  '\nconsole.log(JSON.stringify('   indented'.trimStart())); // 'indented'\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.trimStart()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/trimStart"
+      }
+    ]
+  },
+  "string-trimStart-002": {
+    "explanation": "**The problem:** what is `String.prototype.trimLeft.name`? **The answer: `'trimStart'`.** `trimLeft` is a legacy **alias** that points at the **same function object** as `trimStart`; that function's `name` property is `'trimStart'`, so accessing it through the alias still reports the canonical name. **Why:** the spec defines `trimLeft`/`trimRight` as additional names for `trimStart`/`trimEnd`, not as separate functions. **Why it matters:** confirms they're identical, and that the standard names are canonical. **Common mistakes:** expecting `.name` to be `'trimLeft'`, or thinking the alias is a distinct implementation.",
+    "example": "```js\nconsole.log(String.prototype.trimLeft.name); // 'trimStart' — canonical name\nconsole.log(String.prototype.trimLeft === String.prototype.trimStart); // true\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.trimStart()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/trimStart"
+      }
+    ]
+  },
+  "string-valueOf-001": {
+    "explanation": "**The problem:** what does `new String('hello').valueOf()` return? **The answer: the **primitive** string `'hello'`.** A `String` object wraps a primitive; `valueOf()` returns that underlying **primitive value** (as does `toString()` for strings). **Why it exists:** `valueOf` is the hook the engine uses to get an object's primitive during coercion. **Why it matters:** it's how a `String` object becomes a usable primitive in expressions. **Common mistakes:** confusing the wrapper object (`typeof` is `'object'`) with the primitive its `valueOf` returns (`'string'`); just use string literals or `String(x)` to avoid wrappers entirely.",
+    "example": "```js\nconst obj = new String('hello');\nconsole.log(obj.valueOf());        // 'hello'\nconsole.log(typeof obj.valueOf()); // 'string' — primitive\nconsole.log(typeof obj);           // 'object' — the wrapper\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.valueOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/valueOf"
+      }
+    ]
+  },
+  "string-valueOf-002": {
+    "explanation": "**The problem:** when does the engine call `valueOf()` on a String object automatically? **The answer: during type coercion** — when a `String` **object** is used where a **primitive** is expected (arithmetic, comparison, string concatenation, template literals). The engine invokes `ToPrimitive`, which calls `valueOf()` (and/or `toString()`) to obtain the primitive. **Why the other options are wrong:** it's not \"never\" (coercion triggers it), not limited to `JSON.stringify`, and not limited to `+` (any primitive-expecting context). **Why it matters:** explains how wrapper objects participate in expressions. **Common mistakes:** thinking `valueOf` must be called explicitly, or only fires for one operator.",
+    "example": "```js\nconst obj = new String('5');\nconsole.log(obj + '!');      // '5!' — coercion calls the primitive conversion\nconsole.log(obj == '5');     // true — loose equality coerces the object\nconsole.log(`${obj} chars`); // '5 chars' — template literal coerces too\n```",
+    "resources": [
+      {
+        "label": "MDN — String.prototype.valueOf()",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/valueOf"
+      }
+    ]
   }
 }
