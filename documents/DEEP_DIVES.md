@@ -102,6 +102,18 @@ for a project with Redux installed (self-reviewed). The Redux *core* cards (redu
 data flow, thunk mechanics) use plain-TS demos that **do** compile. Conceptual cards (RTK Query,
 sagas, when-to-use, Provider-missing, several Building/SSG/SSR cards) intentionally have no `example`.
 
-**Other subjects — not started:** `javascript`, `typescript`, `node`, `aws` deepdives files are
-still `{}`. Use the matching prompt in `documents/prompts/`, the same batch workflow, and
-`verify-deepdive-examples.mjs <subject>`. (JS/TS examples are ```ts``` snippets, not React `App`s.)
+**Node.js — DONE: all 61 cards** across Event Loop, Modules, Events, Core API, Streams & Buffers,
+HTTP, Error Handling, Express. Examples are runnable CommonJS/ESM `js` snippets (not React). Verified
+with **`verify-node-examples.mjs node`** — a separate harness that runs **`node --check`** (syntax
+only) on each example, since these snippets import core/uninstalled modules (e.g. `express`) and
+shouldn't be type-checked. 60 of 61 have an example (`node-mod-mcq-002` is conceptual). All parse clean.
+
+**Verification harnesses:**
+- `verify-deepdive-examples.mjs <subject>` — tsx type-check (React; uses installed libs).
+- `verify-node-examples.mjs <subject>` — `node --check` syntax pass (Node/JS snippets). ESM detected
+  via top-level `import`/`export`/`await` (written as `.mjs`), else CommonJS (`.cjs`).
+
+**Remaining subjects — not started:** `javascript`, `typescript`, `aws` deepdives files are still
+`{}`. Use the matching prompt in `documents/prompts/`, the same batch workflow. JS/TS use ```js```/
+```ts``` snippets — verify JS with `verify-node-examples.mjs javascript`; for TS, the tsx harness can
+be adapted (or `tsc` the snippets). AWS cards are scenario-based — examples optional.

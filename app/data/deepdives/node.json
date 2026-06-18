@@ -655,5 +655,201 @@
         "url": "https://nodejs.org/api/errors.html#errorcause"
       }
     ]
+  },
+  "node-exp-001": {
+    "explanation": "**The problem:** You need to run different code for `GET /`, `POST /users`, etc. **Express routing:** `app.METHOD(path, handler)` registers a handler for a specific HTTP method + path — `app.get('/', fn)`, `app.post('/users', fn)`, `app.put`, `app.delete`, and so on (METHOD is the lowercased HTTP verb). `app.all(path, fn)` matches **every** method for a path (handy for shared middleware on a route). **Why:** it maps the request's method+URL to your code declaratively. **The handler** receives `(req, res)` and must end the response. **Common mistakes:** forgetting to send a response (request hangs), mixing up method names, or defining a more general route before a specific one so the specific one never matches.",
+    "example": "```js\nconst express = require('express'); // npm i express\nconst app = express();\n\napp.get('/', (req, res) => res.send('GET home'));\napp.post('/users', (req, res) => res.status(201).send('created'));\napp.all('/health', (req, res) => res.send('ok (any method)'));\n\napp.listen(3000, () => console.log('http://localhost:3000'));\n```",
+    "resources": [
+      {
+        "label": "Express — Basic routing",
+        "url": "https://expressjs.com/en/starter/basic-routing.html"
+      },
+      {
+        "label": "Express — Routing guide",
+        "url": "https://expressjs.com/en/guide/routing.html"
+      }
+    ]
+  },
+  "node-exp-mcq-001": {
+    "explanation": "**The problem:** Route `'/users/:userId/books/:bookId'` with `GET /users/34/books/8989` — what's `req.params`? **The answer:** `{ userId: '34', bookId: '8989' }` — an **object** keyed by the `:name` placeholders, with **string** values. **Why strings:** URL segments are text; Express doesn't guess types, so `'34'` is a string (convert with `Number(req.params.userId)` if you need a number). **Why not an array or merged string:** named params produce a keyed object, one entry per `:placeholder`. **Common mistakes:** assuming numeric params (then `req.params.userId === 34` is false), expecting an array, or forgetting to validate/parse params before using them in queries.",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\napp.get('/users/:userId/books/:bookId', (req, res) => {\n  console.log(req.params); // { userId: '34', bookId: '8989' } — string values\n  const userId = Number(req.params.userId); // convert if you need a number\n  res.json({ userId, bookId: req.params.bookId });\n});\n\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — Route parameters",
+        "url": "https://expressjs.com/en/guide/routing.html#route-parameters"
+      },
+      {
+        "label": "Express — req.params",
+        "url": "https://expressjs.com/en/api.html#req.params"
+      }
+    ]
+  },
+  "node-exp-002": {
+    "explanation": "**The problem:** A route can have **multiple** handler callbacks — how does control move between them? **The flow:** each handler gets `(req, res, next)`; calling **`next()`** passes control to the **next callback of the same route**. This lets you compose per-route steps (validate → authorize → handle). **`next('route')`:** a special form that **skips the remaining callbacks of the current route** and jumps to the **next matching route** entirely — useful to bail out of a route's chain based on a condition. **Note:** `next(err)` (any other argument) jumps to error-handling middleware. **Common mistakes:** forgetting to call `next()` (request hangs), calling `next()` *and* sending a response (double-send error), or confusing `next('route')` (skip to next route) with `next(err)` (error handler).",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\nconst checkPaid = (req, res, next) => {\n  if (req.query.paid !== 'true') return next('route'); // skip rest of THIS route\n  next(); // continue to the next handler of this route\n};\n\napp.get('/content', checkPaid, (req, res) => res.send('premium content'));\napp.get('/content', (req, res) => res.send('upgrade to view')); // fallback route\n\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — Route handlers & next('route')",
+        "url": "https://expressjs.com/en/guide/routing.html#route-handlers"
+      },
+      {
+        "label": "Express — next()",
+        "url": "https://expressjs.com/en/guide/using-middleware.html"
+      }
+    ]
+  },
+  "node-exp-003": {
+    "explanation": "**The problem:** Putting every route in one file doesn't scale. **`express.Router`:** a **mini-application** for modular routing — you define routes (and middleware) on a `router` object in its own file, then **mount** it under a path prefix with `app.use('/birds', router)`. The router's `'/'` and `'/about'` become `'/birds'` and `'/birds/about'`. **Why:** organizes a codebase by feature, keeps related routes + middleware together, and makes them reusable/testable. **Common mistakes:** forgetting to `module.exports` the router, mounting at the wrong prefix, or duplicating the prefix inside the router's own paths (e.g. defining `/birds/about` on a router already mounted at `/birds`).",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\n// birds.js would `module.exports = router;` — inlined here:\nconst router = express.Router();\nrouter.get('/', (req, res) => res.send('Birds home'));     // -> /birds\nrouter.get('/about', (req, res) => res.send('About birds')); // -> /birds/about\n\napp.use('/birds', router); // mount the router under the /birds prefix\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — express.Router",
+        "url": "https://expressjs.com/en/guide/routing.html#express-router"
+      },
+      {
+        "label": "Express — Modular route handlers",
+        "url": "https://expressjs.com/en/starter/basic-routing.html"
+      }
+    ]
+  },
+  "node-exp-mcq-002": {
+    "explanation": "**The problem:** What does `app.route('/book')` enable? **The answer:** **chaining multiple method handlers for one path** — `app.route('/book').get(…).post(…).put(…)`. It returns a single route instance so you attach each HTTP method's handler in one fluent chain, avoiding repeating the path string and reducing typos. **Why use it:** cleaner grouping when one resource path supports several methods. **Why the others are wrong:** it doesn't register across all routers, doesn't generate CRUD automatically, and doesn't redirect. **Common mistakes:** repeating `app.get('/book')`, `app.post('/book')` separately (works, but more error-prone), or expecting `app.route` to do more than group handlers by path.",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\napp.route('/book')\n  .get((req, res) => res.send('get a book'))\n  .post((req, res) => res.send('add a book'))\n  .put((req, res) => res.send('update a book')); // one path, chained methods\n\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — app.route()",
+        "url": "https://expressjs.com/en/guide/routing.html#app-route"
+      },
+      {
+        "label": "Express — Chainable route handlers",
+        "url": "https://expressjs.com/en/api.html#app.route"
+      }
+    ]
+  },
+  "node-exp-004": {
+    "explanation": "**The problem:** Knowing which `res` method to use for each kind of response. **The main ones:** `res.send()` — send a body of various types (string/Buffer/object); `res.json()` — send JSON (sets `Content-Type: application/json`); `res.redirect()` — send a redirect (3xx + `Location`); `res.render()` — render a view template to HTML; `res.download()` — prompt the browser to download a file; `res.end()` — end the response with no body. **Why distinct:** each sets appropriate headers/status for its job. **Key rule:** end the cycle with exactly **one** terminating method per request. **Common mistakes:** calling two terminators (e.g. `res.send` then `res.json` → 'headers already sent'), using `res.send(obj)` vs `res.json(obj)` interchangeably (both JSON-ify objects, but `json` is explicit), or never ending the response.",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\napp.get('/text', (req, res) => res.send('plain or html'));\napp.get('/data', (req, res) => res.json({ ok: true }));      // sets JSON header\napp.get('/old', (req, res) => res.redirect('/data'));         // 302 -> /data\napp.get('/done', (req, res) => res.status(204).end());        // no body\n\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — Response methods",
+        "url": "https://expressjs.com/en/guide/routing.html#response-methods"
+      },
+      {
+        "label": "Express — res API",
+        "url": "https://expressjs.com/en/api.html#res"
+      }
+    ]
+  },
+  "node-mw-001": {
+    "explanation": "**The problem:** Cross-cutting concerns (logging, auth, parsing) shouldn't be copy-pasted into every route. **A middleware function** has access to `(req, res, next)` and runs during the request-response cycle. **The four things it can do:** (1) run **any code**; (2) **modify `req`/`res`** (e.g. attach `req.user`); (3) **end the cycle** by sending a response; or (4) call **`next()`** to pass control to the next middleware/route. An Express app is essentially an ordered **pipeline of middleware**. **Why:** composable, reusable request processing. **The cardinal rule:** a middleware must either end the response or call `next()` — otherwise the request **hangs**. **Common mistakes:** forgetting `next()`, or calling `next()` after already sending a response.",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\n// Logs, attaches data to req, then passes control on with next().\napp.use((req, res, next) => {\n  req.requestTime = Date.now();   // modify req\n  console.log(req.method, req.url); // run code\n  next();                          // pass control to the next middleware/route\n});\n\napp.get('/', (req, res) => res.send(`handled at ${req.requestTime}`));\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — Using middleware",
+        "url": "https://expressjs.com/en/guide/using-middleware.html"
+      },
+      {
+        "label": "Express — Writing middleware",
+        "url": "https://expressjs.com/en/guide/writing-middleware.html"
+      }
+    ]
+  },
+  "node-mw-mcq-001": {
+    "explanation": "**The problem:** A middleware logs the request, but the client hangs until timeout. **The bug:** the middleware **neither ends the response nor calls `next()`** — so control never leaves it, the routes are never reached, and the request stalls forever. **The rule:** every middleware must do exactly one of: send a response (ending the cycle) or call `next()` to continue. **The fix:** add `next()` after logging. **Why the others are wrong:** `console.log` doesn't block, `app.use` isn't method-specific, and you don't 'return res' to continue. **Common mistakes:** writing a logging/auth middleware and forgetting `next()`, or conditionally calling `next()` on some branches but silently doing nothing on others (those requests hang).",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\n// ❌ Bug: no next() and no response -> request hangs.\n// app.use((req, res, next) => { console.log(req.method, req.url); });\n\n// ✅ Fix: call next() so control reaches the routes.\napp.use((req, res, next) => {\n  console.log(req.method, req.url);\n  next();\n});\n\napp.get('/', (req, res) => res.send('ok'));\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — Writing middleware (call next)",
+        "url": "https://expressjs.com/en/guide/writing-middleware.html"
+      },
+      {
+        "label": "Express — Using middleware",
+        "url": "https://expressjs.com/en/guide/using-middleware.html"
+      }
+    ]
+  },
+  "node-mw-002": {
+    "explanation": "**The problem:** Express middleware comes in several flavors; knowing them helps you organize an app. **The five types:** (1) **Application-level** — bound to the app with `app.use(fn)` or `app.METHOD(fn)`. (2) **Router-level** — the same, but on an `express.Router()` instance (`router.use(fn)`). (3) **Error-handling** — special **four-argument** `(err, req, res, next)` functions. (4) **Built-in** — shipped with Express: `express.static()`, `express.json()`, `express.urlencoded()`. (5) **Third-party** — installed packages like `cookie-parser`, wired via `app.use()`. **Why categorize:** each is registered/scoped differently. **Common mistakes:** putting error handlers anywhere but last, or forgetting that built-in body parsers must be registered before routes that read `req.body`.",
+    "example": "```js\nconst express = require('express');\nconst cookieParser = require('cookie-parser'); // third-party\nconst app = express();\n\napp.use(express.json());           // 4) built-in (body parser)\napp.use(cookieParser());           // 5) third-party\napp.use((req, res, next) => { console.log('app-level'); next(); }); // 1) app-level\n\nconst router = express.Router();\nrouter.use((req, res, next) => { console.log('router-level'); next(); }); // 2)\napp.use('/api', router);\n\napp.use((err, req, res, next) => res.status(500).send(err.message)); // 3) error\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — Types of middleware",
+        "url": "https://expressjs.com/en/guide/using-middleware.html"
+      },
+      {
+        "label": "Express — Built-in middleware",
+        "url": "https://expressjs.com/en/guide/using-middleware.html#middleware.built-in"
+      }
+    ]
+  },
+  "node-mw-mcq-002": {
+    "explanation": "**The problem:** The app returns 401 for **every** request, even valid ones, because auth middleware is registered **before** the `/login` route. **Why:** middleware runs in **definition order**. `app.use(authMiddleware)` sits ahead of `app.post('/login')`, so every request — including the login request that's supposed to *issue* a token — hits auth first and is rejected. Nobody can ever obtain a token. **The fix:** register public routes (like `/login`) **before** the auth middleware, or scope auth to only the protected paths (`app.use('/api', authMiddleware)`). **Why the others are wrong:** it's not about `express.json()` ordering, `app.post` can follow `app.use`, and the param count isn't the issue. **Common mistakes:** applying global auth without carving out public endpoints.",
+    "example": "```js\nconst express = require('express');\nconst app = express();\nconst authMiddleware = (req, res, next) =>\n  req.headers.authorization ? next() : res.status(401).send('no token');\n\napp.use(express.json());\napp.post('/login', (req, res) => res.send('here is a token')); // ✅ public, BEFORE auth\napp.use(authMiddleware);                                        // protects routes below\napp.get('/profile', (req, res) => res.send('secret'));\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — Middleware order matters",
+        "url": "https://expressjs.com/en/guide/using-middleware.html#middleware.application"
+      },
+      {
+        "label": "Express — Mounting middleware on a path",
+        "url": "https://expressjs.com/en/guide/using-middleware.html"
+      }
+    ]
+  },
+  "node-mw-003": {
+    "explanation": "**The problem:** How does Express know a middleware is for handling **errors**? **The signature:** an error-handling middleware takes **exactly four** parameters — `(err, req, res, next)`. That fourth `err`-first arity is how Express distinguishes it from regular middleware (you must include all four, even if you don't use `next`). **Where to register it:** **last** — after all other `app.use()` calls and routes — so it catches errors propagated (via `next(err)`) from anything above it. **Why last:** Express runs middleware in order and routes errors forward to the next error handler. **Common mistakes:** writing `(err, req, res)` (only 3 params — Express treats it as a normal middleware and it won't catch errors), or registering the error handler before the routes it should protect.",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\napp.get('/boom', (req, res, next) => next(new Error('something failed')));\n\n// Error handler: FOUR params, registered LAST (after all routes).\napp.use((err, req, res, next) => {\n  console.error(err.message);\n  res.status(500).send('Internal Server Error');\n});\n\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — Error handling",
+        "url": "https://expressjs.com/en/guide/error-handling.html"
+      },
+      {
+        "label": "Express — Writing error handlers",
+        "url": "https://expressjs.com/en/guide/error-handling.html#writing-error-handlers"
+      }
+    ]
+  },
+  "node-mw-mcq-003": {
+    "explanation": "**The problem:** In **Express 4**, a rejected promise inside an `async` route handler crashes the process instead of reaching your error handler. **Why:** Express 4 doesn't know about promises — it only forwards an error to error-handling middleware if you call **`next(err)`**. An unhandled rejection from an `async` handler isn't caught, so it becomes an unhandled rejection (and can crash). **The fixes:** wrap the handler in `try/catch` and call `next(err)` in the catch, or use a wrapper/`express-async-errors`. **Express 5** changes this — it **automatically** forwards rejected promises from async handlers to your error handler. **Why the others are wrong:** async handlers are allowed, `res.send` isn't the issue, and the missing `next` param isn't what disables error tracking. **Common mistakes:** assuming Express 4 catches async errors for you.",
+    "example": "```js\nconst express = require('express');\nconst app = express();\nconst getUserById = async (id) => { throw new Error('db down'); };\n\n// Express 4: catch and forward with next(err) yourself.\napp.get('/user/:id', async (req, res, next) => {\n  try {\n    const user = await getUserById(req.params.id);\n    res.send(user);\n  } catch (err) {\n    next(err); // -> reaches the error handler (Express 5 does this automatically)\n  }\n});\n\napp.use((err, req, res, next) => res.status(500).send(err.message));\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — Error handling (async)",
+        "url": "https://expressjs.com/en/guide/error-handling.html#catching-errors"
+      },
+      {
+        "label": "Express 5 — Migration: rejected promises",
+        "url": "https://expressjs.com/en/guide/migrating-5.html#rejected-promises"
+      }
+    ]
+  },
+  "node-mw-004": {
+    "explanation": "**The problem:** An error happens **after** the response already started sending (e.g. mid-stream). Trying to send a fresh 500 page then throws `ERR_HTTP_HEADERS_SENT`. **Why check `res.headersSent`:** once headers (and possibly body) are on the wire, you **can't** start a new response — status/headers are already committed. So in your error handler, if `res.headersSent` is true, **delegate to Express's default handler** via `next(err)`, which closes the connection cleanly instead of crashing. Only render your custom 500 page when headers haven't been sent yet. **Why it matters:** prevents a secondary crash while handling the first error. **Common mistakes:** unconditionally calling `res.status(500).render(...)` in the error handler, which throws when a response is already in progress.",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\nfunction errorHandler(err, req, res, next) {\n  if (res.headersSent) {\n    return next(err); // response already started — let Express close it cleanly\n  }\n  res.status(500).render('error', { error: err }); // safe: nothing sent yet\n}\n\napp.use(errorHandler); // registered last\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — The default error handler",
+        "url": "https://expressjs.com/en/guide/error-handling.html#the-default-error-handler"
+      },
+      {
+        "label": "Node.js — response.headersSent",
+        "url": "https://nodejs.org/api/http.html#responseheaderssent"
+      }
+    ]
+  },
+  "node-mw-005": {
+    "explanation": "**The problem:** Two of the most-used built-in middlewares. **`express.json()`:** parses incoming requests with a JSON body and puts the parsed object on **`req.body`** — without it, `req.body` is `undefined` for JSON POSTs. **`express.static('public')`:** serves static files (HTML, images, CSS, JS) directly from a directory, so a request for `/logo.png` returns `public/logo.png` with no route needed. **How used:** both are registered with `app.use(...)`, and (for body parsers) **before** routes that read `req.body`. **Why built-in:** these are so common Express ships them (no extra install). **Common mistakes:** reading `req.body` without registering `express.json()` first, registering the body parser after the route, or pointing `express.static` at the wrong folder.",
+    "example": "```js\nconst express = require('express');\nconst app = express();\n\napp.use(express.json());          // populates req.body for JSON requests\napp.use(express.static('public')); // serves files from ./public directly\n\napp.post('/echo', (req, res) => {\n  res.json({ youSent: req.body }); // req.body exists thanks to express.json()\n});\n\napp.listen(3000);\n```",
+    "resources": [
+      {
+        "label": "Express — express.json()",
+        "url": "https://expressjs.com/en/api.html#express.json"
+      },
+      {
+        "label": "Express — Serving static files",
+        "url": "https://expressjs.com/en/starter/static-files.html"
+      }
+    ]
   }
 }
