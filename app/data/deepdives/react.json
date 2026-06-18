@@ -1,10 +1,2010 @@
 {
   "react-comp-001": {
-    "explanation": "**The problem.** You need to put a piece of UI on screen and reuse it in many places without copy-pasting markup.\n\n**Why a component solves it.** React lets you describe UI as a *function that returns markup* (JSX). React calls that function, gets a description of what to render, and reconciles it against the DOM. Because it's just a function, you can call it as many times as you like — that's reuse.\n\n**The two non-negotiable rules.** (1) The name must start with a **capital letter** — `<Profile/>` is your component, `<profile/>` is treated as a literal HTML tag. (2) It must **return JSX** (or `null`). `export default` is what lets another file import it.\n\n**Common mistakes.** Lowercase component names (silently render nothing useful), returning two sibling elements without a wrapper/Fragment, and *defining a component inside another component's body* — that remounts it on every render and throws away its state.",
-    "example": "```tsx\nexport default function App() {\n  // A component is just a capitalized function that returns JSX.\n  // It can be reused as many times as you want.\n  return (\n    <main>\n      <Greeting name=\"Ada\" />\n      <Greeting name=\"Linus\" />\n    </main>\n  );\n}\n\nfunction Greeting({ name }: { name: string }) {\n  return <p>Hello, {name}!</p>;\n}\n```",
+    "explanation": "**The problem:** UI needs to be reusable without copy-pasting markup. **Why it happens:** Building large UIs from scratch each time is repetitive. **Why components work:** A component is just a function—you call it as many times as needed. React handles updating the DOM when props change. **Common mistakes:** Forgetting the capital letter (React thinks it's an HTML tag), defining components inside other components (remounts and loses state), forgetting parentheses on multi-line JSX.",
+    "example": "```tsx\nexport default function App() {\n  return (\n    <div>\n      <Profile name=\"Alice\" />\n      <Profile name=\"Bob\" />\n    </div>\n  );\n}\n\nfunction Profile({ name }: { name: string }) {\n  return <div><h2>{name}</h2><p>Developer</p></div>;\n}\n```",
     "resources": [
-      { "label": "react.dev — Your First Component", "url": "https://react.dev/learn/your-first-component" },
-      { "label": "react.dev — Writing Markup with JSX", "url": "https://react.dev/learn/writing-markup-with-jsx" }
+      {
+        "label": "react.dev — Your First Component",
+        "url": "https://react.dev/learn/your-first-component"
+      },
+      {
+        "label": "react.dev — Writing Markup with JSX",
+        "url": "https://react.dev/learn/writing-markup-with-jsx"
+      }
+    ]
+  },
+  "react-comp-mcq-001": {
+    "explanation": "**The problem:** Understanding JSX syntax rules. **Why capitalization matters:** React has a naming convention—lowercase tags are HTML, capital tags are components. **Why it matters:** A lowercase component is treated as a literal HTML element the browser doesn't recognize. **Key insight:** It's not just style; it's how React's compiler distinguishes them. **Common mistakes:** Writing lowercase component names thinking the convention is optional.",
+    "example": "```tsx\nexport default function App() {\n  // Lowercase function — treated as HTML tag\n  function profile() {\n    return <h1>Profile</h1>;\n  }\n  \n  // This renders <profile /> as an unknown HTML element, never calls the function\n  return (\n    <div>\n      <profile />  {/* Wrong — treated as unknown HTML */}\n    </div>\n  );\n}\n\n// Correct version\nfunction Profile() {\n  return <h1>Profile</h1>;\n}\n\nfunction AppFixed() {\n  return <Profile />; // ✓ Capitalized, calls the component\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — JSX Rules",
+        "url": "https://react.dev/learn/writing-markup-with-jsx#rules-of-jsx"
+      }
+    ]
+  },
+  "react-comp-002": {
+    "explanation": "**The problem:** Nested component definitions cause state loss and performance issues. **Why it happens:** React identifies components by their function reference. A nested definition gets a new reference every render. **Why it breaks:** React sees a different component each render and unmounts/remounts it. **Result:** State is lost, DOM is destroyed/recreated, and it's slow. **Solution:** Always define components at module scope.",
+    "example": "```tsx\n// ❌ WRONG — nested component\nfunction Gallery() {\n  function Profile() {\n    return <div>Profile</div>;\n  }\n  return <Profile />;  // Remounts every render!\n}\n\n// ✓ CORRECT — top-level component\nfunction Profile() {\n  return <div>Profile</div>;\n}\n\nexport default function App() {\n  return <Profile />; // Stable identity\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Keeping Components Pure",
+        "url": "https://react.dev/learn/keeping-components-pure"
+      }
+    ]
+  },
+  "react-comp-003": {
+    "explanation": "**The problem:** Multi-line JSX after `return` doesn't work without parentheses. **Why it happens:** JavaScript's automatic semicolon insertion ends `return` at the first newline. **The fix:** Wrap the JSX in `()`. **Why parentheses work:** They keep the JSX expression attached to the return. **Common mistake:** Leaving off parens and wondering why the UI is empty.",
+    "example": "```tsx\nexport default function App() {\n  // ❌ WRONG — JSX is ignored\n  // return\n  //   <div>Hello</div>;\n  \n  // ✓ CORRECT — parens keep JSX attached\n  return (\n    <div>\n      <h1>Hello</h1>\n      <p>World</p>\n    </div>\n  );\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Your First Component",
+        "url": "https://react.dev/learn/your-first-component#step-2-define-the-component"
+      }
+    ]
+  },
+  "react-jsx-001": {
+    "explanation": "**The problem:** JSX has syntax rules that differ from HTML. **Why:** JSX compiles to JavaScript objects, not markup. **The three rules:** 1) Return a single root (one object per function), 2) Close all tags including self-closing (unambiguous parsing), 3) Use camelCase for attributes (JavaScript object keys). **Why camelCase:** `class` is a JS keyword, so `className` is used. **Key insight:** JSX is stricter than HTML because it's code, not markup.",
+    "example": "```tsx\nexport default function App() {\n  // ✓ Single root, all tags closed, camelCase attributes\n  return (\n    <div className=\"container\" id=\"main\">\n      <img src=\"photo.jpg\" alt=\"Photo\" />  {/* Self-closing tag */}\n      <input type=\"text\" disabled /> {/* Boolean attribute */}\n      <label htmlFor=\"input\">Label</label>  {/* htmlFor, not for */}\n    </div>\n  );\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Writing Markup with JSX",
+        "url": "https://react.dev/learn/writing-markup-with-jsx"
+      },
+      {
+        "label": "react.dev — JSX Rules",
+        "url": "https://react.dev/learn/writing-markup-with-jsx#rules-of-jsx"
+      }
+    ]
+  },
+  "react-jsx-mcq-001": {
+    "explanation": "**The problem:** Understanding why JSX requires a single root. **The answer:** JSX compiles to function calls creating objects. A function can return one value, not multiple. **Two siblings:** Would be `[React.createElement(...), React.createElement(...)]` — invalid. **The solution:** Wrap in a parent or Fragment. **Key mental model:** JSX → JavaScript → must obey JS rules.",
+    "example": "```tsx\nexport default function App() {\n  // ❌ WRONG — two objects\n  // return\n  //   <h1>Title</h1>\n  //   <p>Content</p>;\n  \n  // ✓ CORRECT — single root\n  return (\n    <div>\n      <h1>Title</h1>\n      <p>Content</p>\n    </div>\n  );\n  \n  // ✓ ALSO CORRECT — Fragment (no DOM node)\n  // return (\n  //   <>\n  //     <h1>Title</h1>\n  //     <p>Content</p>\n  //   </>\n  // );\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Writing Markup with JSX",
+        "url": "https://react.dev/learn/writing-markup-with-jsx#the-rules-of-jsx"
+      }
+    ]
+  },
+  "react-jsx-002": {
+    "explanation": "**The problem:** Wrapping siblings in a `<div>` can break layouts or produce invalid HTML. **Why `<div>` fails:** It's a real DOM node that participates in flex/grid layout, and it's invalid in certain parents (e.g., inside `<table>`). **What Fragment does:** Groups siblings without adding a DOM node. **Syntax:** `<>` is shorthand for `<Fragment>`. **When to use:** Whenever you need to group but don't want an extra element.",
+    "example": "```tsx\nexport default function App() {\n  return (\n    <>\n      <h1>No extra div added to DOM</h1>\n      <p>Fragment disappears at render time</p>\n    </>\n  );\n}\n\n// Fragment is useful in tables\nfunction TableRows() {\n  return (\n    <>\n      <tr><td>Row 1</td></tr>\n      <tr><td>Row 2</td></tr>\n    </>\n  );\n}\n\nexport function ValidTable() {\n  return (\n    <table>\n      <tbody>\n        <TableRows />\n      </tbody>\n    </table>\n  );\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Keeping Components Pure",
+        "url": "https://react.dev/learn/keeping-components-pure#returning-jsx-from-components"
+      }
+    ]
+  },
+  "react-jsx-mcq-002": {
+    "explanation": "**The problem:** Which attributes keep dashes in JSX? **The answer:** `aria-*` and `data-*`. **Why:** These are standard attribute names in HTML and must be exact. **All others:** Converted to camelCase because they become JS object keys. **Key insight:** `class` → `className`, `stroke-width` → `strokeWidth`, but `aria-label` and `data-id` stay as-is. **Remember:** The exception proves the camelCase rule.",
+    "example": "```tsx\nexport default function App() {\n  return (\n    <div\n      className=\"button\"  // camelCase\n      id=\"primary\"        // camelCase\n      aria-label=\"Close\"  // keeps dashes (accessibility)\n      data-id=\"123\"       // keeps dashes (custom data)\n      htmlFor=\"input\"     // camelCase (reserved word: for → htmlFor)\n    >\n      <input type=\"checkbox\" />\n    </div>\n  );\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — JSX Attributes",
+        "url": "https://react.dev/learn/writing-markup-with-jsx#applying-css-and-other-attributes-to-elements"
+      }
+    ]
+  },
+  "react-jsx-003": {
+    "explanation": "**The problem:** Where do curly braces work in JSX, and what does `src=\"{avatar}\"` do? **Two places curly braces work:** 1) Embedding JavaScript values in element content: `<h1>{name}</h1>`, 2) As attribute values without quotes: `src={avatar}`. **The gotcha:** `src=\"{avatar}\"` passes a literal string—quotes prevent the braces from being a JS expression. **Key insight:** Braces = \"evaluate this JavaScript\"; quotes = \"this is plain text\".",
+    "example": "```tsx\nexport default function App() {\n  const name = \"Alice\";\n  const age = 25;\n  const imageUrl = \"https://example.com/photo.jpg\";\n  \n  return (\n    <div>\n      {/* Curly braces in content */}\n      <h1>Hello, {name}!</h1>\n      \n      {/* Curly braces in attributes */}\n      <img src={imageUrl} alt=\"Portrait\" />\n      \n      {/* Expressions work: function calls, ternaries, etc */}\n      <p>You are {age > 18 ? \"adult\" : \"minor\"}</p>\n      <span>{Math.floor(age / 10) * 10}s</span>\n      \n      {/* ❌ WRONG — quotes turn it into a string */}\n      <img src=\"{imageUrl}\" alt=\"Broken\" />  {/* Tries to load: https://site.com/images/\"{imageUrl}\" */}\n    </div>\n  );\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Using Curly Braces",
+        "url": "https://react.dev/learn/writing-markup-with-jsx#using-curly-braces-a-window-into-the-javascript-world"
+      }
+    ]
+  },
+  "react-jsx-mcq-003": {
+    "explanation": "**The problem:** What does `{{ backgroundColor: 'black' }}` mean? **The answer:** The outer braces are JSX expression syntax; the inner braces are a JavaScript object literal. **Why double braces:** The `style` prop takes an object, so you nest an object literal. **CSS properties:** Must be camelCase (`backgroundColor`, not `background-color`). **Key insight:** It's not special React syntax, just layered braces.",
+    "example": "```tsx\nexport default function App() {\n  // Double curly braces: JSX braces + object literal\n  return (\n    <div style={{ backgroundColor: \"blue\", color: \"white\", padding: \"10px\" }}>\n      Styled div\n    </div>\n  );\n  \n  // More readable as a variable\n  const styles = {\n    container: { backgroundColor: \"blue\", color: \"white\", padding: \"10px\" }\n  };\n  \n  return <div style={styles.container}>Styled div</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Inline Styles",
+        "url": "https://react.dev/learn/writing-markup-with-jsx#using-curly-braces-in-jsx"
+      }
+    ]
+  },
+  "react-jsx-004": {
+    "explanation": "**The problem:** Are JSX and React the same? **The answer:** No. **JSX:** A syntax extension for writing markup in JavaScript. **React:** A library for building UIs. **The relationship:** React and JSX are designed to work together, but they're separate. **Other uses:** Other libraries can consume JSX. React can run without JSX (via `createElement` calls). **Why they pair:** Because markup and logic belong together in components.",
+    "example": "```tsx\n// JSX version\nexport default function App() {\n  return <h1>Hello</h1>;\n}\n\n// Equivalent without JSX (using React.createElement)\nimport React from 'react';\n\nexport default function AppNoJsx() {\n  return React.createElement('h1', {}, 'Hello');\n}\n\n// Both produce the same output\n```",
+    "resources": [
+      {
+        "label": "react.dev — JSX",
+        "url": "https://react.dev/learn/writing-markup-with-jsx#jsx-is-not-html"
+      }
+    ]
+  },
+  "react-state-001": {
+    "explanation": "**The problem:** Local variables reset on every render and don't trigger re-renders. **Why:** React calls the component function from scratch each render; local variables don't persist. **Why changing doesn't update the screen:** React doesn't know to re-render; the value exists only in memory. **`useState` fixes both:** State persists between renders *and* calling the setter triggers a re-render. **Key insight:** Rendering isn't about running code once; it's a process where React calls your function repeatedly as state changes.",
+    "example": "```tsx\nimport { useState } from 'react';\n\n// ❌ WRONG — local variable approach\nfunction WrongCounter() {\n  let count = 0;  // Resets to 0 every render!\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => { count++; }}>  {/* No re-render! */}\n        Increment\n      </button>\n    </div>\n  );\n}\n\n// ✓ CORRECT — useState approach\nexport default function Counter() {\n  const [count, setCount] = useState(0);\n  \n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>\n        Increment\n      </button>\n    </div>\n  );\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State: A Component's Memory",
+        "url": "https://react.dev/learn/state-a-components-memory"
+      }
+    ]
+  },
+  "react-state-002": {
+    "explanation": "**What `useState` returns:** An array with two items: [currentValue, setterFunction]. **The destructuring:** `const [index, setIndex] = useState(0)` unpacks the array. **The argument:** `0` is the initial value on first render. **On subsequent renders:** `useState` ignores the argument and returns the stored value. **Naming convention:** `count`/`setCount`, `name`/`setName`—not required, but makes intent clear.",
+    "example": "```tsx\nimport { useState } from 'react';\n\nexport default function TextInput() {\n  // Destructure: [current value, setter function] = useState(initial value)\n  const [text, setText] = useState('');  // Starts as empty string\n  const [isVisible, setIsVisible] = useState(true);  // Starts as true\n  \n  return (\n    <div>\n      <input\n        value={text}\n        onChange={(e) => setText(e.target.value)}  // Update on change\n        placeholder=\"Type something\"\n      />\n      <p>You typed: {text}</p>\n      \n      <button onClick={() => setIsVisible(!isVisible)}>\n        Toggle visibility\n      </button>\n      {isVisible && <p>Visible!</p>}\n    </div>\n  );\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Using the State Hook",
+        "url": "https://react.dev/reference/react/useState"
+      }
+    ]
+  },
+  "react-state-mcq-001": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-003": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-mcq-002": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-004": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-005": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-mcq-003": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-006": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-007": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-001": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-mcq-001": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-002": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-mcq-002": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-003": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-004": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-mcq-003": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-005": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-006": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-007": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-props-001": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-props-mcq-001": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-props-002": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-props-003": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-props-mcq-002": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-list-001": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-list-mcq-001": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-list-002": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-list-mcq-002": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-props-004": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-001": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-mcq-001": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-002": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-mcq-002": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-003": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-004": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-005": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-mcq-003": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-006": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-007": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ctx-001": {
+    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Context",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ctx-002": {
+    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Context",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ctx-mcq-001": {
+    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Context",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ctx-003": {
+    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Context",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ctx-mcq-002": {
+    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Context",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ref-001": {
+    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Refs",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ref-mcq-001": {
+    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Refs",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ref-002": {
+    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Refs",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ref-mcq-002": {
+    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Refs",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ref-003": {
+    "explanation": "Understanding refs concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Refs",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ctx-004": {
+    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Context",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-build-001": {
+    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Building",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-build-002": {
+    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Building",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-build-mcq-001": {
+    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Building",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-build-003": {
+    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Building",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-build-004": {
+    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Building",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-build-005": {
+    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Building",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-build-mcq-002": {
+    "explanation": "Understanding building concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Building",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-dom-001": {
+    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-dom-002": {
+    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-dom-003": {
+    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-dom-mcq-001": {
+    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-dom-004": {
+    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-dom-005": {
+    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-dom-006": {
+    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-dom-mcq-002": {
+    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-dom-007": {
+    "explanation": "Understanding react dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-comp-004": {
+    "explanation": "Understanding components concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Components",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-comp-mcq-002": {
+    "explanation": "Understanding components concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Components",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-comp-005": {
+    "explanation": "Understanding components concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Components",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-jsx-005": {
+    "explanation": "Understanding jsx concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — JSX",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-jsx-006": {
+    "explanation": "Understanding jsx concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — JSX",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-jsx-mcq-004": {
+    "explanation": "Understanding jsx concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — JSX",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-008": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-009": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-mcq-004": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-state-010": {
+    "explanation": "Understanding state concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — State",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-008": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-effect-mcq-004": {
+    "explanation": "Understanding effects & lifecycle concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Effects & Lifecycle",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-props-005": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-props-mcq-003": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-props-006": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-list-003": {
+    "explanation": "Understanding props & composition concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Props & Composition",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-008": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-form-mcq-004": {
+    "explanation": "Understanding forms concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Forms",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ctx-005": {
+    "explanation": "Understanding context concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Context",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-001": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-002": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-mcq-001": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-003": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-004": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-mcq-002": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-005": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-006": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-mcq-003": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-007": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-hooks-008": {
+    "explanation": "Understanding hooks concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Hooks",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-perf-001": {
+    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Performance",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-perf-002": {
+    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Performance",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-perf-mcq-001": {
+    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Performance",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-perf-003": {
+    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Performance",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-perf-004": {
+    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Performance",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-perf-mcq-002": {
+    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Performance",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-perf-005": {
+    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Performance",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-perf-006": {
+    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Performance",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-perf-007": {
+    "explanation": "Understanding performance concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Performance",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rax-001": {
+    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux Async Flow",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rax-002": {
+    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux Async Flow",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rax-mcq-001": {
+    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux Async Flow",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rax-003": {
+    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux Async Flow",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rax-004": {
+    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux Async Flow",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rax-005": {
+    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux Async Flow",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rax-mcq-002": {
+    "explanation": "Understanding redux async flow concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux Async Flow",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-redux-001": {
+    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-redux-002": {
+    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-redux-mcq-001": {
+    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-redux-003": {
+    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-redux-004": {
+    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-redux-005": {
+    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-redux-mcq-002": {
+    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-redux-006": {
+    "explanation": "Understanding redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-reuse-001": {
+    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Code Reuse Patterns",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-reuse-002": {
+    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Code Reuse Patterns",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-reuse-003": {
+    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Code Reuse Patterns",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-reuse-mcq-001": {
+    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Code Reuse Patterns",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-reuse-004": {
+    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Code Reuse Patterns",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-reuse-005": {
+    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Code Reuse Patterns",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-reuse-mcq-002": {
+    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Code Reuse Patterns",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-reuse-006": {
+    "explanation": "Understanding code reuse patterns concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Code Reuse Patterns",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-route-001": {
+    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Routing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-route-002": {
+    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Routing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-route-mcq-001": {
+    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Routing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-route-003": {
+    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Routing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-route-004": {
+    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Routing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-route-005": {
+    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Routing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-route-mcq-002": {
+    "explanation": "Understanding routing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Routing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rr-001": {
+    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rr-002": {
+    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rr-mcq-001": {
+    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rr-003": {
+    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rr-004": {
+    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rr-005": {
+    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-rr-mcq-002": {
+    "explanation": "Understanding react redux concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — React Redux",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-sec-001": {
+    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Security",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-sec-002": {
+    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Security",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-sec-mcq-001": {
+    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Security",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-sec-003": {
+    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Security",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-sec-004": {
+    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Security",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-sec-mcq-002": {
+    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Security",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-sec-005": {
+    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Security",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-sec-006": {
+    "explanation": "Understanding security concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Security",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssg-001": {
+    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Static Site Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssg-002": {
+    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Static Site Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssg-mcq-001": {
+    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Static Site Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssg-003": {
+    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Static Site Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssg-004": {
+    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Static Site Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssg-005": {
+    "explanation": "Understanding static site rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Static Site Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssr-001": {
+    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Server Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssr-002": {
+    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Server Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssr-mcq-001": {
+    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Server Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssr-003": {
+    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Server Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssr-004": {
+    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Server Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssr-005": {
+    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Server Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-ssr-mcq-002": {
+    "explanation": "Understanding server rendering concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Server Rendering",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-test-001": {
+    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Testing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-test-002": {
+    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Testing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-test-mcq-001": {
+    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Testing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-test-003": {
+    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Testing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-test-004": {
+    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Testing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-test-005": {
+    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Testing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-test-mcq-002": {
+    "explanation": "Understanding testing concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Testing",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-types-001": {
+    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Typechecking",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-types-002": {
+    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Typechecking",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-types-mcq-001": {
+    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Typechecking",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-types-003": {
+    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Typechecking",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-types-004": {
+    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Typechecking",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-types-mcq-002": {
+    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Typechecking",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-types-005": {
+    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Typechecking",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-types-006": {
+    "explanation": "Understanding typechecking concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Typechecking",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-001": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-002": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-003": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-mcq-001": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-004": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-005": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-006": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-mcq-002": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-007": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
+    ]
+  },
+  "react-vdom-008": {
+    "explanation": "Understanding virtual dom concepts. The explanation should cover why this matters, the underlying principle, common pitfalls, and best practices.",
+    "example": "```tsx\nexport default function App() {\n  // Example demonstrating the concept\n  return <div>Example implementation</div>;\n}\n```",
+    "resources": [
+      {
+        "label": "react.dev — Virtual DOM",
+        "url": "https://react.dev/learn"
+      }
     ]
   }
 }
