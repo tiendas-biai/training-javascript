@@ -1,1 +1,156 @@
-{}
+{
+  "ts-prim-001": {
+    "explanation": "**The problem:** `string` vs `String` look interchangeable but aren't. **`string` (lowercase)** is the **primitive** type — the one you almost always want. **`String` (capitalized)** is the **wrapper object** type (instances of `new String()`), and it does **not** belong in annotations. **Why it matters:** the primitive `string` is *not* the same as the object `String`; a `String` object isn't assignable to a `string` parameter, and using the wrapper invites subtle bugs (e.g. `new String('a') === 'a'` is `false`). **The rule:** use lowercase `string`, `number`, `boolean` everywhere. **Common mistakes:** writing `: String`/`: Number`/`: Boolean` out of habit (some linters flag this), or constructing wrapper objects with `new String(...)`.",
+    "example": "```ts\nlet lower: string = 'hello';   // ✅ the primitive — what you want\nconsole.log(lower.toUpperCase());\n\nfunction shout(s: string) { return s.toUpperCase(); }\nconst wrapped: String = new String('hi'); // the wrapper OBJECT type\n// @ts-expect-error a String object is not assignable to the string primitive\nshout(wrapped);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — The primitives",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean"
+      },
+      {
+        "label": "MDN — String primitives and objects",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#string_primitives_and_string_objects"
+      }
+    ]
+  },
+  "ts-prim-002": {
+    "explanation": "**The problem:** Remembering the three core type names. **The answer:** `string`, `number` (one type for ints *and* floats), and `boolean` — and conveniently, **each type name is exactly what JavaScript's `typeof` returns** for such a value (`typeof 'a' === 'string'`, `typeof 1 === 'number'`, `typeof true === 'boolean'`). **Why this is handy:** the mapping makes `typeof` narrowing intuitive — checking `typeof x === 'string'` narrows `x` to `string`. **Note:** TypeScript has one `number` type (no separate int/float), plus `bigint` for big integers. **Common mistakes:** using the capitalized wrapper types, or expecting separate integer/float types.",
+    "example": "```ts\nconst a: string = 'hi';\nconst b: number = 42;     // ints and floats are both `number`\nconst c: boolean = true;\n\n// The type name matches what typeof reports:\nconsole.log(typeof a, typeof b, typeof c); // 'string' 'number' 'boolean'\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — The primitives",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean"
+      },
+      {
+        "label": "MDN — typeof",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof"
+      }
+    ]
+  },
+  "ts-prim-003": {
+    "explanation": "**The problem:** Do you have to annotate every variable? **No** — TypeScript performs **type inference**: it reads the initializer and assigns the type automatically. `let myName = 'Alice'` is inferred as `string` with no annotation. **Why rely on inference:** less noise, and the type stays correct as code changes. **When to annotate anyway:** function parameters (not inferable from a call), values initialized later, or to *widen/narrow* intent deliberately. **Subtlety:** `const` infers the **literal** type (`'Alice'`), while `let` infers the **widened** type (`string`), because a `let` can be reassigned. **Common mistakes:** over-annotating obvious initializers, or assuming inference reads your intent for empty arrays/objects (those may infer `any[]`/widened types — annotate those).",
+    "example": "```ts\nlet myName = 'Alice'; // inferred as string — no annotation needed\nconsole.log(myName.toUpperCase());\n\n// @ts-expect-error number is not assignable to the inferred type string\nmyName = 42;\n\nconst exact = 'Alice'; // const infers the literal type \"Alice\"\nconst widened = exact; // still \"Alice\" here\nconsole.log(exact, widened);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Type inference",
+        "url": "https://www.typescriptlang.org/docs/handbook/type-inference.html"
+      },
+      {
+        "label": "TypeScript Handbook — Everyday Types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html"
+      }
+    ]
+  },
+  "ts-prim-mcq-001": {
+    "explanation": "**The problem:** What does `any` actually do? **The answer:** it **turns off type checking** for that value — any property access, call, or assignment is permitted, and `any` is assignable to (and from) every type. It's an escape hatch that opts a value out of the type system entirely. **Why that's risky:** errors that types would catch slip through silently, and `any` is **contagious** — it spreads through expressions that touch it. **Why the other options are wrong:** it doesn't keep property checks (that's the difference from a typed object), it's the **opposite** of `unknown` (which forces narrowing before use), and it's not read-only. **The advice:** prefer `unknown` when you truly don't know the type (it's safe — you must narrow), and avoid `any` outside migration/interop. **Common mistakes:** using `any` to silence an error and masking a real bug.",
+    "example": "```ts\nlet value: any = 'hello';\nvalue.foo.bar();      // no error — any disables all checking\nvalue = 42;\nvalue();              // calling a number — still no compile error\nconst n: number = value; // any flows into any type unchecked\n\n// Safer alternative: unknown forces you to narrow first.\nlet u: unknown = 'hi';\n// @ts-expect-error 'u' is of type 'unknown' — must narrow before use\nu.toUpperCase();\nif (typeof u === 'string') u.toUpperCase(); // ok\nconsole.log(n);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — any",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#any"
+      },
+      {
+        "label": "TypeScript Handbook — unknown",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/functions.html#unknown"
+      }
+    ]
+  },
+  "ts-prim-004": {
+    "explanation": "**The problem:** When TypeScript can't infer a type, it silently falls back to `any` — quietly creating untyped holes (e.g. an un-annotated function parameter). **`noImplicitAny`:** a compiler flag that turns those **implicit `any`s into compile errors**, forcing you to annotate or let inference produce a real type. (It's part of `strict`.) **Why recommended:** implicit `any` is where bugs hide — it disables checking without you asking. Turning it on means every value is meaningfully typed. **Note:** *explicit* `any` (you wrote `: any`) is still allowed — the flag only catches the *implicit* ones. **Common mistakes:** disabling `strict`/`noImplicitAny` to 'make errors go away' (you lose safety), or leaving callback params untyped in flagged code.",
+    "example": "```ts\n// Explicit types satisfy noImplicitAny:\nfunction double(x: number) { return x * 2; }\n\n// @ts-expect-error noImplicitAny: parameter 'x' implicitly has an 'any' type\nfunction echo(x) { return x; }\n\nconsole.log(double(2), echo('still works at runtime'));\n```",
+    "resources": [
+      {
+        "label": "TSConfig — noImplicitAny",
+        "url": "https://www.typescriptlang.org/tsconfig#noImplicitAny"
+      },
+      {
+        "label": "TypeScript Handbook — strictness",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/basic-types.html#strictness"
+      }
+    ]
+  },
+  "ts-prim-mcq-002": {
+    "explanation": "**The problem:** What's the inferred type of `req.method` for `const req = { method: 'GET' }`? **The answer: `string`** — **not** the literal `'GET'`. **Why:** object properties are **mutable** by default, so TypeScript *widens* the property's type to `string` (you could later do `req.method = 'POST'`). The literal is only preserved when the value can't change. **How to keep the literal:** add `as const` (makes it `readonly` + literal `'GET'`), annotate the property, or pass the literal inline. **Why the others are wrong:** it's not the literal `'GET'`, not a union, and not `any`. **Common mistakes:** passing `req.method` to a function expecting a literal union and being surprised it's rejected (because it widened to `string`).",
+    "example": "```ts\nconst req = { method: 'GET' };\nconst m: string = req.method; // inferred type is string (widened, mutable prop)\n\n// @ts-expect-error string is not assignable to the literal type \"GET\"\nconst lit: 'GET' = req.method;\nconsole.log(m);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Literal inference",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-inference"
+      },
+      {
+        "label": "TypeScript Handbook — Literal types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types"
+      }
+    ]
+  },
+  "ts-prim-005": {
+    "explanation": "**The problem:** You want an object's properties kept as exact literal types (e.g. for a discriminated config), but they widen to `string`/`number` by default. **`as const`:** a const assertion that converts the value to its **most specific** form — every property becomes **`readonly`** and takes its **literal** type. So `{ method: 'GET' } as const` makes `req.method` the type `'GET'` (not `string`) and the whole object deeply readonly. **Why useful:** lock down config objects, tuples, and arrays so they're usable where literal types are required, and prevent accidental mutation. **Common mistakes:** expecting `as const` to do a runtime freeze (it's compile-time typing only — though it *forbids* writes at compile time), or applying it where you actually need a mutable value.",
+    "example": "```ts\nconst req = { method: 'GET' } as const;\nconst m: 'GET' = req.method; // literal \"GET\", thanks to as const\n\n// @ts-expect-error cannot assign to 'method' — it is a read-only property\nreq.method = 'POST';\nconsole.log(m);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — const assertions",
+        "url": "https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions"
+      },
+      {
+        "label": "TypeScript Handbook — Literal inference (as const)",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-inference"
+      }
+    ]
+  },
+  "ts-prim-mcq-003": {
+    "explanation": "**The problem:** `let a = 'left'; printText('Hello', a)` errors when the parameter is `'left' | 'right' | 'center'`. **Why:** `let a = 'left'` is inferred as **`string`** (because a `let` is reassignable, the literal widens). `string` is broader than the literal union, so it's **not assignable** — TypeScript can't guarantee `a` is one of the three allowed values. **The fixes:** use `const a = 'left'` (infers the literal `'left'`), annotate `const a: 'left'`, write the literal inline, or assert `a as 'left'`. **Why the others are wrong:** literal unions *do* accept variables (if typed narrowly enough), `let` isn't categorically banned, and a cast isn't *required* in all cases. **Common mistakes:** storing a literal in a `let` and losing its narrow type.",
+    "example": "```ts\nfunction printText(s: string, alignment: 'left' | 'right' | 'center') {}\n\nlet a = 'left'; // widened to string\n// @ts-expect-error string is not assignable to the literal union\nprintText('Hello', a);\n\nconst b = 'left'; // inferred as the literal \"left\"\nprintText('Hello', b);          // ✅ ok\nprintText('Hello', a as 'left'); // ✅ also ok via assertion\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Literal inference",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-inference"
+      },
+      {
+        "label": "TypeScript Handbook — Literal types",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types"
+      }
+    ]
+  },
+  "ts-prim-006": {
+    "explanation": "**The problem:** `null` and `undefined` cause the most runtime crashes ('cannot read property of null'). **`strictNullChecks`:** when **off**, `null`/`undefined` are assignable to *every* type and used freely — TypeScript ignores them, so the compiler won't catch null-dereference bugs. When **on** (part of `strict`), `null` and `undefined` have their own types and you must **narrow** (check for them) before using a possibly-null value, or the compiler errors. **Why turn it on:** it surfaces an entire class of bugs at compile time. **How to narrow:** `if (x != null)`, optional chaining `x?.foo`, or a default `x ?? fallback`. **Common mistakes:** leaving it off (false sense of safety), or sprinkling `!` non-null assertions instead of genuinely handling the null case.",
+    "example": "```ts\nfunction printLen(x: string | null) {\n  // @ts-expect-error 'x' is possibly 'null' (strictNullChecks on)\n  console.log(x.length);\n\n  if (x !== null) console.log(x.length); // ✅ narrowed to string\n  console.log(x?.length ?? 0);           // ✅ optional chaining + default\n}\nprintLen('hello');\n```",
+    "resources": [
+      {
+        "label": "TSConfig — strictNullChecks",
+        "url": "https://www.typescriptlang.org/tsconfig#strictNullChecks"
+      },
+      {
+        "label": "TypeScript Handbook — null and undefined",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#null-and-undefined"
+      }
+    ]
+  },
+  "ts-prim-mcq-004": {
+    "explanation": "**The problem:** What does the postfix `!` (non-null assertion) do in `x!.toFixed()`? **The answer:** it **asserts at compile time** that `x` is not `null`/`undefined`, removing those from its type — with **no runtime check** generated. You're telling the compiler 'trust me, this isn't null here'. **The danger:** if you're wrong, it crashes at runtime exactly as untyped JS would — `!` only silences the type error, it doesn't protect you. **Why the others are wrong:** it doesn't throw, doesn't coerce to boolean (that's prefix `!`), and doesn't supply a default (that's `??`). **When to use it:** sparingly, when you *know* something the compiler can't prove (e.g. a value set just before). **Common mistakes:** scattering `!` to quiet errors instead of real narrowing, hiding genuine null bugs.",
+    "example": "```ts\nfunction liveDangerously(x?: number | null) {\n  // `!` removes null/undefined from the type at COMPILE time only.\n  console.log(x!.toFixed()); // crashes at runtime if x really is null/undefined\n}\nliveDangerously(42); // fine\n// liveDangerously() — would throw at runtime despite compiling cleanly\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Non-null assertion (!)",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#non-null-assertion-operator-postfix-"
+      },
+      {
+        "label": "TypeScript Handbook — strictNullChecks",
+        "url": "https://www.typescriptlang.org/tsconfig#strictNullChecks"
+      }
+    ]
+  },
+  "ts-prim-007": {
+    "explanation": "**The problem:** `bigint` and `symbol` are the lesser-known primitives. **Creating a `bigint`** (arbitrary-precision integers, ES2020+): the **`BigInt(100)`** function, or the **literal `100n`** (trailing `n`). Use it when values exceed `Number.MAX_SAFE_INTEGER`. **What's special about `symbol`:** every `Symbol('name')` call produces a **globally unique** value — so two symbols created with the **same description are never equal** (`Symbol('id') !== Symbol('id')`). That uniqueness makes symbols ideal as collision-proof object keys. **Common mistakes:** mixing `bigint` and `number` in arithmetic (a `TypeError` — they don't auto-coerce), or expecting symbols with equal descriptions to compare equal (use `Symbol.for()` for a shared registry if you need that).",
+    "example": "```ts\nconst big1: bigint = BigInt(100);\nconst big2 = 100n;            // literal form\nconsole.log(big1 === big2);   // true — same numeric value\n\nconst s1: symbol = Symbol('id');\nconst s2: symbol = Symbol('id');\nconsole.log(s1 === s2);       // false — every Symbol() is unique\nconsole.log(Symbol.for('k') === Symbol.for('k')); // true — shared registry\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — bigint & symbol",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#less-common-primitives"
+      },
+      {
+        "label": "MDN — Symbol",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol"
+      }
+    ]
+  }
+}
