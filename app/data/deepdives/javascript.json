@@ -690,5 +690,409 @@
         "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/extends"
       }
     ]
+  },
+  "async-promises-001": {
+    "explanation": "**The problem:** async code needs a reliable way to represent \"a value that isn't ready yet\". **The three states:** a Promise is **pending** (not yet settled), **fulfilled** (succeeded, has a value), or **rejected** (failed, has a reason). **Why it's trustworthy:** once a promise **settles** (fulfilled or rejected) it is **immutable** — it can never change state or value again. **Why that matters:** you can attach `.then`/`.catch` handlers at any time, even after the promise already settled, and they'll still fire exactly once with the final result — no race over the state. **Common mistakes:** thinking a promise can flip from fulfilled back to pending, or that creating a promise \"starts\" something later (the executor runs synchronously, immediately).",
+    "example": "```js\nconst p = new Promise((resolve) => {\n  setTimeout(() => resolve('done'), 50); // pending until this fires\n});\nconsole.log(p); // Promise { <pending> }\np.then((v) => console.log('fulfilled with', v)); // 'fulfilled with done'\n// once settled, state is permanent — a later .then still gets the value:\nsetTimeout(() => p.then((v) => console.log('again:', v)), 100);\n```",
+    "resources": [
+      {
+        "label": "MDN — Promise",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
+      },
+      {
+        "label": "MDN — Using promises",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises"
+      }
+    ]
+  },
+  "async-promises-002": {
+    "explanation": "**The problem:** combining multiple promises needs different failure/timing semantics. **`Promise.all(arr)`:** fulfills with an array of all values **only if every** promise fulfills; rejects **immediately** on the first rejection (fail-fast). **`Promise.allSettled(arr)`:** waits for **all** to settle and **never rejects** — it returns `{status:'fulfilled', value}` / `{status:'rejected', reason}` objects so you can inspect partial results. **`Promise.race(arr)`:** settles as soon as the **first** promise settles, adopting its value or error. **When to use which:** `all` when you need every result and one failure should abort; `allSettled` when partial failure is acceptable; `race` for timeouts / first-wins. **Common mistakes:** using `all` when a single failure shouldn't kill the batch, or expecting `race` to wait for a *successful* one (use `Promise.any` for that).",
+    "example": "```js\nconst ok = Promise.resolve(1);\nconst slow = new Promise((r) => setTimeout(() => r(2), 50));\nconst bad = Promise.reject('boom');\n\nPromise.all([ok, slow]).then((v) => console.log('all:', v));        // all: [1, 2]\nPromise.allSettled([ok, bad]).then((v) => console.log('settled:', v));\n// settled: [{status:'fulfilled',value:1},{status:'rejected',reason:'boom'}]\nPromise.race([slow, ok]).then((v) => console.log('race:', v));      // race: 1\n```",
+    "resources": [
+      {
+        "label": "MDN — Promise.all",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all"
+      },
+      {
+        "label": "MDN — Promise.allSettled",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled"
+      }
+    ]
+  },
+  "async-promises-003": {
+    "explanation": "**The problem:** forgetting to `return` a promise inside a `.then` breaks the chain's sequencing. **Why it happens:** a `.then` callback's **return value** becomes the input the chain waits on. If the callback returns a promise, the chain **pauses** until it settles; if it returns nothing (`undefined`), the chain immediately continues to the next `.then`. **The bug:** starting `fetch('/b')` without returning it means the chain doesn't await it — `'done'` logs before `/b` finishes, and any error from `/b` escapes the chain (becomes an unhandled rejection). **The fix:** `return fetch('/b')`. **Common mistakes:** omitting `return` in arrow bodies with braces (`=> { fetch(...) }` returns undefined), and assuming nested promises auto-link without being returned.",
+    "example": "```js\nconst later = (v, ms) => new Promise((r) => setTimeout(() => r(v), ms));\n\n// BUG: no return — chain doesn't wait\nlater('a', 30).then(() => { later('b', 30); }).then(() => console.log('done (early)'));\n\n// FIX: return the promise so the chain awaits it\nlater('a', 30).then(() => later('b', 30)).then((b) => console.log('got', b, 'then done'));\n```",
+    "resources": [
+      {
+        "label": "MDN — Using promises (chaining)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#chaining"
+      }
+    ]
+  },
+  "async-promises-mcq-004": {
+    "explanation": "**The problem:** what exactly is an \"unhandled promise rejection\"? **The answer:** it's when a promise **rejects** and **no rejection handler** (`.catch`, or the second argument to `.then`, or a surrounding `try/catch` with `await`) is attached to deal with it. **Why it's dangerous:** the error is silently lost; in **Node.js** an unhandled rejection terminates the process by default (since v15). **Why the other options are wrong:** the count of promises, storing a rejected promise, or omitting `try/catch` don't define it — though missing `try/catch` around an `await` is one *way* to leave a rejection unhandled. **Common mistakes:** attaching `.catch` too late, or assuming a rejection \"goes away\" if you never inspect the promise.",
+    "example": "```js\n// Unhandled — triggers an 'unhandledRejection' warning/crash:\n// Promise.reject(new Error('nobody catches me'));\n\n// Handled with .catch:\nPromise.reject(new Error('boom')).catch((e) => console.log('caught:', e.message));\n\n// Handled with async/await + try/catch:\nasync function run() {\n  try { await Promise.reject(new Error('bad')); }\n  catch (e) { console.log('caught:', e.message); }\n}\nrun();\n```",
+    "resources": [
+      {
+        "label": "MDN — Promise rejection events",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/Window/unhandledrejection_event"
+      }
+    ]
+  },
+  "async-await-001": {
+    "explanation": "**The problem:** how do `async`/`await` relate to promises? **What `async` does:** it makes a function **always return a promise** — a plain `return x` becomes `Promise.resolve(x)`, and a `throw` becomes a rejected promise. **What `await` does:** inside an async function it **pauses that function** until the awaited promise settles, then resumes with the fulfilled value (or throws the rejection reason). **Why it doesn't block:** `await` yields control back to the event loop, so other tasks run while waiting — it's cooperative, not a thread block. **Where it's allowed:** inside `async` functions, and at the top level of ES modules. **Common mistakes:** thinking `await` blocks the whole program, or using `await` in a non-async, non-module context (SyntaxError).",
+    "example": "```js\nasync function getValue() { return 42; }        // returns a Promise\nconsole.log(getValue());                         // Promise { 42 }\n\nasync function main() {\n  const v = await getValue();                    // pauses until resolved\n  console.log('value:', v);                      // value: 42\n}\nmain();\nconsole.log('runs before value: — await is non-blocking');\n```",
+    "resources": [
+      {
+        "label": "MDN — async function",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function"
+      },
+      {
+        "label": "MDN — await",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await"
+      }
+    ]
+  },
+  "async-await-002": {
+    "explanation": "**The problem:** the output is `1, A, 2, B`, not source order. **Why:** calling `foo()` runs **synchronously** up to the first `await` — so `'A'` prints immediately. `await` then **suspends** `foo` and **returns control to the caller**, so `'2'` (the line after `foo()`) runs next. The continuation after `await` (`console.log('B')`) is scheduled as a **microtask**, which runs only after the current synchronous code finishes — hence `'B'` last. **The key insight:** `await` splits the function — everything before it is synchronous, everything after is a microtask. **Common mistakes:** expecting `'B'` right after `'A'` (the await yields first), or thinking `foo()` blocks the lines beneath it.",
+    "example": "```js\nasync function foo() {\n  console.log('A');             // sync part of foo\n  await Promise.resolve();      // suspend, schedule the rest as a microtask\n  console.log('B');             // runs after sync code finishes\n}\nconsole.log('1');\nfoo();\nconsole.log('2');\n// output: 1, A, 2, B\n```",
+    "resources": [
+      {
+        "label": "MDN — await",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await"
+      }
+    ]
+  },
+  "async-await-003": {
+    "explanation": "**The problem:** two `await`s in a row run the requests **sequentially** — `/b` doesn't start until `/a` resolves — so total time is `a + b`. **Why it happens:** `await` pauses the function at each line, so the second `fetch` isn't even *called* until the first promise settles. **When sequential is correct:** when `/b` depends on `/a`'s result. **The fix for independent calls:** start them **before** awaiting — `Promise.all([fetch('/a'), fetch('/b')])` fires both concurrently, then awaits both, cutting time to `max(a, b)`. **Common mistakes:** awaiting independent operations one by one (the classic async perf bug), or building the array of promises *inside* an awaited loop, which re-serializes them.",
+    "example": "```js\nconst req = (name, ms) => new Promise((r) => setTimeout(() => r(name), ms));\n\nasync function sequential() {            // ~80ms total\n  const a = await req('a', 40);\n  const b = await req('b', 40);\n  return [a, b];\n}\nasync function parallel() {              // ~40ms total\n  const [a, b] = await Promise.all([req('a', 40), req('b', 40)]);\n  return [a, b];\n}\nparallel().then((r) => console.log('parallel:', r)); // parallel: [ 'a', 'b' ]\n```",
+    "resources": [
+      {
+        "label": "MDN — Promise.all",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all"
+      }
+    ]
+  },
+  "async-await-mcq-004": {
+    "explanation": "**The problem:** what does `return 42` produce from an `async` function? **The answer: `Promise.resolve(42)`** — async functions **always** return a promise, wrapping any non-promise return value. So the caller receives a fulfilled promise, not the raw `42`. **How to get the value:** `await` the call (inside another async function) or use `.then(v => ...)`. **Why the others are wrong:** it's not the bare `42` (it's wrapped), not a never-resolving promise (it resolves right away), and not `undefined` (the value is carried). **Note:** if the returned value is *already* a promise, it's adopted rather than double-wrapped. **Common mistakes:** using an async function's result directly as if it were the unwrapped value.",
+    "example": "```js\nasync function get() { return 42; }\nconsole.log(get());                       // Promise { 42 }\nget().then((v) => console.log('then:', v)); // then: 42\n\nasync function use() {\n  console.log('await:', await get());     // await: 42\n}\nuse();\n```",
+    "resources": [
+      {
+        "label": "MDN — async function (return value)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function#return_value"
+      }
+    ]
+  },
+  "async-callbacks-001": {
+    "explanation": "**The problem:** how does code run something *after* an operation finishes without blocking? **What a callback is:** a function passed as an argument to another function, to be invoked later — synchronously (`[1,2].forEach(fn)`) or asynchronously (`setTimeout(fn, 1000)`, `fs.readFile(path, fn)`). **Why it works:** functions are **first-class values** in JS, so they can be stored and called on demand — including by the runtime when a timer fires or I/O completes. **The downside:** sequential async steps nest into **callback hell**, and error handling spreads across every level. **Common mistakes:** assuming all callbacks are async (`forEach`'s is sync), or that returning from a callback returns from the outer function (it doesn't).",
+    "example": "```js\nfunction fetchUser(id, callback) {\n  setTimeout(() => callback({ id, name: 'Ada' }), 30); // async callback\n}\nfetchUser(1, (user) => console.log('got', user.name)); // got Ada (after 30ms)\nconsole.log('this logs first — callback runs later');\n\n[1, 2, 3].forEach((n) => console.log('sync callback', n)); // runs immediately\n```",
+    "resources": [
+      {
+        "label": "MDN — Callback function",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Callback_function"
+      }
+    ]
+  },
+  "async-callbacks-002": {
+    "explanation": "**The problem:** chaining dependent async steps with callbacks produces deeply nested, hard-to-read code — **callback hell** (the \"pyramid of doom\"). **Why it happens:** each async result is only available *inside* its callback, so the next step must nest within it; errors must be checked at **every** level, and the indentation grows with each step. **Why it's bad:** poor readability, scattered error handling, and easy-to-miss bugs. **The fix:** **promises** chain horizontally (`.then().then()`), and **async/await** makes sequential async read like synchronous code with a single `try/catch`. **Common mistakes:** trying to `return` a value out of a nested callback to the outer scope (impossible — refactor to promises/async).",
+    "example": "```js\nconst step = (v, cb) => setTimeout(() => cb(v + 1), 10);\n\n// callback hell: nested pyramid\nstep(0, (a) => step(a, (b) => step(b, (c) => console.log('nested:', c)))); // 3\n\n// flattened with promises\nconst pStep = (v) => new Promise((r) => setTimeout(() => r(v + 1), 10));\npStep(0).then(pStep).then(pStep).then((c) => console.log('chained:', c)); // 3\n```",
+    "resources": [
+      {
+        "label": "MDN — Using promises (avoiding nesting)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#nesting"
+      }
+    ]
+  },
+  "async-callbacks-mcq-003": {
+    "explanation": "**The problem:** what's Node's callback convention? **The answer — error-first (errback):** the callback's **first argument is the error** (an `Error`, or `null` on success), and the **result follows**: `callback(err, result)`. **Why this convention:** a single, predictable signature lets every async API report failure the same way, and forces callers to consider errors before using the result. **The rule:** always check `err` first; only touch `result` when `err` is falsy. **Why the others are wrong:** the error is first, not second; errors are passed *to* the callback, not thrown synchronously for async ops. **Common mistakes:** ignoring the `err` argument, or assuming `result` is valid when an error occurred.",
+    "example": "```js\nfunction readConfig(ok, callback) {\n  setTimeout(() => {\n    if (!ok) return callback(new Error('read failed'));\n    callback(null, { port: 3000 }); // err is null on success\n  }, 10);\n}\nreadConfig(true, (err, result) => {\n  if (err) return console.error('error:', err.message);\n  console.log('config:', result); // config: { port: 3000 }\n});\n```",
+    "resources": [
+      {
+        "label": "Node.js — Error-first callbacks",
+        "url": "https://nodejs.org/api/errors.html#error-first-callbacks"
+      }
+    ]
+  },
+  "error-trycatch-001": {
+    "explanation": "**The problem:** cleanup code (closing files, releasing locks) must run whether or not the `try` block fails. **What `finally` guarantees:** its block **always** executes after `try`/`catch` — on success, on a thrown error, and even when `try` or `catch` runs a `return`/`break`/`continue`. **Why it works:** the engine schedules `finally` to run as control leaves the `try`/`catch`, before the result actually propagates. **Why it matters:** it's the reliable place for teardown, so resources aren't leaked on the error path. **Common mistakes:** putting cleanup only in `try` (skipped on throw) or only in `catch` (skipped on success); also, `return`ing from `finally` overrides earlier returns/throws — usually a bug.",
+    "example": "```js\nfunction withResource(fail) {\n  try {\n    console.log('acquire');\n    if (fail) throw new Error('boom');\n    return 'ok';\n  } catch (e) {\n    console.log('caught:', e.message);\n    return 'recovered';\n  } finally {\n    console.log('release'); // runs in every case\n  }\n}\nconsole.log(withResource(false)); // acquire, release, ok\nconsole.log(withResource(true));  // acquire, caught: boom, release, recovered\n```",
+    "resources": [
+      {
+        "label": "MDN — try...catch (finally)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch#the_finally_block"
+      }
+    ]
+  },
+  "error-trycatch-002": {
+    "explanation": "**The problem:** the function returns `'finally'`, not `'try'`, even though `return 'try'` executed first. **Why it happens:** when `try` runs `return 'try'`, the engine holds that value pending — but `finally` **must run before control actually leaves** the function. The `finally` block then runs its own `return 'finally'`, which **overrides** the pending return. **Why this is a trap:** a `return` (or `throw`) inside `finally` silently discards whatever `try`/`catch` was about to return or throw — including swallowing exceptions. **The guidance:** never `return` or `throw` from `finally`; use it only for side-effect cleanup. **Common mistakes:** assuming the first `return` wins, or accidentally hiding errors behind a `finally` return.",
+    "example": "```js\nfunction test() {\n  try {\n    return 'try';      // value held, but finally runs first\n  } finally {\n    return 'finally';  // overrides the try return\n  }\n}\nconsole.log(test()); // 'finally'\n// finally can even swallow a throw — avoid returning/throwing from finally\n```",
+    "resources": [
+      {
+        "label": "MDN — finally and return",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch#description"
+      }
+    ]
+  },
+  "error-trycatch-mcq-003": {
+    "explanation": "**The problem:** how do you re-throw an error after inspecting it? **The answer: `throw error;`** inside the `catch` block. **Why:** `throw` propagates the (possibly same) error up to the next enclosing handler, letting you act on some cases and pass the rest along. **Why the others are wrong:** `return error` ends the function normally and hides the failure; `reject(error)` only exists inside a `Promise` executor (no `reject` in a plain `catch`); `propagate` isn't a JS feature. **The idiom:** handle the error types you understand and `throw` the rest, so unexpected errors aren't swallowed. **Common mistakes:** catching everything and returning/logging only — silently absorbing errors you didn't mean to handle.",
+    "example": "```js\nfunction parse(json) {\n  try {\n    return JSON.parse(json);\n  } catch (e) {\n    if (e instanceof SyntaxError) {\n      console.log('handling bad JSON');\n      return null;          // handle this case\n    }\n    throw e;                // re-throw anything else\n  }\n}\nconsole.log(parse('{bad}')); // handling bad JSON → null\n```",
+    "resources": [
+      {
+        "label": "MDN — throw",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/throw"
+      }
+    ]
+  },
+  "error-types-001": {
+    "explanation": "**The problem:** knowing the built-in error types lets you handle failures precisely. **The common subtypes:** **`TypeError`** — an operation on the wrong type (calling a non-function, reading a property of `null`); **`RangeError`** — a value outside its valid range (`new Array(-1)`, bad `toFixed` digits); **`ReferenceError`** — using an undeclared variable; **`SyntaxError`** — invalid code, thrown at parse time (or by `JSON.parse` on bad input). **Why they exist:** all inherit from `Error`, so `instanceof` in a `catch` lets you branch on the failure kind. **Custom errors:** subclass `Error` for domain-specific cases. **Common mistakes:** catching everything generically, or matching on `error.message` strings instead of `instanceof`.",
+    "example": "```js\nconst cases = [\n  () => null(),               // TypeError\n  () => new Array(-1),        // RangeError\n  () => undefinedVar,         // ReferenceError\n  () => JSON.parse('{bad}'),  // SyntaxError\n];\nfor (const fn of cases) {\n  try { fn(); } catch (e) { console.log(e.constructor.name); }\n}\n// TypeError, RangeError, ReferenceError, SyntaxError\n```",
+    "resources": [
+      {
+        "label": "MDN — Error types",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#error_types"
+      }
+    ]
+  },
+  "error-types-002": {
+    "explanation": "**The problem:** matching each operation to the error it throws. **`null.property` → `TypeError`:** `null` has no properties, so accessing one is a type-level violation. **`new Array(-1)` → `RangeError`:** an array length must be a non-negative integer, and `-1` is out of range. **`undeclaredVar` → `ReferenceError`:** the name isn't bound in any reachable scope. **`JSON.parse('{bad}')` → `SyntaxError`:** the input isn't valid JSON, so the parser throws. **Why it matters:** distinguishing them lets a `catch` respond differently per cause. **Common mistakes:** expecting `null.property` to be a `ReferenceError` (it's a `TypeError` — the variable exists, the *operation* is invalid), or thinking `JSON.parse` returns `null`/`undefined` on bad input (it throws).",
+    "example": "```js\nconst tries = {\n  'null.property': () => null.property,\n  'new Array(-1)': () => new Array(-1),\n  'undeclaredVar': () => undeclaredVar,\n  \"JSON.parse('{bad}')\": () => JSON.parse('{bad}'),\n};\nfor (const [label, fn] of Object.entries(tries)) {\n  try { fn(); } catch (e) { console.log(label, '→', e.constructor.name); }\n}\n```",
+    "resources": [
+      {
+        "label": "MDN — Error types",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#error_types"
+      }
+    ]
+  },
+  "error-types-mcq-003": {
+    "explanation": "**The problem:** the right way to make a custom error type. **The answer:** `class AppError extends Error { constructor(msg) { super(msg); this.name = 'AppError'; } }`. **Why:** extending `Error` gives you a real error (stack trace, `instanceof Error`), `super(msg)` sets `message`, and assigning `this.name` makes logs and `toString()` read `AppError: ...`. **Why the others fail:** a plain `function AppError(msg){ this.message = msg }` doesn't inherit from `Error` (no stack, fails `instanceof Error`); `new Error('custom')` is just an instance, not a new type; `Error.create` doesn't exist. **Common mistakes:** forgetting `super(msg)` (empty message) or `this.name` (shows as generic `Error`); for `instanceof` to work when targeting old transpile targets you may also need `Object.setPrototypeOf`.",
+    "example": "```js\nclass AppError extends Error {\n  constructor(msg, code) {\n    super(msg);          // sets this.message + stack\n    this.name = 'AppError';\n    this.code = code;    // custom field\n  }\n}\ntry {\n  throw new AppError('payment failed', 402);\n} catch (e) {\n  console.log(e instanceof Error, e.name, e.code); // true AppError 402\n}\n```",
+    "resources": [
+      {
+        "label": "MDN — Custom error types",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#custom_error_types"
+      }
+    ]
+  },
+  "fn-hof-001": {
+    "explanation": "**The problem:** what makes a function \"higher-order\"? **The definition:** a function that **takes one or more functions as arguments** and/or **returns a function**. Examples: `map`/`filter`/`reduce` (take callbacks), `addEventListener` (takes a handler), and factories that return functions. **Why it's possible:** JS functions are **first-class values** — they can be passed, returned, and stored like any value. **Why it's useful:** HOFs abstract over **behavior**, not just data, enabling reusable, composable logic (the backbone of functional programming). **Common mistakes:** thinking only array methods qualify (any function meeting the definition counts), or confusing a higher-order function with the callback it receives.",
+    "example": "```js\n// takes a function:\nconst apply = (fn, x) => fn(x);\nconsole.log(apply((n) => n * 3, 4)); // 12\n\n// returns a function:\nconst multiplier = (factor) => (n) => n * factor;\nconst triple = multiplier(3);\nconsole.log(triple(5)); // 15\nconsole.log([1, 2, 3].map(triple)); // [3, 6, 9] — map is higher-order too\n```",
+    "resources": [
+      {
+        "label": "MDN — First-class functions",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/First-class_Function"
+      }
+    ]
+  },
+  "fn-hof-002": {
+    "explanation": "**The problem:** build `compose`, which runs functions **right-to-left** so `compose(double, addOne)(3)` is `double(addOne(3))` = `8`. **How it works:** `reduceRight` folds the function array from the **last** element toward the first, threading the accumulated value through each: it starts with `x`, applies the rightmost function, then the next, and so on. **Why right-to-left:** it mirrors mathematical composition `(f ∘ g)(x) = f(g(x))`. **The mirror image:** `pipe` uses `reduce` (left-to-right) for natural reading order. **Why it matters:** composition builds complex transforms from small, testable functions. **Common mistakes:** using `reduce` (wrong direction) for `compose`, or forgetting the seed value `x`.",
+    "example": "```js\nconst compose = (...fns) => (x) => fns.reduceRight((acc, fn) => fn(acc), x);\nconst double = (x) => x * 2;\nconst addOne = (x) => x + 1;\nconst transform = compose(double, addOne); // double(addOne(x))\nconsole.log(transform(3)); // 8  — addOne(3)=4, double(4)=8\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.reduceRight",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduceRight"
+      }
+    ]
+  },
+  "fn-hof-mcq-003": {
+    "explanation": "**The problem:** spot the non-HOF among `map`, `filter`, `length`, `reduce`. **The answer: `Array.prototype.length`** — it's a **property** (a number), not a function at all, so it can't take or return a function. **Why the others qualify:** `map`, `filter`, and `reduce` each **take a callback function** as an argument, the defining trait of a higher-order function. **Why it's a useful distinction:** HOFs let you pass behavior; `length` just reports state. **Common mistakes:** assuming everything on `Array.prototype` is a method (some are accessor/data properties), or thinking `length` is callable.",
+    "example": "```js\nconst arr = [1, 2, 3, 4];\nconsole.log(typeof arr.map);    // 'function' — HOF (takes a callback)\nconsole.log(typeof arr.filter); // 'function' — HOF\nconsole.log(typeof arr.reduce); // 'function' — HOF\nconsole.log(typeof arr.length); // 'number'   — a property, not a function\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.length",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/length"
+      }
+    ]
+  },
+  "fn-currying-001": {
+    "explanation": "**The problem:** what is currying? **The definition:** transforming a multi-argument function into a **chain of single-argument functions**, so `add(2, 3)` becomes `add(2)(3)`. **How it works:** each call captures one argument in a **closure** and returns a function awaiting the next, until all are supplied and the result is computed. **Why it's useful:** it enables **partial application** — calling `add(2)` yields a reusable \"add 2\" function — and makes functions easy to **compose** point-free. **Common mistakes:** confusing currying (strictly one arg per step) with general partial application (pre-fill any number), or forgetting that each intermediate call returns a *function*, not the final value.",
+    "example": "```js\nconst add = (a) => (b) => a + b; // curried\nconsole.log(add(2)(3)); // 5\n\nconst add2 = add(2); // partial application via currying\nconsole.log(add2(10), add2(40)); // 12 42\nconsole.log([1, 2, 3].map(add(100))); // [101, 102, 103]\n```",
+    "resources": [
+      {
+        "label": "MDN — Currying",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Currying"
+      }
+    ]
+  },
+  "fn-currying-002": {
+    "explanation": "**The problem:** currying and partial application are related but not the same. **Currying:** *strictly* converts `f(a, b, c)` into `f(a)(b)(c)` — a chain where **each step takes exactly one** argument. **Partial application:** pre-fills **some** arguments (any number) and returns a new function expecting the rest — e.g. `f.bind(null, a)` gives a function still taking `(b, c)` together. **The relationship:** currying is one disciplined *way* to achieve partial application, but partial application is the broader idea. **Why it matters:** both create specialized functions from general ones, improving reuse. **Common mistakes:** calling any pre-filling \"currying\", or expecting a partially applied function to require one argument at a time.",
+    "example": "```js\n// currying: one arg per step\nconst curried = (a) => (b) => (c) => a + b + c;\nconsole.log(curried(1)(2)(3)); // 6\n\n// partial application: pre-fill some args at once with bind\nfunction add(a, b, c) { return a + b + c; }\nconst add10 = add.bind(null, 10); // fixes a=10, still takes (b, c)\nconsole.log(add10(2, 3)); // 15\n```",
+    "resources": [
+      {
+        "label": "MDN — Function.prototype.bind (partial application)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind#partially_applied_functions"
+      }
+    ]
+  },
+  "fn-currying-mcq-003": {
+    "explanation": "**The problem:** trace `pipe`, which runs functions **left-to-right**. **Why the answer is `9`:** `pipe` uses `reduce`, threading the value through each function in array order — start `5`, then `x+1 → 6`, `x*2 → 12`, `x-3 → 9`. **Why left-to-right:** `reduce` folds from the first element to the last, so functions apply in the order written — the natural reading order, opposite of `compose` (right-to-left via `reduceRight`). **Why it matters:** `pipe` reads like a pipeline of steps, which is often clearer than `compose`. **Common mistakes:** applying the functions right-to-left (that's `compose`, giving a different result), or miscomputing the seed.",
+    "example": "```js\nconst pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);\nconst transform = pipe(\n  (x) => x + 1, // 5 → 6\n  (x) => x * 2, // 6 → 12\n  (x) => x - 3, // 12 → 9\n);\nconsole.log(transform(5)); // 9\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.prototype.reduce",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce"
+      }
+    ]
+  },
+  "fn-generators-001": {
+    "explanation": "**The problem:** regular functions run start-to-finish in one go; how do you produce values lazily, on demand? **What a generator is:** a function declared with `function*` that returns a **Generator** object instead of running immediately. **How it works:** each `.next()` runs the body until the next `yield`, which **pauses** and hands back `{ value, done }`; the next `.next()` **resumes** right after that `yield`, with all local state preserved. **Why it's useful:** lazy/infinite sequences, memory-efficient iteration, and custom iterables — generators implement the iterator protocol automatically. **Common mistakes:** expecting a generator function to run its body when called (it doesn't until `.next()`), or that values are computed all at once (they're produced one `yield` at a time).",
+    "example": "```js\nfunction* idMaker() {\n  let id = 1;\n  while (true) yield id++; // infinite, but lazy\n}\nconst ids = idMaker();\nconsole.log(ids.next().value, ids.next().value, ids.next().value); // 1 2 3\n\nfunction* range(a, b) { for (let i = a; i <= b; i++) yield i; }\nconsole.log([...range(1, 4)]); // [1, 2, 3, 4] — generators are iterable\n```",
+    "resources": [
+      {
+        "label": "MDN — Generators",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*"
+      }
+    ]
+  },
+  "fn-generators-002": {
+    "explanation": "**The problem:** what does each `.next()` return, and what happens after the last `yield`? **The walk-through:** each `.next()` resumes the generator until the next `yield`, returning `{ value: <yielded>, done: false }` — so the first three calls give `1`, `2`, `3`. After the final `yield`, the next `.next()` runs to the end and returns `{ value: undefined, done: true }`; further calls keep returning that. **Why `done` flips:** `done: false` means \"paused at a yield\", `done: true` means \"finished\". **Why `value` is `undefined` at the end:** there's no `return` value, so the completion value is `undefined`. **Common mistakes:** expecting a 4th distinct value, or thinking `done: true` carries the last yielded value (it doesn't).",
+    "example": "```js\nfunction* gen() { yield 1; yield 2; yield 3; }\nconst g = gen();\nconsole.log(g.next()); // { value: 1, done: false }\nconsole.log(g.next()); // { value: 2, done: false }\nconsole.log(g.next()); // { value: 3, done: false }\nconsole.log(g.next()); // { value: undefined, done: true }\n```",
+    "resources": [
+      {
+        "label": "MDN — Generator.prototype.next",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/next"
+      }
+    ]
+  },
+  "fn-generators-mcq-003": {
+    "explanation": "**The problem:** what must an object implement to work in `for...of`? **The answer:** a **`[Symbol.iterator]()` method that returns an iterator** — an object with a `.next()` returning `{ value, done }`. **Why:** `for...of`, spread, and destructuring call `[Symbol.iterator]()` to obtain the iterator, then repeatedly call `.next()` until `done` is `true`. **Why the others are wrong:** `.forEach` is array-specific and unrelated to `for...of`; an array-like with `.length` is *not* iterable (convert via `Array.from`); `Symbol.asyncIterator` is for `for await...of`, not `for...of`. **Built-ins that satisfy it:** arrays, strings, `Map`, `Set`, generators. **Common mistakes:** confusing **iterable** (has `Symbol.iterator`) with **iterator** (has `.next`), or assuming `.length` makes something iterable.",
+    "example": "```js\nconst range = {\n  from: 1, to: 3,\n  [Symbol.iterator]() {\n    let n = this.from; const last = this.to;\n    return { next: () => ({ value: n, done: n++ > last }) };\n  },\n};\nfor (const x of range) console.log(x); // 1, 2, 3\nconsole.log([...range]); // [1, 2, 3]\n```",
+    "resources": [
+      {
+        "label": "MDN — Iteration protocols",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols"
+      }
+    ]
+  },
+  "modern-destructuring-001": {
+    "explanation": "**The problem:** how do you supply fallbacks when destructuring missing values? **The syntax:** `const [a = 1] = arr` and `const { x = 5 } = obj` provide defaults used when the extracted value is **`undefined`**. **The crucial detail:** defaults trigger **only** for `undefined` — **not** for `null` or other falsy values. So `const { x = 5 } = { x: null }` gives `null`, and `const [a = 1] = [0]` gives `0`. **Why:** destructuring treats a missing property/element as `undefined`, which is exactly the trigger; an explicit `null` is considered a real value. **Common mistakes:** expecting defaults to replace `null`/`0`/`''` (use `??` or explicit checks for that), or that array defaults fill holes from non-`undefined` falsy values.",
+    "example": "```js\nconst [a = 1, b = 2] = [10];          // a=10 (present), b=2 (default)\nconst { x = 5, y = 10 } = { x: 3 };   // x=3, y=10 (default)\nconsole.log(a, b, x, y);              // 10 2 3 10\n\nconsole.log(((({ z = 5 }) => z))({ z: null })); // null — default skipped for null\nconsole.log((([n = 1]) => n)([0]));             // 0    — 0 is not undefined\n```",
+    "resources": [
+      {
+        "label": "MDN — Destructuring (default values)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring#default_value"
+      }
+    ]
+  },
+  "modern-destructuring-002": {
+    "explanation": "**The problem:** how do you bind an object property to a **differently named** variable? **The syntax:** `const { key: newName } = obj` — `key` is read from the object, and its value is bound to `newName` (note: `newName` is what exists afterward; `key` is *not* a variable). **Why it's useful:** to avoid name clashes with existing variables, to shorten long property names, or to give clearer local names. **Combine with defaults:** `const { firstName: first = 'Unknown' } = obj`. **Common mistakes:** thinking both `key` and `newName` become variables (only `newName` does), or reversing the order (`newName: key`), which binds the wrong side.",
+    "example": "```js\nconst { firstName: first, lastName: last } = { firstName: 'Ada', lastName: 'Lovelace' };\nconsole.log(first, last); // Ada Lovelace\n// console.log(firstName); // ReferenceError — firstName is NOT a variable\n\n// rename + default together:\nconst { role: r = 'guest' } = {};\nconsole.log(r); // guest\n```",
+    "resources": [
+      {
+        "label": "MDN — Destructuring (renaming)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring#assigning_to_new_variable_names"
+      }
+    ]
+  },
+  "modern-destructuring-mcq-003": {
+    "explanation": "**The problem:** what does the rest pattern collect when destructuring an object? **The answer: `{ x: 3, y: 4 }`** — `a` and `b` take their named properties, and `...c` gathers **all remaining own enumerable properties** into a **new object**. **Why an object, not an array:** object rest mirrors the source structure (key/value pairs), unlike array rest which yields an array. **Why `a`/`b` are excluded:** already-destructured keys are omitted from the rest. **Why it's useful:** a clean way to \"omit\" keys — e.g. strip `password` from a user object. **Common mistakes:** expecting `c` to be an array `[3, 4]`, or to include `a`/`b`; also note rest copies only **own enumerable** props (inherited ones are skipped).",
+    "example": "```js\nconst { a, b, ...c } = { a: 1, b: 2, x: 3, y: 4 };\nconsole.log(a, b); // 1 2\nconsole.log(c);    // { x: 3, y: 4 } — a new object of the rest\n\n// handy 'omit' pattern:\nconst user = { id: 1, name: 'Ada', password: 'secret' };\nconst { password, ...safe } = user;\nconsole.log(safe); // { id: 1, name: 'Ada' }\n```",
+    "resources": [
+      {
+        "label": "MDN — Rest in object destructuring",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring#rest_property"
+      }
+    ]
+  },
+  "modern-spread-rest-001": {
+    "explanation": "**The problem:** spread and rest share the `...` token but do opposite things. **Spread (`...iterable`):** **expands** an iterable into individual elements — used in function calls (`Math.max(...nums)`) and array/object literals (`[...a, ...b]`). **Rest (`...name`):** **collects** multiple values into a single array — used in function parameter lists and on the left side of destructuring. **The mnemonic:** spread *spreads out*, rest *gathers in*. **The rule:** a rest parameter must be **last**. **Why both exist:** spread builds/calls with variable data; rest receives variable data. **Common mistakes:** confusing the two by context, or placing rest before other parameters (SyntaxError).",
+    "example": "```js\n// spread: expand into individual values\nconsole.log(Math.max(...[1, 5, 3])); // 5\nconst merged = [...[1, 2], ...[3, 4]]; // [1, 2, 3, 4]\nconsole.log(merged);\n\n// rest: collect arguments into an array\nfunction sum(...nums) { return nums.reduce((a, b) => a + b, 0); }\nconsole.log(sum(1, 2, 3, 4)); // 10\n```",
+    "resources": [
+      {
+        "label": "MDN — Spread syntax",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax"
+      },
+      {
+        "label": "MDN — Rest parameters",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters"
+      }
+    ]
+  },
+  "modern-spread-rest-002": {
+    "explanation": "**The problem:** can a rest parameter sit before other parameters? **No — it's a `SyntaxError`:** \"Rest element must be last element.\" **Why:** rest **greedily collects all remaining arguments**, so anything after it could never receive a value — the engine wouldn't know where collecting stops. It's a **parse-time** error, caught before the code runs. **The rule:** at most one rest parameter, and it must be the **final** one. **The same applies** to rest in array/object destructuring patterns. **Common mistakes:** trying `function f(...a, b)` or `const [...a, b] = arr` (both invalid), or expecting it to fail only at runtime (it's rejected at parse time).",
+    "example": "```js\n// INVALID — SyntaxError: Rest element must be last element\n// function foo(...a, b) {}\n\n// VALID — rest is last and collects the remainder\nfunction foo(first, ...rest) { return { first, rest }; }\nconsole.log(foo(1, 2, 3, 4)); // { first: 1, rest: [ 2, 3, 4 ] }\n```",
+    "resources": [
+      {
+        "label": "MDN — Rest parameters",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters"
+      }
+    ]
+  },
+  "modern-spread-rest-mcq-003": {
+    "explanation": "**The problem:** does mutating the source array after spreading affect the spread result? **The answer: no — `b` is `[1, 2, 3, 4, 5]`.** **Why:** spread performs a **shallow copy** at the moment the expression evaluates, reading the elements of `a` then and there into a brand-new array. **Why later `a.push(99)` doesn't matter:** `b` is independent — spread creates no live link to `a`. **The shallow caveat:** only the top level is copied; nested objects/arrays would still be shared by reference. **Common mistakes:** expecting spread to be a live view of the source, or assuming it deep-copies nested structures (it doesn't — use `structuredClone` for that).",
+    "example": "```js\nconst a = [1, 2, 3];\nconst b = [...a, 4, 5]; // snapshot copy of a's current elements\na.push(99);             // mutates a, not b\nconsole.log(b); // [1, 2, 3, 4, 5]\nconsole.log(a); // [1, 2, 3, 99]\n```",
+    "resources": [
+      {
+        "label": "MDN — Spread syntax",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax"
+      }
+    ]
+  },
+  "modern-optional-nullish-001": {
+    "explanation": "**The problem:** reading a deeply nested property throws if an intermediate value is `null`/`undefined`. **What `?.` does:** optional chaining **short-circuits** — if the value immediately to its left is `null` or `undefined`, the whole expression stops and evaluates to `undefined` instead of throwing a `TypeError`. **Why it works:** `?.` checks for nullish before accessing the next link, so `a?.b?.c` safely yields `undefined` the moment any link is nullish. **It also guards calls/indexes:** `obj.method?.()`, `arr?.[i]`. **Common mistakes:** thinking `?.` suppresses *all* errors (it only guards nullish access — a non-nullish but wrong type still throws), or overusing it where a value is guaranteed to exist (hides real bugs).",
+    "example": "```js\nconst user = { profile: { name: 'Ada' } };\nconsole.log(user?.profile?.name);    // 'Ada'\nconsole.log(user?.address?.city);    // undefined — no throw\nconsole.log(user?.greet?.());        // undefined — optional call\nconst arr = null;\nconsole.log(arr?.[0]);               // undefined — optional index\n```",
+    "resources": [
+      {
+        "label": "MDN — Optional chaining (?.)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining"
+      }
+    ]
+  },
+  "modern-optional-nullish-002": {
+    "explanation": "**The problem:** `||` and `??` both supply defaults but disagree on `0`, `''`, and `false`. **`??` (nullish coalescing):** falls back **only** when the left side is `null` or `undefined`. **`||` (logical OR):** falls back for **any falsy** value — `0`, `''`, `false`, `NaN`, `null`, `undefined`. **Why the difference matters:** `0` and `''` are often **legitimate** values; `||` would wrongly replace them with the default, while `??` preserves them. **The rule of thumb:** use `??` when only \"missing\" (`null`/`undefined`) should trigger the default; use `||` when any falsy value should. **Common mistakes:** using `||` for numeric/string defaults and silently clobbering valid `0`/`''`.",
+    "example": "```js\nconsole.log(0 ?? 'default');  // 0        — 0 is not nullish\nconsole.log(0 || 'default');  // 'default' — 0 is falsy\nconsole.log('' ?? 'default'); // ''       — '' is not nullish\nconsole.log('' || 'default'); // 'default' — '' is falsy\nconsole.log(null ?? 'default'); // 'default' — null is nullish\n```",
+    "resources": [
+      {
+        "label": "MDN — Nullish coalescing (??)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing"
+      }
+    ]
+  },
+  "modern-optional-nullish-mcq-003": {
+    "explanation": "**The problem:** chaining `?.` past a `null` value and past a missing key — both print `undefined`. **Why `obj?.a?.b?.c` is `undefined`:** `obj.a.b` is `null`; the next `?.c` sees a nullish left side and **short-circuits to `undefined`** (not a `TypeError`, and not `null`). **Why `obj?.x?.y` is `undefined`:** `obj.x` is missing → `undefined`, so `?.y` short-circuits. **The key detail:** optional chaining always yields **`undefined`** when it short-circuits, regardless of whether the nullish value was `null` or `undefined`. **Common mistakes:** expecting a `TypeError` for `null?.c` (it's guarded), or expecting the result to be `null` when the nullish link was `null` (it's normalized to `undefined`).",
+    "example": "```js\nconst obj = { a: { b: null } };\nconsole.log(obj?.a?.b?.c); // undefined — null?.c short-circuits (no throw)\nconsole.log(obj?.x?.y);    // undefined — obj.x is missing\nconsole.log(obj?.a?.b);    // null      — last link is the actual value\n```",
+    "resources": [
+      {
+        "label": "MDN — Optional chaining (short-circuiting)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting"
+      }
+    ]
+  },
+  "modern-esm-001": {
+    "explanation": "**The problem:** ES Modules offer two export styles with different import syntax. **Named exports:** `export const foo = …` — imported by **exact name** with braces: `import { foo } from './mod.js'` (rename with `as`). A module can have **many**. **Default export:** `export default value` — imported with **any name, no braces**: `import whatever from './mod.js'`. A module has **at most one**. **Why both exist:** named exports are explicit, searchable, and tree-shakeable; a default suits a module's single primary value. **You can mix** one default with several named. **Common mistakes:** using braces for a default import (or omitting them for a named one), or expecting two default exports in a file.",
+    "example": "```js\n// A module (e.g. mod.js) can mix ONE default with MANY named exports:\nexport const foo = 1;                            // named\nexport function helper() { return 'help'; }      // named\nexport default function main() { return 'hi'; }  // default\n\n// In another file you'd import them on one line:\n//   import main, { foo, helper as h } from './mod.js';\n//   - main : default → any name, no braces\n//   - foo  : named   → exact name, braces\nconsole.log(foo, helper(), main()); // 1 help hi\n```",
+    "resources": [
+      {
+        "label": "MDN — export",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export"
+      },
+      {
+        "label": "MDN — import",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import"
+      }
+    ]
+  },
+  "modern-esm-002": {
+    "explanation": "**The problem:** you want all of a module's named exports grouped under one object instead of importing each. **The syntax:** `import * as name from './mod.js'` creates a **namespace object** whose properties are the module's named exports (a `default` export appears as `name.default`). **Why it's useful:** it namespaces related utilities (`math.add`, `math.sub`) and documents where each came from. **A detail:** the namespace object is **read-only** and **live** — its bindings reflect the module's current values, but you can't reassign them. **Common mistakes:** trying to mutate the namespace (`math.add = …` throws in strict mode), or expecting the default export under its own name rather than `.default`.",
+    "example": "```js\n// math.js\nexport const add = (a, b) => a + b;\nexport const sub = (a, b) => a - b;\n\n// app.js\nimport * as math from './math.js';\nconsole.log(math.add(1, 2)); // 3\nconsole.log(math.sub(5, 2)); // 3\n```",
+    "resources": [
+      {
+        "label": "MDN — import (namespace import)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#namespace_import"
+      }
+    ]
+  },
+  "modern-esm-mcq-003": {
+    "explanation": "**The problem:** the key difference between ES Modules and CommonJS `require`. **The answer:** ESM `import`/`export` are **static** — declarations are resolved at **parse time**, before any code runs, building the dependency graph up front. CommonJS `require()` is a **runtime function call**, evaluated when reached, so it can sit inside `if`/loops. **Why static matters:** it enables **tree-shaking** (dead-export elimination), better circular-dependency handling, and live bindings. **Why the other options are wrong:** ESM isn't \"async vs sync\" in that simplistic sense, CommonJS *does* support named-ish exports via `module.exports`, and Node has supported ESM for years (`.mjs` or `\"type\": \"module\"`). **Common mistakes:** putting `import` inside a block (illegal — use dynamic `import()` for conditional loading).",
+    "example": "```js\n// ESM: static, hoisted, top-level only\nimport { readFile } from 'node:fs/promises';\nconsole.log(typeof readFile); // 'function'\n\n// Conditional loading needs DYNAMIC import (returns a promise):\nasync function load(flag) {\n  if (flag) {\n    const os = await import('node:os');\n    return os.platform();\n  }\n}\nload(true).then((p) => console.log('platform:', p));\n```",
+    "resources": [
+      {
+        "label": "MDN — JavaScript modules",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules"
+      },
+      {
+        "label": "Node.js — Modules: ECMAScript modules",
+        "url": "https://nodejs.org/api/esm.html"
+      }
+    ]
   }
 }
