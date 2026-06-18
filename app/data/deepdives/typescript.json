@@ -740,5 +740,145 @@
         "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#initialization-order"
       }
     ]
+  },
+  "ts-narrow-001": {
+    "explanation": "**The problem:** A parameter typed `number | string` can't be used as either type directly — you must prove which one it is in a given branch. **Type narrowing** is TypeScript **refining a value's type to something more specific** based on the control flow of your checks. In `padLeft`, `typeof padding === 'number'` tells the compiler that *inside* the `if`, `padding` is a `number` (so `.repeat()` is valid); and because that branch `return`s, **after** the `if` only `string` remains, so `padding + input` is string concatenation. **Why it works:** TypeScript does **control-flow analysis** — it tracks how guards, returns, and assignments constrain types along each path. **Common mistakes:** using a union member's method without narrowing, or writing checks the compiler can't follow (then reach for a type guard).",
+    "example": "```ts\nfunction padLeft(padding: number | string, input: string): string {\n  if (typeof padding === 'number') {\n    return ' '.repeat(padding) + input; // padding narrowed to number here\n  }\n  return padding + input; // after the if, padding is narrowed to string\n}\nconsole.log(padLeft(4, 'hi'), padLeft('> ', 'hi'));\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Narrowing",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html"
+      },
+      {
+        "label": "TypeScript Handbook — typeof type guards",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#typeof-type-guards"
+      }
+    ]
+  },
+  "ts-narrow-mcq-001": {
+    "explanation": "**The problem:** For `strs: string | string[] | null`, what's the type inside `if (typeof strs === 'object')`? **The answer: `string[] | null`** — a famous trap. **Why `null` sneaks in:** `typeof null === 'object'` (a historical JS quirk), so the `object` check matches both arrays **and** `null`. It excludes only `string` (whose `typeof` is `'string'`), leaving `string[] | null`. **The consequence:** iterating `strs` here can crash on `null`, and the compiler flags it. **The fix:** add a truthiness check (`if (strs && typeof strs === 'object')`) or handle `null` separately. **Why the others are wrong:** it's not just `string[]` (null leaks in), not only `null`, not the literal `'object'`. **Common mistakes:** assuming `typeof x === 'object'` excludes `null`.",
+    "example": "```ts\nfunction printAll(strs: string | string[] | null) {\n  if (typeof strs === 'object') {\n    // strs is string[] | null here — typeof null === 'object'!\n    // @ts-expect-error 'strs' is possibly 'null'\n    for (const s of strs) console.log(s);\n    if (strs) for (const s of strs) console.log(s); // guard against null first\n  }\n}\nprintAll(['a', 'b']);\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — typeof null is object",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#typeof-type-guards"
+      },
+      {
+        "label": "MDN — typeof null",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof#typeof_null"
+      }
+    ]
+  },
+  "ts-narrow-002": {
+    "explanation": "**The problem:** `if (value)` is a quick way to drop `null`/`undefined`, but it's too broad for strings/numbers. **Truthiness narrowing:** a condition like `if (value)` removes **all falsy** members from the type — `null`, `undefined`, and also `false`. **The subtle bug:** for a `string`, the empty string `''` is **falsy**, and for a `number`, `0` is falsy — so a truthiness check accidentally treats `''`/`0` the **same as missing**, skipping legitimate values. **The fix:** check explicitly for what you mean — `value != null` (only null/undefined) or `value !== ''`. **Why it matters:** silent data bugs where empty-but-valid input is dropped. **Common mistakes:** `if (str)` to mean 'is present' (rejects `''`), or `if (count)` rejecting `0`.",
+    "example": "```ts\nfunction greet(name: string | null | undefined) {\n  if (name) { // removes null/undefined — but ALSO drops the empty string ''\n    console.log('Hi ' + name.toUpperCase());\n  } else {\n    console.log('no name'); // '' lands here too — maybe not intended\n  }\n}\nfunction greetSafe(name: string | null) {\n  if (name != null) console.log(name.length); // treats '' as a real value\n}\ngreet(''); greetSafe('');\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Truthiness narrowing",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#truthiness-narrowing"
+      },
+      {
+        "label": "MDN — Falsy",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Falsy"
+      }
+    ]
+  },
+  "ts-narrow-003": {
+    "explanation": "**The problem:** You want to exclude *both* `null` and `undefined` in one check, while keeping other falsy values (`0`, `''`). **`container.value != null`** does exactly that: the **loose** inequality `!=` treats `null` and `undefined` as **equal to each other and to nothing else**, so `!= null` removes **both** in a single comparison — without dropping `0` or `''` (which truthiness would). **Why it's idiomatic:** concise and precise for 'is this value present?'. **The flip side:** `== null` is the idiomatic 'is null OR undefined' check. **Note:** this is one of the few places loose equality is recommended (linters often special-case `== null`/`!= null`). **Common mistakes:** using `!== null` (misses `undefined`) or a truthiness check (wrongly drops `0`/`''`).",
+    "example": "```ts\nfunction process(container: { value: number | null | undefined }) {\n  if (container.value != null) {\n    // both null AND undefined removed; 0 would still pass through\n    console.log(container.value.toFixed(2));\n  }\n}\nprocess({ value: 3.14159 }); // 3.14\nprocess({ value: 0 });        // 0.00 — kept, unlike a truthiness check\nprocess({ value: null });     // skipped\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Equality narrowing",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#equality-narrowing"
+      },
+      {
+        "label": "MDN — Equality comparisons (== null)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness"
+      }
+    ]
+  },
+  "ts-narrow-mcq-002": {
+    "explanation": "**The problem:** Given `Fish = { swim }` and `Bird = { fly }`, which guard narrows `animal: Fish | Bird` to `Fish`? **The answer: `if ('swim' in animal)`** — the **`in` operator** narrowing checks whether a property name exists on the value, and TypeScript uses that to pick the union member(s) that have it. Since only `Fish` has `swim`, the `if` branch narrows to `Fish` (and the `else` to `Bird`). **Why the others are wrong:** `animal instanceof Fish` doesn't work because `Fish` is a **type alias**, not a class/constructor (instanceof needs a constructor); `typeof animal === 'Fish'` is invalid (`typeof` only returns `'object'` etc., never custom names); `animal.swim !== undefined` errors because `swim` isn't known to exist on `Bird`. **Common mistakes:** trying `instanceof` on a non-class type, or accessing a member before narrowing.",
+    "example": "```ts\ntype Fish = { swim: () => void };\ntype Bird = { fly: () => void };\n\nfunction move(animal: Fish | Bird) {\n  if ('swim' in animal) {\n    animal.swim(); // narrowed to Fish\n  } else {\n    animal.fly();  // narrowed to Bird\n  }\n}\nmove({ swim: () => console.log('swimming') });\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — The in operator narrowing",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#the-in-operator-narrowing"
+      },
+      {
+        "label": "TypeScript Handbook — instanceof narrowing",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#instanceof-narrowing"
+      }
+    ]
+  },
+  "ts-narrow-004": {
+    "explanation": "**The problem:** Built-in guards (`typeof`, `in`, `instanceof`) can't express *custom* checks (like 'is this a Fish?'). **A type predicate** lets you write your own: a function whose return type is **`pet is Fish`** (`parameterName is Type`). When such a function returns `true`, TypeScript **narrows the argument to that type at the call site** — so after `if (isFish(pet))`, `pet` is a `Fish`. **Why it's powerful:** encapsulate complex/shared narrowing logic and reuse it; the compiler trusts the predicate. **The responsibility:** the predicate is *unchecked* — if its body lies, you get an unsafe narrowing (a runtime bug). **Common mistakes:** returning `boolean` instead of `pet is Fish` (no narrowing happens), or writing a predicate body that doesn't actually verify the type it claims.",
+    "example": "```ts\ntype Fish = { swim: () => void };\ntype Bird = { fly: () => void };\n\nfunction isFish(pet: Fish | Bird): pet is Fish {\n  return (pet as Fish).swim !== undefined;\n}\n\nfunction move(pet: Fish | Bird) {\n  if (isFish(pet)) pet.swim(); // narrowed to Fish at the call site\n  else pet.fly();\n}\nmove({ fly: () => console.log('flying') });\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Using type predicates",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates"
+      },
+      {
+        "label": "TypeScript Handbook — Narrowing",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html"
+      }
+    ]
+  },
+  "ts-narrow-005": {
+    "explanation": "**The problem:** You have a union of related shapes and want safe, ergonomic narrowing without custom guards. **A discriminated (tagged) union:** a union whose members all share a **common property** that holds a **different literal type** in each member — here `kind: 'circle'` vs `kind: 'square'`. **What makes it work:** because the `kind` values are distinct *literal* types, checking that one property (e.g. `switch (shape.kind)` or `if (shape.kind === 'circle')`) lets TypeScript narrow to the exact member, giving access to that member's specific fields (`radius` vs `sideLength`). **Why it's the recommended pattern:** clean, exhaustive-checkable modeling of variants (events, API results, state machines). **Common mistakes:** using a non-literal discriminant (e.g. `kind: string`, which can't narrow), or members that don't all carry the tag.",
+    "example": "```ts\ninterface Circle { kind: 'circle'; radius: number; }\ninterface Square { kind: 'square'; sideLength: number; }\ntype Shape = Circle | Square;\n\nfunction area(shape: Shape) {\n  switch (shape.kind) {\n    case 'circle': return Math.PI * shape.radius ** 2; // narrowed to Circle\n    case 'square': return shape.sideLength ** 2;        // narrowed to Square\n  }\n}\nconsole.log(area({ kind: 'circle', radius: 2 }));\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Discriminated Unions",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions"
+      },
+      {
+        "label": "TypeScript Handbook — Narrowing",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html"
+      }
+    ]
+  },
+  "ts-narrow-mcq-003": {
+    "explanation": "**The problem:** What does `const _exhaustiveCheck: never = shape` in the `default` case accomplish? **Exhaustiveness checking.** After handling every known `kind`, `shape` has been narrowed to **`never`** in `default` (nothing is left), so assigning it to a `never` variable compiles. **The payoff:** if someone later **adds a new member** to `Shape` (e.g. `Triangle`), that case is no longer handled, so in `default` `shape` is now `Triangle` — **not** `never` — and the assignment becomes a **compile error**, forcing you to handle the new case. **Why the others are wrong:** it's a compile-time safety net, not a runtime throw guarantee, not just silencing a return warning, and it doesn't 'skip' shapes. **Common mistakes:** omitting the never-check and silently missing new union members.",
+    "example": "```ts\ninterface Circle { kind: 'circle'; radius: number; }\ninterface Square { kind: 'square'; sideLength: number; }\ntype Shape = Circle | Square;\n\nfunction getArea(shape: Shape) {\n  switch (shape.kind) {\n    case 'circle': return Math.PI * shape.radius ** 2;\n    case 'square': return shape.sideLength ** 2;\n    default: {\n      // If a new Shape is added, `shape` won't be `never` here -> compile error.\n      const _exhaustiveCheck: never = shape;\n      return _exhaustiveCheck;\n    }\n  }\n}\nconsole.log(getArea({ kind: 'square', sideLength: 3 }));\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Exhaustiveness checking",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#exhaustiveness-checking"
+      },
+      {
+        "label": "TypeScript Handbook — The never type",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#the-never-type"
+      }
+    ]
+  },
+  "ts-narrow-006": {
+    "explanation": "**The problem:** Understanding the difference between a variable's **declared** type and its **narrowed** type across assignments. For `let x = Math.random() < 0.5 ? 10 : 'hello'`, the **declared** type is `string | number`. **Assignment narrowing:** after `x = 1`, TypeScript narrows `x` to `number` *for subsequent reads*; after `x = 'goodbye'`, it's `string`. **Why the last line fails:** `x = true` is rejected because `boolean` was **never part of the declared type** (`string | number`) — you can only assign values compatible with what was originally declared, even though the *current narrowed* type changes. **The key idea:** narrowing affects what reads see; the declared type sets the bounds of what you may assign. **Common mistakes:** thinking the narrowed type widens what you can assign, or expecting to assign a type outside the original union.",
+    "example": "```ts\nlet x = Math.random() < 0.5 ? 10 : 'hello'; // declared type: string | number\nx = 1;          // ok — narrowed to number\nconsole.log(x.toFixed());\nx = 'goodbye';  // ok — narrowed to string\nconsole.log(x.toUpperCase());\n// @ts-expect-error boolean was never part of the declared type string | number\nx = true;\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Narrowing & assignments",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#assignments"
+      },
+      {
+        "label": "TypeScript Handbook — Control flow analysis",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#control-flow-analysis"
+      }
+    ]
+  },
+  "ts-narrow-mcq-004": {
+    "explanation": "**The problem:** In `if (x === y)` with `x: string | number` and `y: string | boolean`, what are `x` and `y` inside? **The answer: both are `string`.** **Why:** a strict `===` can only be true when both sides are actually equal, which requires them to share a type. The **only type common to both unions** is `string`, so within the `if` TypeScript narrows **both** `x` and `y` to `string` (their intersection of possibilities). **Why the others are wrong:** equality *does* narrow (so not 'no narrowing'), it's not the union of both, and the unions *can* be equal (they overlap on `string`, so not `never`). **Why useful:** comparing two unions safely lets you then use shared-type operations (`x.toUpperCase()`). **Common mistakes:** assuming equality doesn't narrow, or forgetting that `===` narrows both operands to the common type.",
+    "example": "```ts\nfunction example(x: string | number, y: string | boolean) {\n  if (x === y) {\n    // string is the only type both unions share -> both narrow to string\n    console.log(x.toUpperCase(), y.toUpperCase());\n  }\n}\nexample('match', 'match');\n```",
+    "resources": [
+      {
+        "label": "TypeScript Handbook — Equality narrowing",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#equality-narrowing"
+      },
+      {
+        "label": "TypeScript Handbook — Narrowing",
+        "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html"
+      }
+    ]
   }
 }
