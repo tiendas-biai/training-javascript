@@ -1,10 +1,230 @@
 {
   "types-prim-001": {
-    "explanation": "**The problem.** \"How many primitive types are there?\" trips people up because they conflate *primitives* with *everything that isn't an object*, and they forget the newer additions (`bigint`, `symbol`).\n\n**What makes a value primitive.** A primitive is immutable and compared **by value**, not by reference. The seven are: `string`, `number`, `bigint`, `boolean`, `undefined`, `symbol`, and `null`. Everything else — arrays, functions, dates, plain `{}` — is an **object** (compared by reference).\n\n**Why the count surprises people.** `typeof null` returns `\"object\"` (a famous historical bug), so `null` *looks* like an object but is a primitive. And `typeof function(){}` returns `\"function\"`, even though functions are objects. So `typeof` reports **eight** strings for **seven** primitives plus objects — don't use it to count primitives.\n\n**Common mistakes.** Calling arrays/objects \"primitive\"; assuming `typeof null === 'null'`; forgetting `bigint`/`symbol` because they're newer.",
-    "example": "```js\nconst samples = [\n  'hi',            // string\n  42,              // number\n  10n,             // bigint\n  true,            // boolean\n  undefined,       // undefined\n  Symbol('id'),    // symbol\n  null,            // null  -> but typeof reports 'object' (legacy bug)\n  {},              // object (not primitive)\n];\n\nfor (const v of samples) {\n  console.log(String(v).padEnd(12), '->', typeof v);\n}\n// note: typeof null === 'object', yet null IS a primitive.\n```",
+    "explanation": "**The problem:** People conflate \"primitive\" with \"anything that isn't an object\" and forget the newer additions (`bigint`, `symbol`), so they miscount or mislabel `null`. **What makes a value primitive:** a primitive is **immutable** and compared **by value**, not by reference. The seven are `string`, `number`, `bigint`, `boolean`, `undefined`, `symbol`, and `null`. **Why it matters:** everything else — objects, arrays, functions, dates — is a non-primitive (object), held by reference and mutable. **Common mistakes:** assuming `null` is an object because `typeof null === 'object'` (a historical bug — it's still a primitive), or thinking arrays/functions are their own primitive category.",
+    "example": "```js\nconst kinds = ['hi', 42, 10n, true, undefined, Symbol('id'), null];\nconsole.log(kinds.map(v => typeof v));\n// ['string','number','bigint','boolean','undefined','symbol','object']\n// note: typeof null is 'object' (a bug) but null is still a primitive\nconsole.log(typeof [], typeof {}, typeof function () {}); // object object function (non-primitives)\n```",
     "resources": [
-      { "label": "MDN — Primitive", "url": "https://developer.mozilla.org/en-US/docs/Glossary/Primitive" },
-      { "label": "MDN — typeof", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof" }
+      {
+        "label": "MDN — Primitive",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Primitive"
+      },
+      {
+        "label": "MDN — typeof",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof"
+      }
+    ]
+  },
+  "types-prim-002": {
+    "explanation": "**The problem:** `typeof null` returns `'object'`, which makes it useless for detecting `null` and surprises everyone. **Why it happens:** in the very first JavaScript engine, values were tagged by a few low bits; the object tag was `0`, and the `null` pointer was also all-zeros, so `null` got read as an object. It was never fixed because too much existing code relies on the quirk. **Why the right solution works:** `value === null` checks identity directly — there's only one `null`, so strict equality is exact and unambiguous. **Common mistakes:** writing `if (typeof x === 'object')` and expecting `null` to be excluded (it isn't), or using `typeof` at all to test for `null`.",
+    "example": "```js\nconsole.log(typeof null); // 'object' — historical bug, not reliable\nfunction isObject(v) {\n  return typeof v === 'object' && v !== null; // must exclude null explicitly\n}\nconsole.log(isObject(null)); // false\nconsole.log(isObject({}));   // true\nconsole.log(null === null);  // true — the correct null test\n```",
+    "resources": [
+      {
+        "label": "MDN — typeof (null)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof#typeof_null"
+      }
+    ]
+  },
+  "types-prim-003": {
+    "explanation": "**The problem:** `NaN` means \"Not-a-Number\", yet `typeof NaN` is `'number'`, and `NaN === NaN` is `false` — both feel contradictory. **Why it happens:** `NaN` is a special value of the IEEE-754 floating-point `number` type, produced by invalid math like `0/0` or `Number('x')`; the spec defines it as **unequal to everything, including itself**, so any comparison with it is `false`. **Why the right solution works:** `Number.isNaN(x)` checks specifically whether `x` *is* the `NaN` value, sidestepping the self-inequality trap. **Common mistakes:** testing `x === NaN` (always false), or using the global `isNaN()` which coerces first (`isNaN('foo')` is `true`); prefer `Number.isNaN`.",
+    "example": "```js\nconsole.log(typeof NaN);        // 'number'\nconsole.log(NaN === NaN);        // false — NaN equals nothing, not even itself\nconsole.log(Number('hello'));   // NaN (failed coercion)\nconsole.log(Number.isNaN(NaN)); // true — the reliable check\nconsole.log(isNaN('hello'));    // true — coerces first, often misleading\nconsole.log(Number.isNaN('hello')); // false — no coercion\n```",
+    "resources": [
+      {
+        "label": "MDN — NaN",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN"
+      },
+      {
+        "label": "MDN — Number.isNaN",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN"
+      }
+    ]
+  },
+  "types-prim-004": {
+    "explanation": "**The problem:** assigning to a string index (`s[0] = 'H'`) appears to do nothing — the string is unchanged. **Why it happens:** strings are **primitives and immutable**; their characters cannot be modified in place. The index assignment is a no-op in non-strict mode (it silently fails to create a property on the temporary wrapper) and throws a `TypeError` in strict mode. **Why \"hello\" prints:** since nothing can mutate `s`, it still holds its original value. **Why the right solution works:** to \"change\" a string you build a **new** one (e.g. `'H' + s.slice(1)`). **Common mistakes:** treating strings like char arrays, or expecting methods like `toUpperCase()` to mutate (they return new strings).",
+    "example": "```js\nlet s = 'hello';\ns[0] = 'H';        // silently ignored (non-strict); TypeError under 'use strict'\nconsole.log(s);    // 'hello' — unchanged, strings are immutable\n\nconst fixed = 'H' + s.slice(1); // build a new string instead\nconsole.log(fixed); // 'Hello'\nconsole.log(s.toUpperCase(), s); // 'HELLO' 'hello' — methods return new strings\n```",
+    "resources": [
+      {
+        "label": "MDN — String",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String"
+      }
+    ]
+  },
+  "types-prim-005": {
+    "explanation": "**The problem:** after `b = a; b = 20`, people expect `a` to change too — it doesn't. **Why it happens:** primitives are **copied by value**. `let b = a` puts an independent copy of `a`'s value into `b`; the two variables share no link. **Why 10 prints:** reassigning `b` only rebinds `b`'s own slot, leaving `a` at its original `10`. **The contrast:** objects are copied by *reference*, so the same statement with objects would make both names point at one shared object. **Common mistakes:** assuming `=` creates an alias for primitives (it never does), or expecting object behavior (shared mutation) from numbers/strings/booleans.",
+    "example": "```js\nlet a = 10;\nlet b = a;  // b gets a COPY of the value 10\nb = 20;     // rebinds b only\nconsole.log(a, b); // 10 20 — a is untouched\n\n// contrast: objects share a reference\nlet o1 = { n: 10 };\nlet o2 = o1;\no2.n = 20;\nconsole.log(o1.n); // 20 — same object\n```",
+    "resources": [
+      {
+        "label": "MDN — Primitive",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Primitive"
+      }
+    ]
+  },
+  "types-prim-006": {
+    "explanation": "**The problem:** if primitives have no methods, why does `'hello'.toUpperCase()` work? **Why it happens:** when you access a property/method on a primitive, JS performs **autoboxing** — it temporarily wraps the value in its corresponding object wrapper (`String`, `Number`, `Boolean`), reads the method off that wrapper's prototype, calls it, then **discards the wrapper**. **Why the right answer works:** the method really runs on a throwaway object, so the original primitive stays a primitive and untouched. **The tell:** `'hi'.foo = 1` persists nothing, because the wrapper it was set on is gone the next statement. **Common mistakes:** thinking primitives \"are\" objects, or trying to store properties on them; also note `null`/`undefined` have no wrapper, so property access on them throws.",
+    "example": "```js\nconsole.log('hello'.toUpperCase()); // 'HELLO' — runs on a temp String wrapper\n\nlet s = 'hi';\ns.foo = 1;          // sets a prop on an ephemeral wrapper...\nconsole.log(s.foo); // undefined — that wrapper was discarded immediately\n\nconsole.log((5).toFixed(2)); // '5.00' — Number autoboxing\n// null/undefined have no wrapper:\ntry { null.x; } catch (e) { console.log(e.constructor.name); } // TypeError\n```",
+    "resources": [
+      {
+        "label": "MDN — Primitive wrapper objects",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Primitive#primitive_wrapper_objects_in_javascript"
+      }
+    ]
+  },
+  "types-prim-007": {
+    "explanation": "**The problem:** two symbols created with the same description are not equal, which surprises people expecting string-like behavior. **Why it happens:** `Symbol()` mints a brand-new, **guaranteed-unique** primitive every call; the description string is purely a debugging label and plays no part in identity. So `typeof` reports `'symbol'`, and `Symbol('id') === Symbol('id')` is `false` because they are two distinct values. **Why this is the point:** uniqueness makes symbols ideal as **non-colliding property keys** — no two libraries' symbol keys can clash. **Common mistakes:** comparing symbols by description, expecting `Symbol('x')` to be interned (use `Symbol.for('x')` for a shared global symbol), or trying to auto-coerce a symbol into a string (throws).",
+    "example": "```js\nconsole.log(typeof Symbol('id'));               // 'symbol'\nconsole.log(Symbol('id') === Symbol('id'));      // false — each is unique\n\nconst KEY = Symbol('meta');\nconst obj = { [KEY]: 1 };\nconsole.log(obj[KEY]);                           // 1 — collision-proof key\n\nconsole.log(Symbol.for('app') === Symbol.for('app')); // true — global registry\n```",
+    "resources": [
+      {
+        "label": "MDN — Symbol",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol"
+      }
+    ]
+  },
+  "types-prim-008": {
+    "explanation": "**The problem:** \"what are symbols for?\" is fuzzy because their two roles — unique keys and customizing language behavior — look unrelated. **What a symbol is:** a unique, immutable primitive (ES2015); every `Symbol()` is distinct even with the same description. **Use one — collision-free keys:** a symbol property can't clash with string keys or other symbols, so libraries can attach metadata to objects safely. **Use two — well-known symbols:** built-ins like `Symbol.iterator` and `Symbol.asyncIterator` are hooks the language reads, so defining `[Symbol.iterator]` makes your object work with `for...of` and spread. **Registry:** `Symbol.for(key)` returns the *same* symbol for a key across the whole program. **Common mistakes:** expecting symbol keys in `JSON.stringify` or `Object.keys` (they're skipped — use `Object.getOwnPropertySymbols`).",
+    "example": "```js\nconst range = {\n  from: 1, to: 3,\n  [Symbol.iterator]() {            // well-known symbol hook\n    let n = this.from, last = this.to;\n    return { next: () => ({ value: n, done: n++ > last }) };\n  },\n};\nconsole.log([...range]); // [1, 2, 3] — for...of/spread now work\n\nconst id = Symbol('id');\nconst user = { name: 'Ada', [id]: 42 };\nconsole.log(Object.keys(user));                  // ['name'] — symbol key hidden\nconsole.log(Object.getOwnPropertySymbols(user)); // [Symbol(id)]\n```",
+    "resources": [
+      {
+        "label": "MDN — Symbol",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol"
+      },
+      {
+        "label": "MDN — Symbol.iterator",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/iterator"
+      }
+    ]
+  },
+  "types-nonprim-001": {
+    "explanation": "**The problem:** `{} === {}` and `[] === []` are both `false`, even though the operands look identical. **Why it happens:** objects (including arrays) are compared **by reference**, not by content. Each literal `{}`/`[]` allocates a brand-new object in memory, so the two sides are two different references and can never be `===`. **Why this is correct:** `===` on objects asks \"are these the same object?\", not \"do they have the same shape?\". **Common mistakes:** expecting `===` to do a structural/deep comparison; for that you compare contents yourself (e.g. `JSON.stringify(a) === JSON.stringify(b)` for plain data, or a deep-equal utility). Two variables are only `===` when they point at the *same* object.",
+    "example": "```js\nconsole.log({} === {});   // false — two different objects\nconsole.log([] === []);   // false — two different arrays\n\nconst a = { x: 1 };\nconst b = a;              // same reference\nconsole.log(a === b);     // true — identical object\n\nconst c = { x: 1 };\nconsole.log(JSON.stringify(a) === JSON.stringify(c)); // true — structural compare\n```",
+    "resources": [
+      {
+        "label": "MDN — Equality comparisons and sameness",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness"
+      }
+    ]
+  },
+  "types-nonprim-002": {
+    "explanation": "**The problem:** `typeof []` is `'object'`, so `typeof` can't tell an array from a plain object. **Why it happens:** arrays *are* objects (a specialized, index-keyed kind), and `typeof` only reports the coarse `'object'` for all of them. **Why `Array.isArray` is the answer:** it checks the internal `[[Class]]`/array marker directly and works **across realms** (iframes, worker contexts), where each global has its own `Array`. **Why not `instanceof Array`:** `instanceof` walks the prototype chain and fails for an array created in a *different* realm (its prototype is that realm's `Array.prototype`, not yours), giving a false negative. **Common mistakes:** using `typeof x === 'array'` (never true) or relying on `instanceof Array` in multi-frame code.",
+    "example": "```js\nconsole.log(typeof []);            // 'object' — can't distinguish arrays\nconsole.log(Array.isArray([]));    // true  — reliable\nconsole.log(Array.isArray({}));    // false\nconsole.log(Array.isArray('hi'));  // false\n\n// instanceof breaks across realms; Array.isArray does not:\nconsole.log([] instanceof Array);  // true here, but unreliable cross-iframe\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.isArray",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray"
+      }
+    ]
+  },
+  "types-nonprim-003": {
+    "explanation": "**The problem:** functions are objects, yet `typeof function(){}` is `'function'`, not `'object'`. **Why it happens:** a function is a **callable object** — it has properties and a prototype like any object — but the spec gives `typeof` a special `'function'` result whenever a value implements the internal `[[Call]]` method, as a convenience for detecting callables. **Why this is useful:** `typeof fn === 'function'` is the idiomatic \"is this callable?\" test. **The object side still holds:** you can assign properties to a function (`fn.count = 0`) and it has methods like `call`/`bind`. **Common mistakes:** thinking `typeof` returning `'function'` means functions aren't objects (they are), or expecting `typeof` to say `'object'` for them.",
+    "example": "```js\nfunction greet() {}\nconsole.log(typeof greet);          // 'function'\nconsole.log(greet instanceof Object); // true — functions ARE objects\n\ngreet.callCount = 0;                 // can hold properties like any object\ngreet.callCount++;\nconsole.log(greet.callCount);        // 1\n\nconst maybe = greet;\nif (typeof maybe === 'function') maybe(); // idiomatic callable check\n```",
+    "resources": [
+      {
+        "label": "MDN — typeof",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof"
+      }
+    ]
+  },
+  "types-nonprim-004": {
+    "explanation": "**The problem:** mutating an object parameter inside a function (`o.x = 1`) is visible to the caller, which feels like \"pass by reference\". **Why it happens:** JavaScript is **pass by value**, but for objects the *value passed is the reference*. The function gets its own copy of the reference, and that copy points at the **same** underlying object — so mutating through it (`o.x = 1`) is seen outside. **The key distinction:** **reassigning** the parameter (`o = {}`) only rebinds the local copy and is *not* visible outside; only **mutation** of the shared object propagates. **Common mistakes:** believing whole objects are copied on call (they aren't — only the reference is), or expecting `o = newObj` inside to replace the caller's object.",
+    "example": "```js\nfunction mutate(o) { o.x = 1; }       // mutates the shared object\nfunction reassign(o) { o = { x: 99 }; } // rebinds local copy only\n\nconst obj = {};\nmutate(obj);\nconsole.log(obj.x); // 1 — mutation is visible\n\nreassign(obj);\nconsole.log(obj.x); // 1 — reassignment is NOT visible\n```",
+    "resources": [
+      {
+        "label": "MDN — Function (passing arguments)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions"
+      }
+    ]
+  },
+  "types-nonprim-005": {
+    "explanation": "**The problem:** people expect `const o = {...}; o.a = 2` to throw because `o` is `const`. It doesn't. **Why it happens:** `const` freezes the **binding**, not the **value**. It guarantees you can't reassign `o` to a different object, but the object it points to is fully mutable — you can add, change, and delete its properties. **Why 2 prints:** mutating a property never touches the binding, so `const` has no objection. **Why the right solution works:** to make the *contents* immutable you call `Object.freeze(o)` (shallow — nested objects still mutable). **Common mistakes:** assuming `const` deep-freezes objects, or expecting `o.a = 2` to throw; the only thing that throws is `o = somethingElse`.",
+    "example": "```js\nconst o = { a: 1 };\no.a = 2;            // allowed — const freezes the binding, not the object\nconsole.log(o.a);   // 2\n// o = {};          // THIS would throw: Assignment to constant variable\n\nconst frozen = Object.freeze({ a: 1 });\nfrozen.a = 99;      // silently ignored (TypeError in strict mode)\nconsole.log(frozen.a); // 1 — contents now immutable (shallowly)\n```",
+    "resources": [
+      {
+        "label": "MDN — const",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const"
+      },
+      {
+        "label": "MDN — Object.freeze",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze"
+      }
+    ]
+  },
+  "types-nonprim-006": {
+    "explanation": "**The problem:** spreading an object (`{ ...a }`) and then mutating a nested property changes the original too. **Why it happens:** spread (and `Object.assign`) performs a **shallow copy** — it copies the top-level property *values*. For nested objects, that value is a **reference**, so the copy and the original both point at the *same* nested object. Mutating `b.x.y` mutates the shared `x`. **Why 2 prints:** `a.x` and `b.x` are one object; only the outer wrappers differ. **Why the right solution works:** a **deep copy** (`structuredClone(a)`) duplicates nested objects too, giving full independence. **Common mistakes:** assuming spread is a deep clone, or deep-cloning with `JSON.parse(JSON.stringify())` (drops functions/`undefined`, mangles `Date`).",
+    "example": "```js\nconst a = { x: { y: 1 } };\nconst b = { ...a };     // shallow: b.x is the SAME object as a.x\nb.x.y = 2;\nconsole.log(a.x.y);     // 2 — shared nested reference\n\nconst c = structuredClone(a); // deep copy — fully independent\nc.x.y = 99;\nconsole.log(a.x.y);     // 2 — unaffected\n```",
+    "resources": [
+      {
+        "label": "MDN — Spread syntax",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax"
+      },
+      {
+        "label": "MDN — structuredClone",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/structuredClone"
+      }
+    ]
+  },
+  "types-nonprim-007": {
+    "explanation": "**The problem:** `JSON.parse(JSON.stringify(obj))` is a popular deep-copy trick, but it silently loses data. **Why it happens:** the round-trip is limited to what **JSON** can represent. `JSON.stringify` **drops** properties whose value is a function, `undefined`, or a `symbol`; converts `Date` to an ISO **string**; turns `Map`/`Set` into `{}`/empty; and **throws** on circular references. **Why this matters:** the \"copy\" can quietly differ in shape and types from the source. **Why the right solution works:** `structuredClone()` uses the structured-clone algorithm, preserving `Date`, `Map`, `Set`, typed arrays, and circular refs (though it still can't copy functions). **Common mistakes:** using the JSON trick on objects with dates/maps/functions, or on anything potentially cyclic.",
+    "example": "```js\nconst obj = { fn: () => 1, u: undefined, when: new Date(), n: 5 };\nconst copy = JSON.parse(JSON.stringify(obj));\nconsole.log(copy); // { when: '2026-...T...Z' (string!), n: 5 } — fn & u dropped\n\nconst safe = structuredClone({ when: new Date(), set: new Set([1, 2]) });\nconsole.log(safe.when instanceof Date, safe.set instanceof Set); // true true\n```",
+    "resources": [
+      {
+        "label": "MDN — JSON.stringify",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify"
+      },
+      {
+        "label": "MDN — structuredClone",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/structuredClone"
+      }
+    ]
+  },
+  "types-cmp-001": {
+    "explanation": "**The problem:** the practical difference between primitives and objects shows up as confusing copy/compare behavior. **Primitives** (`string`, `number`, `bigint`, `boolean`, `undefined`, `symbol`, `null`) are **immutable**, **copied by value**, and **compared by value** — two equal primitives are `===`. **Non-primitives** (objects, arrays, functions) are **mutable**, **copied/passed by reference**, and **compared by identity** — two objects are `===` only if they're literally the same object. **Why it works this way:** primitives hold their value directly in the variable; objects live on the heap and the variable holds a pointer to them. **Common mistakes:** expecting `{a:1} === {a:1}` to be true (it's structural-blind), or expecting an object passed to a function not to be mutable from inside (it is).",
+    "example": "```js\n// primitives: value semantics\nlet x = 5, y = x; y = 9;\nconsole.log(x, x === 5); // 5 true — independent copy\n\n// objects: reference semantics\nconst a = { n: 1 }, b = a; b.n = 2;\nconsole.log(a.n);        // 2 — same object\nconsole.log({ n: 1 } === { n: 1 }); // false — different objects\nconsole.log('hi' === 'hi');         // true  — equal primitives\n```",
+    "resources": [
+      {
+        "label": "MDN — Data structures (primitives vs objects)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures"
+      }
+    ]
+  },
+  "types-mcq-001": {
+    "explanation": "**The problem:** spotting the non-primitive in a list (`string`, `null`, `array`, `symbol`) trips people who forget arrays are objects. **The answer is `array`:** there is no `array` primitive — arrays are a specialized **object**, held by reference and mutable. **Why the others are primitives:** `string` and `symbol` are clearly primitives, and `null` *is* a primitive despite `typeof null === 'object'` (a historical bug). **The full list to memorize:** `string`, `number`, `bigint`, `boolean`, `undefined`, `symbol`, `null` — seven, and anything else (arrays, functions, dates, plain objects) is a non-primitive. **Common mistakes:** counting `null` as an object, or forgetting `bigint`/`symbol` exist.",
+    "example": "```js\nconst values = ['s', null, [1, 2], Symbol('x')];\nfor (const v of values) {\n  // arrays report 'object'; the rest are primitives (null too, despite the bug)\n  console.log(typeof v, Array.isArray(v));\n}\n// 'string' false | 'object' false | 'object' true | 'symbol' false\nconsole.log(Array.isArray([1, 2])); // true — arrays are objects, not a primitive\n```",
+    "resources": [
+      {
+        "label": "MDN — Primitive",
+        "url": "https://developer.mozilla.org/en-US/docs/Glossary/Primitive"
+      }
+    ]
+  },
+  "types-mcq-002": {
+    "explanation": "**The problem:** the natural guess for `typeof null` is `'null'`, but the answer is `'object'`. **Why it happens:** in the original JS engine, a value's type was read from its low tag bits; objects were tagged `0` and the machine `null` was the all-zeros pointer, so `null` was misread as an object. Backward compatibility froze the bug in place. **Why the answer is `'object'`:** the spec mandates this exact (wrong) result for `typeof null`. **Why not the others:** `'undefined'` is for `undefined`, `'boolean'` for booleans; there is no `'null'` result from `typeof`. **Common mistakes:** using `typeof x === 'object'` and assuming `null` is excluded — test `x === null` instead.",
+    "example": "```js\nconsole.log(typeof null);      // 'object' — the famous bug\nconsole.log(typeof undefined); // 'undefined'\n\n// reliable null check:\nconst x = null;\nconsole.log(x === null);       // true\n// safe object guard must exclude null:\nconsole.log(typeof x === 'object' && x !== null); // false\n```",
+    "resources": [
+      {
+        "label": "MDN — typeof (null)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof#typeof_null"
+      }
+    ]
+  },
+  "types-mcq-003": {
+    "explanation": "**The problem:** four plausible array checks, but only one is robust. **The answer is `Array.isArray(x)`:** it inspects the internal array marker and works **across realms** (iframes/workers). **Why the others fail:** `typeof x === 'array'` is never true (`typeof` returns `'object'` for arrays); `x instanceof Array` gives a false negative for arrays from another realm (different `Array.prototype`); `x.constructor === Array` is brittle — it breaks if `constructor` was overwritten and throws on `null`/`undefined`. **Why `Array.isArray` is best:** no prototype-chain or property dependence, immune to realm boundaries. **Common mistakes:** trusting `instanceof Array` in multi-frame apps, or `typeof` for arrays.",
+    "example": "```js\nconst arr = [1, 2];\nconsole.log(typeof arr === 'array'); // false — typeof says 'object'\nconsole.log(arr instanceof Array);   // true here, unreliable cross-realm\nconsole.log(Array.isArray(arr));     // true — the robust check\n\n// constructor check is brittle:\nconst weird = []; weird.constructor = Object;\nconsole.log(weird.constructor === Array); // false (broken) — but isArray still works:\nconsole.log(Array.isArray(weird));        // true\n```",
+    "resources": [
+      {
+        "label": "MDN — Array.isArray",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray"
+      }
+    ]
+  },
+  "types-mcq-004": {
+    "explanation": "**The problem:** after `const b = a; b.push(3)`, `a.length` is `3`, not `2` — `a` changed through `b`. **Why it happens:** arrays are objects assigned **by reference**. `const b = a` copies the reference, so `a` and `b` name the **same** array; `b.push(3)` mutates that one shared array, and `a.length` reflects it. **Why not a `TypeError`:** `const` forbids *reassigning* `b`, but mutating the array it points to (`push`) is fine. **Why not `2`:** there's only one array, now with three elements. **Common mistakes:** thinking `const b = a` clones the array (use `[...a]` or `a.slice()` for an independent copy), or expecting `const` to block mutation.",
+    "example": "```js\nconst a = [1, 2];\nconst b = a;        // same array, shared reference\nb.push(3);          // mutates the shared array (const allows mutation)\nconsole.log(a.length, a); // 3 [1, 2, 3]\n\nconst copy = [...a]; // independent shallow copy\ncopy.push(4);\nconsole.log(a.length, copy.length); // 3 4 — a untouched\n```",
+    "resources": [
+      {
+        "label": "MDN — const",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const"
+      },
+      {
+        "label": "MDN — Array.prototype.push",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push"
+      }
     ]
   }
 }
