@@ -78,5 +78,105 @@
         "url": "https://graphql.org/learn/best-practices/"
       }
     ]
+  },
+  "graphql-query-001": {
+    "explanation": "**The core idea:** A query is a tree of fields. At each object you open a selection set `{ … }` and name the fields you want; the response mirrors that exact shape.\n\n**Scalars vs objects:** A scalar field (String, Int, Boolean, ID, custom scalars) is a leaf — you select it by name with no braces. An object field is a branch — you must open a nested selection set and choose among *its* fields.\n\n**Why it works this way:** Making the leaf vs branch rule explicit means the response shape is fully determined by the query, and the server never has to guess how deep to go.\n\n**Common mistakes:** Leaving an object field without a sub-selection (invalid) or putting `{ … }` on a scalar (also invalid).",
+    "example": "```graphql\nquery {\n  user(id: \"1\") {\n    name          # scalar leaf — no braces\n    address {     # object branch — needs a selection set\n      city\n      country\n    }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Fields",
+        "url": "https://graphql.org/learn/queries/#fields"
+      }
+    ]
+  },
+  "graphql-query-002": {
+    "explanation": "**What arguments are:** Named, typed inputs to a field, written in parentheses: `field(name: value)`. The schema declares each argument’s name and type.\n\n**Why they’re powerful in GraphQL:** Arguments can appear on *any* field at any depth, not only top-level resources. So you can parameterize nested fields — request a `profilePic(size: 100)` directly on a `user`.\n\n**How the server sees them:** They arrive as the `args` object in that field’s resolver, so each field decides how to use its own inputs.\n\n**Common mistake:** Hard-coding values in the query string instead of pairing arguments with variables, which makes queries dynamic and cacheable.",
+    "example": "```graphql\nquery {\n  user(id: \"1\") {\n    name\n    profilePic(size: 100)   # argument on a nested field\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Arguments",
+        "url": "https://graphql.org/learn/queries/#arguments"
+      }
+    ]
+  },
+  "graphql-query-003": {
+    "explanation": "**The problem:** The result JSON keys come from field names, so requesting the same field twice with different arguments would collide on one key.\n\n**The fix:** An alias `key: field(args)` renames the field in the response only. Now each instance has a distinct key.\n\n**Why it works:** Aliasing is purely a client-side naming concern; the server still resolves the underlying field — it just labels the output as you asked.\n\n**Common use:** Comparison queries (the same field for two different ids/arguments) and adapting field names to what your UI code expects.",
+    "example": "```graphql\nquery {\n  empireHero: hero(episode: EMPIRE) {\n    name\n  }\n  jediHero: hero(episode: JEDI) {\n    name\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Aliases",
+        "url": "https://graphql.org/learn/queries/#aliases"
+      }
+    ]
+  },
+  "graphql-query-004": {
+    "explanation": "**The problem:** Two parts of a query (or two components) often need the same set of fields, leading to copy-paste.\n\n**The fix:** A fragment names a reusable selection on a type — `fragment userFields on User { … }` — and you splice it in with `...userFields`.\n\n**Why it works:** The fragment is expanded against the same type wherever it’s spread, so the selection stays DRY and consistent.\n\n**Why it matters in practice:** Component-based clients (Relay, Apollo) let each component declare a fragment for exactly the data it renders, then compose them up the tree into one request.",
+    "example": "```graphql\nquery {\n  empireHero: hero(episode: EMPIRE) {\n    ...heroFields\n  }\n  jediHero: hero(episode: JEDI) {\n    ...heroFields\n  }\n}\n\nfragment heroFields on Character {\n  name\n  appearsIn\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Fragments",
+        "url": "https://graphql.org/learn/queries/#fragments"
+      }
+    ]
+  },
+  "graphql-query-005": {
+    "explanation": "**Why variables exist:** Building queries by string-concatenating dynamic values is error-prone and defeats query caching. Variables keep the query text constant and pass values separately.\n\n**How to use them:** Declare `$name: Type` in the operation signature, reference `$name` where an argument value goes, and send a `variables` JSON map with the request.\n\n**Defaults and required:** `= value` supplies a default when the client omits the variable; a non-null type (`ID!`) makes it required and the request fails validation if missing.\n\n**Common mistake:** Forgetting that the variable’s declared type must match the argument’s type in the schema.",
+    "example": "```graphql\nquery HeroByEpisode($episode: Episode = JEDI, $withFriends: Boolean!) {\n  hero(episode: $episode) {\n    name\n    friends @include(if: $withFriends) {\n      name\n    }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Variables",
+        "url": "https://graphql.org/learn/queries/#variables"
+      }
+    ]
+  },
+  "graphql-query-006": {
+    "explanation": "**Two pieces:** `query GetUser { … }` has an operation *type* (`query`) and an operation *name* (`GetUser`).\n\n**When the name is required:** It’s optional for a single anonymous operation (the bare `{ … }` shorthand), but mandatory once a document defines more than one operation, so the server knows which to run.\n\n**Why name anyway:** Named operations show up in server logs, tracing, and error messages, and are required by some persisted-query and analytics tooling.\n\n**Common mistake:** Relying on the anonymous shorthand in production code, where named operations make debugging far easier.",
+    "example": "```graphql\nquery GetUser($id: ID!) {\n  user(id: $id) {\n    name\n    email\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Operation name",
+        "url": "https://graphql.org/learn/queries/#operation-name"
+      }
+    ]
+  },
+  "graphql-query-mcq-001": {
+    "explanation": "**What directives are:** Annotations prefixed with `@` that change execution. The two built-in *query* directives are `@skip` and `@include`.\n\n**The two opposites:** `@include(if: $cond)` keeps the field/fragment only when `$cond` is true; `@skip(if: $cond)` drops it when `$cond` is true. They’re logical mirror images.\n\n**Why they’re useful:** A single query can conditionally fetch expensive sub-selections based on UI state, instead of maintaining two near-identical queries.\n\n**Common mistake:** Expecting directives to alter the schema — they don’t; they only affect whether a field is resolved for this request.",
+    "example": "```graphql\nquery Hero($episode: Episode, $withFriends: Boolean!, $skipName: Boolean!) {\n  hero(episode: $episode) {\n    name @skip(if: $skipName)\n    friends @include(if: $withFriends) {\n      name\n    }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Directives",
+        "url": "https://graphql.org/learn/queries/#directives"
+      }
+    ]
+  },
+  "graphql-query-mcq-002": {
+    "explanation": "**The rule:** Fields that share a response key must be able to *merge* — same field, same arguments. The validator enforces this before execution.\n\n**Why the query fails:** Both selections use the key `hero` but with different `episode` arguments, so they can’t merge, and validation rejects the document.\n\n**The fix:** Give each its own response key with an alias (`empireHero:` / `jediHero:`).\n\n**Common mistake:** Assuming the second silently wins or that GraphQL returns a list — it does neither; the query is simply invalid.",
+    "example": "```graphql\nquery {\n  empireHero: hero(episode: EMPIRE) { name }\n  jediHero: hero(episode: JEDI) { name }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Aliases",
+        "url": "https://graphql.org/learn/queries/#aliases"
+      }
+    ]
+  },
+  "graphql-query-mcq-003": {
+    "explanation": "**What it is:** `__typename` is a built-in meta field available on every object, interface, and union type. It returns the name of the *concrete* object type at that position.\n\n**Why it matters:** On a union or interface, the client often needs the runtime type to decide how to render or how to normalize it into a cache. `__typename` provides that without a custom field.\n\n**Tooling note:** Apollo Client and Relay add `__typename` to selections automatically so their normalized caches can key objects by type + id.\n\n**Common mistake:** Confusing it with introspection’s `__type`/`__schema`, which describe the schema itself rather than a value’s runtime type.",
+    "example": "```graphql\nquery {\n  search(text: \"an\") {\n    __typename\n    ... on Human { name }\n    ... on Droid { name }\n    ... on Starship { name }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Meta fields",
+        "url": "https://graphql.org/learn/queries/#meta-fields"
+      }
+    ]
+  },
+  "graphql-query-mr-001": {
+    "explanation": "**Why these three:** Aliases, arguments on nested fields, and named fragment spreads are all part of the executable query language and appear in everyday queries.\n\n**Why the others are wrong:** New type definitions belong to the schema (SDL), authored on the server — not inside a query document. And GraphQL has no imperative control flow: there are no loops; a field that returns a list is resolved by the server and you simply select fields on each element.\n\n**Takeaway:** A query *describes* the data you want declaratively; it never *computes* or *defines schema*.",
+    "example": "```graphql\nquery {\n  me: user(id: \"1\") {        # alias\n    ...userCard              # fragment spread\n    avatar(size: 64)         # nested-field argument\n  }\n}\n\nfragment userCard on User {\n  name\n  email\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Queries",
+        "url": "https://graphql.org/learn/queries/"
+      }
+    ]
   }
 }

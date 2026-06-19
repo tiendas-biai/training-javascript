@@ -132,5 +132,172 @@
       "mr",
       "rest"
     ]
+  },
+  {
+    "id": "graphql-query-001",
+    "topic": "Queries",
+    "subtopic": "Fields & selection sets",
+    "difficulty": "easy",
+    "question": "In a GraphQL query, what is a *selection set*, and what happens if a field returns an object?",
+    "answer": "A **selection set** is the `{ … }` list of fields you ask for on a type. If a field returns a scalar (String, Int, …) you select it by name with no sub-selection. If a field returns an **object type**, you must open a nested selection set and choose which of *its* fields you want — selections nest as deep as the graph.",
+    "explanation": "A query that stops at an object type without selecting sub-fields is invalid; conversely you cannot put a selection set on a scalar field.",
+    "tags": [
+      "queries",
+      "fields"
+    ]
+  },
+  {
+    "id": "graphql-query-002",
+    "topic": "Queries",
+    "subtopic": "Arguments",
+    "difficulty": "easy",
+    "question": "How do arguments work in GraphQL, and where can they appear?",
+    "answer": "Any field can take **arguments** — named, typed inputs written in parentheses after the field name, e.g. `user(id: \"1\")` or `posts(first: 10)`. Unlike REST, arguments can appear on **any field at any level** of the query, not just the top, so you can parameterize nested fields (e.g. ask for a `profilePic(size: 100)` on a user).",
+    "explanation": "Each argument’s name and type are declared in the schema; the server passes them to that field’s resolver as the `args` object.",
+    "tags": [
+      "queries",
+      "arguments"
+    ]
+  },
+  {
+    "id": "graphql-query-003",
+    "topic": "Queries",
+    "subtopic": "Aliases",
+    "difficulty": "medium",
+    "question": "What problem do aliases solve in a GraphQL query?",
+    "answer": "A response key comes from the field name, so you cannot query the **same field twice with different arguments** without a collision. An **alias** (`renamed: fieldName`) renames a field in the result, letting you request it multiple times — e.g. `hero(episode: EMPIRE)` and `hero(episode: JEDI)` aliased to `empireHero` and `jediHero`.",
+    "explanation": "Aliases only change the key in the returned JSON; they do not change which field on the server is resolved.",
+    "tags": [
+      "queries",
+      "aliases"
+    ]
+  },
+  {
+    "id": "graphql-query-004",
+    "topic": "Queries",
+    "subtopic": "Fragments",
+    "difficulty": "medium",
+    "question": "What is a fragment in GraphQL and why is it useful?",
+    "answer": "A **fragment** is a named, reusable set of fields on a particular type, defined with `fragment Name on Type { … }` and used with the spread `...Name`. It lets you avoid repeating the same field selection — for example sharing one `userFields` fragment across two aliased sides of a comparison query.",
+    "explanation": "Fragments are the building block that GraphQL clients (Relay especially) use to colocate each UI component’s data requirements with the component.",
+    "tags": [
+      "queries",
+      "fragments"
+    ]
+  },
+  {
+    "id": "graphql-query-005",
+    "topic": "Queries",
+    "subtopic": "Variables",
+    "difficulty": "medium",
+    "question": "How are variables declared and used in a GraphQL query, and how do default values work?",
+    "answer": "Variables are declared in the **operation signature** with a `$name: Type` list, then referenced inside the query where an argument value goes. The client sends a separate `variables` JSON map alongside the query. A **default value** is given with `= value` in the declaration (`$first: Int = 10`); a variable typed non-null (`$id: ID!`) is required.",
+    "explanation": "Variables keep the query string static (good for caching and persisted queries) and move dynamic values out of the query text, avoiding manual string interpolation.",
+    "tags": [
+      "queries",
+      "variables"
+    ]
+  },
+  {
+    "id": "graphql-query-006",
+    "topic": "Queries",
+    "subtopic": "Operation name & type",
+    "difficulty": "easy",
+    "question": "What are the operation type and operation name in `query GetUser { … }`?",
+    "answer": "`query` is the **operation type** (one of `query`, `mutation`, `subscription`); `GetUser` is the **operation name**, a meaningful label you choose. The name is optional for a single anonymous query (the `{ … }` shorthand) but **required** when a document contains multiple operations, and it’s valuable for logging, debugging, and server-side analytics.",
+    "explanation": "The bare `{ … }` form is shorthand for an anonymous `query`. Naming operations is a recommended best practice even when not strictly required.",
+    "tags": [
+      "queries",
+      "operations"
+    ]
+  },
+  {
+    "id": "graphql-query-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Queries",
+    "subtopic": "Directives",
+    "difficulty": "hard",
+    "question": "What does the `@include(if: $expanded)` directive do in a query, and how does it differ from `@skip`?",
+    "options": [
+      "@include adds a field to the schema at runtime; @skip removes it permanently.",
+      "@include keeps the field only when the condition is true; @skip omits the field when its condition is true (they are logical opposites).",
+      "@include caches the field; @skip disables caching for it.",
+      "Both are server-only directives that clients cannot use."
+    ],
+    "answer": "@include keeps the field only when the condition is true; @skip omits the field when its condition is true (they are logical opposites).",
+    "explanation": "`@skip` and `@include` are the two built-in query directives. Both take an `if` argument (usually a Boolean variable) and let the client include/exclude a field or fragment dynamically without writing two separate queries.",
+    "tags": [
+      "queries",
+      "directives",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-query-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Queries",
+    "subtopic": "Aliases",
+    "difficulty": "medium",
+    "question": "A query selects `hero(episode: EMPIRE) { name }` and `hero(episode: JEDI) { name }` at the top level without aliases. What happens?",
+    "options": [
+      "Both run and the second overwrites the first in the response.",
+      "The query is invalid — two fields with the same response key and differing arguments conflict.",
+      "GraphQL returns an array of both heroes automatically.",
+      "Only the first field is executed; the second is ignored."
+    ],
+    "answer": "The query is invalid — two fields with the same response key and differing arguments conflict.",
+    "explanation": "Field merging requires that fields sharing a response key be identical. Different arguments make them un-mergeable, so validation fails. Aliases (`empireHero:` / `jediHero:`) give each its own key and fix it.",
+    "tags": [
+      "queries",
+      "aliases",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-query-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Queries",
+    "subtopic": "Meta fields",
+    "difficulty": "medium",
+    "question": "What does the meta field `__typename` return?",
+    "options": [
+      "The name of the GraphQL operation.",
+      "The name of the concrete object type of the object where it appears.",
+      "The internal database table backing the type.",
+      "The list of all types in the schema."
+    ],
+    "answer": "The name of the concrete object type of the object where it appears.",
+    "explanation": "`__typename` is available on every type and is especially useful on unions and interfaces, where clients need to know the concrete type to render or normalize each result. Client caches like Apollo request it automatically.",
+    "tags": [
+      "queries",
+      "typename",
+      "mcq",
+      "introspection"
+    ]
+  },
+  {
+    "id": "graphql-query-mr-001",
+    "type": "multiple-response",
+    "topic": "Queries",
+    "subtopic": "Query features",
+    "difficulty": "medium",
+    "question": "Which of the following are legal, real features of GraphQL *query* documents? (Select THREE)",
+    "options": [
+      "Aliasing a field to rename it in the response",
+      "Passing arguments to nested (not just top-level) fields",
+      "Reusing a selection via a named fragment spread",
+      "Defining new object types inside the query document",
+      "Looping over a list with a for-statement in the query"
+    ],
+    "answers": [
+      "Aliasing a field to rename it in the response",
+      "Passing arguments to nested (not just top-level) fields",
+      "Reusing a selection via a named fragment spread"
+    ],
+    "explanation": "Aliases, nested arguments, and fragments are all part of the query language. Type definitions live in the schema (SDL), not in query documents, and GraphQL has no imperative loops — lists are resolved by the server and you select fields on each element.",
+    "tags": [
+      "queries",
+      "mr"
+    ]
   }
 ]
