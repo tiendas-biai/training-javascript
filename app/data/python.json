@@ -218,7 +218,7 @@
     "subtopic": "Iteration",
     "difficulty": "medium",
     "question": "How do you loop with an index, and how do you iterate two lists in parallel?",
-    "answer": "Use **`enumerate(seq)`** to get `(index, value)` pairs: `for i, val in enumerate(seq):`. Use **`zip(a, b)`** to iterate in parallel: `for x, y in zip(a, b):`. Avoid `for i in range(len(seq))` — it's unidiomatic.",
+    "answer": "Use `enumerate(seq)` to get `(index, value)` pairs: `for i, val in enumerate(seq):`. Use `zip(a, b)` to iterate in parallel: `for x, y in zip(a, b):`. Avoid `for i in range(len(seq))` — it's unidiomatic.",
     "explanation": "`enumerate` accepts a `start` argument. `zip` stops at the shortest input; `itertools.zip_longest` pads to the longest.",
     "tags": ["enumerate", "zip", "iteration"]
   },
@@ -255,7 +255,7 @@
     "subtopic": "Definition",
     "difficulty": "easy",
     "question": "How do you define a function, and what does it return if there's no `return` statement?",
-    "answer": "Define with `def name(params):`. If the function has no `return` (or a bare `return`), it returns **`None`** implicitly. A function always returns something — `None` by default.",
+    "answer": "Define with `def name(params):`. If the function has no `return` (or a bare `return`), it returns `None` implicitly. A function always returns something — `None` by default.",
     "explanation": "This is why `result = my_list.sort()` is a common bug: `sort()` mutates in place and returns `None`. `sorted()` returns a new sorted list.",
     "tags": ["def", "return", "none"]
   },
@@ -312,7 +312,7 @@
     "subtopic": "Classes",
     "difficulty": "easy",
     "question": "What is `__init__`, and what is `self`?",
-    "answer": "`__init__` is the **initializer** (constructor-like) called when you create an instance; it sets up the object's attributes. **`self`** is the first parameter of instance methods and refers to the instance being operated on — it's passed automatically when you call `obj.method()`.",
+    "answer": "`__init__` is the **initializer** (constructor-like) called when you create an instance; it sets up the object's attributes. `self` is the first parameter of instance methods and refers to the instance being operated on — it's passed automatically when you call `obj.method()`.",
     "explanation": "`self` is a convention, not a keyword, but always use it. `__init__` doesn't create the object (that's `__new__`); it initializes the already-created instance.",
     "tags": ["init", "self", "classes"]
   },
@@ -332,7 +332,7 @@
     "subtopic": "Inheritance",
     "difficulty": "medium",
     "question": "How do you call a parent class's method from a subclass?",
-    "answer": "Use **`super()`**: e.g. `super().__init__(args)` inside a subclass `__init__` to run the parent's initializer. `super()` returns a proxy that dispatches to the next class in the **method resolution order (MRO)**.",
+    "answer": "Use `super()`: e.g. `super().__init__(args)` inside a subclass `__init__` to run the parent's initializer. `super()` returns a proxy that dispatches to the next class in the **method resolution order (MRO)**.",
     "explanation": "Using `super()` (rather than naming the parent explicitly) is what makes cooperative multiple inheritance and the MRO work correctly. Inspect the order with `Cls.__mro__`.",
     "tags": ["inheritance", "super", "mro"]
   },
@@ -379,7 +379,7 @@
     "subtopic": "Static vs Class Methods",
     "difficulty": "hard",
     "question": "What is the difference between `@staticmethod` and `@classmethod`?",
-    "answer": "A **`@classmethod`** receives the class as its first argument (`cls`) and is often used for alternative constructors (`cls(...)`). A **`@staticmethod`** receives neither `self` nor `cls` — it's just a plain function namespaced inside the class.",
+    "answer": "A `@classmethod` receives the class as its first argument (`cls`) and is often used for alternative constructors (`cls(...)`). A `@staticmethod` receives neither `self` nor `cls` — it's just a plain function namespaced inside the class.",
     "explanation": "Use `classmethod` when you need the class (e.g. `Date.from_string`), and `staticmethod` for a utility that logically belongs to the class but needs no instance/class state.",
     "tags": ["staticmethod", "classmethod"]
   },
@@ -416,7 +416,7 @@
     "subtopic": "Packages",
     "difficulty": "easy",
     "question": "What is `pip`, and what is a virtual environment for?",
-    "answer": "**`pip`** is Python's package installer (pulls from PyPI). A **virtual environment** (`python -m venv .venv`) is an isolated per-project Python with its own installed packages, so projects don't share or clash on dependency versions.",
+    "answer": "`pip` is Python's package installer (pulls from PyPI). A **virtual environment** (`python -m venv .venv`) is an isolated per-project Python with its own installed packages, so projects don't share or clash on dependency versions.",
     "explanation": "Activate with `source .venv/bin/activate`. Pin dependencies in `requirements.txt` (or use tools like Poetry/uv). Without a venv, `pip install` pollutes the global/system Python.",
     "tags": ["pip", "venv", "packages"]
   },
@@ -426,7 +426,7 @@
     "subtopic": "Handling",
     "difficulty": "easy",
     "question": "What is the structure of a try/except block, and what do `else` and `finally` add?",
-    "answer": "`try:` runs risky code; `except SomeError:` handles a matching exception. **`else:`** runs only if no exception was raised; **`finally:`** always runs (cleanup), exception or not. You can have multiple `except` clauses for different error types.",
+    "answer": "`try:` runs risky code; `except SomeError:` handles a matching exception. `else:` runs only if no exception was raised; `finally:` always runs (cleanup), exception or not. You can have multiple `except` clauses for different error types.",
     "explanation": "Catch specific exceptions, not a bare `except:` (which swallows everything, including `KeyboardInterrupt`). Capture the object with `except ValueError as e:`.",
     "tags": ["try", "except", "finally"]
   },

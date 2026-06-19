@@ -36,20 +36,28 @@ export function SubjectPicker() {
         <p className="app-subtitle">Pick a subject to study</p>
       </header>
       <div className="subject-tiles">
-        {(tiles ?? []).map(({ subject, total, dueToday }) => (
-          <button
-            key={subject.id}
-            className="subject-tile"
-            style={{ '--subject-color': subject.color } as React.CSSProperties}
-            onClick={() => navigate(`/${subject.id}`)}
-          >
-            <span className="subject-icon">{subject.icon}</span>
-            <span className="subject-label">{subject.label}</span>
-            <span className="subject-counts">
-              {total === 0 ? 'No cards yet' : `${total} cards · ${dueToday} due`}
-            </span>
-          </button>
-        ))}
+        {tiles === null
+          ? listSubjects().map(subject => (
+              <div key={subject.id} className="subject-tile subject-tile--skeleton" aria-hidden="true">
+                <span className="skeleton skeleton-icon" />
+                <span className="skeleton skeleton-line" />
+                <span className="skeleton skeleton-line short" />
+              </div>
+            ))
+          : tiles.map(({ subject, total, dueToday }) => (
+              <button
+                key={subject.id}
+                className="subject-tile"
+                style={{ '--subject-color': subject.color } as React.CSSProperties}
+                onClick={() => navigate(`/${subject.id}`)}
+              >
+                <span className="subject-icon">{subject.icon}</span>
+                <span className="subject-label">{subject.label}</span>
+                <span className="subject-counts">
+                  {total === 0 ? 'No cards yet' : `${total} cards · ${dueToday} due`}
+                </span>
+              </button>
+            ))}
       </div>
     </div>
   );

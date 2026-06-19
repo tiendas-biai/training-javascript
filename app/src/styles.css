@@ -14,6 +14,8 @@
   --purple:      #8c52ff;  /* PURPLE */
   --font-heading: 'Antonio', sans-serif;
   --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --shadow-sm:   0 1px 2px rgba(28,45,64,0.06);
+  --shadow-md:   0 4px 14px rgba(28,45,64,0.08);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -170,10 +172,11 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
   margin-bottom: 10px;
 }
 .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+.btn-primary:active:not(:disabled) { transform: translateY(1px); }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn-secondary {
@@ -305,6 +308,7 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   border-radius: 14px;
   padding: 24px 28px;
   margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
 }
 .card-meta {
   display: flex;
@@ -361,21 +365,22 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
 .grade-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 .btn-hard, .btn-good, .btn-easy {
-  padding: 12px 8px;
+  padding: 16px 14px;
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   border: 1px solid;
 }
+.btn-hard:active, .btn-good:active, .btn-easy:active { transform: translateY(1px); }
 .btn-hard {
   background: rgba(219,93,110,0.08);
   border-color: var(--wrong);
@@ -398,7 +403,7 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
 .btn-easy:hover { background: rgba(59,144,151,0.18); }
 
 .interval-label {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 400;
   opacity: 0.85;
 }
@@ -646,18 +651,21 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 8px 28px;
+  padding: 10px 28px 4px;
   margin-top: 16px;
+  box-shadow: var(--shadow-sm);
 }
-.deep-dive[open] { padding-bottom: 28px; }
+.deep-dive[open] { padding-bottom: 32px; }
 .deep-dive-summary {
   cursor: pointer;
   list-style: none;
-  padding: 18px 0;
+  padding: 22px 4px;
   font-weight: 700;
   color: var(--accent);
   user-select: none;
+  transition: color 0.15s;
 }
+.deep-dive-summary:hover { color: var(--accent-h); }
 .deep-dive-summary::-webkit-details-marker { display: none; }
 .deep-dive-summary::before {
   content: '▸';
@@ -666,7 +674,7 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   transition: transform 0.15s;
 }
 .deep-dive[open] .deep-dive-summary::before { transform: rotate(90deg); }
-.deep-dive-body { border-top: 1px solid var(--border); padding-top: 20px; }
+.deep-dive-body { border-top: 1px solid var(--border); padding-top: 22px; }
 .deep-dive-explanation { line-height: 1.6; }
 .deep-dive-example, .deep-dive-resources { margin-top: 18px; }
 .deep-dive-resources ul {
@@ -794,13 +802,38 @@ h1, h2, .app-title, .summary-title, .subject-label, .lib-title {
   gap: 8px;
   color: var(--text);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s, background 0.15s, transform 0.1s, box-shadow 0.15s;
 }
 .subject-tile:hover {
   border-color: var(--subject-color);
   background: var(--surface-2);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
+.subject-tile:active { transform: translateY(0); }
+
+/* Skeleton placeholders shown while the subject banks load */
+.subject-tile--skeleton {
+  cursor: default;
+  box-shadow: var(--shadow-sm);
+}
+.subject-tile--skeleton:hover {
+  border-color: var(--border);
+  background: var(--surface);
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+.skeleton {
+  background: var(--surface-2);
+  border-radius: 6px;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+.skeleton-icon { width: 48px; height: 48px; border-radius: 10px; }
+.skeleton-line { width: 60%; height: 0.9rem; }
+.skeleton-line.short { width: 40%; height: 0.7rem; }
+@keyframes skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 .subject-icon {
   width: 48px;
   height: 48px;
