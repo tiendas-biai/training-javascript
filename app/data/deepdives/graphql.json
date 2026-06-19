@@ -501,5 +501,92 @@
         "url": "https://www.apollographql.com/docs/apollo-server/data/subscriptions/#scaling-subscriptions"
       }
     ]
+  },
+  "graphql-perf-001": {
+    "explanation": "**The problem:** A list field returns N items; selecting a related field on each makes that child resolver run N times, each doing its own fetch — plus the 1 query for the list. That’s N+1 database hits.\n\n**Why it happens:** GraphQL resolves fields independently. The `author` resolver fires once per post and has no idea its siblings need authors too, so it can’t coalesce.\n\n**Why it’s sneaky:** The query looks innocent — `posts { author { name } }` — but scales linearly with result size and can crush a database.\n\n**The fix preview:** Batch the per-item loads into one query with DataLoader (next cards).\n\n**Common mistake:** Profiling only with tiny datasets, where N+1 is invisible until production traffic.",
+    "example": "```js\n// Naïve: one DB hit per post -> N+1.\nconst resolvers = {\n  Query: { posts: (_p, _a, { db }) => db.post.all() },\n  Post: {\n    // runs once PER post; 100 posts => 100 separate queries\n    author: (post, _a, { db }) => db.user.findById(post.authorId),\n  },\n};\n```",
+    "resources": [
+      {
+        "label": "apollographql.com — Understanding the N+1 problem",
+        "url": "https://www.apollographql.com/docs/technotes/TN0019-solving-n-plus-1-with-dataloader/"
+      }
+    ]
+  },
+  "graphql-perf-002": {
+    "explanation": "**What batching does:** DataLoader gathers every `load(key)` made during one tick of the event loop and calls your batch function once with all the keys.\n\n**The win:** 100 `load(authorId)` calls become a single `WHERE id IN (...)` query — N+1 collapses to 1+1.\n\n**The contract:** Your batch function receives `keys` and must return a Promise of values **in the same order** (one result per key, or an Error for misses).\n\n**Why it works:** DataLoader schedules the dispatch on a microtask after the current synchronous frame, so all sibling resolver loads in that frame are collected first.\n\n**Common mistake:** Awaiting each `load` sequentially in a loop, which defeats batching — fire them so they queue within the same tick.",
+    "example": "```js\nimport DataLoader from 'dataloader';\n\nconst userLoader = new DataLoader(async (ids) => {\n  const users = await db.user.findByIds(ids);            // ONE query\n  const byId = new Map(users.map((u) => [u.id, u]));\n  return ids.map((id) => byId.get(id) ?? null);          // same order as ids\n});\n\n// In the Post.author resolver:\n// author: (post) => userLoader.load(post.authorId)\n```",
+    "resources": [
+      {
+        "label": "graphql.org/dataloader",
+        "url": "https://github.com/graphql/dataloader"
+      }
+    ]
+  },
+  "graphql-perf-003": {
+    "explanation": "**The second feature:** Beyond batching, DataLoader memoizes by key. Calling `load(7)` twice returns the same cached Promise, so the value is fetched once.\n\n**Why it compounds with batching:** Within a request, an author referenced by many posts is both batched into the `IN (...)` query and de-duplicated by the cache.\n\n**What kind of cache:** A simple per-key memo for the loader’s lifetime — not a TTL/expiry cache. Use `.clear(key)` or `.clearAll()` after a mutation if you must invalidate.\n\n**Why lifetime matters:** Because the cache never expires on its own, a loader must not outlive a request (next card).\n\n**Common mistake:** Treating DataLoader as an application cache for cross-request data — it’s a request-scoped de-duplicator.",
+    "example": "```js\nconst userLoader = new DataLoader(batchGetUsers);\n\nawait userLoader.load('1');\nawait userLoader.load('1'); // cached — no second fetch\nuserLoader.clear('1');       // invalidate after a mutation if needed\n```",
+    "resources": [
+      {
+        "label": "graphql/dataloader — Caching",
+        "url": "https://github.com/graphql/dataloader#caching"
+      }
+    ]
+  },
+  "graphql-perf-mcq-001": {
+    "explanation": "**The reason:** DataLoader caches results for its whole lifetime. That cache must match the request, not the process.\n\n**What goes wrong if shared:** A global loader would return data cached during an earlier request — stale after writes, and worse, it could hand one user data fetched under another user’s permissions (leakage).\n\n**The pattern:** Build fresh loaders in the per-request `context` function and read them from `context.loaders` in resolvers.\n\n**Why the other options are wrong:** It isn’t about TCP reuse, loaders *can* be reused within a request, and a global loader is explicitly discouraged.\n\n**Common mistake:** Instantiating loaders once at module load — correct for batching, disastrous for cache correctness.",
+    "example": "```js\n// New loaders per request -> clean, isolated cache.\nconst server = new ApolloServer({ typeDefs, resolvers });\nawait startStandaloneServer(server, {\n  context: async ({ req }) => ({\n    user: await getUser(req),\n    loaders: {\n      user: new DataLoader(batchGetUsers),\n      post: new DataLoader(batchGetPosts),\n    },\n  }),\n});\n```",
+    "resources": [
+      {
+        "label": "graphql/dataloader — Creating a new DataLoader per request",
+        "url": "https://github.com/graphql/dataloader#creating-a-new-dataloader-per-request"
+      }
+    ]
+  },
+  "graphql-perf-004": {
+    "explanation": "**Why GraphQL caching is layered:** There’s no single URL to cache like REST, so caching is explicit and stacked.\n\n**Client cache:** Apollo/Relay keep a normalized store keyed by `__typename` + `id`, so repeated objects are shared and updates propagate.\n\n**Server field/response cache:** Annotate fields with cache hints (e.g. `@cacheControl(maxAge:...)`); the server derives the response’s cacheability from its least-cacheable field and a response cache/CDN honors it.\n\n**Whole-response/CDN:** Persisted queries over GET let a CDN cache by query hash.\n\n**Common mistake:** Expecting REST-style automatic HTTP caching — in GraphQL you opt into each layer deliberately.",
+    "example": "```graphql\ntype Query {\n  # cache this field for 60s; servers combine hints across the response\n  topStories: [Story!]! @cacheControl(maxAge: 60)\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Caching",
+        "url": "https://graphql.org/learn/caching/"
+      },
+      {
+        "label": "apollographql.com — Server-side caching",
+        "url": "https://www.apollographql.com/docs/apollo-server/performance/caching/"
+      }
+    ]
+  },
+  "graphql-perf-005": {
+    "explanation": "**The idea:** Identify a query by a hash instead of sending its full text every time.\n\n**APQ flow:** The client sends only the SHA-256 hash. If the server knows it, it executes; if not (a `PersistedQueryNotFound`), the client resends the full query once to register it, and future calls use the hash alone.\n\n**What you gain:** Smaller payloads, the option to send via GET so CDNs cache responses by hash, and — with a strict safelist — only pre-approved operations run, blocking ad-hoc expensive/malicious queries.\n\n**Common mistake:** Conflating APQ (a payload/caching optimization) with a hand-curated allow-list (a security control); APQ enables the latter but isn’t automatically a safelist unless you enforce registration.",
+    "example": "```js\n// Apollo Client: enable Automatic Persisted Queries (send hashes, GET on read).\nimport { createPersistedQueryLink } from '@apollo/client/link/persisted-queries';\nimport { sha256 } from 'crypto-hash';\n\nconst link = createPersistedQueryLink({ sha256, useGETForHashedQueries: true });\n```",
+    "resources": [
+      {
+        "label": "apollographql.com — Automatic persisted queries",
+        "url": "https://www.apollographql.com/docs/apollo-server/performance/apq/"
+      }
+    ]
+  },
+  "graphql-perf-mcq-002": {
+    "explanation": "**The risk:** Because clients compose queries freely, one request can nest deeply or fan out across huge lists, costing arbitrary server/database work.\n\n**The defense:** Assign each field/list a weight, sum a query’s estimated cost, and reject anything over a budget *before* executing. Depth limiting is a simpler cousin that caps nesting.\n\n**Why it matters most for public APIs:** Untrusted clients can otherwise craft a denial-of-service query in a few lines.\n\n**Why the others are wrong:** It’s not about payload compression or SQL translation, and GraphQL absolutely can limit depth/cost — that’s exactly what these tools do.\n\n**Common mistake:** Shipping a public GraphQL API with no depth/cost limits and no timeouts.",
+    "example": "```graphql\n# Without limits, a client could nest relationships to explode cost:\nquery Bomb {\n  posts { author { posts { author { posts { author { id } } } } } }\n}\n# Cost analysis scores this and rejects it before execution.\n```",
+    "resources": [
+      {
+        "label": "apollographql.com — Limiting query depth/complexity",
+        "url": "https://www.apollographql.com/docs/technotes/TN0009-coordinating-graph-development/"
+      },
+      {
+        "label": "graphql.org — Security best practices",
+        "url": "https://graphql.org/learn/best-practices/"
+      }
+    ]
+  },
+  "graphql-perf-mr-001": {
+    "explanation": "**Why these three:** DataLoader batches/de-duplicates per-request fetches (kills N+1); depth limiting and cost analysis bound how expensive any single query can be; persisted queries over GET shrink payloads and let CDNs cache responses.\n\n**Why the others are wrong:** Non-null markers (`!`) are about nullability semantics, not speed — over-using them actually spreads error propagation. Disabling the schema would remove validation entirely, the opposite of safe.\n\n**Takeaway:** Performance and abuse-resistance in GraphQL come from batching, bounding, and caching — applied deliberately at each layer.",
+    "resources": [
+      {
+        "label": "graphql.org — Best Practices",
+        "url": "https://graphql.org/learn/best-practices/"
+      }
+    ]
   }
 }

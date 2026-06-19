@@ -838,5 +838,143 @@
       "scaling",
       "mr"
     ]
+  },
+  {
+    "id": "graphql-perf-001",
+    "topic": "Performance",
+    "subtopic": "The N+1 problem",
+    "difficulty": "medium",
+    "question": "What is the N+1 problem in GraphQL?",
+    "answer": "When a query returns a **list of N items** and you select a related field on each, the naïve resolver fires **one query per item** — 1 query for the list plus N queries for the related data = **N+1** round-trips. For example, fetching 100 posts and each post’s `author` runs 1 query for posts + 100 author lookups, swamping the database.",
+    "explanation": "It arises naturally from GraphQL’s per-field resolution: the `author` resolver runs once per post with no awareness of its siblings, so without batching each does its own fetch.",
+    "tags": [
+      "performance",
+      "n+1"
+    ]
+  },
+  {
+    "id": "graphql-perf-002",
+    "topic": "Performance",
+    "subtopic": "DataLoader batching",
+    "difficulty": "medium",
+    "question": "How does DataLoader solve the N+1 problem with batching?",
+    "answer": "**DataLoader** collects the individual `load(key)` calls made during a single tick of the event loop and dispatches them together to a **batch function** you supply (`keys => fetch all at once`). So 100 `userLoader.load(authorId)` calls become **one** `SELECT … WHERE id IN (…)`. It turns N+1 into 1+1.",
+    "explanation": "DataLoader coalesces calls made synchronously within one frame using a microtask, then calls your batch function once with the array of keys, returning results in the same order.",
+    "tags": [
+      "performance",
+      "dataloader",
+      "batching"
+    ]
+  },
+  {
+    "id": "graphql-perf-003",
+    "topic": "Performance",
+    "subtopic": "DataLoader caching",
+    "difficulty": "medium",
+    "question": "Besides batching, what caching does DataLoader provide?",
+    "answer": "DataLoader also **memoizes** by key: repeated `load(sameKey)` calls within the loader’s lifetime return the **same cached Promise** instead of re-fetching. Combined with batching, this de-duplicates both within a batch and across the request, so the same author referenced by many posts is fetched once.",
+    "explanation": "This cache is a simple per-key memo, not a TTL cache — it exists to de-duplicate loads within one request, which is why loaders are created per request (see the next card).",
+    "tags": [
+      "performance",
+      "dataloader",
+      "caching"
+    ]
+  },
+  {
+    "id": "graphql-perf-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Performance",
+    "subtopic": "Per-request loaders",
+    "difficulty": "hard",
+    "question": "Why should DataLoader instances be created fresh for each request (and put on context)?",
+    "options": [
+      "To make resolvers run faster by reusing TCP connections.",
+      "Because DataLoader’s per-key cache is request-scoped — sharing one loader across requests would serve stale data and leak one user’s data to another.",
+      "Because DataLoader cannot be reused more than once.",
+      "It makes no difference; a global loader is recommended."
+    ],
+    "answer": "Because DataLoader’s per-key cache is request-scoped — sharing one loader across requests would serve stale data and leak one user’s data to another.",
+    "explanation": "A DataLoader caches results for its lifetime. A long-lived/global loader would hand request B the data cached during request A (staleness + cross-user leakage). Building loaders in the per-request `context` function gives each request a clean cache.",
+    "tags": [
+      "performance",
+      "dataloader",
+      "context",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-perf-004",
+    "topic": "Performance",
+    "subtopic": "Caching",
+    "difficulty": "medium",
+    "question": "What caching options exist for GraphQL beyond DataLoader’s per-request memo?",
+    "answer": "Several layers: **client-side normalized caches** (Apollo/Relay key objects by `__typename` + `id`); **server-side field/response caching** (cache a field’s value with a TTL, e.g. Apollo’s `@cacheControl` response cache); and **whole-response caching** via persisted queries served over GET so a CDN can cache by query hash. There’s no single URL cache like REST — caching is layered and explicit.",
+    "explanation": "Field-level cache hints let the server compute a response’s overall cacheability from the least-cacheable field, which CDNs/response caches then honor.",
+    "tags": [
+      "performance",
+      "caching"
+    ]
+  },
+  {
+    "id": "graphql-perf-005",
+    "topic": "Performance",
+    "subtopic": "Persisted queries",
+    "difficulty": "medium",
+    "question": "What are persisted queries (and Automatic Persisted Queries) and what do they buy you?",
+    "answer": "A **persisted query** replaces the full query string with a precomputed **hash/ID** the server already knows. **Automatic Persisted Queries (APQ)** negotiate this at runtime: the client first sends just the hash; on a cache miss it sends the full query once to register it. Benefits: smaller requests, the ability to send via **GET** (so CDNs can cache), and a safelist that blocks arbitrary queries in production.",
+    "explanation": "Because the query text is fixed and identified by hash, persisted queries also act as an allow-list — only pre-registered operations are permitted, mitigating malicious/expensive ad-hoc queries.",
+    "tags": [
+      "performance",
+      "persisted-queries",
+      "caching",
+      "security"
+    ]
+  },
+  {
+    "id": "graphql-perf-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Performance",
+    "subtopic": "Query cost",
+    "difficulty": "hard",
+    "question": "Why do GraphQL servers often implement query cost / complexity analysis?",
+    "options": [
+      "To compress the response payload.",
+      "Because a single deeply-nested or list-heavy query can be arbitrarily expensive, so the server scores a query’s cost and rejects ones over a budget before executing.",
+      "To translate GraphQL into SQL automatically.",
+      "Because GraphQL has no way to limit query depth."
+    ],
+    "answer": "Because a single deeply-nested or list-heavy query can be arbitrarily expensive, so the server scores a query’s cost and rejects ones over a budget before executing.",
+    "explanation": "GraphQL’s flexibility means clients can request enormous nested structures. Cost/complexity analysis (and depth limiting) assigns weights to fields/lists and rejects queries exceeding a threshold, protecting the backend — a key defense for public APIs.",
+    "tags": [
+      "performance",
+      "query-cost",
+      "security",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-perf-mr-001",
+    "type": "multiple-response",
+    "topic": "Performance",
+    "subtopic": "Mitigations",
+    "difficulty": "medium",
+    "question": "Which techniques help with GraphQL performance and abuse-resistance? (Select THREE)",
+    "options": [
+      "DataLoader to batch and de-duplicate per-request data fetches",
+      "Query depth limiting and cost analysis",
+      "Persisted queries served over GET for CDN caching",
+      "Marking every field non-null to speed up resolution",
+      "Disabling the schema so queries can’t be validated"
+    ],
+    "answers": [
+      "DataLoader to batch and de-duplicate per-request data fetches",
+      "Query depth limiting and cost analysis",
+      "Persisted queries served over GET for CDN caching"
+    ],
+    "explanation": "Batching, depth/cost limits, and persisted queries are all standard performance/safety tools. Non-null markers are about nullability semantics, not speed (and over-using them causes error propagation); disabling the schema would break validation entirely.",
+    "tags": [
+      "performance",
+      "mr"
+    ]
   }
 ]
