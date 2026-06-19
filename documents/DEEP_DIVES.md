@@ -123,6 +123,17 @@ leaking `null`); those are intentional and the verifier passes because the error
   with `parse()` from the **`graphql`** package (a `^17` devDependency added for this; validates
   SDL *and* executable-document syntax **without a schema**, never executed), ` ```js ` blocks go
   through `node --check`. Reports failing ids; prints `✓ All examples parse clean.`
+- `verify-java-examples.mjs java` — full `javac` type-check (not syntax-only). Bank snippets are
+  *fragments*, so each ` ```java ` example is wrapped into one compilable class before compiling:
+  imports hoisted (plus a standard set injected, so snippets needn't repeat `import java.util.*;`),
+  top-level type declarations turned into `static` nested types (instantiable from the synthetic
+  `main` with no enclosing instance), file-scope methods made `static`, and loose statements moved
+  into `public static void main(...) throws Exception`. Needs a **JDK 17+ on PATH** — e.g.
+  `PATH="$(brew --prefix openjdk@21)/bin:$PATH" node scripts/verify-java-examples.mjs java` — and
+  **SKIPs cleanly (exit 0)** when `javac` isn't runnable. `--emit-only` writes the wrapped sources to
+  `app/.java-verify/` without compiling (handy to eyeball the wrapping). Scratch dir is gitignored,
+  removed on success, kept on failure. Caveat: because a standard import set is injected, a genuinely
+  *missing* import in a snippet won't be flagged — the gate checks logic/types, not import hygiene.
 
 **JavaScript — DONE: all 267 cards / 12 topics** — Types (20), Arrays (84), Strings (83), Coercion (8),
 Scope (11), Execution (10), this (7), Prototypes (6), Async (11), Functions (9), Error Handling (6),
@@ -141,6 +152,24 @@ caching (8), Best Practices & Security (8), Ecosystem & Tooling (6). Every card 
 ` ```graphql ` SDL/queries/mutations or ` ```js ` resolver/DataLoader/client snippets; verified with
 **`verify-graphql-examples.mjs graphql`**, **all 60 parse clean**. Authored with colon-ending bold
 labels so the `DeepDive` spacing regex fires. Plan/runbook: `documents/GRAPHQL_PLAN.md`.
+
+**Spring Boot — DONE: all 55 cards / 9 topics** — Introduction (5), Dependency Injection (8),
+Auto-Configuration (5), Configuration (6), Web & REST (10), Data & JPA (8), Testing (5),
+Actuator & Production (4), Security (4). Every card has an `example`; fences are mostly ` ```java `
+(46) with a few ` ```xml ` (pom/bean config), ` ```yaml `/` ```properties ` (config), and a ` ```bash `.
+**No automated verifier:** the Java snippets use Spring types (`@RestController`, `@Autowired`,
+`@SpringBootApplication`, JPA, etc.) that aren't on a local classpath, so `javac` can't resolve them —
+these were **self-reviewed**, not machine-checked. Authored with colon-ending bold labels so the
+`DeepDive` spacing regex fires.
+
+**Java — DONE: all 45 cards / 7 topics** — Language Basics (8), OOP (12), Strings (3), Collections (6),
+Exceptions (5), Generics (3), Modern Java (8). Foundational scope for non-senior devs, authored from
+the Oracle Java Tutorials + dev.java. Every card has a ` ```java ` `example`; verified with
+**`verify-java-examples.mjs java`** (full `javac` type-check via the fragment-wrapping harness above) —
+**all 45 compile clean under javac 21**. Unlike Spring Boot, these are plain-JDK snippets (no external
+libraries), so `javac` resolves everything. The verifier caught two examples referencing undefined
+symbols while authoring (`java-str-003` used an undeclared `name`; `java-exc-002` called a missing
+`doWork()`) — both fixed so they type-check. Authored with colon-ending bold labels.
 
 **Remaining subject — not started:** `aws` deepdives file is still `{}`. AWS cards are scenario-based —
 examples optional.
