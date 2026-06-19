@@ -11,6 +11,10 @@ import 'prismjs/components/prism-graphql';
 import 'prismjs/components/prism-java';
 // Python appears in the Python subject's cards and deep dives.
 import 'prismjs/components/prism-python';
+// Docker subject deep dives use Dockerfiles, YAML manifests (k8s/compose), and shell.
+import 'prismjs/components/prism-bash'; // also registers the `sh`/`shell` aliases
+import 'prismjs/components/prism-yaml';
+import 'prismjs/components/prism-docker'; // registers the `dockerfile` alias
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 

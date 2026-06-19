@@ -100,6 +100,14 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:python',
     loadData: loader('python', () => load(import('../../data/python.json'))),
   },
+  docker: {
+    id: 'docker',
+    label: 'Docker',
+    icon: '🐳',
+    color: '#2496ed',
+    storageKey: 'srs:docker',
+    loadData: loader('docker', () => load(import('../../data/docker.json'))),
+  },
 };
 
 export function getSubject(id: string | undefined): Subject | null {

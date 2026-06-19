@@ -17,6 +17,7 @@ const loaders: Record<string, () => Promise<{ default: DeepDiveMap }>> = {
   springboot: () => cast(import('../../data/deepdives/springboot.json')),
   java: () => cast(import('../../data/deepdives/java.json')),
   python: () => cast(import('../../data/deepdives/python.json')),
+  docker: () => cast(import('../../data/deepdives/docker.json')),
 };
 
 /** Dynamic-import a subject's deep-dive map. Unknown subjects resolve to {}. */
