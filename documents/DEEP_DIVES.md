@@ -171,5 +171,21 @@ libraries), so `javac` resolves everything. The verifier caught two examples ref
 symbols while authoring (`java-str-003` used an undeclared `name`; `java-exc-002` called a missing
 `doWork()`) — both fixed so they type-check. Authored with colon-ending bold labels.
 
+**Python — DONE: all 48 cards / 10 topics** — Language Basics (5), Data Types (4), Strings (4),
+Collections (6), Control Flow (4), Functions (5), OOP (7), Modules & Imports (3), Exceptions (4),
+Modern Python (6). Foundational scope authored from the official Python tutorial + docs.python.org.
+Every card has a ` ```python ` `example`; verified with **`verify-python-examples.mjs python`** —
+a new harness that parses each snippet via CPython's **`python3 -m py_compile`** (syntax-only, no
+execution or import resolution), **all 48 parse clean**, and a representative subset was
+runtime-spot-checked with `python3` to confirm the inline output comments. Authored with colon-ending
+bold labels. Also added the `prismjs/components/prism-python` grammar to `RichText.tsx` so
+` ```python ` blocks highlight (previously they'd fall back to the JS grammar).
+
 **Remaining subject — not started:** `aws` deepdives file is still `{}`. AWS cards are scenario-based —
 examples optional.
+
+**Python verifier** — `verify-python-examples.mjs <subject>`: finds `python3` (falls back to `python`),
+SKIPs cleanly (exit 0) if neither is on PATH; only fences tagged `python`/`py`/bare are compiled (a
+shell/other-lang fence is skipped), each run through `python3 -m py_compile`. Like the Node verifier
+this is a parse gate, not a type/import check — snippets may reference names defined elsewhere or
+import stdlib/3rd-party modules.

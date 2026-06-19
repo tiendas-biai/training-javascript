@@ -9,6 +9,8 @@ import 'prismjs/components/prism-tsx';
 import 'prismjs/components/prism-graphql';
 // Java appears in the Spring Boot subject's cards and deep dives.
 import 'prismjs/components/prism-java';
+// Python appears in the Python subject's cards and deep dives.
+import 'prismjs/components/prism-python';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 

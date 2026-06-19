@@ -92,6 +92,14 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:java',
     loadData: loader('java', () => load(import('../../data/java.json'))),
   },
+  python: {
+    id: 'python',
+    label: 'Python',
+    icon: 'Py',
+    color: '#3776ab',
+    storageKey: 'srs:python',
+    loadData: loader('python', () => load(import('../../data/python.json'))),
+  },
 };
 
 export function getSubject(id: string | undefined): Subject | null {

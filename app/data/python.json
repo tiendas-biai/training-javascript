@@ -1,0 +1,530 @@
+[
+  {
+    "id": "py-basics-001",
+    "topic": "Language Basics",
+    "subtopic": "Execution",
+    "difficulty": "easy",
+    "question": "Is Python compiled or interpreted, and what is bytecode's role?",
+    "answer": "Python is **interpreted** at the level you use it, but it first compiles your source (`.py`) into **bytecode** (`.pyc`), which the **CPython virtual machine** then executes. You don't run a separate compile step — it happens automatically on import/run.",
+    "explanation": "CPython is the reference implementation. The bytecode caching (in `__pycache__`) is why imports are faster the second time. Other implementations exist (PyPy, Jython), but CPython is the default.",
+    "tags": ["interpreter", "bytecode", "cpython"]
+  },
+  {
+    "id": "py-basics-002",
+    "topic": "Language Basics",
+    "subtopic": "Syntax",
+    "difficulty": "easy",
+    "question": "How does Python delimit code blocks, and why does this matter?",
+    "answer": "Python uses **indentation** (whitespace) to define blocks — there are no curly braces. A consistent indent (conventionally **4 spaces**) starts a block; dedenting ends it. Mixing tabs and spaces raises `TabError`.",
+    "explanation": "This forces visually consistent code but means whitespace is syntactically significant. A misaligned line is a syntax error, not just a style issue.",
+    "tags": ["indentation", "whitespace", "blocks"]
+  },
+  {
+    "id": "py-basics-003",
+    "topic": "Language Basics",
+    "subtopic": "Variables",
+    "difficulty": "easy",
+    "question": "Is Python statically or dynamically typed? What does that mean for variable declarations?",
+    "answer": "Python is **dynamically typed**: you don't declare a type, and a variable can be rebound to a different type at any time. The type lives with the **value (object)**, not the variable name.",
+    "explanation": "`x = 5` then `x = \"hi\"` is legal. Names are just references to objects. Type hints (`x: int = 5`) are optional annotations checked by external tools like mypy, not by the interpreter at runtime.",
+    "tags": ["dynamic-typing", "variables"]
+  },
+  {
+    "id": "py-basics-004",
+    "type": "multiple-choice",
+    "topic": "Language Basics",
+    "subtopic": "Truthiness",
+    "difficulty": "medium",
+    "question": "Which of these values is **truthy** in Python?",
+    "options": ["[1]", "[]", "0", "\"\""],
+    "answer": "[1]",
+    "explanation": "Empty containers (`[]`, `{}`, `()`, `\"\"`), `0`, `0.0`, and `None` are all falsy. A non-empty list like `[1]` is truthy. This is why `if my_list:` is the idiomatic emptiness check.",
+    "tags": ["truthiness", "booleans"]
+  },
+  {
+    "id": "py-basics-005",
+    "topic": "Language Basics",
+    "subtopic": "None",
+    "difficulty": "easy",
+    "question": "What is `None`, and how should you test for it?",
+    "answer": "`None` is the single object representing 'no value' (Python's null). Test with `is`/`is not`, not `==`: `if x is None:`. There is only one `None` object, so identity comparison is correct and fast.",
+    "explanation": "Using `==` can be misleading because a custom `__eq__` could lie about equality with None. `is None` checks identity, which is unambiguous.",
+    "tags": ["none", "identity", "null"]
+  },
+  {
+    "id": "py-types-001",
+    "topic": "Data Types",
+    "subtopic": "Numbers",
+    "difficulty": "easy",
+    "question": "What is the difference between `/`, `//`, and `%` in Python?",
+    "answer": "`/` is **true division** and always returns a `float` (`7 / 2 == 3.5`). `//` is **floor division**, rounding toward negative infinity (`7 // 2 == 3`). `%` is the **modulo** (remainder) operator (`7 % 2 == 1`).",
+    "explanation": "In Python 3, `/` always produces a float even for evenly divisible integers (`4 / 2 == 2.0`). Note `-7 // 2 == -4` because floor rounds down, not toward zero.",
+    "tags": ["division", "operators", "numbers"]
+  },
+  {
+    "id": "py-types-002",
+    "type": "multiple-choice",
+    "topic": "Data Types",
+    "subtopic": "Integers",
+    "difficulty": "medium",
+    "question": "What happens when you compute a very large integer like `2 ** 1000` in Python?",
+    "options": [
+      "It computes exactly — Python ints have arbitrary precision",
+      "It overflows and wraps around",
+      "It raises an OverflowError",
+      "It silently converts to a float and loses precision"
+    ],
+    "answer": "It computes exactly — Python ints have arbitrary precision",
+    "explanation": "Python's `int` is unbounded (limited only by memory), so there is no integer overflow. Floats, by contrast, are fixed-precision IEEE-754 doubles and can lose precision.",
+    "tags": ["integers", "precision"]
+  },
+  {
+    "id": "py-types-003",
+    "topic": "Data Types",
+    "subtopic": "Conversion",
+    "difficulty": "easy",
+    "question": "How do you convert between types, and what does `type()` vs `isinstance()` do?",
+    "answer": "Use constructor functions: `int(\"42\")`, `str(42)`, `float(\"3.14\")`, `list(\"abc\")`. `type(x)` returns the exact type object; `isinstance(x, int)` checks if `x` is an int **or a subclass**, and is the preferred check.",
+    "explanation": "`isinstance` respects inheritance and accepts a tuple of types (`isinstance(x, (int, float))`). Prefer it over `type(x) == int` for that reason.",
+    "tags": ["conversion", "type", "isinstance"]
+  },
+  {
+    "id": "py-types-004",
+    "topic": "Data Types",
+    "subtopic": "Mutability",
+    "difficulty": "medium",
+    "question": "Which built-in types are mutable and which are immutable?",
+    "answer": "**Immutable**: `int`, `float`, `bool`, `str`, `tuple`, `frozenset`, `bytes`, `None`. **Mutable**: `list`, `dict`, `set`, `bytearray`. Immutable means the object's value can't change after creation — operations return new objects.",
+    "explanation": "Mutability drives a lot of Python behavior: only immutable (hashable) objects can be dict keys or set members, and mutable default arguments are a classic bug.",
+    "tags": ["mutability", "immutable"]
+  },
+  {
+    "id": "py-str-001",
+    "topic": "Strings",
+    "subtopic": "Immutability",
+    "difficulty": "easy",
+    "question": "Are Python strings mutable? What happens when you 'modify' one?",
+    "answer": "Strings are **immutable**. You cannot change a character in place (`s[0] = 'x'` raises `TypeError`). Methods like `.upper()` or `.replace()` return a **new string**; the original is unchanged.",
+    "explanation": "Because strings are immutable, building a string by repeated `+=` in a loop is O(n²); use `\"\".join(list_of_strings)` instead, which is O(n).",
+    "tags": ["strings", "immutability"]
+  },
+  {
+    "id": "py-str-002",
+    "topic": "Strings",
+    "subtopic": "Formatting",
+    "difficulty": "easy",
+    "question": "What is an f-string and why is it preferred for formatting?",
+    "answer": "An **f-string** (formatted string literal) is a string prefixed with `f` where `{expr}` embeds and evaluates expressions inline: `f\"Hello {name}, you are {age + 1} next year\"`. It's the most readable and fastest formatting method.",
+    "explanation": "Introduced in Python 3.6, f-strings replaced older `%`-formatting and `.format()`. They also support format specs (`f\"{pi:.2f}\"`) and, since 3.8, self-documenting debug syntax (`f\"{x=}\"`).",
+    "tags": ["f-strings", "formatting"]
+  },
+  {
+    "id": "py-str-003",
+    "type": "multiple-choice",
+    "topic": "Strings",
+    "subtopic": "Slicing",
+    "difficulty": "medium",
+    "question": "What does `\"python\"[1:4]` return?",
+    "options": ["\"yth\"", "\"ytho\"", "\"pyt\"", "\"thon\""],
+    "answer": "\"yth\"",
+    "explanation": "Slicing is `[start:stop]` where `start` is inclusive and `stop` is exclusive. Indices 1, 2, 3 → 'y', 't', 'h'. Index 4 ('o') is not included.",
+    "tags": ["slicing", "strings"]
+  },
+  {
+    "id": "py-str-004",
+    "topic": "Strings",
+    "subtopic": "Slicing",
+    "difficulty": "medium",
+    "question": "How do you reverse a string or list using slicing?",
+    "answer": "Use a step of `-1`: `s[::-1]`. The full slice syntax is `[start:stop:step]`; omitting start/stop and setting step to `-1` walks the sequence backwards, producing a reversed copy.",
+    "explanation": "This works on any sequence (str, list, tuple). For lists you can also reverse in place with `.reverse()` or get a reversed iterator with `reversed()`.",
+    "tags": ["slicing", "reverse"]
+  },
+  {
+    "id": "py-coll-001",
+    "topic": "Collections",
+    "subtopic": "List vs Tuple",
+    "difficulty": "easy",
+    "question": "What is the key difference between a list and a tuple?",
+    "answer": "A **list** (`[1, 2, 3]`) is mutable — you can add, remove, and change elements. A **tuple** (`(1, 2, 3)`) is immutable — fixed once created. Tuples are hashable (usable as dict keys) if their contents are; lists are not.",
+    "explanation": "Use tuples for fixed, heterogeneous records (like a coordinate or a returned multi-value) and lists for homogeneous, growable collections. A single-element tuple needs the trailing comma: `(1,)`.",
+    "tags": ["list", "tuple", "mutability"]
+  },
+  {
+    "id": "py-coll-002",
+    "topic": "Collections",
+    "subtopic": "Dict",
+    "difficulty": "easy",
+    "question": "What is a dict and how do you safely read a key that might be missing?",
+    "answer": "A **dict** is a key→value mapping (`{\"a\": 1}`). Indexing a missing key (`d[\"x\"]`) raises `KeyError`. Use `d.get(\"x\")` (returns `None`) or `d.get(\"x\", default)` to read safely without an exception.",
+    "explanation": "Keys must be hashable (immutable). Since Python 3.7, dicts preserve insertion order. `setdefault` and `collections.defaultdict` help when accumulating into values.",
+    "tags": ["dict", "get", "keyerror"]
+  },
+  {
+    "id": "py-coll-003",
+    "topic": "Collections",
+    "subtopic": "Set",
+    "difficulty": "easy",
+    "question": "What is a set used for, and what is the gotcha when creating an empty one?",
+    "answer": "A **set** is an unordered collection of unique, hashable elements — ideal for membership tests and deduplication. The gotcha: `{}` creates an empty **dict**, not a set. Use `set()` for an empty set.",
+    "explanation": "Membership (`x in s`) on a set is O(1) average vs O(n) for a list. Sets support union `|`, intersection `&`, and difference `-`.",
+    "tags": ["set", "unique", "membership"]
+  },
+  {
+    "id": "py-coll-004",
+    "topic": "Collections",
+    "subtopic": "Comprehensions",
+    "difficulty": "medium",
+    "question": "What is a list comprehension and how do you add a condition?",
+    "answer": "A concise way to build a list from an iterable: `[expr for item in iterable]`. Add a filter with `if`: `[x*x for x in range(10) if x % 2 == 0]` → squares of even numbers. There are also dict (`{k: v for ...}`) and set (`{x for ...}`) comprehensions.",
+    "explanation": "Comprehensions are faster and more readable than an explicit loop with `.append()`. Keep them simple — nested or heavily-conditional comprehensions hurt readability.",
+    "tags": ["comprehension", "list"]
+  },
+  {
+    "id": "py-coll-005",
+    "type": "multiple-choice",
+    "topic": "Collections",
+    "subtopic": "Copying",
+    "difficulty": "hard",
+    "question": "After `a = [1, 2, 3]; b = a; b.append(4)`, what is `a`?",
+    "options": ["[1, 2, 3, 4]", "[1, 2, 3]", "[4]", "It raises an error"],
+    "answer": "[1, 2, 3, 4]",
+    "explanation": "`b = a` copies the reference, not the list. Both names point to the same list object, so mutating through `b` is visible through `a`. To get an independent copy use `b = a.copy()` or `b = a[:]`.",
+    "tags": ["references", "copy", "aliasing"]
+  },
+  {
+    "id": "py-coll-006",
+    "topic": "Collections",
+    "subtopic": "Unpacking",
+    "difficulty": "medium",
+    "question": "What does `a, *rest = [1, 2, 3, 4]` assign?",
+    "answer": "`a` gets `1` and `rest` gets `[2, 3, 4]`. The starred name absorbs the remaining items as a list. This is **extended iterable unpacking** — exactly one starred target is allowed, and it can be in any position.",
+    "explanation": "Useful patterns: `first, *middle, last = seq`, or swapping `a, b = b, a`. The `*` here is unrelated to multiplication or `*args` in function signatures, though the spirit (gather the rest) is similar.",
+    "tags": ["unpacking", "starred"]
+  },
+  {
+    "id": "py-flow-001",
+    "topic": "Control Flow",
+    "subtopic": "Loops",
+    "difficulty": "easy",
+    "question": "What does `range(2, 10, 2)` produce, and is the stop value included?",
+    "answer": "It produces `2, 4, 6, 8` — start at 2, step by 2, **stop is exclusive** (10 is not included). `range` returns a lazy sequence object, not a list, so wrap it in `list()` to materialize it.",
+    "explanation": "`range(stop)`, `range(start, stop)`, and `range(start, stop, step)` are the three forms. The lazy nature means `range(10**9)` uses almost no memory.",
+    "tags": ["range", "loops"]
+  },
+  {
+    "id": "py-flow-002",
+    "topic": "Control Flow",
+    "subtopic": "Iteration",
+    "difficulty": "medium",
+    "question": "How do you loop with an index, and how do you iterate two lists in parallel?",
+    "answer": "Use **`enumerate(seq)`** to get `(index, value)` pairs: `for i, val in enumerate(seq):`. Use **`zip(a, b)`** to iterate in parallel: `for x, y in zip(a, b):`. Avoid `for i in range(len(seq))` — it's unidiomatic.",
+    "explanation": "`enumerate` accepts a `start` argument. `zip` stops at the shortest input; `itertools.zip_longest` pads to the longest.",
+    "tags": ["enumerate", "zip", "iteration"]
+  },
+  {
+    "id": "py-flow-003",
+    "topic": "Control Flow",
+    "subtopic": "Else clause",
+    "difficulty": "hard",
+    "question": "What does the `else` clause on a `for` loop do?",
+    "answer": "The `for...else` block runs **only if the loop completed without hitting `break`**. It's commonly used in search loops: the `else` runs when no match was found and you didn't break out early.",
+    "explanation": "It's a frequently-misunderstood feature. Read it as 'no break' rather than 'else'. The same applies to `while...else`.",
+    "tags": ["for-else", "break"]
+  },
+  {
+    "id": "py-flow-004",
+    "type": "multiple-choice",
+    "topic": "Control Flow",
+    "subtopic": "Ternary",
+    "difficulty": "easy",
+    "question": "What is the correct Python conditional (ternary) expression to assign the larger of `a` and `b`?",
+    "options": [
+      "m = a if a > b else b",
+      "m = a > b ? a : b",
+      "m = if a > b then a else b",
+      "m = (a > b) a : b"
+    ],
+    "answer": "m = a if a > b else b",
+    "explanation": "Python's conditional expression reads value-first: `X if condition else Y`. There is no `?:` operator. For this specific case the built-in `max(a, b)` is even cleaner.",
+    "tags": ["ternary", "conditional"]
+  },
+  {
+    "id": "py-func-001",
+    "topic": "Functions",
+    "subtopic": "Definition",
+    "difficulty": "easy",
+    "question": "How do you define a function, and what does it return if there's no `return` statement?",
+    "answer": "Define with `def name(params):`. If the function has no `return` (or a bare `return`), it returns **`None`** implicitly. A function always returns something — `None` by default.",
+    "explanation": "This is why `result = my_list.sort()` is a common bug: `sort()` mutates in place and returns `None`. `sorted()` returns a new sorted list.",
+    "tags": ["def", "return", "none"]
+  },
+  {
+    "id": "py-func-002",
+    "type": "multiple-choice",
+    "topic": "Functions",
+    "subtopic": "Default Arguments",
+    "difficulty": "hard",
+    "question": "Why is `def f(items=[]): items.append(1); return items` dangerous?",
+    "options": [
+      "The default list is created once and shared across all calls",
+      "It raises a SyntaxError",
+      "Lists can't be default arguments",
+      "It creates a new list on every call, which is slow"
+    ],
+    "answer": "The default list is created once and shared across all calls",
+    "explanation": "Default argument values are evaluated **once** at function-definition time, not per call. A mutable default accumulates state between calls. The fix: `def f(items=None): items = items or []`.",
+    "tags": ["default-args", "mutable-default", "gotcha"]
+  },
+  {
+    "id": "py-func-003",
+    "topic": "Functions",
+    "subtopic": "args/kwargs",
+    "difficulty": "medium",
+    "question": "What do `*args` and `**kwargs` mean in a function signature?",
+    "answer": "`*args` collects extra **positional** arguments into a tuple; `**kwargs` collects extra **keyword** arguments into a dict. They let a function accept any number of arguments. The names are convention — the `*` and `**` are what matter.",
+    "explanation": "The same `*`/`**` syntax at a call site does the reverse — it **unpacks** a sequence/dict into arguments: `f(*my_list, **my_dict)`.",
+    "tags": ["args", "kwargs", "varargs"]
+  },
+  {
+    "id": "py-func-004",
+    "topic": "Functions",
+    "subtopic": "Lambda",
+    "difficulty": "medium",
+    "question": "What is a lambda, and what is its main limitation?",
+    "answer": "A **lambda** is an anonymous, single-expression function: `lambda x: x * 2`. Its limitation is that the body must be a **single expression** — no statements, assignments, or multiple lines. For anything more, use a named `def`.",
+    "explanation": "Lambdas shine as throwaway arguments, e.g. `sorted(data, key=lambda p: p.age)`. PEP 8 discourages assigning a lambda to a name — just use `def` there.",
+    "tags": ["lambda", "anonymous"]
+  },
+  {
+    "id": "py-func-005",
+    "topic": "Functions",
+    "subtopic": "Scope",
+    "difficulty": "hard",
+    "question": "What does the LEGB rule describe, and when do you need `global` or `nonlocal`?",
+    "answer": "**LEGB** is Python's name-resolution order: **L**ocal → **E**nclosing → **G**lobal → **B**uilt-in. Assigning to a name inside a function makes it local by default; use `global x` to rebind a module-level name, or `nonlocal x` to rebind a name in an enclosing function.",
+    "explanation": "Reading an outer variable works without keywords; assigning to one is what triggers the need for `global`/`nonlocal`, otherwise Python creates a new local and you may get `UnboundLocalError`.",
+    "tags": ["scope", "legb", "global", "nonlocal"]
+  },
+  {
+    "id": "py-oop-001",
+    "topic": "OOP",
+    "subtopic": "Classes",
+    "difficulty": "easy",
+    "question": "What is `__init__`, and what is `self`?",
+    "answer": "`__init__` is the **initializer** (constructor-like) called when you create an instance; it sets up the object's attributes. **`self`** is the first parameter of instance methods and refers to the instance being operated on — it's passed automatically when you call `obj.method()`.",
+    "explanation": "`self` is a convention, not a keyword, but always use it. `__init__` doesn't create the object (that's `__new__`); it initializes the already-created instance.",
+    "tags": ["init", "self", "classes"]
+  },
+  {
+    "id": "py-oop-002",
+    "topic": "OOP",
+    "subtopic": "Instance vs Class",
+    "difficulty": "medium",
+    "question": "What is the difference between a class attribute and an instance attribute?",
+    "answer": "A **class attribute** is defined in the class body and shared by all instances. An **instance attribute** is set on `self` (usually in `__init__`) and is unique per object. Reading falls back from instance → class; assigning to `self.x` always creates/updates an instance attribute.",
+    "explanation": "A classic trap: a mutable class attribute (like a list) is shared across instances, so mutating it through one instance affects all. Use instance attributes for per-object state.",
+    "tags": ["class-attribute", "instance-attribute"]
+  },
+  {
+    "id": "py-oop-003",
+    "topic": "OOP",
+    "subtopic": "Inheritance",
+    "difficulty": "medium",
+    "question": "How do you call a parent class's method from a subclass?",
+    "answer": "Use **`super()`**: e.g. `super().__init__(args)` inside a subclass `__init__` to run the parent's initializer. `super()` returns a proxy that dispatches to the next class in the **method resolution order (MRO)**.",
+    "explanation": "Using `super()` (rather than naming the parent explicitly) is what makes cooperative multiple inheritance and the MRO work correctly. Inspect the order with `Cls.__mro__`.",
+    "tags": ["inheritance", "super", "mro"]
+  },
+  {
+    "id": "py-oop-004",
+    "topic": "OOP",
+    "subtopic": "Dunder Methods",
+    "difficulty": "medium",
+    "question": "What is the difference between `__str__` and `__repr__`?",
+    "answer": "`__str__` returns a **user-friendly** string (used by `print()` and `str()`). `__repr__` returns an **unambiguous, developer-facing** string, ideally one that could recreate the object (used in the REPL, debuggers, and as a fallback for `__str__`).",
+    "explanation": "If you implement only one, implement `__repr__` — `str()` falls back to it, but not vice versa. A good `__repr__` looks like `ClassName(field=value)`.",
+    "tags": ["dunder", "str", "repr"]
+  },
+  {
+    "id": "py-oop-005",
+    "topic": "OOP",
+    "subtopic": "Encapsulation",
+    "difficulty": "medium",
+    "question": "How does Python signal 'private' attributes, given it has no access modifiers?",
+    "answer": "By **convention**: a single leading underscore (`_x`) means 'internal, don't touch'. A double leading underscore (`__x`) triggers **name mangling** to `_ClassName__x`, which avoids accidental clashes in subclasses. Neither truly prevents access — Python trusts the programmer.",
+    "explanation": "There is no `private`/`public` keyword. The underscore conventions are about intent and tooling, not enforcement. Name mangling is for clash avoidance, not security.",
+    "tags": ["encapsulation", "private", "name-mangling"]
+  },
+  {
+    "id": "py-oop-006",
+    "type": "multiple-choice",
+    "topic": "OOP",
+    "subtopic": "Decorators",
+    "difficulty": "hard",
+    "question": "What does the `@property` decorator let you do?",
+    "options": [
+      "Expose a method as a read-only attribute accessed without parentheses",
+      "Make an attribute private",
+      "Cache a method's return value forever",
+      "Declare a class-level constant"
+    ],
+    "answer": "Expose a method as a read-only attribute accessed without parentheses",
+    "explanation": "`@property` turns a getter method into an attribute-style access (`obj.area` instead of `obj.area()`). You can pair it with a `@area.setter` to control assignment. It enables computed/validated attributes without changing the public interface.",
+    "tags": ["property", "decorator", "getter"]
+  },
+  {
+    "id": "py-oop-007",
+    "topic": "OOP",
+    "subtopic": "Static vs Class Methods",
+    "difficulty": "hard",
+    "question": "What is the difference between `@staticmethod` and `@classmethod`?",
+    "answer": "A **`@classmethod`** receives the class as its first argument (`cls`) and is often used for alternative constructors (`cls(...)`). A **`@staticmethod`** receives neither `self` nor `cls` — it's just a plain function namespaced inside the class.",
+    "explanation": "Use `classmethod` when you need the class (e.g. `Date.from_string`), and `staticmethod` for a utility that logically belongs to the class but needs no instance/class state.",
+    "tags": ["staticmethod", "classmethod"]
+  },
+  {
+    "id": "py-mod-001",
+    "topic": "Modules & Imports",
+    "subtopic": "Importing",
+    "difficulty": "easy",
+    "question": "What is the difference between `import math` and `from math import sqrt`?",
+    "answer": "`import math` binds the **module** name — you call `math.sqrt(x)`. `from math import sqrt` binds **`sqrt` directly** into your namespace — you call `sqrt(x)`. The latter is convenient but can cause name clashes.",
+    "explanation": "Avoid `from module import *`, which dumps everything into your namespace and obscures origins. Aliasing (`import numpy as np`) is the common middle ground.",
+    "tags": ["import", "modules"]
+  },
+  {
+    "id": "py-mod-002",
+    "type": "multiple-choice",
+    "topic": "Modules & Imports",
+    "subtopic": "Main guard",
+    "difficulty": "medium",
+    "question": "What does `if __name__ == \"__main__\":` accomplish?",
+    "options": [
+      "It runs the block only when the file is executed directly, not when imported",
+      "It defines the program's required main function",
+      "It runs the block every time the module is imported",
+      "It marks the file as the package entry point for pip"
+    ],
+    "answer": "It runs the block only when the file is executed directly, not when imported",
+    "explanation": "When a file is run directly, its `__name__` is `\"__main__\"`; when imported, `__name__` is the module's name. The guard lets a file be both an importable module and a runnable script.",
+    "tags": ["main-guard", "name", "modules"]
+  },
+  {
+    "id": "py-mod-003",
+    "topic": "Modules & Imports",
+    "subtopic": "Packages",
+    "difficulty": "easy",
+    "question": "What is `pip`, and what is a virtual environment for?",
+    "answer": "**`pip`** is Python's package installer (pulls from PyPI). A **virtual environment** (`python -m venv .venv`) is an isolated per-project Python with its own installed packages, so projects don't share or clash on dependency versions.",
+    "explanation": "Activate with `source .venv/bin/activate`. Pin dependencies in `requirements.txt` (or use tools like Poetry/uv). Without a venv, `pip install` pollutes the global/system Python.",
+    "tags": ["pip", "venv", "packages"]
+  },
+  {
+    "id": "py-exc-001",
+    "topic": "Exceptions",
+    "subtopic": "Handling",
+    "difficulty": "easy",
+    "question": "What is the structure of a try/except block, and what do `else` and `finally` add?",
+    "answer": "`try:` runs risky code; `except SomeError:` handles a matching exception. **`else:`** runs only if no exception was raised; **`finally:`** always runs (cleanup), exception or not. You can have multiple `except` clauses for different error types.",
+    "explanation": "Catch specific exceptions, not a bare `except:` (which swallows everything, including `KeyboardInterrupt`). Capture the object with `except ValueError as e:`.",
+    "tags": ["try", "except", "finally"]
+  },
+  {
+    "id": "py-exc-002",
+    "topic": "Exceptions",
+    "subtopic": "Raising",
+    "difficulty": "medium",
+    "question": "How do you raise an exception, and how do you define a custom one?",
+    "answer": "Raise with `raise ValueError(\"message\")`. Define a custom exception by subclassing `Exception`: `class MyError(Exception): pass`. Inside an `except`, a bare `raise` re-raises the current exception, preserving its traceback.",
+    "explanation": "Subclass the most specific built-in that fits (e.g. `ValueError`), or `Exception` for app-specific errors. Avoid subclassing `BaseException` directly.",
+    "tags": ["raise", "custom-exception"]
+  },
+  {
+    "id": "py-exc-003",
+    "topic": "Exceptions",
+    "subtopic": "EAFP",
+    "difficulty": "hard",
+    "question": "What does the Python idiom 'EAFP' mean, contrasted with 'LBYL'?",
+    "answer": "**EAFP** = 'Easier to Ask Forgiveness than Permission' — just try the operation and catch the exception if it fails. **LBYL** = 'Look Before You Leap' — check preconditions first. Python idiomatically prefers EAFP (e.g. `try: d[k] except KeyError:`) because it avoids race conditions and redundant checks.",
+    "explanation": "EAFP is often faster on the success path and avoids the check-then-act race. LBYL (`if k in d:`) can still be clearer for simple cases.",
+    "tags": ["eafp", "lbyl", "idioms"]
+  },
+  {
+    "id": "py-exc-004",
+    "topic": "Exceptions",
+    "subtopic": "Context Managers",
+    "difficulty": "medium",
+    "question": "What does the `with` statement do, e.g. `with open(\"f\") as f:`?",
+    "answer": "`with` uses a **context manager** to guarantee setup and teardown. `open` returns a file object whose `__exit__` **closes the file automatically** when the block ends — even if an exception is raised. No manual `f.close()` needed.",
+    "explanation": "Any object implementing `__enter__`/`__exit__` works. The `@contextlib.contextmanager` decorator lets you write one as a generator. Common uses: files, locks, DB connections.",
+    "tags": ["with", "context-manager", "resources"]
+  },
+  {
+    "id": "py-modern-001",
+    "topic": "Modern Python",
+    "subtopic": "Generators",
+    "difficulty": "hard",
+    "question": "What is a generator, and how does `yield` differ from `return`?",
+    "answer": "A **generator** is a function containing `yield`; calling it returns a lazy iterator that produces values one at a time. `yield` **pauses** the function and emits a value, resuming where it left off on the next request; `return` ends the function and produces a single value.",
+    "explanation": "Generators are memory-efficient for large/infinite sequences because they compute values on demand. A generator expression `(x*x for x in range(10))` is the lazy cousin of a list comprehension.",
+    "tags": ["generator", "yield", "lazy"]
+  },
+  {
+    "id": "py-modern-002",
+    "topic": "Modern Python",
+    "subtopic": "Decorators",
+    "difficulty": "hard",
+    "question": "What is a decorator at its core?",
+    "answer": "A **decorator** is a callable that takes a function and returns a (usually wrapped) function. `@my_decorator` above a `def` is sugar for `func = my_decorator(func)`. It lets you add behavior (logging, timing, caching) without modifying the original function's body.",
+    "explanation": "Use `functools.wraps` on the inner wrapper to preserve the original's name and docstring. Decorators can take arguments by adding another layer of nesting.",
+    "tags": ["decorator", "higher-order"]
+  },
+  {
+    "id": "py-modern-003",
+    "type": "multiple-choice",
+    "topic": "Modern Python",
+    "subtopic": "Sorting",
+    "difficulty": "medium",
+    "question": "How do you sort a list of dicts by a `\"age\"` field?",
+    "options": [
+      "sorted(people, key=lambda p: p[\"age\"])",
+      "sorted(people, by=\"age\")",
+      "people.sort(\"age\")",
+      "sorted(people, lambda p: p[\"age\"])"
+    ],
+    "answer": "sorted(people, key=lambda p: p[\"age\"])",
+    "explanation": "The `key` argument takes a function mapping each element to a sort key. Add `reverse=True` for descending. `operator.itemgetter(\"age\")` is a faster alternative to the lambda.",
+    "tags": ["sorting", "key", "lambda"]
+  },
+  {
+    "id": "py-modern-004",
+    "topic": "Modern Python",
+    "subtopic": "Type Hints",
+    "difficulty": "medium",
+    "question": "What are type hints, and are they enforced at runtime?",
+    "answer": "**Type hints** annotate expected types: `def greet(name: str) -> str:`. They are **not enforced at runtime** — Python ignores them during execution. They're consumed by static checkers (mypy, Pyright), IDEs, and documentation.",
+    "explanation": "Hints improve tooling, autocompletion, and catch bugs before running. Generics come from `typing` (or built-ins in 3.9+, e.g. `list[int]`); `Optional[X]` means `X | None`.",
+    "tags": ["type-hints", "annotations", "mypy"]
+  },
+  {
+    "id": "py-modern-005",
+    "topic": "Modern Python",
+    "subtopic": "Equality vs Identity",
+    "difficulty": "medium",
+    "question": "What is the difference between `==` and `is`?",
+    "answer": "`==` compares **values** (calls `__eq__`); `is` compares **identity** (whether two names point to the exact same object in memory). Use `==` for value equality and reserve `is` for singletons like `None`, `True`, `False`.",
+    "explanation": "Small-int caching and string interning can make `is` *appear* to work for values (`a is b` for small ints), but that's an implementation detail — never rely on it. `x is None` is the one canonical `is` use.",
+    "tags": ["equality", "identity", "is"]
+  },
+  {
+    "id": "py-modern-006",
+    "topic": "Modern Python",
+    "subtopic": "Dataclasses",
+    "difficulty": "hard",
+    "question": "What problem does `@dataclass` solve?",
+    "answer": "`@dataclass` (from `dataclasses`) auto-generates boilerplate for classes that mainly hold data: `__init__`, `__repr__`, and `__eq__` are derived from typed class-level fields. You write the fields once instead of repeating them across dunder methods.",
+    "explanation": "`@dataclass(frozen=True)` makes instances immutable and hashable. Use `field(default_factory=list)` for mutable defaults to avoid the shared-default bug.",
+    "tags": ["dataclass", "boilerplate"]
+  }
+]
