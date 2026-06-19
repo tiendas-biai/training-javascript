@@ -1115,5 +1115,109 @@
       "security",
       "mr"
     ]
+  },
+  {
+    "id": "graphql-eco-001",
+    "topic": "Ecosystem & Tooling",
+    "subtopic": "Clients",
+    "difficulty": "medium",
+    "question": "How do Apollo Client and Relay compare as GraphQL clients?",
+    "answer": "**Apollo Client** is flexible and widely used: a normalized cache, hooks (`useQuery`/`useMutation`), and few constraints on your schema. **Relay** is more opinionated and performance-focused: it requires schema conventions (Node interface with global IDs, Connection-style pagination) and a compiler, in exchange for highly optimized, fragment-driven data fetching. Apollo optimizes for flexibility; Relay for scale and strictness.",
+    "explanation": "Both maintain a normalized cache keyed by id + type. Relay’s compiler and conventions buy guarantees (e.g. data colocated per component) that Apollo leaves to convention.",
+    "tags": [
+      "ecosystem",
+      "clients",
+      "apollo",
+      "relay"
+    ]
+  },
+  {
+    "id": "graphql-eco-002",
+    "topic": "Ecosystem & Tooling",
+    "subtopic": "GraphiQL",
+    "difficulty": "easy",
+    "question": "What is GraphiQL, and what makes it work?",
+    "answer": "**GraphiQL** (and Apollo Sandbox) is an in-browser IDE for exploring and running queries against an endpoint: autocomplete, inline docs, and a query editor. It works by using **introspection** — it queries the schema (`__schema`/`__type`) to learn every type and field, then powers completion and the docs explorer from that.",
+    "explanation": "Because GraphiQL is built entirely on introspection, disabling introspection in production also disables GraphiQL’s autocomplete/docs against that endpoint.",
+    "tags": [
+      "ecosystem",
+      "graphiql",
+      "introspection",
+      "tooling"
+    ]
+  },
+  {
+    "id": "graphql-eco-003",
+    "topic": "Ecosystem & Tooling",
+    "subtopic": "Schema-first vs code-first",
+    "difficulty": "medium",
+    "question": "What’s the difference between schema-first and code-first server development?",
+    "answer": "**Schema-first**: you write the schema in **SDL** as the source of truth, then implement matching resolvers (e.g. SDL string + a resolver map). **Code-first**: you define types in your programming language (decorators/builders, as in Nexus, Pothos, or TypeGraphQL) and the SDL is **generated** from that code. Schema-first centers a readable contract; code-first centers type-safety and keeping schema + resolvers in one place.",
+    "explanation": "Both produce the same executable schema. The choice is about whether SDL or code is authoritative, and how tightly types stay in sync with resolvers.",
+    "tags": [
+      "ecosystem",
+      "schema-first",
+      "code-first"
+    ]
+  },
+  {
+    "id": "graphql-eco-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Ecosystem & Tooling",
+    "subtopic": "Federation",
+    "difficulty": "hard",
+    "question": "What problem does GraphQL federation (e.g. Apollo Federation) solve?",
+    "options": [
+      "It compresses query responses across services.",
+      "It composes multiple independently-owned GraphQL services (subgraphs) into one unified supergraph, so clients query a single graph while teams own their slices.",
+      "It replaces resolvers with REST endpoints.",
+      "It versions the schema by date."
+    ],
+    "answer": "It composes multiple independently-owned GraphQL services (subgraphs) into one unified supergraph, so clients query a single graph while teams own their slices.",
+    "explanation": "Federation lets large orgs split a graph into subgraphs (e.g. users, products, reviews) owned by separate teams. A gateway/router composes them into one supergraph and plans cross-subgraph queries, so a `Product` can be extended with `reviews` from another service — without one monolithic schema.",
+    "tags": [
+      "ecosystem",
+      "federation",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-eco-004",
+    "topic": "Ecosystem & Tooling",
+    "subtopic": "Codegen",
+    "difficulty": "medium",
+    "question": "What does GraphQL code generation (e.g. GraphQL Code Generator) produce, and why use it?",
+    "answer": "Codegen reads your **schema** and your **operations** and emits **typed artifacts** — TypeScript types for every type, and typed hooks/functions for each query/mutation. Because the types are derived from the schema, the compiler catches a removed/renamed field or a wrong variable type at build time, keeping client and server in sync without hand-written types.",
+    "explanation": "It’s the practical payoff of GraphQL’s strong typing: the schema becomes a source for end-to-end type safety from server to client.",
+    "tags": [
+      "ecosystem",
+      "codegen",
+      "typescript"
+    ]
+  },
+  {
+    "id": "graphql-eco-mr-001",
+    "type": "multiple-response",
+    "topic": "Ecosystem & Tooling",
+    "subtopic": "Ecosystem facts",
+    "difficulty": "medium",
+    "question": "Which statements about the GraphQL ecosystem are true? (Select THREE)",
+    "options": [
+      "graphql-js is the JavaScript reference implementation of the spec",
+      "GraphiQL relies on introspection to provide autocomplete and docs",
+      "Federation composes multiple subgraphs into one supergraph",
+      "Relay imposes no conventions on your schema",
+      "Code-first means writing SDL by hand as the source of truth"
+    ],
+    "answers": [
+      "graphql-js is the JavaScript reference implementation of the spec",
+      "GraphiQL relies on introspection to provide autocomplete and docs",
+      "Federation composes multiple subgraphs into one supergraph"
+    ],
+    "explanation": "graphql-js is the reference implementation, GraphiQL is introspection-driven, and federation builds a supergraph from subgraphs. Relay is the *opinionated* client (Node IDs, Connections); and writing SDL by hand is *schema*-first, not code-first.",
+    "tags": [
+      "ecosystem",
+      "mr"
+    ]
   }
 ]

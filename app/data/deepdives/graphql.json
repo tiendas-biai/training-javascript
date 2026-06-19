@@ -671,5 +671,72 @@
         "url": "https://graphql.org/learn/best-practices/"
       }
     ]
+  },
+  "graphql-eco-001": {
+    "explanation": "**Apollo Client:** The pragmatic default — a normalized cache, React hooks (`useQuery`, `useMutation`), and minimal schema requirements. You can point it at almost any GraphQL API.\n\n**Relay:** Opinionated and built for scale. It requires schema conventions (a `Node` interface with global object IDs, Relay Connection pagination) and runs a compiler that validates and optimizes fragments at build time.\n\n**The trade-off:** Apollo favors flexibility and a gentle on-ramp; Relay favors strict guarantees, fragment colocation, and performance for large apps.\n\n**Common mistake:** Expecting Relay to work against an arbitrary schema — adopt its conventions, or choose Apollo if you can’t.",
+    "example": "```js\n// Apollo Client: a query hook, normalized cache under the hood.\nimport { useQuery, gql } from '@apollo/client';\n\nconst GET_USER = gql`\n  query GetUser($id: ID!) {\n    user(id: $id) { id name }\n  }\n`;\n\nfunction Profile({ id }) {\n  const { data, loading, error } = useQuery(GET_USER, { variables: { id } });\n  return loading ? 'Loading…' : data.user.name;\n}\n```",
+    "resources": [
+      {
+        "label": "apollographql.com — Apollo Client",
+        "url": "https://www.apollographql.com/docs/react/"
+      },
+      {
+        "label": "relay.dev",
+        "url": "https://relay.dev/"
+      }
+    ]
+  },
+  "graphql-eco-002": {
+    "explanation": "**What it is:** GraphiQL is a browser-based query IDE — editor, autocomplete, inline documentation explorer, and a run button — for any GraphQL endpoint. Apollo Sandbox is a similar tool.\n\n**How it knows your schema:** It sends an introspection query (`__schema`/`__type`) to discover every type and field, then drives completion and docs from the result.\n\n**The practical link:** Disable introspection in production and GraphiQL’s autocomplete/docs stop working against that endpoint — the two are coupled.\n\n**Common mistake:** Wondering why prod autocomplete is empty after locking down introspection — that’s expected; use it against a dev/internal endpoint.",
+    "example": "```graphql\n# What GraphiQL fetches once to build its UI:\nquery IntrospectionLite {\n  __schema {\n    queryType { name }\n    types { name kind }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Tools and Libraries",
+        "url": "https://graphql.org/community/tools-and-libraries/"
+      }
+    ]
+  },
+  "graphql-eco-003": {
+    "explanation": "**Schema-first:** The SDL is the source of truth. You write `type`s and fields in SDL, then implement a resolver map that matches. The readable contract leads; you must keep resolvers in sync with it.\n\n**Code-first:** You define types in your host language using builders/decorators (Pothos, Nexus, TypeGraphQL), and the SDL is generated from that code. Types and resolvers live together, with the compiler enforcing alignment.\n\n**Same result:** Both compile to an executable schema; the difference is which representation is authoritative and how drift is prevented.\n\n**Common mistake:** Assuming one is ‘more real’ GraphQL — they’re equivalent at runtime; pick based on whether you want SDL-as-contract or end-to-end language type-safety.",
+    "example": "```js\n// Schema-first: SDL is the source of truth, resolvers implement it.\nconst typeDefs = /* GraphQL */ `\n  type Query { hello: String! }\n`;\nconst resolvers = {\n  Query: { hello: () => 'world' },\n};\n```",
+    "resources": [
+      {
+        "label": "apollographql.com — Schema basics",
+        "url": "https://www.apollographql.com/docs/apollo-server/schema/schema/"
+      }
+    ]
+  },
+  "graphql-eco-mcq-001": {
+    "explanation": "**The problem:** As a graph grows, one monolithic schema owned by everyone becomes a bottleneck — teams step on each other and deploys couple.\n\n**Federation’s answer:** Split the graph into **subgraphs**, each an independent GraphQL service owned by one team. A **gateway/router** composes them into a single **supergraph** that clients query as if it were one API, and plans queries that span subgraphs.\n\n**Cross-subgraph types:** A type like `Product` defined in one subgraph can be *extended* with fields (e.g. `reviews`) resolved by another, using entity keys.\n\n**Why the others are wrong:** Federation isn’t compression, doesn’t swap resolvers for REST, and isn’t a versioning scheme.\n\n**Common mistake:** Adopting federation for a small app — it’s an org-scaling tool with real operational overhead.",
+    "example": "```graphql\n# reviews subgraph extends the Product entity owned by another subgraph\ntype Product @key(fields: \"id\") {\n  id: ID!\n  reviews: [Review!]!\n}\n\ntype Review {\n  id: ID!\n  body: String!\n}\n```",
+    "resources": [
+      {
+        "label": "apollographql.com — Apollo Federation",
+        "url": "https://www.apollographql.com/docs/federation/"
+      }
+    ]
+  },
+  "graphql-eco-004": {
+    "explanation": "**What it does:** A codegen tool ingests your schema plus the operations your client uses, and emits typed code — TypeScript types for schema types and typed hooks/functions per operation.\n\n**Why it’s valuable:** The generated types are derived from the schema, so renaming or removing a field, or passing a wrong variable type, becomes a compile error instead of a runtime surprise.\n\n**The payoff:** End-to-end type safety from server schema to client call sites, with no hand-maintained interfaces drifting out of sync.\n\n**Common mistake:** Hand-writing TypeScript interfaces for query results — they rot as the schema evolves; let codegen own them.",
+    "example": "```js\n// codegen.ts (GraphQL Code Generator) — generate typed hooks from the schema.\nconst config = {\n  schema: 'http://localhost:4000/graphql',\n  documents: 'src/**/*.graphql',\n  generates: {\n    'src/gql/': { preset: 'client' },\n  },\n};\nexport default config;\n```",
+    "resources": [
+      {
+        "label": "the-guild.dev — GraphQL Code Generator",
+        "url": "https://the-guild.dev/graphql/codegen"
+      }
+    ]
+  },
+  "graphql-eco-mr-001": {
+    "explanation": "**Why these three are true:** `graphql-js` is the spec’s JavaScript reference implementation (and what this subject’s verifier parses with); GraphiQL is entirely introspection-driven; and federation composes subgraphs into one supergraph.\n\n**Why the others are false:** Relay is the *opinionated* client — it imposes a `Node` interface, global IDs, and Connection pagination. And writing SDL by hand as the source of truth is *schema-first*, not code-first (code-first generates SDL from language types).\n\n**Takeaway:** Know the landscape — reference impl (graphql-js), clients (Apollo/Relay), tooling (GraphiQL/codegen), and scaling (federation).",
+    "resources": [
+      {
+        "label": "graphql-js.org",
+        "url": "https://graphql-js.org/"
+      },
+      {
+        "label": "graphql.org — Community tools",
+        "url": "https://graphql.org/community/tools-and-libraries/"
+      }
+    ]
   }
 }
