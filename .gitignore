@@ -2,6 +2,10 @@ node_modules
 .idea
 app/dist/
 
+# Scratch dirs from deep-dive example verifiers (kept only on failure)
+app/.node-verify/
+app/.java-verify/
+
 # Local env (secrets/config) — .env.example is committed as the template
 .env
 .env.local
