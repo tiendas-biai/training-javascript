@@ -428,5 +428,255 @@
     "answer": "**Namespaces** partition a cluster into virtual sub-clusters, scoping names and enabling per-team/per-environment isolation. They let you apply **resource quotas**, **RBAC**, and **network policies** per namespace, and they scope DNS (`<service>.<namespace>.svc.cluster.local`).",
     "explanation": "Namespaces separate, say, `dev`/`staging`/`prod` or different teams within one cluster. Cluster-wide objects (nodes, PVs, StorageClasses) are not namespaced. They are an organizational/security boundary, not a hard multi-tenancy isolation by themselves.",
     "tags": ["namespace", "rbac", "quota"]
+  },
+  {
+    "id": "docker-ecr-001",
+    "topic": "ECR",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What is Amazon ECR, and how do you authenticate Docker to push to it?",
+    "answer": "**Amazon Elastic Container Registry (ECR)** is AWS's managed private (and public) Docker registry, integrated with IAM for access control. Docker doesn't use a static password — you fetch a short-lived (12-hour) token with `aws ecr get-login-password` and pipe it to `docker login --password-stdin` against your account's ECR endpoint, then `docker push`/`pull` normally.",
+    "explanation": "The repository must exist first (`aws ecr create-repository`). Access is governed by IAM (and optional repository policies), so EC2/EKS/ECS can pull using their instance/task role with no stored credentials. Region and account ID appear in the registry URL `<acct>.dkr.ecr.<region>.amazonaws.com`.",
+    "tags": ["ecr", "login", "push"]
+  },
+  {
+    "id": "docker-ecr-002",
+    "topic": "ECR",
+    "subtopic": "Tag Immutability",
+    "difficulty": "medium",
+    "question": "What does ECR tag immutability provide, and why enable it?",
+    "answer": "With **tag immutability** enabled on a repository, once a tag (e.g. `1.2.0`) is pushed it **cannot be overwritten** — a second push to the same tag fails. This guarantees that a given tag always refers to the exact same image, preventing accidental or malicious replacement of a deployed version.",
+    "explanation": "Mutable tags let `1.2.0` silently change, breaking reproducibility and supply-chain integrity. With immutability, CI must use unique tags (e.g. the git SHA), and deployments referencing a tag are guaranteed the bytes they tested. Pairs well with referencing images by digest.",
+    "tags": ["ecr", "immutability", "tags"]
+  },
+  {
+    "id": "docker-ecr-mcq-001",
+    "type": "multiple-choice",
+    "topic": "ECR",
+    "subtopic": "Lifecycle Policies",
+    "difficulty": "medium",
+    "question": "What is the purpose of an ECR lifecycle policy?",
+    "options": [
+      "To automatically deploy new images when pushed",
+      "To automatically expire/clean up old or untagged images to control storage cost",
+      "To scan images for vulnerabilities on push",
+      "To replicate images to other regions"
+    ],
+    "answer": "To automatically expire/clean up old or untagged images to control storage cost",
+    "explanation": "Lifecycle policies define rules like 'keep only the last 10 tagged images' or 'expire untagged images older than 14 days', so the registry doesn't accumulate unbounded storage. Vulnerability scanning is a separate ECR feature; cross-region copying is ECR replication; deployment is handled by ECS/EKS/CodePipeline.",
+    "tags": ["ecr", "lifecycle-policy", "mcq"]
+  },
+  {
+    "id": "docker-ecr-003",
+    "topic": "ECR",
+    "subtopic": "Image Scanning",
+    "difficulty": "medium",
+    "question": "What does ECR image scanning do, and what are the two scan types?",
+    "answer": "ECR scans pushed images for known **CVEs** in OS packages (and, for enhanced scanning, language dependencies). **Basic scanning** uses the open-source Clair database on-push/on-demand; **enhanced scanning** is powered by **Amazon Inspector** and continuously rescans for newly disclosed vulnerabilities, covering OS and programming-language packages.",
+    "explanation": "Scan-on-push catches vulnerable images before they deploy; you can gate CI/CD on findings. Enhanced scanning's continuous rescans matter because a CVE can be disclosed after an image is already in the registry. Smaller images (multi-stage, slim bases) reduce the scan/attack surface.",
+    "tags": ["ecr", "scanning", "inspector"]
+  },
+  {
+    "id": "docker-ecs-001",
+    "topic": "ECS & Fargate",
+    "subtopic": "Concepts",
+    "difficulty": "medium",
+    "question": "What are the core ECS concepts: cluster, task definition, task, and service?",
+    "answer": "A **task definition** is the blueprint (like a Pod spec): which container image(s), CPU/memory, ports, env, IAM roles. A **task** is a running instance of a task definition (one or more containers). A **service** keeps a desired number of tasks running, replaces failed ones, and integrates with a load balancer. A **cluster** is the logical grouping where tasks run.",
+    "explanation": "Mapping to Kubernetes: task definition ≈ Pod template, task ≈ Pod, service ≈ Deployment+Service. ECS is AWS's own orchestrator (simpler than Kubernetes), tightly integrated with IAM, ALB, CloudWatch, and Fargate.",
+    "tags": ["ecs", "task-definition", "service"]
+  },
+  {
+    "id": "docker-ecs-002",
+    "topic": "ECS & Fargate",
+    "subtopic": "Launch Types",
+    "difficulty": "medium",
+    "question": "What is the difference between the EC2 and Fargate launch types in ECS?",
+    "answer": "With the **EC2** launch type, you provision and manage a fleet of EC2 container instances and ECS schedules tasks onto them — you control/patch the hosts and pay for the instances. With **Fargate**, AWS runs each task on managed, right-sized compute with **no servers to manage** — you specify task CPU/memory and pay per task for what it uses.",
+    "explanation": "Fargate trades some control and per-unit cost for zero host management and per-task isolation; EC2 suits steady high utilization, special instance types (GPU), or daemon workloads. The same task definition can often run on either (with `requiresCompatibilities`).",
+    "tags": ["ecs", "fargate", "ec2"]
+  },
+  {
+    "id": "docker-ecs-mcq-001",
+    "type": "multiple-choice",
+    "topic": "ECS & Fargate",
+    "subtopic": "IAM Roles",
+    "difficulty": "hard",
+    "question": "In an ECS task definition, what is the difference between the task role and the task execution role?",
+    "options": [
+      "They are the same role with two names",
+      "The task role grants permissions to your application code; the execution role lets the ECS agent pull images and write logs",
+      "The execution role grants permissions to your application; the task role pulls images",
+      "Both only control image pulling"
+    ],
+    "answer": "The task role grants permissions to your application code; the execution role lets the ECS agent pull images and write logs",
+    "explanation": "The **task role** is the AWS identity your container's code assumes (e.g. to call S3, DynamoDB) — least-privilege per service. The **task execution role** is used by the ECS/Fargate agent to pull the image from ECR, fetch secrets, and send logs to CloudWatch. Confusing the two is a common cause of 'access denied pulling image' (execution role) vs 'app can't reach S3' (task role).",
+    "tags": ["ecs", "iam", "task-role", "mcq"]
+  },
+  {
+    "id": "docker-ecs-003",
+    "topic": "ECS & Fargate",
+    "subtopic": "Load Balancing",
+    "difficulty": "medium",
+    "question": "How does an ECS service integrate with an Application Load Balancer?",
+    "answer": "An ECS service registers its tasks into an ALB **target group**. As tasks start/stop (deploys, scaling), ECS automatically registers/deregisters their IP:port with the target group, and the ALB health-checks targets and routes traffic only to healthy ones. The ALB listener rules (host/path) direct requests to the right target group/service.",
+    "explanation": "This gives rolling deployments without downtime: new tasks must pass ALB health checks before old ones are drained (connection draining/deregistration delay). With Fargate + `awsvpc` networking each task gets its own ENI/IP, registered directly in the target group.",
+    "tags": ["ecs", "alb", "target-group"]
+  },
+  {
+    "id": "docker-ecs-004",
+    "topic": "ECS & Fargate",
+    "subtopic": "Autoscaling",
+    "difficulty": "medium",
+    "question": "How does ECS Service Auto Scaling work?",
+    "answer": "ECS uses **Application Auto Scaling** to adjust a service's desired **task count** based on CloudWatch metrics. The common mode is **target tracking** — keep a metric (average CPU/memory, or ALB requests-per-target) at a target value, scaling tasks out/in automatically; step and scheduled scaling are also available.",
+    "explanation": "This is the ECS analog of the Kubernetes HPA. On Fargate, scaling tasks is enough (no node management); on EC2 you also scale the underlying instance fleet (capacity providers / ASG) so there's room for new tasks.",
+    "tags": ["ecs", "autoscaling", "target-tracking"]
+  },
+  {
+    "id": "docker-ecs-mr-001",
+    "type": "multiple-response",
+    "topic": "ECS & Fargate",
+    "subtopic": "Fargate Tradeoffs",
+    "difficulty": "hard",
+    "question": "A team wants to run containers on ECS with minimal operational overhead and per-task isolation. Which are advantages of choosing Fargate over the EC2 launch type? (Select TWO)",
+    "options": [
+      "No EC2 hosts to provision, patch, or scale",
+      "Lower compute cost per vCPU-hour at very high, steady utilization",
+      "Each task runs in its own isolated, right-sized compute environment",
+      "Ability to use GPU instance types and DaemonSet-style host agents",
+      "SSH access to the underlying host for debugging"
+    ],
+    "answers": [
+      "No EC2 hosts to provision, patch, or scale",
+      "Each task runs in its own isolated, right-sized compute environment"
+    ],
+    "explanation": "Fargate's wins are zero host management and strong per-task isolation with right-sized billing. The other options are reasons to choose EC2 instead: cheaper per-unit at sustained high utilization, GPU/special instance types and host-level daemons, and direct host access. Choose based on control vs. operational burden.",
+    "tags": ["ecs", "fargate", "mr"]
+  },
+  {
+    "id": "docker-eks-001",
+    "topic": "EKS",
+    "subtopic": "Basics",
+    "difficulty": "medium",
+    "question": "What is Amazon EKS, and what does AWS manage versus what you manage?",
+    "answer": "**Amazon Elastic Kubernetes Service (EKS)** is managed Kubernetes. AWS runs and scales the **control plane** (API server, etcd) across AZs and keeps it patched. **You** manage the workloads and the **data plane** — the worker capacity (managed node groups, self-managed nodes, or Fargate) and your manifests, add-ons, and networking.",
+    "explanation": "EKS gives you upstream-conformant Kubernetes without operating the control plane. Compared to ECS, EKS is portable (standard Kubernetes API, Helm, operators) at the cost of more moving parts. You still pick worker compute and install add-ons like the AWS Load Balancer Controller and CSI drivers.",
+    "tags": ["eks", "control-plane", "managed"]
+  },
+  {
+    "id": "docker-eks-002",
+    "topic": "EKS",
+    "subtopic": "Compute",
+    "difficulty": "medium",
+    "question": "What are the worker compute options in EKS: managed node groups vs Fargate profiles?",
+    "answer": "**Managed node groups** are EC2 instances EKS provisions and lifecycle-manages as Kubernetes nodes (you choose instance types, autoscaling, and they can run any Pod, including DaemonSets). **Fargate profiles** run selected Pods (matched by namespace/labels) on serverless Fargate — one micro-VM per Pod, no nodes to manage, but with constraints (no DaemonSets, no privileged Pods, no host networking).",
+    "explanation": "Node groups suit most workloads and DaemonSets and pair with the Cluster Autoscaler or Karpenter for node scaling. Fargate suits bursty or isolation-sensitive Pods where you don't want to manage nodes. Many clusters mix both.",
+    "tags": ["eks", "node-groups", "fargate"]
+  },
+  {
+    "id": "docker-eks-mcq-001",
+    "type": "multiple-choice",
+    "topic": "EKS",
+    "subtopic": "IRSA",
+    "difficulty": "hard",
+    "question": "What does IRSA (IAM Roles for Service Accounts) let you do in EKS?",
+    "options": [
+      "Give every Pod on a node the node's full IAM permissions",
+      "Assign a fine-grained IAM role to a specific Kubernetes ServiceAccount, so only Pods using it get those AWS permissions",
+      "Replace Kubernetes RBAC entirely with IAM",
+      "Log in to the cluster with IAM users instead of kubeconfig"
+    ],
+    "answer": "Assign a fine-grained IAM role to a specific Kubernetes ServiceAccount, so only Pods using it get those AWS permissions",
+    "explanation": "IRSA uses an OIDC provider so a ServiceAccount can assume a scoped IAM role; Pods using that ServiceAccount receive temporary credentials for exactly those AWS APIs — least privilege per workload, instead of granting the whole node role to every Pod. (EKS Pod Identity is a newer alternative with the same goal.) IAM authenticates cluster access separately; RBAC still governs in-cluster authorization.",
+    "tags": ["eks", "irsa", "iam", "mcq"]
+  },
+  {
+    "id": "docker-eks-003",
+    "topic": "EKS",
+    "subtopic": "Load Balancing",
+    "difficulty": "medium",
+    "question": "What does the AWS Load Balancer Controller do in EKS?",
+    "answer": "It's an add-on that watches Kubernetes **Ingress** and **Service** objects and provisions the corresponding AWS load balancers: an **Ingress** becomes an **Application Load Balancer (ALB)** for L7 host/path routing, and a `Service type: LoadBalancer` (with annotations) becomes a **Network Load Balancer (NLB)** for L4. It can route directly to Pod IPs (`target-type: ip`).",
+    "explanation": "Without it, Kubernetes Ingress objects do nothing on EKS. The controller translates cluster intent into real AWS LBs, wiring in target groups, health checks, TLS (ACM), and security groups via annotations. This is how Ingress consolidates many services behind one ALB on AWS.",
+    "tags": ["eks", "alb", "load-balancer-controller"]
+  },
+  {
+    "id": "docker-eks-004",
+    "topic": "EKS",
+    "subtopic": "Storage",
+    "difficulty": "medium",
+    "question": "What do the EBS and EFS CSI drivers provide on EKS?",
+    "answer": "They are add-ons that let Kubernetes dynamically provision AWS storage via StorageClasses/PVCs. The **EBS CSI driver** provisions an **EBS** volume per PVC — block storage, `ReadWriteOnce` (single node), good for databases. The **EFS CSI driver** mounts **EFS** — shared, elastic, `ReadWriteMany` (many Pods/nodes/AZs), good for shared files.",
+    "explanation": "Choose EBS for single-writer, low-latency block storage and EFS when multiple Pods (possibly across AZs) must share the same filesystem. The CSI driver is what makes `kind: PersistentVolumeClaim` actually create AWS storage — install it as an EKS add-on with an IRSA role.",
+    "tags": ["eks", "ebs", "efs", "csi"]
+  },
+  {
+    "id": "docker-eks-mr-001",
+    "type": "multiple-response",
+    "topic": "EKS",
+    "subtopic": "Pod AWS Permissions",
+    "difficulty": "hard",
+    "question": "You want a specific Pod in EKS to read from one S3 bucket, following least privilege. Which steps set this up with IRSA? (Select TWO)",
+    "options": [
+      "Associate an IAM OIDC provider with the cluster and create an IAM role scoped to the S3 bucket with a trust policy for the ServiceAccount",
+      "Create a Kubernetes ServiceAccount annotated with the IAM role ARN and run the Pod under that ServiceAccount",
+      "Attach the S3 permissions to the EC2 node instance role",
+      "Store long-lived IAM access keys in a Kubernetes Secret and mount them",
+      "Give the Pod the cluster-admin RBAC role"
+    ],
+    "answers": [
+      "Associate an IAM OIDC provider with the cluster and create an IAM role scoped to the S3 bucket with a trust policy for the ServiceAccount",
+      "Create a Kubernetes ServiceAccount annotated with the IAM role ARN and run the Pod under that ServiceAccount"
+    ],
+    "explanation": "IRSA = OIDC provider + a scoped IAM role trusting the ServiceAccount, plus a ServiceAccount annotated with the role ARN that the Pod uses. Attaching permissions to the node role grants them to ALL Pods on the node (not least privilege); long-lived keys in Secrets are insecure; cluster-admin RBAC is Kubernetes authorization, unrelated to AWS API permissions.",
+    "tags": ["eks", "irsa", "s3", "mr"]
+  },
+  {
+    "id": "docker-obs-001",
+    "topic": "AWS Observability & Secrets",
+    "subtopic": "Logging",
+    "difficulty": "medium",
+    "question": "How do container logs and metrics reach CloudWatch on ECS/EKS?",
+    "answer": "Containers should log to **stdout/stderr**. On **ECS**, the task's `awslogs` (or `awsfirelens`) log driver ships those streams to **CloudWatch Logs**. On **EKS**, you run a log agent (Fluent Bit/Fluentd DaemonSet) to forward Pod logs. **CloudWatch Container Insights** adds aggregated metrics (CPU/memory/network) and dashboards for clusters, services, tasks, and Pods.",
+    "explanation": "The pattern is the same as Docker's 'log to stdout, let the platform collect': don't write log files inside the container. Container Insights gives the metric layer (often the source for autoscaling and alarms), while CloudWatch Logs holds the searchable log events.",
+    "tags": ["cloudwatch", "logging", "container-insights"]
+  },
+  {
+    "id": "docker-obs-mcq-001",
+    "type": "multiple-choice",
+    "topic": "AWS Observability & Secrets",
+    "subtopic": "Log Drivers",
+    "difficulty": "easy",
+    "question": "Which ECS task definition log driver sends container stdout/stderr to CloudWatch Logs?",
+    "options": [
+      "json-file",
+      "awslogs",
+      "syslog",
+      "none"
+    ],
+    "answer": "awslogs",
+    "explanation": "The `awslogs` log driver, configured in the task definition's `logConfiguration`, streams stdout/stderr to a CloudWatch Logs group (it needs the task execution role to have logs permissions). `json-file`/`syslog` are local Docker drivers; `awsfirelens` (Fluent Bit) is the flexible alternative for routing logs to many destinations.",
+    "tags": ["ecs", "awslogs", "cloudwatch", "mcq"]
+  },
+  {
+    "id": "docker-sec-001",
+    "topic": "AWS Observability & Secrets",
+    "subtopic": "Secrets Injection",
+    "difficulty": "medium",
+    "question": "How should containers get secrets from AWS Secrets Manager / SSM Parameter Store instead of baking them in?",
+    "answer": "On **ECS**, reference a secret ARN in the task definition's `secrets` block; the agent (via the execution role) fetches it from **Secrets Manager** or **SSM Parameter Store** at task start and injects it as an environment variable. On **EKS**, use the **Secrets Store CSI driver** (AWS provider) or External Secrets to mount/sync secrets into Pods — using an IRSA role for access.",
+    "explanation": "This keeps secrets out of images, manifests, and Git, and centralizes rotation. The execution role (ECS) or IRSA role (EKS) provides least-privilege access to specific secret ARNs. Avoid plain Kubernetes Secret manifests for sensitive values; prefer pulling from a managed secret store.",
+    "tags": ["secrets-manager", "ssm", "csi", "secrets"]
+  },
+  {
+    "id": "docker-cicd-001",
+    "topic": "AWS Observability & Secrets",
+    "subtopic": "CI/CD",
+    "difficulty": "medium",
+    "question": "What does a typical container CI/CD pipeline to AWS look like?",
+    "answer": "**Build → push → deploy:** CI builds the image and tags it with the git SHA, logs in to ECR and **pushes**, then triggers a deploy — updating the **ECS service** to the new task-definition revision, or applying a new **image tag/manifest** to EKS (often via `kubectl`/Helm/GitOps like Argo CD). AWS-native options are CodeBuild + CodePipeline + CodeDeploy; GitHub Actions with an OIDC-assumed IAM role is also common.",
+    "explanation": "Immutable, SHA-tagged images (plus ECR tag immutability) make deploys reproducible and rollbacks trivial (point back to the prior revision/tag). CodeDeploy can do blue/green for ECS; EKS GitOps reconciles the cluster to the manifests in Git. Use OIDC (no long-lived keys) for the pipeline's AWS access.",
+    "tags": ["cicd", "codepipeline", "ecr", "deploy"]
   }
 ]
