@@ -666,5 +666,265 @@
     "resources": [
       { "label": "AWS — Aurora failover", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.AuroraHighAvailability.html" }
     ]
+  },
+  "aws-perf-mcq-001": {
+    "explanation": "**The problem:** A single EBS volume must sustain 60,000 consistent IOPS for a database. **Why io2 Provisioned IOPS SSD:** it's designed for high, *consistent* random IOPS — up to 64,000 on Nitro instances (more with io2 Block Express) — exactly the database pattern. **Why the distractors fail:** gp3 tops out at 16,000 IOPS per volume; the HDD families (st1 throughput-optimized, sc1 cold) are for sequential throughput workloads (logs, cold data), not random IOPS. **The exam skill:** match volume type to the IOPS/throughput requirement — random IOPS → io1/io2, throughput → st1, cheap cold → sc1, general → gp3. **Common mistakes:** picking gp3 for >16,000 IOPS, and using HDD for a random-access database.",
+    "example": "```bash\naws ec2 create-volume --availability-zone us-east-1a \\\n  --volume-type io2 --size 500 --iops 60000\n```",
+    "resources": [
+      { "label": "AWS — EBS volume types", "url": "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html" }
+    ]
+  },
+  "aws-perf-mcq-002": {
+    "explanation": "**The problem:** Global users get slow loads for images/videos served from an S3 bucket in one Region. **Why CloudFront:** it caches the content at hundreds of edge locations close to users — one distribution with the bucket as origin, no application changes, no replication to manage. **Why the distractors fail:** multi-Region replication with per-user URLs reinvents a CDN at far higher cost/complexity; relocating the bucket helps one geography at others' expense; versioning is unrelated to latency. **The pattern:** 'global users, static/cacheable content, reduce latency simply' → CloudFront. **Common mistakes:** hand-rolling regional copies instead of using a CDN, and moving the origin (helps some users, hurts others).",
+    "resources": [
+      { "label": "AWS — CloudFront with S3 origin", "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html" }
+    ]
+  },
+  "aws-perf-mcq-003": {
+    "explanation": "**The problem:** A multiplayer game uses custom UDP, needs lowest global latency to servers in two Regions, and clients must connect to fixed IPs. **Why Global Accelerator:** it provides two static anycast IPs and routes *any* TCP/UDP traffic onto the AWS backbone from the nearest edge, with automatic failover between Regional endpoints — built for non-HTTP, latency-sensitive workloads (gaming, VoIP, IoT). **Why the distractors fail:** CloudFront accelerates HTTP(S) content/APIs, not custom UDP; Route 53 latency routing picks a Region at DNS time but gives no static IPs or backbone routing; ALBs are HTTP-layer and Regional. **The discriminator:** static IPs + non-HTTP + global low latency → Global Accelerator. **Common mistakes:** choosing CloudFront for UDP, and assuming DNS routing equals backbone acceleration.",
+    "resources": [
+      { "label": "AWS — Global Accelerator", "url": "https://docs.aws.amazon.com/global-accelerator/latest/dg/what-is-global-accelerator.html" }
+    ]
+  },
+  "aws-perf-mcq-004": {
+    "explanation": "**The problem:** A read-heavy DynamoDB app needs microsecond reads for hot items with minimal code change. **Why DAX:** DynamoDB Accelerator is a purpose-built, API-compatible in-memory cache — point the SDK at the DAX endpoint and reads drop from single-digit milliseconds to microseconds, with write-through caching and *no* cache-aside logic to write. **Why the distractors fail:** ElastiCache reaches similar latency but you build/maintain the caching layer and cache-aside code; global tables address multi-Region access, not single-Region read latency; more RCUs raise throughput but never break the millisecond floor. **The signal:** 'DynamoDB + microseconds + minimal change' → DAX. **Common mistakes:** adding RCUs to fix latency (it fixes throughput), and hand-building ElastiCache when DAX is drop-in.",
+    "resources": [
+      { "label": "AWS — DynamoDB Accelerator (DAX)", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.html" }
+    ]
+  },
+  "aws-perf-mcq-005": {
+    "explanation": "**The problem:** A service needs millions of TCP connections/sec at ultra-low latency, and partners must whitelist fixed IPs per AZ. **Why NLB:** it operates at layer 4 — millions of requests/sec, extreme low latency, and uniquely a *static IP* (or your own Elastic IP) per AZ, which satisfies partner whitelisting. **Why the distractors fail:** ALB is layer 7 with DNS-name addressing and changing IPs (no static IP to whitelist); Classic LB is legacy; Route 53 weighting isn't a load balancer and offers no health-aware connection handling at this scale. **The discriminator:** static IP + extreme TCP throughput/low latency → NLB; HTTP routing/features → ALB. **Common mistakes:** choosing ALB when fixed IPs are required, and using DNS weighting as a load balancer.",
+    "resources": [
+      { "label": "AWS — Network Load Balancer", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html" }
+    ]
+  },
+  "aws-perf-mr-001": {
+    "explanation": "**The problem:** RDS PostgreSQL slows under read-heavy traffic — repeated product queries plus heavy analytics scans. **Why the two answers (complementary read scaling):** an ElastiCache cluster absorbs the *repeated identical* reads (product pages) at sub-millisecond latency, while read replicas absorb the *heavy, varied* reads (analytics) without touching the primary. **Why both:** caching kills duplicate hot reads; replicas offload the rest. **Why the distractors fail:** Multi-AZ is availability, not performance; backups don't serve queries; one bigger instance is vertical scaling with a ceiling and a single point of failure. **Common mistakes:** using Multi-AZ to offload reads, and vertically scaling instead of caching + replicas.",
+    "resources": [
+      { "label": "AWS — ElastiCache caching strategies", "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/Strategies.html" }
+    ]
+  },
+  "aws-perf-mcq-006": {
+    "explanation": "**The problem:** 100k clickstream events/sec, multiple independent apps must read the *same* events in order, and analysts need 24-hour replay. **Why Kinesis Data Streams:** it supports many consumers reading the same records (vs SQS where consumers compete and deleting removes data for everyone), per-shard ordering, and replay within the retention window (24h–365d). **Why the distractors fail:** SNS pushes but doesn't retain or replay; Step Functions orchestrates workflows, not ingestion; SQS is for competing-consumer queues, not shared replayable streams. **The signature:** 'multiple consumers + replay + ordering' → Kinesis. **Common mistakes:** choosing SQS for multi-consumer broadcast, and forgetting replay needs a stream, not a queue.",
+    "resources": [
+      { "label": "AWS — Kinesis Data Streams", "url": "https://docs.aws.amazon.com/streams/latest/dev/introduction.html" }
+    ]
+  },
+  "aws-perf-mcq-007": {
+    "explanation": "**The problem:** Analysts want occasional ad-hoc SQL over CSV/JSON in S3 with no servers and no loading. **Why Athena:** it's serverless, queries data *in place* in S3 with standard SQL, and bills per data scanned — the definition of occasional ad-hoc analysis. **Why the distractors fail:** RDS and Redshift require loading the data and running (and paying for) always-on infrastructure; EMR suits heavy custom big-data processing, not casual SQL. **The mapping:** 'serverless SQL over S3' → Athena. **Common mistakes:** standing up a database/cluster for occasional queries, and using EMR when plain SQL suffices.",
+    "resources": [
+      { "label": "AWS — Amazon Athena", "url": "https://docs.aws.amazon.com/athena/latest/ug/what-is.html" }
+    ]
+  },
+  "aws-perf-mcq-008": {
+    "explanation": "**The problem:** Athena over a growing lake of CSV is slow and expensive. **Why convert to partitioned, columnar Parquet (via Glue ETL):** columnar Parquet lets Athena read only the queried columns, and partitioning (e.g. by date) prunes whole directories — together routinely cutting scanned bytes (the cost driver) by 10–100×. **Why Glue:** it's the managed ETL service for the CSV→Parquet transformation. **Why the distractors fail:** S3 buckets have no size tiers; Athena has no instance sizes; ZIP isn't a splittable, query-friendly format (and Athena still scans it). **Common mistakes:** querying raw CSV at scale, and compressing without converting to a columnar format.",
+    "resources": [
+      { "label": "AWS — Athena performance (columnar + partitioning)", "url": "https://docs.aws.amazon.com/athena/latest/ug/performance-tuning.html" }
+    ]
+  },
+  "aws-perf-mcq-009": {
+    "explanation": "**The problem:** A tightly-coupled HPC workload needs the lowest possible inter-node latency. **Why a cluster placement group (single AZ):** it packs instances close together on the same high-bisection-bandwidth network segment — lowest latency, highest throughput — the HPC choice (often paired with Elastic Fabric Adapter for MPI). **Why the distractors fail:** spread placement maximizes *separation* for a few critical instances; partition placement isolates groups for large distributed systems (Kafka/HDFS); separate Regions multiply latency. **The mapping:** lowest latency/tight coupling → cluster; max isolation → spread; fault-isolated partitions → partition. **Common mistakes:** using spread/partition for latency-sensitive HPC, and spanning AZs/Regions for a tightly-coupled job.",
+    "example": "```bash\naws ec2 create-placement-group --group-name hpc-cluster --strategy cluster\n```",
+    "resources": [
+      { "label": "AWS — Placement groups", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html" }
+    ]
+  },
+  "aws-perf-mcq-010": {
+    "explanation": "**The problem:** A CPU-bound Lambda (already efficient code) is too slow. **Why increase memory:** Lambda exposes one performance dial — memory (128 MB–10 GB) — and vCPU scales *linearly* with it (about 6 vCPUs at the top). More memory = more CPU; there's no separate CPU setting. **Why the distractors fail:** a longer timeout lets slow work finish but doesn't speed it up; provisioned concurrency removes cold starts (a start-latency concern, not per-invocation compute); there is no dedicated-vCPU configuration. **The exam skill:** sizing Lambda = choosing memory. **Common mistakes:** raising the timeout to 'go faster', and looking for a vCPU knob that doesn't exist.",
+    "example": "```bash\naws lambda update-function-configuration \\\n  --function-name process-images --memory-size 3008\n```",
+    "resources": [
+      { "label": "AWS — Lambda memory & CPU", "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html" }
+    ]
+  },
+  "aws-perf-mcq-011": {
+    "explanation": "**The problem:** An in-memory analytics engine needs a high RAM:vCPU ratio. **Why the R family:** instance family letters map to resource profiles — R (and X/z for extremes) = memory optimized for in-memory databases and analytics. **Why the distractors fail:** C = compute optimized (CPU-bound work); T = burstable general purpose (spiky light workloads); I = storage optimized (high local NVMe IOPS). **The exam quick-win:** match workload shape to family — memory → R/X, CPU → C, burst → T, local storage → I, GPU → P/G. **Common mistakes:** defaulting to general-purpose M when a memory-optimized R fits, and confusing storage-optimized I with memory-optimized R.",
+    "resources": [
+      { "label": "AWS — EC2 instance types", "url": "https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-types.html" }
+    ]
+  },
+  "aws-perf-mcq-012": {
+    "explanation": "**The problem:** A one-time 200 TB NFS→S3 migration over a 10 Gbps Direct Connect link, with verification and scheduling. **Why DataSync:** it's the online bulk-transfer service — an agent reads NFS/SMB, saturates available bandwidth with parallelism, verifies integrity, and supports scheduled or one-time jobs. **Why online is fine here:** 200 TB over 10 Gbps is a few days — well within reason. **Why the distractors fail:** File Gateway is for *ongoing hybrid access* (local cache, S3 backing), not migrations; Transfer Acceleration speeds *internet* uploads (irrelevant over DX); Snowball is the *offline* option when the network would take too long. **Common mistakes:** reaching for Snowball when the link is fast enough, and using File Gateway for a one-time migration.",
+    "resources": [
+      { "label": "AWS — DataSync", "url": "https://docs.aws.amazon.com/datasync/latest/userguide/what-is-datasync.html" }
+    ]
+  },
+  "aws-perf-mr-002": {
+    "explanation": "**The problem:** Global field teams upload multi-GB videos to one S3 bucket; uploads are slow and restart from zero on drops. **Why the two answers:** multipart upload parallelizes parts and retries only failed parts — a dropped connection no longer restarts gigabytes (recommended >100 MB, required >5 GB) — and S3 Transfer Acceleration routes uploads into the nearest CloudFront edge and across the AWS backbone, fixing the long-haul internet leg. **Why both:** multipart fixes reliability + parallelism; Transfer Acceleration fixes the global distance. **Why the distractors fail:** versioning and storage classes don't affect transfer speed; single PUTs with a longer timeout are exactly what's failing. **Common mistakes:** uploading large files as one PUT, and ignoring the long-haul network for global uploaders.",
+    "resources": [
+      { "label": "AWS — S3 multipart upload & Transfer Acceleration", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html" }
+    ]
+  },
+  "aws-perf-mcq-013": {
+    "explanation": "**The problem:** Real-time leaderboards (sorted rankings) need an in-memory store with replication, automatic failover, and persistence options. **Why ElastiCache for Redis:** Redis sorted sets are purpose-built for leaderboards, and it supports replication, Multi-AZ automatic failover, snapshots/AOF persistence, and pub/sub. **Why the distractors fail:** Memcached is simpler (multithreaded, easy scale-out) but has *no* replication, persistence, or rich data structures; DynamoDB isn't in-memory; RDS with a big buffer pool is still a disk-based relational DB. **The exam split:** rich data types/replication/persistence → Redis; simple, multithreaded cache → Memcached. **Common mistakes:** choosing Memcached when HA/persistence/sorted-sets are required.",
+    "resources": [
+      { "label": "AWS — ElastiCache Redis vs Memcached", "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/SelectEngine.html" }
+    ]
+  },
+  "aws-perf-mcq-014": {
+    "explanation": "**The problem:** A DynamoDB table keyed on `status` (only ACTIVE/INACTIVE) throttles despite huge provisioned capacity. **Why hot partitions:** DynamoDB hashes the partition key to spread data and throughput across partitions; with only two key values, nearly all traffic lands on two partitions — each capped at ~3,000 RCU / 1,000 WCU — so the table throttles while aggregate capacity sits idle. **The fix:** a *high-cardinality* partition key (user ID, order ID), possibly with write sharding. **Why the distractors fail:** sort keys and GSIs don't repair a degenerate partition-key choice; capacity is per-table/partition, not per item. **Common mistakes:** choosing a low-cardinality partition key, and adding capacity to fix a key-design problem.",
+    "resources": [
+      { "label": "AWS — DynamoDB partition key design", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html" }
+    ]
+  },
+  "aws-perf-mcq-015": {
+    "explanation": "**The problem:** Continuous SQS polling mostly returns empty, driving up API cost and CPU. **Why long polling:** setting `ReceiveMessageWaitTimeSeconds` (up to 20s) holds the receive call open until a message arrives or the wait expires — eliminating the empty-response storm, cutting API calls (cost), and *reducing* delivery latency versus sleeping. **Why the distractors fail:** a 5-minute sleep adds up to 5 minutes of latency; FIFO changes ordering, not polling; visibility timeout governs in-flight invisibility, not polling. **The pairing:** empty receives/cost → long polling. **Common mistakes:** sleeping between polls (adds latency), and confusing visibility timeout with poll wait time.",
+    "example": "```bash\naws sqs set-queue-attributes --queue-url \"$QUEUE_URL\" \\\n  --attributes ReceiveMessageWaitTimeSeconds=20\n```",
+    "resources": [
+      { "label": "AWS — SQS short vs long polling", "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.html" }
+    ]
+  },
+  "aws-perf-mcq-016": {
+    "explanation": "**The problem:** A Lambda API shows 1–2s latency on the first request after idle, then 50ms — cold starts. **Why provisioned concurrency:** it keeps a configured number of execution environments initialized and warm, so requests hit pre-warmed instances at steady latency (apply it to the production alias/version). **Why the distractors fail:** more memory speeds *execution* but not initialization; *reserved* concurrency is a limit/guarantee on concurrent executions — a different knob with a confusingly similar name (classic distractor); container images generally cold-start slower, not faster. **The distinction:** cold-start latency → provisioned concurrency; concurrency limits → reserved concurrency. **Common mistakes:** confusing reserved vs provisioned concurrency, and adding memory to fix cold starts.",
+    "example": "```bash\naws lambda put-provisioned-concurrency-config \\\n  --function-name my-api --qualifier prod \\\n  --provisioned-concurrent-executions 20\n```",
+    "resources": [
+      { "label": "AWS — Lambda provisioned concurrency", "url": "https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html" }
+    ]
+  },
+  "aws-perf-mcq-017": {
+    "explanation": "**The problem:** Distributed ML training on hundreds of instances needs a shared POSIX file system with sub-ms latency and hundreds of GB/s aggregate throughput, sourced from S3. **Why FSx for Lustre:** it's the HPC/ML parallel file system — hundreds of GB/s, sub-millisecond latency, with an S3 data repository association that lazy-loads from and writes back to S3. **Why the distractors fail:** EFS is general-purpose NFS (solid but not in Lustre's performance class for this pattern); Mountpoint for S3 suits sequential object access, not POSIX random I/O; one instance re-exporting EBS over NFS bottlenecks the whole cluster. **The mapping:** HPC/ML high-throughput POSIX + S3 → FSx for Lustre. **Common mistakes:** using EFS for extreme-throughput HPC, and single-node NFS re-export.",
+    "resources": [
+      { "label": "AWS — FSx for Lustre", "url": "https://docs.aws.amazon.com/fsx/latest/LustreGuide/what-is.html" }
+    ]
+  },
+  "aws-perf-mcq-018": {
+    "explanation": "**The problem:** A Windows app needs shared SMB storage with Active Directory integration and NTFS permissions. **Why FSx for Windows File Server:** it's a fully managed native Windows file system — SMB protocol, NTFS, DFS namespaces, and AD integration (AWS Managed AD or self-managed). **Why the distractors fail:** EFS speaks NFS (Linux territory); S3 is object storage, not a file share; FSx for Lustre targets Linux HPC. **The tell is the protocol:** SMB/AD → FSx for Windows; NFS/Linux → EFS; parallel HPC → Lustre. **Common mistakes:** using EFS for a Windows/SMB workload, and treating S3 as a mountable file share.",
+    "resources": [
+      { "label": "AWS — FSx for Windows File Server", "url": "https://docs.aws.amazon.com/fsx/latest/WindowsGuide/what-is.html" }
+    ]
+  },
+  "aws-perf-mcq-019": {
+    "explanation": "**The problem:** App logs must stream into S3 (and optionally Redshift) in near real time, with optional Lambda transform — and zero servers, shards, or consumers to manage. **Why Kinesis Data Firehose:** it's the fully managed delivery pipe — batches, optionally transforms (Lambda) and converts formats, and delivers to S3, Redshift, OpenSearch, and third parties, scaling automatically with no shards or consumers. **Why the distractors fail:** Kinesis Data Streams needs custom consumers/shard sizing (the right pick when you need replay or custom real-time processing); SQS+workers is hand-built; DataSync moves file systems, not streams. **The mapping:** 'easiest way to load streaming data into a store' → Firehose. **Common mistakes:** choosing Data Streams when no custom consumer/replay is needed, and building worker fleets.",
+    "resources": [
+      { "label": "AWS — Kinesis Data Firehose", "url": "https://docs.aws.amazon.com/firehose/latest/dev/what-is-this-service.html" }
+    ]
+  },
+  "aws-perf-mcq-020": {
+    "explanation": "**The problem:** Complex aggregations joining billions of rows for BI take minutes on RDS PostgreSQL. **Why Redshift:** this is OLAP — scanning/aggregating huge datasets — and Redshift's columnar storage, compression, and massively parallel processing are built for it, routinely turning minutes into seconds at petabyte scale. **Why the distractors fail:** RDS is row-oriented OLTP (scaling it up only delays the wall); DynamoDB serves key-based access, not ad-hoc joins; ElastiCache accelerates repeated reads, not novel analytical queries. **Core vocabulary:** OLTP → RDS; OLAP/data warehouse → Redshift. **Common mistakes:** scaling RDS for analytics, and using a key-value store for ad-hoc joins.",
+    "resources": [
+      { "label": "AWS — Amazon Redshift", "url": "https://docs.aws.amazon.com/redshift/latest/mgmt/welcome.html" }
+    ]
+  },
+  "aws-perf-mcq-021": {
+    "explanation": "**The problem:** Product search needs full-text queries, fuzzy typo matching, filters, and relevance ranking. **Why OpenSearch Service:** it's the managed search engine (Elasticsearch fork) — inverted indexes for full-text search, fuzzy matching, faceted filtering, and relevance scoring out of the box. **Why the distractors fail:** SQL `LIKE '%term%'` can't use indexes and has no ranking; DynamoDB scans are expensive full reads with no text awareness; Athena is batch SQL over S3, not an interactive search backend. **The mapping:** full-text/relevance search → OpenSearch. **Common mistakes:** building search on SQL `LIKE`, and using DynamoDB scans for text search.",
+    "resources": [
+      { "label": "AWS — OpenSearch Service", "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html" }
+    ]
+  },
+  "aws-perf-mr-003": {
+    "explanation": "**The problem:** A tightly-coupled simulation is bottlenecked by inter-node network latency/throughput. **Why the two answers:** instance types with enhanced networking (ENA, and EFA for MPI-style HPC) raise per-instance packet rates and lower latency, while a cluster placement group in one AZ physically co-locates the fleet on a low-latency, high-bisection segment. **Why both:** the NIC capability + the physical placement together maximize node-to-node performance. **Why the distractors fail:** spreading across Regions multiplies latency by orders of magnitude; EBS is storage, not network; an ALB is an HTTP front door, not an inter-node fabric. **Common mistakes:** spanning AZs/Regions for a tightly-coupled job, and adding storage/load-balancers to a network-bound problem.",
+    "resources": [
+      { "label": "AWS — Enhanced networking & EFA", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking.html" }
+    ]
+  },
+  "aws-perf-mcq-022": {
+    "explanation": "**The problem:** An Aurora cluster (writer + 4 replicas) should spread reads across all replicas automatically, including future auto-scaled ones. **Why the reader endpoint:** it load-balances connections across all *current* read replicas — replicas added/removed by auto scaling join and leave automatically, with no application changes. **Why the distractors fail:** the cluster endpoint always targets the *writer* (use it for writes); hand-rolled rotation over instance endpoints breaks whenever the replica set changes; raw IPs break on failover. **The pairing:** reads → reader endpoint; writes → cluster endpoint. **Common mistakes:** sending reads to the cluster endpoint, and managing replica connections manually.",
+    "resources": [
+      { "label": "AWS — Aurora endpoints", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Overview.Endpoints.html" }
+    ]
+  },
+  "aws-perf-mcq-023": {
+    "explanation": "**The problem:** Identical GET requests hammer a Lambda backend behind API Gateway for catalog data that changes every few minutes. **Why API Gateway caching:** stage-level caching stores responses keyed by request (configurable per method and by parameters), serving repeats from cache until the TTL expires — Lambda invocation count (and cost) collapses. Matching the TTL to the change cadence (a few minutes) keeps staleness acceptable. **Why the distractors fail:** more concurrency or memory just processes the redundant invocations faster; switching to EC2 doesn't remove the redundancy. **Common mistakes:** scaling the backend to absorb repeated identical reads, and setting a TTL longer than the data's freshness tolerance.",
+    "example": "```bash\naws apigateway update-stage --rest-api-id abc123 --stage-name prod \\\n  --patch-operations \\\n    op=replace,path=/cacheClusterEnabled,value=true \\\n    op=replace,path=/*/*/caching/ttlInSeconds,value=300\n```",
+    "resources": [
+      { "label": "AWS — API Gateway caching", "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html" }
+    ]
+  },
+  "aws-perf-mcq-024": {
+    "explanation": "**The problem:** A job needs scratch space with millions of IOPS and microsecond latency for temporary files worthless after completion. **Why NVMe instance store:** it's physically attached NVMe — no network hop — delivering millions of IOPS and microsecond latency that even io2 Block Express (network-attached) can't match. Its catch is ephemerality: data is lost on stop/terminate, which is exactly fine for scratch. **Why the distractors fail:** io2 is network-attached (lower ceiling); EFS adds network/NFS overhead; S3 is object storage, not low-latency scratch. **The pattern:** temporary/scratch + extreme IOPS → instance store; persistent + high IOPS → io2. **Common mistakes:** using instance store for data that must survive, and expecting io2 to match local NVMe latency.",
+    "resources": [
+      { "label": "AWS — EC2 instance store", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html" }
+    ]
+  },
+  "aws-perf-mcq-025": {
+    "explanation": "**The problem:** A cache-aside (lazy-loading) ElastiCache setup serves stale data for a long time after updates. **Why add write-through:** lazy loading populates the cache only on read *misses*, so an updated row stays stale until its cached copy expires — write-through complements it by updating the cache on every database *write*, so reads always see current data. **The classic combo:** write-through + lazy loading + a TTL safety net (TTL bounds staleness for anything written by paths that bypass the cache). **Why the distractors fail:** connection timeouts, caching misses, and the engine choice change failure behavior/memory/engine — not freshness. **Common mistakes:** relying on lazy loading alone for write-heavy data, and omitting a TTL safety net.",
+    "resources": [
+      { "label": "AWS — ElastiCache caching strategies", "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/Strategies.html" }
+    ]
+  },
+  "aws-perf-mcq-026": {
+    "explanation": "**The problem:** 60 VPCs across accounts plus Direct Connect — full-mesh peering is unmanageable. **Why Transit Gateway:** it's the regional network hub — VPCs, VPN connections, and Direct Connect gateways attach once, and hub route tables control who reaches whom (thousands of attachments, cross-Region peering available). **Why the distractors fail:** a 60-VPC full mesh needs ~1,770 peering connections, and peering isn't transitive — exactly the wall hit here; PrivateLink exposes specific *services*, not whole networks; a NAT gateway is internet egress. **The mapping:** many-VPC hub-and-spoke → Transit Gateway. **Common mistakes:** scaling peering instead of adopting a hub, and expecting peering to be transitive.",
+    "resources": [
+      { "label": "AWS — Transit Gateway", "url": "https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html" }
+    ]
+  },
+  "aws-perf-mcq-027": {
+    "explanation": "**The problem:** Daily large transfers over an internet VPN miss deadlines because bandwidth fluctuates. **Why Direct Connect:** it's a dedicated physical circuit (1/10/100 Gbps or hosted capacities) between the data center and AWS — bandwidth and latency are *consistent* because traffic never crosses the public internet. **Why the distractors fail:** a second VPN tunnel still rides the internet (same variability); Transfer Acceleration helps S3 uploads over the internet but guarantees nothing; bigger receiving instances don't fix the pipe. **The mapping:** consistent/dedicated bandwidth to AWS → Direct Connect. **Common mistakes:** adding VPN tunnels to fix internet variability, and confusing Transfer Acceleration with dedicated connectivity.",
+    "resources": [
+      { "label": "AWS — Direct Connect", "url": "https://docs.aws.amazon.com/directconnect/latest/UserGuide/Welcome.html" }
+    ]
+  },
+  "aws-perf-mcq-028": {
+    "explanation": "**The problem:** A CloudFront site runs A/B tests — route to one of two origins based on a cookie, at the edge, with no round trip to a Region. **Why Lambda@Edge (origin request):** it runs at CloudFront locations on viewer/origin request and response events; an *origin-request* function can inspect the cookie and rewrite the origin per request — the canonical A/B mechanism. **The sibling:** CloudFront Functions are lighter/cheaper for sub-millisecond header/URL rewrites on *viewer* events, but origin selection lives with Lambda@Edge. **Why the distractors fail:** geo restrictions block countries; Route 53 weights split by DNS query (blind to cookies); S3 redirect rules can't read cookies. **Common mistakes:** using CloudFront Functions for origin selection, and trying cookie logic in Route 53.",
+    "resources": [
+      { "label": "AWS — Lambda@Edge", "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html" }
+    ]
+  },
+  "aws-perf-mcq-029": {
+    "explanation": "**The problem:** Nightly Spark jobs over terabytes from S3, with AWS managing the cluster and Spot for workers. **Why EMR:** it's managed big-data infrastructure — clusters running Spark/Hadoop/Hive/Presto reading straight from S3 (EMRFS), with deep Spot integration for task nodes; *transient* clusters that exist only for the nightly run are the cost-efficient pattern. **Why the distractors fail:** Lambda caps at 15 minutes and 10 GB (wrong shape for terabyte Spark); RDS is a relational database; QuickSight visualizes results, it doesn't compute them. **The mapping:** managed Spark/Hadoop big-data processing → EMR. **Common mistakes:** forcing big-data jobs into Lambda, and running always-on clusters for nightly batches.",
+    "resources": [
+      { "label": "AWS — Amazon EMR", "url": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-what-is-emr.html" }
+    ]
+  },
+  "aws-perf-mcq-030": {
+    "explanation": "**The problem:** Hundreds of thousands of containerized jobs with varied resources and dependencies, needing managed queues, right-sized provisioning, and Spot — without building a scheduler. **Why AWS Batch:** it's purpose-built batch scheduling — job definitions, priority queues, dependencies, array jobs for massive parallelism, and compute environments that provision optimal EC2/Spot/Fargate capacity per demand. **Why the distractors fail:** Step Functions orchestrates workflows (and often *submits* Batch jobs) but isn't a queue/packing scheduler; SQS+workers means building Batch yourself; Lambda's 15-min/10 GB limits don't fit heavy jobs. **The mapping:** large-scale batch/HPC job scheduling → AWS Batch. **Common mistakes:** hand-building a scheduler on SQS, and confusing workflow orchestration with batch scheduling.",
+    "resources": [
+      { "label": "AWS — AWS Batch", "url": "https://docs.aws.amazon.com/batch/latest/userguide/what-is-batch.html" }
+    ]
+  },
+  "aws-perf-mcq-031": {
+    "explanation": "**The problem:** Interactive BI dashboards over Athena/Redshift for hundreds of users, with ML insights and no BI servers. **Why QuickSight:** it's the serverless BI service — native connectors to Athena, Redshift, RDS, and S3, the in-memory SPICE engine for fast interactive queries, per-session reader pricing, embedding, and ML insights (anomaly detection, forecasting). **Why the distractors fail:** CloudWatch dashboards visualize *metrics*; Glue DataBrew is data preparation; OpenSearch Dashboards serve log/search analytics on OpenSearch data. **The mapping:** managed BI/visualization → QuickSight. **Common mistakes:** using CloudWatch dashboards for business BI, and confusing data prep (DataBrew) with visualization.",
+    "resources": [
+      { "label": "AWS — Amazon QuickSight", "url": "https://docs.aws.amazon.com/quicksight/latest/user/welcome.html" }
+    ]
+  },
+  "aws-perf-mcq-032": {
+    "explanation": "**The problem:** 'Friends of friends who like hiking' across billions of relationships in milliseconds — relational JOINs are unusable. **Why Neptune:** it's the managed graph database — property graphs (Gremlin/openCypher) and RDF (SPARQL) — built to traverse relationship networks in milliseconds where the equivalent SQL needs explosive self-JOINs. Social graphs, recommendations, fraud rings, and knowledge graphs are its signature scenarios. **Why the distractors fail:** Redshift aggregates columns, DynamoDB serves key-value at scale, ElastiCache caches — none traverse relationships natively. **The mapping:** highly-connected relationship queries → Neptune. **Common mistakes:** modeling graph traversals as SQL self-JOINs, and using DynamoDB for relationship-heavy queries.",
+    "resources": [
+      { "label": "AWS — Amazon Neptune", "url": "https://docs.aws.amazon.com/neptune/latest/userguide/intro.html" }
+    ]
+  },
+  "aws-perf-mcq-033": {
+    "explanation": "**The problem:** An io2 volume provisioned for 40,000 IOPS never exceeds ~20,000 while the app is I/O starved, with no volume queue saturation. **Why the instance is the bottleneck:** EBS performance is min(volume, instance) — every instance type has its own EBS-attached IOPS/throughput ceiling, and a c5.large caps far below 40,000 IOPS, so the volume is fine but the instance can't drive it. The fix is a larger size (or an EBS-optimized family with higher EBS bandwidth). **Why the distractors fail:** io2 exceeds 64,000 IOPS; RAID 1 mirrors for redundancy (it halves write throughput); Multi-Attach is about multiple instances, not speed. **Common mistakes:** blaming the volume when the instance's EBS ceiling is the cap, and adding RAID 1 hoping for speed.",
+    "resources": [
+      { "label": "AWS — EBS-optimized instances", "url": "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-optimized.html" }
+    ]
+  },
+  "aws-perf-mcq-034": {
+    "explanation": "**The problem:** Backup software expects an iSCSI virtual tape interface; the company wants to retire tape hardware and store backups in S3/Glacier without changing the software. **Why Tape Gateway:** it presents a virtual tape library (VTL) over iSCSI, so existing backup software (Veeam, NetBackup, Commvault) keeps working unchanged — virtual tapes land in S3 and 'ejected' tapes archive to Glacier tiers. **Why the distractors fail:** File Gateway is NFS/SMB to S3; DataSync migrates files; EBS snapshots don't speak to backup software. **The Storage Gateway map:** File = NFS/SMB→S3, Volume = iSCSI block, Tape = VTL. **Common mistakes:** confusing the gateway types, and trying to point tape backup software at File Gateway.",
+    "resources": [
+      { "label": "AWS — Storage Gateway Tape Gateway", "url": "https://docs.aws.amazon.com/storagegateway/latest/tgw/WhatIsStorageGateway.html" }
+    ]
+  },
+  "aws-perf-mcq-035": {
+    "explanation": "**The problem:** Move 600 TB to S3 within three weeks over a non-upgradeable 200 Mbps uplink. **Why Snowball Edge (do the math first):** 600 TB over 200 Mbps ≈ 280+ days at full saturation — no online method (DataSync, Transfer Acceleration, multipart) beats the arithmetic of the pipe. Snowball Edge devices hold ~80 TB usable each; several in parallel, loaded locally and shipped back, complete the transfer within the deadline. **Why the distractors fail:** every online option is bounded by the same 200 Mbps. **The rule of thumb:** when transfer time exceeds ~a week of dedicated bandwidth, go offline. **Common mistakes:** skipping the bandwidth math, and assuming Transfer Acceleration/DataSync can overcome a slow uplink.",
+    "resources": [
+      { "label": "AWS — Snowball Edge", "url": "https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html" }
+    ]
+  },
+  "aws-perf-mcq-036": {
+    "explanation": "**The problem:** 10 GB S3 downloads are far slower than available bandwidth on a single stream, and a network blip restarts the whole file. **Why parallel byte-range GETs:** the `Range` header lets each request pull a slice of the object; running slices concurrently aggregates throughput far beyond one TCP stream, and a failed slice retries alone instead of restarting 10 GB. It's the download mirror of multipart upload (SDK transfer managers do both automatically). **Why the distractors fail:** storage class doesn't change wire speed; a bigger archive worsens the retry problem; a NAT gateway adds cost, not bandwidth. **Common mistakes:** single-stream downloads of huge objects, and combining files into one archive (bigger restart on failure).",
+    "example": "```bash\n# Fetch a byte range; run several of these concurrently for one object\naws s3api get-object --bucket my-bucket --key big.bin \\\n  --range bytes=0-104857599 part0.bin\n```",
+    "resources": [
+      { "label": "AWS — S3 performance (byte-range fetches)", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html" }
+    ]
+  },
+  "aws-perf-mcq-037": {
+    "explanation": "**The problem:** Millions of timestamped sensor readings per minute, time-windowed aggregations, and automatic aging of old data to cheaper storage. **Why Timestream:** it's the serverless time-series database — built for high-throughput timestamped ingestion, time-windowed SQL analytics (interpolation, smoothing), and automatic tiering from a memory store to a cheaper magnetic store by age. **Why the distractors fail:** general-purpose RDS strains at this write rate and needs hand-rolled partitioning/expiry; Neptune is graphs; Redis is a cache. **The signature:** sensor/metrics data + time-window queries → Timestream. **Common mistakes:** forcing time-series into a relational table, and building manual data-expiry pipelines.",
+    "resources": [
+      { "label": "AWS — Amazon Timestream", "url": "https://docs.aws.amazon.com/timestream/latest/developerguide/what-is-timestream.html" }
+    ]
+  },
+  "aws-perf-mr-004": {
+    "explanation": "**The problem:** Users in Asia/Australia get slow page loads — both static assets and API calls — from a us-east-1 app. **Why the two answers:** distance is the enemy — CloudFront caches static content at edges near the users (and accelerates dynamic calls somewhat via backbone routing), while a *second Regional deployment* with Route 53 latency-based routing puts the *API itself* close to them, attacking both halves of the complaint. **Why both:** CloudFront fixes static + some dynamic; the regional stack fixes the API round trip. **Why the distractors fail:** bucket 'size' isn't a real dial; bigger instances and a different load balancer in Virginia don't shorten the 200+ ms round trip from Sydney. **Common mistakes:** scaling the origin Region instead of moving closer to users, and expecting CloudFront alone to fix API latency.",
+    "resources": [
+      { "label": "AWS — Latency-based routing + CloudFront", "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-latency.html" }
+    ]
+  },
+  "aws-perf-mcq-038": {
+    "explanation": "**The problem:** An RDS database on gp2 slows during sustained heavy I/O, and BurstBalance hits zero exactly when slowdowns start. **Why burst exhaustion:** gp2 earns burst credits at 3 IOPS/GB and spends them above baseline; sustained heavy I/O drains the bucket and performance collapses to baseline — the BurstBalance-hits-zero correlation is the textbook diagnosis. **The fix:** gp3 (decouples performance from size, flat 3,000 IOPS baseline, configurable higher) or Provisioned IOPS for the heaviest cases, sized for the sustained load. **Why the distractors fail:** RAM, connection pooling (RDS Proxy), and capacity are different problems with different metrics. **Common mistakes:** scaling instance RAM for an I/O-credit problem, and staying on gp2 for sustained high-IOPS workloads.",
+    "example": "```bash\naws ec2 modify-volume --volume-id vol-0abc123 \\\n  --volume-type gp3 --iops 6000 --throughput 250\n```",
+    "resources": [
+      { "label": "AWS — gp2 vs gp3 / burst balance", "url": "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html" }
+    ]
   }
 }
