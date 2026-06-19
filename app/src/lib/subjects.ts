@@ -68,6 +68,14 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:aws',
     loadData: loader('aws', () => load(import('../../data/aws.json'))),
   },
+  graphql: {
+    id: 'graphql',
+    label: 'GraphQL',
+    icon: '◈',
+    color: '#e10098',
+    storageKey: 'srs:graphql',
+    loadData: loader('graphql', () => load(import('../../data/graphql.json'))),
+  },
 };
 
 export function getSubject(id: string | undefined): Subject | null {

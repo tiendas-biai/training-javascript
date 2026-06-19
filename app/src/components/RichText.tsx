@@ -5,6 +5,8 @@ import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-jsx';
 import 'prismjs/components/prism-tsx';
+// GraphQL SDL/queries appear in the GraphQL subject's cards and deep dives.
+import 'prismjs/components/prism-graphql';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
