@@ -26,15 +26,16 @@ up automatically.
 ## Progress checklist
 
 - [x] **`graphql` devDependency installed** in `app/package.json` (`^17.0.1`) — used only by the new
-  verifier; `import { parse } from 'graphql'` confirmed working. ⚠️ **Uncommitted** (working tree has
-  `package.json` + `package-lock.json` changes).
-- [ ] `app/src/lib/subjects.ts` — add the `graphql` registry entry.
-- [ ] `app/data/graphql.json` — create the bank (start `[]`, fill per topic).
-- [ ] `app/data/deepdives/graphql.json` — create the deep-dive map (start `{}`).
-- [ ] `app/scripts/verify-graphql-examples.mjs` — new verifier (see below).
-- [ ] `app/src/components/RichText.tsx` — register Prism `graphql` grammar.
-- [ ] Topics 1–9 authored (cards + deep dives), verified, committed per topic.
-- [ ] `CLAUDE.md` + `documents/DEEP_DIVES.md` updated; final typecheck/test/coverage.
+  verifier; `import { parse } from 'graphql'` confirmed working (committed in `ce0e9c4`).
+- [x] `app/src/lib/subjects.ts` — `graphql` registry entry added (icon `◈`, color `#e10098`).
+- [x] `app/data/graphql.json` — bank created and filled: **72 cards**, unique ids, MCQ/MR validated.
+- [x] `app/data/deepdives/graphql.json` — deep-dive map: **72 entries, 0 cards missing a deep dive**.
+- [x] `app/scripts/verify-graphql-examples.mjs` — verifier added (` ```graphql `→`parse()`, ` ```js `→`node --check`).
+- [x] `app/src/components/RichText.tsx` — Prism `graphql` grammar registered.
+- [x] Topics 1–9 authored (cards + deep dives), verified (`✓ All examples parse clean`), committed per topic.
+- [x] `CLAUDE.md` + `documents/DEEP_DIVES.md` updated; typecheck clean, 117/117 tests pass, coverage 72/72.
+
+**Status: COMPLETE.** All 9 topics authored, verified, and committed; docs updated.
 
 ## Subject registration
 

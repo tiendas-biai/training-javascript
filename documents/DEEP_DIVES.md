@@ -119,6 +119,10 @@ leaking `null`); those are intentional and the verifier passes because the error
 - `verify-deepdive-examples.mjs <subject>` — tsx type-check (React; uses installed libs).
 - `verify-node-examples.mjs <subject>` — `node --check` syntax pass (Node/JS snippets). ESM detected
   via top-level `import`/`export`/`await` (written as `.mjs`), else CommonJS (`.cjs`).
+- `verify-graphql-examples.mjs graphql` — routes by fence language: ` ```graphql ` blocks are parsed
+  with `parse()` from the **`graphql`** package (a `^17` devDependency added for this; validates
+  SDL *and* executable-document syntax **without a schema**, never executed), ` ```js ` blocks go
+  through `node --check`. Reports failing ids; prints `✓ All examples parse clean.`
 
 **JavaScript — DONE: all 267 cards / 12 topics** — Types (20), Arrays (84), Strings (83), Coercion (8),
 Scope (11), Execution (10), this (7), Prototypes (6), Async (11), Functions (9), Error Handling (6),
@@ -129,6 +133,14 @@ Modern JS (12). Every card has an `example`; verified with **`verify-node-exampl
 used periods and was rewritten. Also **fixed a wrong card answer** while authoring: `array-join-002`
 claimed `[1,null,undefined,2].join('-')` is `'1--2'`; it's `'1---2'` (4 elements → 3 separators) —
 corrected in `data/javascript.json` too.
+
+**GraphQL — DONE: all 72 cards / 9 topics** — Introduction (8), Queries (10), Mutations (6),
+Schema & Type System (12), Resolvers & Execution (9), Subscriptions (5), Performance/N+1/DataLoader/
+caching (8), Best Practices & Security (8), Ecosystem & Tooling (6). Every card has a deep dive; 60 of
+72 carry an `example` (conceptual cards — e.g. GraphQL vs REST, when-to-use — omit it). Examples are
+` ```graphql ` SDL/queries/mutations or ` ```js ` resolver/DataLoader/client snippets; verified with
+**`verify-graphql-examples.mjs graphql`**, **all 60 parse clean**. Authored with colon-ending bold
+labels so the `DeepDive` spacing regex fires. Plan/runbook: `documents/GRAPHQL_PLAN.md`.
 
 **Remaining subject — not started:** `aws` deepdives file is still `{}`. AWS cards are scenario-based —
 examples optional.
