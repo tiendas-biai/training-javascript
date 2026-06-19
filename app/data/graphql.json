@@ -396,5 +396,213 @@
       "mutations",
       "mr"
     ]
+  },
+  {
+    "id": "graphql-schema-001",
+    "topic": "Schema & Types",
+    "subtopic": "SDL & object types",
+    "difficulty": "easy",
+    "question": "What is the SDL, and how do you declare an object type?",
+    "answer": "The **Schema Definition Language (SDL)** is GraphQL’s human-readable, language-agnostic syntax for describing a schema. The most common building block is the **object type**: `type User { … }` listing named fields, each with its own type (`name: String!`). Object types and their fields are the nodes and edges of the graph clients traverse.",
+    "explanation": "SDL is implementation-independent: the same `type User { … }` describes a schema whether the server is written in JS, Go, or Java.",
+    "tags": [
+      "schema",
+      "sdl",
+      "object-types"
+    ]
+  },
+  {
+    "id": "graphql-schema-002",
+    "topic": "Schema & Types",
+    "subtopic": "Built-in scalars",
+    "difficulty": "easy",
+    "question": "What are GraphQL’s five built-in scalar types?",
+    "answer": "GraphQL ships with five **scalars** (leaf values): **Int** (signed 32-bit), **Float** (double-precision), **String** (UTF-8), **Boolean** (true/false), and **ID** (a unique identifier, serialized as a String but not meant to be human-readable). Every field ultimately resolves down to scalars at the leaves of a query.",
+    "explanation": "Scalars are the leaves of any selection — you never put a sub-selection on a scalar field.",
+    "tags": [
+      "schema",
+      "scalars"
+    ]
+  },
+  {
+    "id": "graphql-schema-003",
+    "topic": "Schema & Types",
+    "subtopic": "Custom scalars",
+    "difficulty": "medium",
+    "question": "Why and how do you define a custom scalar?",
+    "answer": "When the five built-ins don’t capture a value’s meaning or validation — dates, emails, URLs, big integers — you declare a **custom scalar** with `scalar DateTime`. The server provides serialize / parseValue / parseLiteral logic to convert between the wire format (usually a String) and an internal representation, centralizing validation in one place.",
+    "explanation": "Custom scalars are opaque to the client beyond their serialized form; the agreed encoding (e.g. ISO-8601 for DateTime) is part of the API contract.",
+    "tags": [
+      "schema",
+      "scalars",
+      "custom-scalars"
+    ]
+  },
+  {
+    "id": "graphql-schema-004",
+    "topic": "Schema & Types",
+    "subtopic": "Enums",
+    "difficulty": "easy",
+    "question": "What is an enum type in GraphQL?",
+    "answer": "An **enum** is a scalar restricted to a fixed set of named values: `enum Episode { NEWHOPE EMPIRE JEDI }`. The schema (and validation) guarantees a field of that type only ever takes one of those values, which self-documents the allowed options and prevents typos that a free-form String would allow.",
+    "explanation": "On the wire enum values are unquoted names (e.g. `episode: JEDI`), not strings; servers may map them to any internal value.",
+    "tags": [
+      "schema",
+      "enums"
+    ]
+  },
+  {
+    "id": "graphql-schema-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Schema & Types",
+    "subtopic": "Lists & non-null",
+    "difficulty": "hard",
+    "question": "In the field type `friends: [Character!]!`, what do the two `!` marks mean?",
+    "options": [
+      "The list may be null but its elements may not.",
+      "The list itself is non-null (never null, though it may be empty) AND no element may be null.",
+      "Both marks are redundant; one `!` would mean the same thing.",
+      "The list must contain at least one element."
+    ],
+    "answer": "The list itself is non-null (never null, though it may be empty) AND no element may be null.",
+    "explanation": "The inner `!` (`Character!`) forbids null *elements*; the outer `!` (`[…]!`) forbids a null *list*. Non-null says nothing about length — `[]` is a perfectly valid non-null list. By default (no `!`) both the list and its elements are nullable.",
+    "tags": [
+      "schema",
+      "lists",
+      "non-null",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-schema-005",
+    "topic": "Schema & Types",
+    "subtopic": "Interfaces",
+    "difficulty": "medium",
+    "question": "What is an interface in GraphQL, and how do types use it?",
+    "answer": "An **interface** declares a set of fields that multiple object types must include: `interface Character { id: ID! name: String! }`. Object types `implements` the interface and add their own fields. A field can return the interface type, and clients use inline fragments (`... on Droid { … }`) to select type-specific fields on the concrete result.",
+    "explanation": "Because every implementer shares the interface’s fields, you can select those common fields directly on an interface-typed result without an inline fragment.",
+    "tags": [
+      "schema",
+      "interfaces",
+      "polymorphism"
+    ]
+  },
+  {
+    "id": "graphql-schema-006",
+    "topic": "Schema & Types",
+    "subtopic": "Unions",
+    "difficulty": "medium",
+    "question": "What is a union type, and how does it differ from an interface?",
+    "answer": "A **union** lists several object types that share **no required common fields**: `union SearchResult = Human | Droid | Starship`. A union-typed field can return any member, and the client must use inline fragments per member plus usually `__typename`. The difference from an interface: an interface guarantees shared fields, a union only enumerates possible types.",
+    "explanation": "Use a union for heterogeneous results (search across unrelated types); use an interface when the types genuinely share fields and behavior.",
+    "tags": [
+      "schema",
+      "unions",
+      "polymorphism"
+    ]
+  },
+  {
+    "id": "graphql-schema-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Schema & Types",
+    "subtopic": "Input vs object types",
+    "difficulty": "medium",
+    "question": "How does an `input` type differ from a regular object `type`?",
+    "options": [
+      "There is no difference; `input` is just an alias for `type`.",
+      "Input types describe data passed *into* arguments and may contain only scalars, enums, and other input types; object types describe data returned *out* and have resolver-backed fields.",
+      "Input types can have resolvers but object types cannot.",
+      "Object types are used in mutations and input types are used in queries."
+    ],
+    "answer": "Input types describe data passed *into* arguments and may contain only scalars, enums, and other input types; object types describe data returned *out* and have resolver-backed fields.",
+    "explanation": "Input types have no resolvers (there’s nothing to resolve on incoming data), so they can’t contain output object types, interfaces, or unions. This split is why you often define both a `User` (output) and a `UserInput` (input).",
+    "tags": [
+      "schema",
+      "input-types",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-schema-007",
+    "topic": "Schema & Types",
+    "subtopic": "Root types",
+    "difficulty": "medium",
+    "question": "What are the three root operation types in a GraphQL schema?",
+    "answer": "The entry points are **Query** (reads), **Mutation** (writes), and **Subscription** (real-time event streams). Each is an ordinary object type whose top-level fields are the operations clients may start. Only **Query** is required; Mutation and Subscription are optional. The `schema { query: Query, mutation: Mutation }` block can rename them, but the defaults are conventional.",
+    "explanation": "A query like `{ user(id: \"1\") { … } }` is just selecting the `user` field on the `Query` root type.",
+    "tags": [
+      "schema",
+      "root-types"
+    ]
+  },
+  {
+    "id": "graphql-schema-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Schema & Types",
+    "subtopic": "The ID scalar",
+    "difficulty": "medium",
+    "question": "Which best describes the built-in `ID` scalar?",
+    "options": [
+      "An auto-incrementing integer the server generates.",
+      "A unique identifier, serialized as a String, intended to be opaque rather than human-readable.",
+      "A UUID that GraphQL validates for you.",
+      "Exactly the same as the `Int` type."
+    ],
+    "answer": "A unique identifier, serialized as a String, intended to be opaque rather than human-readable.",
+    "explanation": "`ID` signals “this is an identifier” for caching/normalization tools. It serializes as a String and accepts String (or integer) input, but carries no human-readable guarantee and isn’t validated as any particular format.",
+    "tags": [
+      "schema",
+      "scalars",
+      "id",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-schema-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Schema & Types",
+    "subtopic": "Interface vs union",
+    "difficulty": "hard",
+    "question": "You need a `search` field returning Humans, Droids, and Starships — unrelated types with no shared fields. What fits best?",
+    "options": [
+      "An interface they all implement.",
+      "A union of the three types.",
+      "An enum listing the type names.",
+      "A single object type with every possible field made nullable."
+    ],
+    "answer": "A union of the three types.",
+    "explanation": "With no common fields, a union (`union SearchResult = Human | Droid | Starship`) is the right tool. An interface would force a shared field contract these types don’t have; an enum only names values; and a god-object with all-nullable fields throws away type safety.",
+    "tags": [
+      "schema",
+      "unions",
+      "interfaces",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-schema-mr-001",
+    "type": "multiple-response",
+    "topic": "Schema & Types",
+    "subtopic": "Built-in scalars",
+    "difficulty": "easy",
+    "question": "Which of the following are GraphQL *built-in* scalar types? (Select THREE)",
+    "options": [
+      "ID",
+      "Boolean",
+      "Float",
+      "DateTime",
+      "JSON"
+    ],
+    "answers": [
+      "ID",
+      "Boolean",
+      "Float"
+    ],
+    "explanation": "The five built-ins are Int, Float, String, Boolean, and ID. `DateTime` and `JSON` are *custom* scalars you must define and implement yourself — they are not part of the spec.",
+    "tags": [
+      "schema",
+      "scalars",
+      "mr"
+    ]
   }
 ]

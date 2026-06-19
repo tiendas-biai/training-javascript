@@ -241,5 +241,128 @@
         "url": "https://graphql.org/learn/queries/#mutations"
       }
     ]
+  },
+  "graphql-schema-001": {
+    "explanation": "**What SDL is:** A declarative, language-neutral syntax for describing types. It’s what you read in docs and what tools introspect.\n\n**Object types:** `type Name { field: Type }` defines a node in your graph. Each field has a type, may take arguments, and (on the server) is backed by a resolver.\n\n**Why it’s central:** The schema written in SDL is the single contract between client and server; validation, introspection, and codegen all derive from it.\n\n**Common mistake:** Confusing the SDL schema (types) with query documents (selections). Types are defined once on the server; queries select against them.",
+    "example": "```graphql\ntype User {\n  id: ID!\n  name: String!\n  email: String\n  posts: [Post!]!\n}\n\ntype Post {\n  id: ID!\n  title: String!\n  author: User!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Schemas and Types",
+        "url": "https://graphql.org/learn/schema/"
+      }
+    ]
+  },
+  "graphql-schema-002": {
+    "explanation": "**The leaf values:** Every query bottoms out in scalars. GraphQL defines five: Int (32-bit signed), Float (double), String (UTF-8), Boolean, and ID.\n\n**ID is special:** It’s serialized like a String but signals “identifier,” which client caches use for normalization.\n\n**Why only five:** A small core keeps the spec portable; anything richer (dates, money) is a custom scalar you define.\n\n**Common mistake:** Putting a selection set on a scalar (`name { … }`) — scalars are leaves and take no sub-fields.",
+    "example": "```graphql\ntype Product {\n  id: ID!\n  title: String!\n  price: Float!\n  stock: Int!\n  inStock: Boolean!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Scalar types",
+        "url": "https://graphql.org/learn/schema/#scalar-types"
+      }
+    ]
+  },
+  "graphql-schema-003": {
+    "explanation": "**The problem:** Built-in scalars can’t express domain meaning or validation — a `String` doesn’t guarantee a valid email or ISO date.\n\n**The fix:** Declare `scalar DateTime` (etc.) and implement three hooks on the server: serialize (internal → wire), parseValue (variable → internal), parseLiteral (inline literal → internal).\n\n**Why it works:** Validation and formatting live in one place; every field of that scalar type is consistently coerced.\n\n**Common mistake:** Treating custom scalars as free magic — the *client* must still agree on the encoding (e.g. ISO-8601), and you must implement coercion or use a library like graphql-scalars.",
+    "example": "```graphql\nscalar DateTime\n\ntype Event {\n  id: ID!\n  name: String!\n  startsAt: DateTime!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Scalar types",
+        "url": "https://graphql.org/learn/schema/#scalar-types"
+      },
+      {
+        "label": "the-guild.dev — graphql-scalars",
+        "url": "https://the-guild.dev/graphql/scalars"
+      }
+    ]
+  },
+  "graphql-schema-004": {
+    "explanation": "**What an enum is:** A scalar limited to a fixed list of named values, declared `enum Episode { NEWHOPE EMPIRE JEDI }`.\n\n**Why use it:** The schema enforces that only those values appear, which documents the options and blocks typos a free-form String would allow.\n\n**Wire format:** Enum values are unquoted names (`episode: JEDI`), not strings. Servers may map each name to any internal value (a number, a DB code).\n\n**Common mistake:** Using a String where the set of values is known and closed — an enum is safer and self-documenting.",
+    "example": "```graphql\nenum Role {\n  ADMIN\n  EDITOR\n  VIEWER\n}\n\ntype Member {\n  id: ID!\n  role: Role!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Enumeration types",
+        "url": "https://graphql.org/learn/schema/#enumeration-types"
+      }
+    ]
+  },
+  "graphql-schema-mcq-001": {
+    "explanation": "**Read it inside-out:** `[Character!]!` — the inner `!` binds to `Character` (elements can’t be null); the outer `!` binds to the list (the list itself can’t be null).\n\n**Four combinations:** `[Character]` (list nullable, elements nullable), `[Character!]` (list nullable, no null elements), `[Character]!` (list non-null, elements nullable), `[Character!]!` (both non-null).\n\n**Key nuance:** Non-null ≠ non-empty. `[]` satisfies `[Character!]!`.\n\n**Why it matters:** Non-null fields that error propagate null up to the nearest nullable parent — so over-using `!` can blank out large parts of a response.\n\n**Common mistake:** Reading the marks as a length constraint or assuming one `!` covers both list and elements.",
+    "example": "```graphql\ntype Character {\n  name: String!\n  # never null; may be empty; contains no null elements\n  friends: [Character!]!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Lists and Non-Null",
+        "url": "https://graphql.org/learn/schema/#lists-and-non-null"
+      }
+    ]
+  },
+  "graphql-schema-005": {
+    "explanation": "**What an interface is:** A named set of fields that implementing types must provide. `type Droid implements Character` must include all of `Character`’s fields, then may add its own.\n\n**How clients query it:** Select shared fields directly on the interface-typed result; use inline fragments `... on Droid { primaryFunction }` for type-specific fields. `__typename` tells you the concrete type.\n\n**Why it’s useful:** It models “is-a” relationships and lets a field (e.g. `hero`) return any Character while still guaranteeing common fields.\n\n**Common mistake:** Forgetting that an implementing type must declare *every* interface field (and keep compatible types), or expecting to select a subtype-only field without an inline fragment.",
+    "example": "```graphql\ninterface Character {\n  id: ID!\n  name: String!\n}\n\ntype Human implements Character {\n  id: ID!\n  name: String!\n  totalCredits: Int\n}\n\ntype Droid implements Character {\n  id: ID!\n  name: String!\n  primaryFunction: String\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Interfaces",
+        "url": "https://graphql.org/learn/schema/#interfaces"
+      }
+    ]
+  },
+  "graphql-schema-006": {
+    "explanation": "**What a union is:** `union SearchResult = Human | Droid | Starship` — a field of this type may return any one member.\n\n**Interface vs union:** An interface guarantees shared fields across implementers; a union just enumerates possible types with no shared-field promise.\n\n**How to query it:** You can’t select fields directly (there are no common ones); use inline fragments per member and typically `__typename` to branch in the client.\n\n**When to reach for it:** Heterogeneous results — a search returning unrelated entities, or a result-or-error pattern (`union Result = Success | ValidationError`).\n\n**Common mistake:** Using a union when the types actually share fields — an interface would be cleaner there.",
+    "example": "```graphql\nunion SearchResult = Human | Droid | Starship\n\ntype Query {\n  search(text: String!): [SearchResult!]!\n}\n\n# Query side:\n# search(text: \"a\") { __typename ... on Human { name } ... on Droid { name } }\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Union types",
+        "url": "https://graphql.org/learn/schema/#union-types"
+      }
+    ]
+  },
+  "graphql-schema-mcq-002": {
+    "explanation": "**Direction is everything:** Object `type`s describe data coming *out* (responses); `input` types describe data going *in* (arguments).\n\n**The containment rule:** Because input data has no resolvers, input types may contain only scalars, enums, and other input types — never object types, interfaces, or unions.\n\n**Practical consequence:** You commonly define a `User` output type and a separate `CreateUserInput` input type, even if they overlap.\n\n**Why the wrong answers fail:** `input` ≠ `type`; neither has client-side resolvers; and input/object usage isn’t split by query vs mutation — queries take input arguments too.",
+    "example": "```graphql\ntype User {\n  id: ID!\n  name: String!\n  posts: [Post!]!   # object field — only valid on output types\n}\n\ninput CreateUserInput {\n  name: String!     # scalars / enums / other inputs only\n  email: String!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Input types",
+        "url": "https://graphql.org/learn/schema/#input-types"
+      }
+    ]
+  },
+  "graphql-schema-007": {
+    "explanation": "**The three entry points:** Query (reads), Mutation (writes), Subscription (event streams). Each is a normal object type; its fields are the operations clients can invoke.\n\n**What’s required:** Only Query. Mutation and Subscription are optional and added when needed.\n\n**Renaming:** The `schema { query: …, mutation: … }` block lets you map them to differently-named types, but the defaults (`Query`, `Mutation`, `Subscription`) are conventional.\n\n**Mental model:** `{ user(id: 1) { name } }` is just selecting the `user` field on the Query root — the root types are where every operation begins.\n\n**Common mistake:** Thinking root types are magic; they’re ordinary types treated specially only as starting points.",
+    "example": "```graphql\ntype Query {\n  user(id: ID!): User\n  posts: [Post!]!\n}\n\ntype Mutation {\n  createUser(input: CreateUserInput!): User!\n}\n\ntype Subscription {\n  postAdded: Post!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — The Query and Mutation types",
+        "url": "https://graphql.org/learn/schema/#the-query-and-mutation-types"
+      }
+    ]
+  },
+  "graphql-schema-mcq-003": {
+    "explanation": "**What ID means:** It marks a field as a unique identifier. On the wire it serializes as a String, and it accepts String (and integer) literals as input.\n\n**Why it exists separately from String:** Client caches (Apollo, Relay) combine `__typename` + `id` to normalize objects, so typing identifiers as `ID` is a strong signal.\n\n**What it does NOT do:** It doesn’t auto-generate values, isn’t validated as a UUID, and isn’t an integer. It’s deliberately opaque — clients shouldn’t parse meaning from it.\n\n**Common mistake:** Expecting GraphQL to generate or validate IDs; that’s your resolver/data layer’s job.",
+    "example": "```graphql\ntype User {\n  id: ID!     # opaque identifier, serialized as a String\n  name: String!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Scalar types",
+        "url": "https://graphql.org/learn/schema/#scalar-types"
+      }
+    ]
+  },
+  "graphql-schema-mcq-004": {
+    "explanation": "**The deciding question:** Do the result types share fields? If yes → interface. If no → union.\n\n**Why a union here:** Human, Droid, and Starship are unrelated, so a `union SearchResult` lets one field return any of them, and clients branch with inline fragments + `__typename`.\n\n**Why the others fail:** An interface forces a shared field contract that doesn’t exist; an enum only lists names, not whole objects; and one all-nullable object type discards type safety and makes the response ambiguous.\n\n**Common mistake:** Defaulting to interfaces for every polymorphic field — unions are the right call when there’s nothing in common.",
+    "example": "```graphql\nunion SearchResult = Human | Droid | Starship\n\ntype Query {\n  search(text: String!): [SearchResult!]!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Union types",
+        "url": "https://graphql.org/learn/schema/#union-types"
+      }
+    ]
+  },
+  "graphql-schema-mr-001": {
+    "explanation": "**The five built-ins:** Int, Float, String, Boolean, ID. From the options, ID, Boolean, and Float qualify.\n\n**Why DateTime and JSON don’t:** They’re common *custom* scalars — you must declare (`scalar DateTime`) and implement their coercion yourself, often via a library. The spec doesn’t define them.\n\n**Takeaway:** If a value type isn’t one of the five, it’s either an object/enum/list composition or a custom scalar you own.",
+    "resources": [
+      {
+        "label": "graphql.org — Scalar types",
+        "url": "https://graphql.org/learn/schema/#scalar-types"
+      }
+    ]
   }
 }
