@@ -193,5 +193,240 @@
     "answer": "Run `docker login <registry>` (or pipe a token to `docker login --password-stdin`), which stores credentials for subsequent push/pull",
     "explanation": "`docker login` authenticates and caches a token in the Docker config so later `push`/`pull` calls are authorized. There is no `LOGIN` Dockerfile instruction. For ECR you obtain a short-lived token with `aws ecr get-login-password` and pipe it to `docker login --password-stdin` — covered in the AWS topics.",
     "tags": ["login", "auth", "mcq"]
+  },
+  {
+    "id": "docker-k8s-pod-001",
+    "topic": "Pods & Workloads",
+    "subtopic": "Pods",
+    "difficulty": "easy",
+    "question": "What is a Pod in Kubernetes, and how does it relate to containers?",
+    "answer": "A **Pod** is the smallest deployable unit in Kubernetes — a wrapper around **one or more containers** that share the same network namespace (one IP, same `localhost`) and can share storage volumes. Usually one app container per Pod; extra containers are **sidecars** (logging, proxy) that must run alongside it.",
+    "explanation": "You rarely create Pods directly — a controller (Deployment) manages them. Containers in a Pod are always co-scheduled on the same node and live/die together. They reach each other over `localhost` and shared volumes.",
+    "tags": ["pod", "containers", "sidecar"]
+  },
+  {
+    "id": "docker-k8s-pod-002",
+    "topic": "Pods & Workloads",
+    "subtopic": "Deployments",
+    "difficulty": "medium",
+    "question": "What is the relationship between a Deployment, a ReplicaSet, and Pods?",
+    "answer": "A **Deployment** declares the desired state (which image, how many replicas) and manages a **ReplicaSet**, which in turn keeps the specified number of identical **Pods** running. You edit the Deployment; it creates a new ReplicaSet for each change and reconciles reality to match.",
+    "explanation": "The ReplicaSet is the controller that maintains replica count (recreating failed Pods); the Deployment adds rollout/rollback orchestration on top by managing ReplicaSets. You almost always work with Deployments, not bare ReplicaSets or Pods.",
+    "tags": ["deployment", "replicaset", "pod"]
+  },
+  {
+    "id": "docker-k8s-pod-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Pods & Workloads",
+    "subtopic": "Rolling Updates",
+    "difficulty": "medium",
+    "question": "When you change a Deployment's image, what does the default `RollingUpdate` strategy do?",
+    "options": [
+      "Deletes all old Pods, then creates new ones (downtime)",
+      "Gradually replaces old Pods with new ones a few at a time, keeping the app available, and can roll back on failure",
+      "Creates new Pods only after you manually approve each one",
+      "Restarts the existing Pods in place with the new image"
+    ],
+    "answer": "Gradually replaces old Pods with new ones a few at a time, keeping the app available, and can roll back on failure",
+    "explanation": "`RollingUpdate` (the default) spins up a new ReplicaSet and shifts Pods over incrementally, bounded by `maxSurge`/`maxUnavailable`, so there's no downtime. `kubectl rollout undo` reverts to the previous ReplicaSet. The alternative `Recreate` strategy kills all old Pods first (causing downtime) and is only for apps that can't run two versions at once.",
+    "tags": ["rolling-update", "rollout", "mcq"]
+  },
+  {
+    "id": "docker-k8s-pod-003",
+    "topic": "Pods & Workloads",
+    "subtopic": "Images in Pods",
+    "difficulty": "medium",
+    "question": "How does a container image get referenced in a Pod spec, and what controls re-pulling and private-registry access?",
+    "answer": "Each container in `spec.containers` has an `image:` field (e.g. `myrepo/app:1.2.0`). **`imagePullPolicy`** controls re-pulling (`IfNotPresent`, `Always`, `Never`; defaults to `Always` for `:latest`, else `IfNotPresent`). For private registries, reference an **`imagePullSecrets`** entry so the kubelet can authenticate.",
+    "explanation": "Pin a specific tag or digest rather than `:latest` for reproducible rollouts (and so `imagePullPolicy` is predictable). On EKS, nodes can pull from ECR via the node's IAM role instead of an imagePullSecret — covered in the AWS topics.",
+    "tags": ["image", "imagepullpolicy", "imagepullsecrets"]
+  },
+  {
+    "id": "docker-k8s-pod-004",
+    "topic": "Pods & Workloads",
+    "subtopic": "Labels & Selectors",
+    "difficulty": "medium",
+    "question": "How do labels and selectors connect Deployments, ReplicaSets, Services, and Pods?",
+    "answer": "**Labels** are key/value tags on objects (e.g. `app: web`). **Selectors** match labels to form loose couplings: a Deployment's `selector` tells its ReplicaSet which Pods it owns, and a Service's `selector` picks which Pods receive its traffic. Nothing is wired by name — it's all label matching.",
+    "explanation": "This is how a Service automatically starts routing to new Pods created during a rollout: the new Pods carry the matching label, so they join the Service's endpoint set with no manual change. Mismatched labels/selectors are a classic cause of 'my Service has no endpoints'.",
+    "tags": ["labels", "selectors", "service"]
+  },
+  {
+    "id": "docker-k8s-svc-001",
+    "topic": "Services & Networking",
+    "subtopic": "Service Types",
+    "difficulty": "medium",
+    "question": "What are the ClusterIP, NodePort, and LoadBalancer Service types?",
+    "answer": "A **Service** gives a stable virtual IP/DNS name in front of a changing set of Pods. **ClusterIP** (default) is reachable only inside the cluster. **NodePort** opens a fixed port on every node so external traffic can reach the Service. **LoadBalancer** provisions an external load balancer (on AWS, an ELB/NLB) that forwards to the Service.",
+    "explanation": "Pods are ephemeral with changing IPs; a Service provides a durable front. LoadBalancer builds on NodePort which builds on ClusterIP. In the cloud, LoadBalancer is the usual way to expose a single service externally; for many HTTP routes you use an Ingress (next card) instead of many LoadBalancers.",
+    "tags": ["service", "clusterip", "loadbalancer"]
+  },
+  {
+    "id": "docker-k8s-svc-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Services & Networking",
+    "subtopic": "Service Types",
+    "difficulty": "easy",
+    "question": "Which Service type exposes Pods only to other workloads inside the cluster?",
+    "options": [
+      "NodePort",
+      "LoadBalancer",
+      "ClusterIP",
+      "ExternalName"
+    ],
+    "answer": "ClusterIP",
+    "explanation": "ClusterIP is the default and is reachable only from within the cluster — ideal for internal services like a database or backend API. NodePort and LoadBalancer expose traffic externally. ExternalName is a special type that just returns a CNAME to an external DNS name and proxies nothing.",
+    "tags": ["clusterip", "service", "mcq"]
+  },
+  {
+    "id": "docker-k8s-svc-002",
+    "topic": "Services & Networking",
+    "subtopic": "Ingress",
+    "difficulty": "medium",
+    "question": "What does an Ingress add over a Service, and what is an ingress controller?",
+    "answer": "An **Ingress** is an L7 (HTTP/HTTPS) routing rule set — it maps hostnames and URL paths to backend Services, and can terminate TLS — so many services share one external entry point. An Ingress does nothing by itself; an **ingress controller** (NGINX, or the **AWS Load Balancer Controller**) actually watches Ingress objects and configures the real load balancer.",
+    "explanation": "Without Ingress you'd need a LoadBalancer Service (and an external LB) per service. Ingress consolidates host/path routing behind one LB. On EKS the AWS Load Balancer Controller turns Ingress resources into an Application Load Balancer (ALB) — covered in the AWS topics.",
+    "tags": ["ingress", "ingress-controller", "alb"]
+  },
+  {
+    "id": "docker-k8s-svc-003",
+    "topic": "Services & Networking",
+    "subtopic": "Service Discovery",
+    "difficulty": "medium",
+    "question": "How do Pods discover and reach Services by name inside a cluster?",
+    "answer": "Kubernetes runs an in-cluster **DNS** (CoreDNS). Every Service gets a DNS name `**<service>.<namespace>.svc.cluster.local**`. A Pod in the same namespace can use just `<service>`; cross-namespace uses `<service>.<namespace>`. The name resolves to the Service's stable ClusterIP, which load-balances across the matching Pods.",
+    "explanation": "This is the cluster-scale version of Docker's user-defined-network DNS. Because clients talk to the Service name (not Pod IPs), Pods can be rescheduled freely. Env-var-based discovery also exists but DNS is the standard approach.",
+    "tags": ["dns", "coredns", "service-discovery"]
+  },
+  {
+    "id": "docker-k8s-cfg-001",
+    "topic": "Config & Secrets",
+    "subtopic": "ConfigMaps",
+    "difficulty": "easy",
+    "question": "What is a ConfigMap, and how is it consumed by a Pod?",
+    "answer": "A **ConfigMap** stores non-confidential configuration as key/value pairs, decoupling config from the image. A Pod consumes it as **environment variables** (`envFrom`/`valueFrom.configMapKeyRef`) or as **files in a mounted volume**. Change the config without rebuilding the image.",
+    "explanation": "Same idea as Docker's `--env-file`/mounted config, but cluster-managed and reusable across Pods. ConfigMaps are plain text and not for secrets. Note: env-var values are read at Pod start (a restart is needed to pick up changes), while volume-mounted ConfigMaps can update in place.",
+    "tags": ["configmap", "config", "env"]
+  },
+  {
+    "id": "docker-k8s-cfg-002",
+    "topic": "Config & Secrets",
+    "subtopic": "Secrets",
+    "difficulty": "medium",
+    "question": "How do Kubernetes Secrets differ from ConfigMaps, and are they encrypted?",
+    "answer": "**Secrets** hold sensitive data (passwords, tokens, keys) and are consumed the same way as ConfigMaps (env vars or mounted files). Their values are **base64-encoded, not encrypted, by default** — base64 is just encoding. For real protection enable **encryption at rest** for Secrets in etcd and restrict access with RBAC.",
+    "explanation": "Treating base64 as security is the classic mistake. Best practice on AWS is to keep secrets in **AWS Secrets Manager / SSM Parameter Store** and sync or mount them (e.g. via the Secrets Store CSI driver) rather than committing Secret manifests — covered in the AWS topics.",
+    "tags": ["secret", "base64", "encryption"]
+  },
+  {
+    "id": "docker-k8s-cfg-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Config & Secrets",
+    "subtopic": "Injection",
+    "difficulty": "medium",
+    "question": "You need a config value that can update without restarting the Pod. Which injection method supports in-place updates?",
+    "options": [
+      "Injecting it as an environment variable from a ConfigMap",
+      "Mounting the ConfigMap as a file in a volume",
+      "Baking it into the container image",
+      "Passing it as a container command argument"
+    ],
+    "answer": "Mounting the ConfigMap as a file in a volume",
+    "explanation": "Environment variables are resolved when the container starts, so changing the ConfigMap won't update them until the Pod restarts. A ConfigMap mounted as a volume is updated in place by the kubelet (after a short delay), so an app that re-reads the file picks up changes without a restart. Baking config into the image or command args is fully static.",
+    "tags": ["configmap", "volume", "mcq"]
+  },
+  {
+    "id": "docker-k8s-stor-001",
+    "topic": "Kubernetes Storage",
+    "subtopic": "PV & PVC",
+    "difficulty": "medium",
+    "question": "What is the difference between a PersistentVolume (PV) and a PersistentVolumeClaim (PVC)?",
+    "answer": "A **PersistentVolume (PV)** is a piece of cluster storage (backed by EBS, EFS, NFS, …) — the supply. A **PersistentVolumeClaim (PVC)** is a Pod's request for storage of a given size/access mode — the demand. Kubernetes **binds** a PVC to a matching PV, and the Pod mounts the PVC.",
+    "explanation": "This separation lets app authors ask for storage (PVC) without knowing the backend, while the PV (often created dynamically via a StorageClass) handles the real disk. The PVC outlives the Pod, so data persists across Pod rescheduling.",
+    "tags": ["pv", "pvc", "storage"]
+  },
+  {
+    "id": "docker-k8s-stor-002",
+    "topic": "Kubernetes Storage",
+    "subtopic": "StorageClass",
+    "difficulty": "medium",
+    "question": "What does a StorageClass do, and what is dynamic provisioning?",
+    "answer": "A **StorageClass** defines a *type* of storage (which provisioner/driver, parameters like disk type, reclaim policy). With **dynamic provisioning**, creating a PVC that references a StorageClass automatically creates a matching PV (and the real disk) on demand — no pre-created PVs needed.",
+    "explanation": "On EKS, a StorageClass backed by the **EBS CSI driver** provisions an EBS volume per PVC (block, single-node ReadWriteOnce); the **EFS CSI driver** gives shared ReadWriteMany storage. Choosing the StorageClass picks the backend and its performance/cost characteristics.",
+    "tags": ["storageclass", "dynamic-provisioning", "csi"]
+  },
+  {
+    "id": "docker-k8s-stor-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Kubernetes Storage",
+    "subtopic": "Ephemeral vs Persistent",
+    "difficulty": "easy",
+    "question": "Where does data written to an `emptyDir` volume go when the Pod is deleted?",
+    "options": [
+      "It persists and is re-attached to the next Pod",
+      "It is lost — `emptyDir` lives only for the Pod's lifetime",
+      "It is automatically backed up to a PersistentVolume",
+      "It is stored in the container image"
+    ],
+    "answer": "It is lost — `emptyDir` lives only for the Pod's lifetime",
+    "explanation": "`emptyDir` is ephemeral scratch space tied to the Pod; deleting the Pod deletes the data (it does survive a container restart within the same Pod). For data that must outlive the Pod, use a PVC backed by a PersistentVolume. This mirrors Docker's writable-layer-vs-volume distinction.",
+    "tags": ["emptydir", "ephemeral", "mcq"]
+  },
+  {
+    "id": "docker-k8s-health-001",
+    "topic": "Health & Scaling",
+    "subtopic": "Probes",
+    "difficulty": "medium",
+    "question": "What is the difference between liveness, readiness, and startup probes?",
+    "answer": "A **liveness** probe checks if the container is still healthy — on failure Kubernetes **restarts** it. A **readiness** probe checks if it's ready to serve — on failure the Pod is **removed from Service endpoints** (no traffic) but not restarted. A **startup** probe protects slow-starting apps by holding off the other probes until the app has booted.",
+    "explanation": "The key distinction: liveness restarts, readiness gates traffic. Misconfiguring liveness (too aggressive) causes restart loops; missing readiness sends traffic to a not-yet-ready Pod. Startup probes prevent a slow boot from being killed by liveness.",
+    "tags": ["liveness", "readiness", "startup-probe"]
+  },
+  {
+    "id": "docker-k8s-health-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Health & Scaling",
+    "subtopic": "Probes",
+    "difficulty": "medium",
+    "question": "A Pod is temporarily overloaded and shouldn't receive new requests, but you don't want it killed. Which probe should fail?",
+    "options": [
+      "Liveness probe",
+      "Readiness probe",
+      "Startup probe",
+      "All probes simultaneously"
+    ],
+    "answer": "Readiness probe",
+    "explanation": "A failing readiness probe pulls the Pod out of the Service's endpoint list, so it stops getting new traffic — but it is NOT restarted, giving it room to recover. A failing liveness probe would restart the container (wrong here). A startup probe only gates the initial boot. This is exactly why readiness and liveness must be separate checks.",
+    "tags": ["readiness", "probe", "mcq"]
+  },
+  {
+    "id": "docker-k8s-scale-001",
+    "topic": "Health & Scaling",
+    "subtopic": "Requests & Limits",
+    "difficulty": "medium",
+    "question": "What is the difference between a container's resource `requests` and `limits`?",
+    "answer": "**`requests`** are the CPU/memory the container is *guaranteed* — the scheduler uses them to place the Pod on a node with enough capacity. **`limits`** are the *maximum* it may use — exceeding the memory limit gets the container **OOM-killed**, and exceeding the CPU limit gets it **throttled** (not killed).",
+    "explanation": "Requests drive scheduling and reservations; limits cap consumption and protect neighbors. Setting requests too low overcommits the node; omitting limits lets one Pod starve others. They also determine the Pod's QoS class (Guaranteed/Burstable/BestEffort) used during eviction.",
+    "tags": ["requests", "limits", "resources"]
+  },
+  {
+    "id": "docker-k8s-scale-002",
+    "topic": "Health & Scaling",
+    "subtopic": "Autoscaling",
+    "difficulty": "medium",
+    "question": "What does the Horizontal Pod Autoscaler (HPA) do, and what does it need to work?",
+    "answer": "The **HPA** automatically scales a Deployment's **replica count** up or down based on observed metrics (e.g. average CPU/memory utilization, or custom metrics) against a target. It needs the **metrics-server** (or a custom metrics adapter) installed to read Pod metrics, and the Pods must declare resource **requests** so utilization percentages are meaningful.",
+    "explanation": "HPA changes the *number* of Pods (horizontal); the Vertical Pod Autoscaler changes per-Pod resources, and the Cluster Autoscaler / Karpenter adds nodes. On EKS these layers combine: HPA scales Pods, and a node autoscaler adds EC2/Fargate capacity when Pods can't be scheduled.",
+    "tags": ["hpa", "autoscaling", "metrics-server"]
+  },
+  {
+    "id": "docker-k8s-scale-003",
+    "topic": "Health & Scaling",
+    "subtopic": "Namespaces",
+    "difficulty": "easy",
+    "question": "What are Kubernetes namespaces used for?",
+    "answer": "**Namespaces** partition a cluster into virtual sub-clusters, scoping names and enabling per-team/per-environment isolation. They let you apply **resource quotas**, **RBAC**, and **network policies** per namespace, and they scope DNS (`<service>.<namespace>.svc.cluster.local`).",
+    "explanation": "Namespaces separate, say, `dev`/`staging`/`prod` or different teams within one cluster. Cluster-wide objects (nodes, PVs, StorageClasses) are not namespaced. They are an organizational/security boundary, not a hard multi-tenancy isolation by themselves.",
+    "tags": ["namespace", "rbac", "quota"]
   }
 ]
