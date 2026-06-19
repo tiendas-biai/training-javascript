@@ -976,5 +976,144 @@
       "performance",
       "mr"
     ]
+  },
+  {
+    "id": "graphql-bp-001",
+    "topic": "Best Practices & Security",
+    "subtopic": "Pagination",
+    "difficulty": "medium",
+    "question": "What pagination style does GraphQL recommend, and why cursors over offsets?",
+    "answer": "The recommended style is **cursor-based (connection) pagination** — the Relay **Connections** spec with `edges { node, cursor }` and `pageInfo { hasNextPage, endCursor }`, paged via `first`/`after`. Cursors point at a stable position in the result, so they don’t skip or duplicate rows when the underlying list changes between pages, unlike `offset`/`limit`.",
+    "explanation": "Offset pagination breaks under inserts/deletes (rows shift) and is slow at high offsets; cursors encode “where you were,” giving stable, efficient paging.",
+    "tags": [
+      "best-practices",
+      "pagination",
+      "cursors"
+    ]
+  },
+  {
+    "id": "graphql-bp-002",
+    "topic": "Best Practices & Security",
+    "subtopic": "Error handling",
+    "difficulty": "medium",
+    "question": "How does a GraphQL response represent errors, and what is partial data?",
+    "answer": "A response is a JSON object with **`data`** and/or **`errors`**. Field-level failures are collected into the top-level `errors` array (each with a `message`, `path`, and optional `extensions.code`), while successfully-resolved fields still appear under `data` — this is **partial data**. So a single response can carry both results and errors, unlike REST’s one-status-per-response model.",
+    "explanation": "Most GraphQL servers return HTTP 200 even with errors present; clients must inspect the `errors` array, not just the HTTP status. `extensions` is the spec-blessed place for machine-readable error codes.",
+    "tags": [
+      "best-practices",
+      "errors"
+    ]
+  },
+  {
+    "id": "graphql-bp-003",
+    "topic": "Best Practices & Security",
+    "subtopic": "Nullability strategy",
+    "difficulty": "hard",
+    "question": "What’s a sound strategy for choosing non-null (`!`) vs nullable fields?",
+    "answer": "Be **conservative with `!`**. Mark a field non-null only when it can *never legitimately* be null and you accept that an error there nulls out its parent (error propagation). Prefer **nullable for fields that might fail independently** (a flaky downstream, optional data) so a localized failure degrades gracefully instead of blanking a whole branch.",
+    "explanation": "Once a field is non-null in a published schema, making it nullable later is a breaking change; defaulting to nullable for risky fields keeps the schema evolvable and failures contained.",
+    "tags": [
+      "best-practices",
+      "nullability"
+    ]
+  },
+  {
+    "id": "graphql-bp-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Best Practices & Security",
+    "subtopic": "Versioning",
+    "difficulty": "medium",
+    "question": "What is GraphQL’s recommended approach to API versioning?",
+    "options": [
+      "Ship a new URL like /v2/graphql for each breaking change.",
+      "Avoid versioning: evolve the single schema continuously — add fields, and deprecate old ones with @deprecated instead of removing them.",
+      "Increment a required `version` argument on every query.",
+      "Recreate the whole schema monthly."
+    ],
+    "answer": "Avoid versioning: evolve the single schema continuously — add fields, and deprecate old ones with @deprecated instead of removing them.",
+    "explanation": "Because clients request only the fields they use, you can add fields without breaking anyone and retire old ones gradually with `@deprecated(reason: \"...\")`. Tooling surfaces deprecations, and analytics show when a field is safe to remove — so URL-style versioning is usually unnecessary.",
+    "tags": [
+      "best-practices",
+      "versioning",
+      "deprecation",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-bp-004",
+    "topic": "Best Practices & Security",
+    "subtopic": "Authorization",
+    "difficulty": "medium",
+    "question": "Where should authentication and authorization live in a GraphQL server?",
+    "answer": "Authenticate the request **before/while building `context`** (e.g. verify a JWT, attach the `user`), then enforce **authorization in your business/resolver layer** using `context.user`. Keep authz out of the schema’s shape — the schema describes capabilities, while per-field/per-object permission checks belong in resolvers (or a delegated service), so rules stay consistent and testable.",
+    "explanation": "Centralizing auth in the data/business layer (rather than scattering checks or trying to encode them in types) keeps it uniform across queries, mutations, and subscriptions.",
+    "tags": [
+      "best-practices",
+      "security",
+      "auth",
+      "context"
+    ]
+  },
+  {
+    "id": "graphql-bp-005",
+    "topic": "Best Practices & Security",
+    "subtopic": "Introspection",
+    "difficulty": "medium",
+    "question": "What is introspection, and should it be exposed in production?",
+    "answer": "**Introspection** lets clients query the schema itself (`__schema`, `__type`) — it powers GraphiQL, autocomplete, and codegen. It’s invaluable in development. In production it’s debated: disabling it (and tools like GraphiQL) is **defense-in-depth/obscurity** that hides your schema from casual attackers, but it’s **not real security** — protect with auth, query-cost limits, and a persisted-query safelist regardless.",
+    "explanation": "Many teams disable introspection on public prod endpoints to reduce attack-surface discovery, while keeping it on internally. It should never be your only protection.",
+    "tags": [
+      "best-practices",
+      "security",
+      "introspection"
+    ]
+  },
+  {
+    "id": "graphql-bp-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Best Practices & Security",
+    "subtopic": "Rate limiting",
+    "difficulty": "hard",
+    "question": "Why is simple request-count rate limiting often insufficient for a GraphQL API?",
+    "options": [
+      "Because GraphQL forbids rate limiting entirely.",
+      "Because one request can vary enormously in cost, so limiting by request count lets a single expensive query through — cost/complexity-based limiting is needed.",
+      "Because every GraphQL request has identical cost.",
+      "Because rate limiting only works on REST."
+    ],
+    "answer": "Because one request can vary enormously in cost, so limiting by request count lets a single expensive query through — cost/complexity-based limiting is needed.",
+    "explanation": "In REST, requests map to endpoints of roughly known cost, so counting works. In GraphQL one POST can be trivial or ruinously deep/wide, so you complement request limits with query-cost/complexity budgets, depth limits, and timeouts.",
+    "tags": [
+      "best-practices",
+      "security",
+      "rate-limiting",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-bp-mr-001",
+    "type": "multiple-response",
+    "topic": "Best Practices & Security",
+    "subtopic": "Security checklist",
+    "difficulty": "medium",
+    "question": "Which are recommended security practices for a public GraphQL API? (Select THREE)",
+    "options": [
+      "Enforce query depth and cost limits with timeouts",
+      "Authenticate in context and authorize in the business/resolver layer",
+      "Use persisted queries / an operation safelist",
+      "Rely solely on disabling introspection for security",
+      "Trust client-supplied IDs without authorization checks"
+    ],
+    "answers": [
+      "Enforce query depth and cost limits with timeouts",
+      "Authenticate in context and authorize in the business/resolver layer",
+      "Use persisted queries / an operation safelist"
+    ],
+    "explanation": "Depth/cost limits, layered auth, and safelisting are core defenses. Disabling introspection is only obscurity (not sufficient alone), and trusting client IDs without authorization invites IDOR-style data leaks.",
+    "tags": [
+      "best-practices",
+      "security",
+      "mr"
+    ]
   }
 ]

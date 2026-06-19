@@ -588,5 +588,88 @@
         "url": "https://graphql.org/learn/best-practices/"
       }
     ]
+  },
+  "graphql-bp-001": {
+    "explanation": "**The problem with offsets:** `limit`/`offset` paging shifts when rows are inserted or deleted between requests, so users skip or re-see items; high offsets also scan-and-discard many rows.\n\n**The connection pattern:** Relay-style connections wrap a list in `edges` (each with a `node` and a `cursor`) plus `pageInfo` (`hasNextPage`, `endCursor`). You page with `first` + `after: <cursor>`.\n\n**Why cursors are stable:** A cursor encodes a position (e.g. an id or sort key), so “give me the next 10 after this cursor” stays correct even as the list mutates.\n\n**Common mistake:** Reaching for offset pagination on feeds/timelines that change constantly — cursors are the durable choice.",
+    "example": "```graphql\ntype PostConnection {\n  edges: [PostEdge!]!\n  pageInfo: PageInfo!\n}\ntype PostEdge {\n  node: Post!\n  cursor: String!\n}\ntype PageInfo {\n  hasNextPage: Boolean!\n  endCursor: String\n}\n\ntype Query {\n  posts(first: Int!, after: String): PostConnection!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Pagination",
+        "url": "https://graphql.org/learn/pagination/"
+      },
+      {
+        "label": "relay.dev — Connections spec",
+        "url": "https://relay.dev/graphql/connections.htm"
+      }
+    ]
+  },
+  "graphql-bp-002": {
+    "explanation": "**The response shape:** A GraphQL result has `data` and/or `errors`. Field failures go into the top-level `errors` array; fields that resolved fine still appear in `data`.\n\n**Partial data:** Because GraphQL resolves fields independently, one response can return good data *and* errors at once — there’s no single success/failure status for the whole request.\n\n**Status code gotcha:** Servers usually return HTTP 200 even with errors, so clients must read the `errors` array, not the HTTP status. Put machine-readable codes in `extensions.code`.\n\n**Common mistake:** Treating GraphQL like REST and branching only on HTTP status — you’ll miss field-level errors and partial results.",
+    "example": "```graphql\n# Conceptual response:\n# {\n#   \"data\": { \"user\": { \"name\": \"Ada\", \"profile\": null } },\n#   \"errors\": [\n#     { \"message\": \"profile unavailable\", \"path\": [\"user\",\"profile\"],\n#       \"extensions\": { \"code\": \"DOWNSTREAM_TIMEOUT\" } }\n#   ]\n# }\nquery { user(id: \"1\") { name profile { bio } } }\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Best Practices",
+        "url": "https://graphql.org/learn/best-practices/"
+      }
+    ]
+  },
+  "graphql-bp-003": {
+    "explanation": "**The tension:** `!` (non-null) is a guarantee to clients, but a non-null field that errors nulls its parent, propagating up to the nearest nullable ancestor — potentially erasing a big branch.\n\n**The strategy:** Use `!` only where null is genuinely impossible and a failure should reasonably take the parent down with it (e.g. an `id`). For fields that can fail on their own — a flaky downstream, optional/derived data — prefer nullable so the failure stays local.\n\n**Evolvability angle:** Non-null → nullable is a breaking change in a published schema; nullable → non-null is safe. Defaulting risky fields to nullable keeps options open.\n\n**Common mistake:** Reflexively adding `!` everywhere, then watching one flaky field blank out whole responses.",
+    "example": "```graphql\ntype User {\n  id: ID!          # truly never null\n  name: String!    # required core data\n  # may come from a flaky service -> nullable so failure stays contained\n  creditScore: Int\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Best Practices (nullability)",
+        "url": "https://graphql.org/learn/best-practices/#nullability"
+      }
+    ]
+  },
+  "graphql-bp-mcq-001": {
+    "explanation": "**The philosophy:** GraphQL favors a single, continuously-evolving schema over versioned endpoints.\n\n**Why it’s possible:** Clients select only the fields they use, so *adding* fields/types never breaks existing queries.\n\n**Retiring fields:** Mark them `@deprecated(reason: \"use X\")`. Tooling shows the deprecation, and field-usage analytics tell you when no client uses it anymore, so you can remove it safely.\n\n**Why not /v2:** Versioned URLs force clients to migrate wholesale and duplicate maintenance — the opposite of GraphQL’s incremental model.\n\n**Common mistake:** Removing or renaming a field outright instead of deprecating it through a transition period.",
+    "example": "```graphql\ntype User {\n  name: String!\n  # old field kept working but flagged for clients/tools\n  fullName: String @deprecated(reason: \"Use `name`.\")\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Best Practices (versioning)",
+        "url": "https://graphql.org/learn/best-practices/#versioning"
+      }
+    ]
+  },
+  "graphql-bp-004": {
+    "explanation": "**Two phases:** Authentication (who are you?) happens as you build context — verify the token, attach `context.user`. Authorization (what may you do?) happens in resolvers/business logic using that identity.\n\n**Why keep authz out of the schema:** The schema describes *capabilities*, not per-row permissions. Encoding rules in types is rigid and leaks policy into the contract; resolver/service-layer checks stay consistent across queries, mutations, and subscriptions and are easy to unit-test.\n\n**Practical tip:** Delegate to a single authorization function/service so the same rule isn’t reimplemented per field.\n\n**Common mistake:** Scattering ad-hoc `if (user...)` checks unevenly across resolvers, or assuming a field’s presence in the schema implies the caller is allowed to read it.",
+    "example": "```js\nconst resolvers = {\n  Mutation: {\n    deletePost: (_p, { id }, { user, db }) => {\n      if (!user) throw new Error('Unauthenticated');\n      const post = db.post.findById(id);\n      if (post.authorId !== user.id && !user.isAdmin)\n        throw new Error('Forbidden');\n      return db.post.delete(id);\n    },\n  },\n};\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Authorization",
+        "url": "https://graphql.org/learn/authorization/"
+      }
+    ]
+  },
+  "graphql-bp-005": {
+    "explanation": "**What introspection is:** Built-in meta-queries (`__schema`, `__type`) that describe the schema. They power GraphiQL, IDE autocomplete, and client codegen.\n\n**Production debate:** Turning introspection (and GraphiQL) off hides your schema from casual probing — defense-in-depth/obscurity. But a determined attacker can still infer fields, so it’s not a real security boundary.\n\n**What actually protects you:** Authentication/authorization, query depth & cost limits, timeouts, and a persisted-query safelist. Do those regardless of introspection.\n\n**Common mistake:** Treating ‘introspection disabled’ as ‘API secured’ — it isn’t; it’s a thin layer on top of real controls.",
+    "example": "```graphql\n# An introspection query (what GraphiQL runs under the hood):\nquery {\n  __schema {\n    queryType { name }\n    types { name kind }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Introspection",
+        "url": "https://graphql.org/learn/introspection/"
+      }
+    ]
+  },
+  "graphql-bp-mcq-002": {
+    "explanation": "**Why REST-style counting falls short:** In REST a request maps to an endpoint of roughly predictable cost, so N requests/min is a meaningful limit. In GraphQL a single POST can be trivial or pathologically deep/wide.\n\n**The fix:** Score each query’s complexity/cost (weight fields and list multipliers), enforce a per-query and per-window budget, cap depth, and add execution timeouts. Combine with request-rate limits, don’t rely on them alone.\n\n**Why the others are wrong:** GraphQL doesn’t forbid rate limiting, requests are *not* uniform cost, and rate limiting isn’t REST-only.\n\n**Common mistake:** Putting only a requests-per-minute gate in front of a public GraphQL API and assuming you’re protected from expensive queries.",
+    "example": "```graphql\n# Same \"1 request\", wildly different cost — why count-based limits fail:\nquery Cheap { me { id } }\nquery Expensive {\n  users(first: 1000) { posts(first: 1000) { comments(first: 1000) { id } } }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Security best practices",
+        "url": "https://graphql.org/learn/best-practices/"
+      }
+    ]
+  },
+  "graphql-bp-mr-001": {
+    "explanation": "**Why these three:** Depth/cost limits with timeouts bound the work any query can demand; authenticating in context + authorizing in the business layer keeps access control uniform and testable; persisted-query safelists ensure only vetted operations run.\n\n**Why the others are wrong:** Disabling introspection is obscurity, not a control you can rely on alone. Trusting client-supplied IDs without an ownership/permission check is a classic IDOR vulnerability that leaks other users’ data.\n\n**Takeaway:** Layer real controls — bound cost, authenticate+authorize, safelist — and never treat schema-hiding as security.",
+    "resources": [
+      {
+        "label": "graphql.org — Best Practices",
+        "url": "https://graphql.org/learn/best-practices/"
+      }
+    ]
   }
 }
