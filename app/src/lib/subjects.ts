@@ -76,6 +76,14 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:graphql',
     loadData: loader('graphql', () => load(import('../../data/graphql.json'))),
   },
+  springboot: {
+    id: 'springboot',
+    label: 'Spring Boot',
+    icon: 'SB',
+    color: '#6db33f',
+    storageKey: 'srs:springboot',
+    loadData: loader('springboot', () => load(import('../../data/springboot.json'))),
+  },
 };
 
 export function getSubject(id: string | undefined): Subject | null {

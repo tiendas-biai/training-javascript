@@ -1,0 +1,596 @@
+[
+  {
+    "id": "sb-intro-001",
+    "topic": "Introduction",
+    "subtopic": "What is Spring Boot",
+    "difficulty": "easy",
+    "question": "What problem does Spring Boot solve compared to the plain Spring Framework?",
+    "answer": "Spring Boot removes most of the boilerplate configuration of Spring: it provides **auto-configuration** (sensible defaults based on the classpath), **starter dependencies** (curated dependency bundles), an **embedded server** so the app runs as a plain `java -jar`, and production features (Actuator) — letting you start a working app in minutes instead of wiring XML/Java config by hand.",
+    "explanation": "Plain Spring is powerful but requires you to configure a DispatcherServlet, view resolvers, data sources, transaction managers, etc. Spring Boot is *opinionated*: it looks at what's on the classpath and configures reasonable defaults you can override. It is built on top of Spring — not a replacement.",
+    "tags": ["intro", "auto-configuration"]
+  },
+  {
+    "id": "sb-intro-002",
+    "topic": "Introduction",
+    "subtopic": "Inversion of Control",
+    "difficulty": "easy",
+    "question": "What are Inversion of Control (IoC) and Dependency Injection (DI) in Spring?",
+    "answer": "**IoC** means the framework — not your code — controls object creation and lifecycle. The Spring **container** (ApplicationContext) instantiates objects (*beans*), wires their dependencies, and manages them. **DI** is the mechanism: instead of a class building its own collaborators with `new`, it declares them (usually as constructor parameters) and the container *injects* the right instances.",
+    "explanation": "DI is one form of IoC. The payoff is loose coupling and testability: a class depends on an interface, and you can inject a real implementation in production or a mock in tests without changing the class.",
+    "tags": ["ioc", "di", "container"]
+  },
+  {
+    "id": "sb-intro-003",
+    "topic": "Introduction",
+    "subtopic": "ApplicationContext",
+    "difficulty": "medium",
+    "question": "What is the Spring `ApplicationContext`?",
+    "answer": "It is the **IoC container** — the runtime registry of all beans. It reads your configuration (annotations / `@Configuration` classes), instantiates and wires beans, manages their scopes and lifecycle, publishes events, and resolves dependencies. `SpringApplication.run()` creates and returns it.",
+    "explanation": "`ApplicationContext` extends the more basic `BeanFactory` with enterprise features: internationalization, event publishing, and convenient resource loading. In a Spring Boot app you rarely touch it directly — you let it inject beans for you — but it's the object that *is* your running application's bean graph.",
+    "tags": ["context", "container"]
+  },
+  {
+    "id": "sb-intro-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Introduction",
+    "subtopic": "@SpringBootApplication",
+    "difficulty": "medium",
+    "question": "`@SpringBootApplication` is a convenience annotation. Which three annotations does it combine?",
+    "options": [
+      "@Configuration, @EnableAutoConfiguration, @ComponentScan",
+      "@Component, @Service, @Repository",
+      "@RestController, @RequestMapping, @Autowired",
+      "@Bean, @Configuration, @Profile"
+    ],
+    "answer": "@Configuration, @EnableAutoConfiguration, @ComponentScan",
+    "explanation": "`@SpringBootApplication` = `@SpringBootConfiguration` (a `@Configuration`) + `@EnableAutoConfiguration` (turn on auto-config) + `@ComponentScan` (scan the package of the annotated class and below for components).",
+    "tags": ["intro", "annotations", "mcq"]
+  },
+  {
+    "id": "sb-intro-004",
+    "topic": "Introduction",
+    "subtopic": "Starters",
+    "difficulty": "easy",
+    "question": "What is a Spring Boot \"starter\"?",
+    "answer": "A starter is a curated set of dependencies bundled under one artifact. Adding e.g. `spring-boot-starter-web` pulls in Spring MVC, Jackson, validation, and an embedded Tomcat — all with compatible versions — so you don't hand-pick and version-align individual libraries.",
+    "explanation": "Starters follow the naming convention `spring-boot-starter-*`. They contain almost no code themselves — they are dependency descriptors. Combined with the parent POM's dependency management, you usually add starters *without version numbers*; Spring Boot picks tested versions.",
+    "tags": ["starters", "dependencies"]
+  },
+  {
+    "id": "sb-di-001",
+    "topic": "Dependency Injection",
+    "subtopic": "Stereotype annotations",
+    "difficulty": "easy",
+    "question": "What is the difference between `@Component`, `@Service`, `@Repository`, and `@Controller`?",
+    "answer": "All four register the class as a Spring-managed bean via component scanning. `@Component` is the generic stereotype; the others are **specializations** that add intent and sometimes behavior: `@Service` marks business logic, `@Repository` marks data-access (and enables exception translation into Spring's `DataAccessException`), and `@Controller` marks a web controller (`@RestController` = `@Controller` + `@ResponseBody`).",
+    "explanation": "Functionally `@Service` and `@Component` are nearly identical, but using the specific stereotype documents the layer and lets tooling/aspects target it. `@Repository`'s exception translation is the one with real extra behavior.",
+    "tags": ["di", "stereotypes", "beans"]
+  },
+  {
+    "id": "sb-di-002",
+    "topic": "Dependency Injection",
+    "subtopic": "Constructor injection",
+    "difficulty": "medium",
+    "question": "Why is constructor injection preferred over field injection in Spring?",
+    "answer": "Constructor injection makes dependencies **explicit and required**, allows the field to be `final` (immutable), guarantees the bean is fully initialized before use, and works without Spring (so it's easy to unit-test with `new`). Field injection (`@Autowired` on a field) hides dependencies, can't be `final`, and forces reflection/Spring to instantiate for tests.",
+    "explanation": "Since Spring 4.3, a class with a single constructor doesn't even need `@Autowired` — the container injects automatically. Field injection also makes it easy to accumulate too many dependencies without noticing, since the constructor signature doesn't grow.",
+    "tags": ["di", "constructor-injection", "best-practices"]
+  },
+  {
+    "id": "sb-di-003",
+    "topic": "Dependency Injection",
+    "subtopic": "@Autowired",
+    "difficulty": "easy",
+    "question": "What does `@Autowired` do, and when is it optional?",
+    "answer": "`@Autowired` tells Spring to inject a matching bean by type (then by name if ambiguous). It can go on a constructor, setter, or field. Since Spring 4.3 it is **optional on a class's single constructor** — Spring autowires it automatically.",
+    "explanation": "Resolution is by type first. If multiple candidates match, Spring tries the parameter/field name against bean names, and otherwise needs `@Qualifier` or `@Primary` to disambiguate. `@Autowired(required = false)` makes a dependency optional.",
+    "tags": ["di", "autowired"]
+  },
+  {
+    "id": "sb-di-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Dependency Injection",
+    "subtopic": "Bean scopes",
+    "difficulty": "easy",
+    "question": "What is the default scope of a Spring bean?",
+    "options": ["singleton", "prototype", "request", "session"],
+    "answer": "singleton",
+    "explanation": "By default Spring creates exactly **one** instance per container and shares it everywhere it's injected. `prototype` creates a new instance on each injection/lookup; `request`/`session` are web scopes. Because singletons are shared, they must be stateless (or thread-safe).",
+    "tags": ["di", "scopes", "mcq"]
+  },
+  {
+    "id": "sb-di-004",
+    "topic": "Dependency Injection",
+    "subtopic": "Bean scopes",
+    "difficulty": "medium",
+    "question": "Contrast the `singleton` and `prototype` bean scopes. What's a common gotcha?",
+    "answer": "`singleton` (default): one shared instance per container. `prototype`: a new instance every time the bean is requested. **Gotcha:** injecting a prototype bean into a singleton gives you the *same* prototype instance forever — it's resolved once when the singleton is created. To get a fresh one each time, use a `Provider`/`ObjectProvider`, method injection (`@Lookup`), or `@Scope(proxyMode = TARGET_CLASS)`.",
+    "explanation": "Spring fully manages the singleton lifecycle but for prototypes it does *not* call destruction callbacks — the caller owns cleanup. The singleton-holding-prototype trap is one of the most common DI bugs.",
+    "tags": ["di", "scopes"]
+  },
+  {
+    "id": "sb-di-005",
+    "topic": "Dependency Injection",
+    "subtopic": "@Configuration & @Bean",
+    "difficulty": "medium",
+    "question": "When do you use `@Configuration` and `@Bean` instead of `@Component`?",
+    "answer": "Use `@Bean` methods inside a `@Configuration` class when you need to register beans you **don't own** (third-party classes you can't annotate) or need custom construction logic. `@Component` is for your own classes that Spring can instantiate via component scanning.",
+    "explanation": "A `@Bean` method's return value becomes a bean; its method name is the bean name. `@Configuration` classes are proxied (CGLIB) so calling one `@Bean` method from another returns the shared singleton rather than a new object — that's the difference from a plain `@Component` holding `@Bean` methods (\"lite\" mode).",
+    "tags": ["di", "configuration", "bean"]
+  },
+  {
+    "id": "sb-di-006",
+    "topic": "Dependency Injection",
+    "subtopic": "@Qualifier & @Primary",
+    "difficulty": "medium",
+    "question": "Two beans implement the same interface. How do you tell Spring which to inject?",
+    "answer": "Either mark one bean `@Primary` (the default winner when type alone is ambiguous), or annotate the injection point with `@Qualifier(\"beanName\")` to name the exact bean. `@Qualifier` at the injection point overrides `@Primary`.",
+    "explanation": "Without disambiguation Spring throws `NoUniqueBeanDefinitionException` at startup. `@Primary` is good for a sensible default with occasional overrides; `@Qualifier` is explicit per injection. You can also create custom qualifier annotations for type-safety.",
+    "tags": ["di", "qualifier", "primary"]
+  },
+  {
+    "id": "sb-di-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Dependency Injection",
+    "subtopic": "Ambiguous beans",
+    "difficulty": "medium",
+    "question": "Two beans of type `PaymentGateway` exist and an injection point requests `PaymentGateway` with no `@Qualifier`/`@Primary`. What happens?",
+    "options": [
+      "The application fails to start with NoUniqueBeanDefinitionException",
+      "Spring injects the first bean it created",
+      "Spring injects null",
+      "Spring injects a list of both beans"
+    ],
+    "answer": "The application fails to start with NoUniqueBeanDefinitionException",
+    "explanation": "When type matching yields multiple candidates and the field/parameter name doesn't match a bean name, Spring can't decide and fails fast at startup. Resolve with `@Primary` on one bean or `@Qualifier` at the injection point. (Injecting `List<PaymentGateway>` *would* get both — but only if you ask for a collection.)",
+    "tags": ["di", "mcq", "errors"]
+  },
+  {
+    "id": "sb-auto-001",
+    "topic": "Auto-Configuration",
+    "subtopic": "How it works",
+    "difficulty": "medium",
+    "question": "How does Spring Boot auto-configuration actually work?",
+    "answer": "`@EnableAutoConfiguration` loads a list of auto-configuration classes (declared in each starter's `META-INF/spring/...AutoConfiguration.imports` file). Each is gated by `@Conditional` annotations (`@ConditionalOnClass`, `@ConditionalOnMissingBean`, `@ConditionalOnProperty`, …) so it only applies when relevant — e.g. configure a `DataSource` only if a JDBC driver is on the classpath and you haven't defined one yourself.",
+    "explanation": "The key design is **\"back off when the user defines their own bean\"** via `@ConditionalOnMissingBean`. That's why auto-config feels invisible: it fills in defaults but never overrides beans you explicitly declare.",
+    "tags": ["auto-configuration", "conditional"]
+  },
+  {
+    "id": "sb-auto-002",
+    "topic": "Auto-Configuration",
+    "subtopic": "@Conditional",
+    "difficulty": "medium",
+    "question": "What do `@ConditionalOnClass`, `@ConditionalOnMissingBean`, and `@ConditionalOnProperty` do?",
+    "answer": "They register a bean/config only when a condition holds: `@ConditionalOnClass` — a given class is on the classpath; `@ConditionalOnMissingBean` — no bean of that type already exists (lets users override); `@ConditionalOnProperty` — a configuration property has a given value. These are the building blocks of all auto-configuration.",
+    "explanation": "There are matching negatives too (`@ConditionalOnMissingClass`, `@ConditionalOnBean`). Together they make configuration *reactive to the environment* — the presence of a library or a property flips behavior on or off without code changes.",
+    "tags": ["auto-configuration", "conditional"]
+  },
+  {
+    "id": "sb-auto-003",
+    "topic": "Auto-Configuration",
+    "subtopic": "Excluding",
+    "difficulty": "medium",
+    "question": "How do you disable a specific auto-configuration that you don't want?",
+    "answer": "Exclude it: `@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)`, or via the `spring.autoconfigure.exclude` property in `application.properties`. To see what got auto-configured (and why), run with `--debug` to print the **auto-configuration report** (positive/negative matches).",
+    "explanation": "Common case: you include a starter that pulls in JPA but you configure the data source yourself or don't need one at startup — excluding `DataSourceAutoConfiguration` stops Boot from failing when no DB URL is set.",
+    "tags": ["auto-configuration", "exclude"]
+  },
+  {
+    "id": "sb-auto-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Auto-Configuration",
+    "subtopic": "Component scanning",
+    "difficulty": "medium",
+    "question": "By default, which packages does `@SpringBootApplication` component-scan?",
+    "options": [
+      "The package of the annotated class and all sub-packages",
+      "Every package on the classpath",
+      "Only the package literally named 'com.example'",
+      "Only packages listed in application.properties"
+    ],
+    "answer": "The package of the annotated class and all sub-packages",
+    "explanation": "`@ComponentScan` (inside `@SpringBootApplication`) defaults to the package where the main class lives, recursively. That's why the conventional advice is to put the main application class in a **root/top-level package** above all your code — components in sibling or parent packages won't be found.",
+    "tags": ["auto-configuration", "component-scan", "mcq"]
+  },
+  {
+    "id": "sb-auto-004",
+    "topic": "Auto-Configuration",
+    "subtopic": "Dependency management",
+    "difficulty": "easy",
+    "question": "Why can you usually add Spring Boot starters without specifying version numbers?",
+    "answer": "The `spring-boot-starter-parent` (or the imported `spring-boot-dependencies` BOM) provides **dependency management**: a curated list of versions known to work together. Your build inherits those versions, so you list the artifact and let Boot pick the tested version.",
+    "explanation": "This avoids \"dependency hell\" — mismatched versions of Spring, Jackson, Hibernate, etc. You can still override a managed version by setting a property (e.g. `<jackson.version>`) or declaring an explicit version, but the default is curated and consistent.",
+    "tags": ["dependencies", "bom", "maven"]
+  },
+  {
+    "id": "sb-config-001",
+    "topic": "Configuration",
+    "subtopic": "Property files",
+    "difficulty": "easy",
+    "question": "Where does Spring Boot read external configuration from, and what formats are supported?",
+    "answer": "Primarily `application.properties` or `application.yml` on the classpath (`src/main/resources`). Boot also reads, in increasing precedence, default properties, profile-specific files (`application-<profile>.yml`), OS environment variables, JVM system properties (`-D`), and command-line args (`--key=value`) — later sources override earlier ones.",
+    "explanation": "Both `.properties` and `.yml` are equivalent; YAML is nicer for nested/hierarchical config. The layered precedence is what makes the same jar deployable across environments — you override a few keys via env vars without rebuilding.",
+    "tags": ["config", "properties", "yaml"]
+  },
+  {
+    "id": "sb-config-002",
+    "topic": "Configuration",
+    "subtopic": "@Value",
+    "difficulty": "easy",
+    "question": "How does `@Value` inject a single configuration property?",
+    "answer": "`@Value(\"${app.timeout:30}\")` injects the value of property `app.timeout`, defaulting to `30` if it's not set (text after the colon). It works on fields and constructor/method parameters and supports SpEL expressions.",
+    "explanation": "`@Value` is best for one-off single values. The `${...:default}` syntax provides a fallback. For groups of related properties, `@ConfigurationProperties` is cleaner and type-safe — `@Value` doesn't validate or bind nested structures well.",
+    "tags": ["config", "value"]
+  },
+  {
+    "id": "sb-config-003",
+    "topic": "Configuration",
+    "subtopic": "@ConfigurationProperties",
+    "difficulty": "medium",
+    "question": "When and why would you use `@ConfigurationProperties` over `@Value`?",
+    "answer": "`@ConfigurationProperties(prefix = \"app\")` binds a whole group of related properties (including nested objects and lists) onto a typed POJO. Prefer it when you have several related settings: it's type-safe, supports relaxed binding and validation (`@Validated`), and centralizes config in one class instead of scattered `@Value` strings.",
+    "explanation": "Relaxed binding means `app.page-size`, `app.pageSize`, `APP_PAGE_SIZE` all map to the same `pageSize` field. `@Value` can't do nested binding or validation cleanly, so reach for `@ConfigurationProperties` once you have more than a couple of related keys.",
+    "tags": ["config", "configuration-properties", "binding"]
+  },
+  {
+    "id": "sb-config-004",
+    "topic": "Configuration",
+    "subtopic": "Profiles",
+    "difficulty": "medium",
+    "question": "What are Spring profiles and how do you activate one?",
+    "answer": "Profiles let you group beans and configuration per environment. Annotate beans with `@Profile(\"dev\")` so they load only under that profile, and put environment-specific properties in `application-dev.yml`. Activate via `spring.profiles.active=dev` (property, env var `SPRING_PROFILES_ACTIVE`, or `--spring.profiles.active=dev`).",
+    "explanation": "Common use: a `dev` profile with an in-memory H2 database and verbose logging vs a `prod` profile pointing at the real database. Beans without a `@Profile` are always active. You can activate multiple profiles at once (comma-separated).",
+    "tags": ["config", "profiles", "environments"]
+  },
+  {
+    "id": "sb-config-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Configuration",
+    "subtopic": "Property precedence",
+    "difficulty": "hard",
+    "question": "A property `server.port` is set in `application.properties` (8080), as an OS env var `SERVER_PORT=9090`, and as a command-line arg `--server.port=7070`. Which value wins?",
+    "options": ["7070 (command-line argument)", "8080 (application.properties)", "9090 (environment variable)", "Startup fails due to conflict"],
+    "answer": "7070 (command-line argument)",
+    "explanation": "Spring Boot's property sources have a defined precedence (highest first): command-line args > JVM system properties > OS environment variables > application.properties/yml > defaults. Command-line `--server.port` overrides the env var, which overrides the file. This layering is intentional — it lets you override anything at launch without editing files.",
+    "tags": ["config", "precedence", "mcq"]
+  },
+  {
+    "id": "sb-config-005",
+    "topic": "Configuration",
+    "subtopic": "Externalized config",
+    "difficulty": "medium",
+    "question": "How do you keep secrets (DB passwords, API keys) out of `application.properties`?",
+    "answer": "Don't hard-code them. Reference an environment variable or external source: `spring.datasource.password=${DB_PASSWORD}`. At runtime supply `DB_PASSWORD` via the OS environment, a secrets manager, Kubernetes secret, or Spring Cloud Config — Boot's externalized-config precedence resolves the placeholder.",
+    "explanation": "The `${VAR}` placeholder binds to any higher-precedence source (env var, system property). This keeps the artifact environment-agnostic and keeps secrets out of source control. For richer needs, Spring Cloud Config or Vault integrations centralize and encrypt config.",
+    "tags": ["config", "secrets", "externalized"]
+  },
+  {
+    "id": "sb-web-001",
+    "topic": "Web & REST",
+    "subtopic": "Controllers",
+    "difficulty": "easy",
+    "question": "What is the difference between `@Controller` and `@RestController`?",
+    "answer": "`@Controller` returns view names by default (for server-side templating). `@RestController` = `@Controller` + `@ResponseBody`, so every handler method's return value is **serialized directly into the HTTP response body** (typically JSON via Jackson) instead of being resolved to a view. Use `@RestController` for REST APIs.",
+    "explanation": "With `@RestController` you don't annotate each method with `@ResponseBody` — it's applied class-wide. Returning a POJO produces a JSON body and a 200 status; return `ResponseEntity` when you need to control status/headers.",
+    "tags": ["web", "rest", "controller"]
+  },
+  {
+    "id": "sb-web-002",
+    "topic": "Web & REST",
+    "subtopic": "Request mappings",
+    "difficulty": "easy",
+    "question": "What are `@GetMapping`, `@PostMapping`, etc., and how do they relate to `@RequestMapping`?",
+    "answer": "They are HTTP-method-specific shortcuts for `@RequestMapping`. `@GetMapping(\"/users\")` is shorthand for `@RequestMapping(value = \"/users\", method = GET)`. There are `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping`, and `@PatchMapping`.",
+    "explanation": "`@RequestMapping` at the class level sets a base path that method-level mappings extend. The shortcuts make controllers more readable and prevent the common mistake of forgetting to constrain the HTTP method.",
+    "tags": ["web", "rest", "mappings"]
+  },
+  {
+    "id": "sb-web-003",
+    "topic": "Web & REST",
+    "subtopic": "Request parameters",
+    "difficulty": "medium",
+    "question": "What is the difference between `@PathVariable` and `@RequestParam`?",
+    "answer": "`@PathVariable` binds a value from the URL **path** template — `/users/{id}` → `@PathVariable Long id`. `@RequestParam` binds a **query-string** (or form) parameter — `/users?active=true` → `@RequestParam boolean active`. Path variables identify a resource; request params filter/modify a query.",
+    "explanation": "`@RequestParam` supports `required` and `defaultValue` attributes; `@PathVariable` values are part of the route, so they're typically required. Both are converted from String to the declared type automatically.",
+    "tags": ["web", "rest", "path-variable", "request-param"]
+  },
+  {
+    "id": "sb-web-004",
+    "topic": "Web & REST",
+    "subtopic": "Request/response bodies",
+    "difficulty": "medium",
+    "question": "What does `@RequestBody` do in a REST controller?",
+    "answer": "`@RequestBody` tells Spring to **deserialize the HTTP request body** (e.g. JSON) into the annotated method parameter object, using an `HttpMessageConverter` (Jackson for JSON). It's the input counterpart to `@ResponseBody`, which serializes the return value into the response body.",
+    "explanation": "So a `POST /users` with a JSON body maps to `createUser(@RequestBody UserDto dto)` and arrives as a populated object. Combine with `@Valid` to validate it. In `@RestController`, `@ResponseBody` is implied, so you only need `@RequestBody` on inputs.",
+    "tags": ["web", "rest", "request-body", "jackson"]
+  },
+  {
+    "id": "sb-web-005",
+    "topic": "Web & REST",
+    "subtopic": "ResponseEntity",
+    "difficulty": "medium",
+    "question": "When should a controller return `ResponseEntity<T>` instead of the plain object?",
+    "answer": "Return `ResponseEntity` when you need to control the **status code and/or headers**, not just the body — e.g. `201 Created` with a `Location` header, `404 Not Found`, or `204 No Content`. Returning a plain object always yields `200 OK` with that object as the body.",
+    "explanation": "`ResponseEntity.ok(body)`, `ResponseEntity.status(HttpStatus.CREATED).body(...)`, `ResponseEntity.notFound().build()` are common builders. For REST APIs that need accurate status semantics, `ResponseEntity` (or `@ResponseStatus` on exceptions) is the idiomatic tool.",
+    "tags": ["web", "rest", "response-entity", "status-codes"]
+  },
+  {
+    "id": "sb-web-006",
+    "topic": "Web & REST",
+    "subtopic": "Exception handling",
+    "difficulty": "medium",
+    "question": "How do you handle exceptions globally across all REST controllers?",
+    "answer": "Use a `@RestControllerAdvice` class with `@ExceptionHandler` methods. Each handler catches a given exception type thrown by any controller and maps it to a structured response (status + body). This centralizes error handling instead of try/catch in every endpoint.",
+    "explanation": "`@RestControllerAdvice` = `@ControllerAdvice` + `@ResponseBody`. Within it, `@ExceptionHandler(ResourceNotFoundException.class)` returns a 404 with a consistent error DTO. You can also extend `ResponseEntityExceptionHandler` to customize Spring's built-in exceptions (validation, malformed JSON, etc.).",
+    "tags": ["web", "rest", "exception-handling", "controller-advice"]
+  },
+  {
+    "id": "sb-web-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Web & REST",
+    "subtopic": "Mappings",
+    "difficulty": "easy",
+    "question": "Which annotation maps an HTTP POST request to create a resource?",
+    "options": ["@PostMapping", "@PutMapping", "@GetMapping", "@RequestParam"],
+    "answer": "@PostMapping",
+    "explanation": "`@PostMapping` handles POST (typically create). `@PutMapping` handles PUT (replace/update), `@GetMapping` handles GET (read), and `@RequestParam` isn't a mapping at all — it binds a query parameter.",
+    "tags": ["web", "rest", "mcq"]
+  },
+  {
+    "id": "sb-web-007",
+    "topic": "Web & REST",
+    "subtopic": "Validation",
+    "difficulty": "medium",
+    "question": "How do you validate an incoming request body in Spring Boot?",
+    "answer": "Add Bean Validation constraints (`@NotNull`, `@Email`, `@Size`, …) to the DTO fields and annotate the controller parameter with `@Valid`: `createUser(@Valid @RequestBody UserDto dto)`. If validation fails, Spring throws `MethodArgumentNotValidException` (→ 400 by default), which you can shape via `@RestControllerAdvice`.",
+    "explanation": "Requires `spring-boot-starter-validation` (Hibernate Validator). `@Valid` triggers validation before the handler body runs. For path/query params, put `@Validated` on the controller class and constraints directly on the parameters.",
+    "tags": ["web", "rest", "validation"]
+  },
+  {
+    "id": "sb-web-mr-001",
+    "type": "multiple-response",
+    "topic": "Web & REST",
+    "subtopic": "Status codes",
+    "difficulty": "medium",
+    "question": "Which of the following are correct REST conventions for status codes? (Select TWO)",
+    "options": [
+      "A successful POST that creates a resource should return 201 Created",
+      "A DELETE with nothing to return should return 204 No Content",
+      "A request for a missing resource should return 200 OK with an empty body",
+      "A validation failure should return 500 Internal Server Error",
+      "Every successful request must return 200 OK"
+    ],
+    "answers": [
+      "A successful POST that creates a resource should return 201 Created",
+      "A DELETE with nothing to return should return 204 No Content"
+    ],
+    "explanation": "201 Created (often with a Location header) is the convention for successful creation, and 204 No Content for a successful operation with no body. A missing resource should be 404, validation failures are 4xx (typically 400), and not every success is 200 (201/204 are also successes).",
+    "tags": ["web", "rest", "status-codes", "mr"]
+  },
+  {
+    "id": "sb-web-008",
+    "topic": "Web & REST",
+    "subtopic": "Embedded server",
+    "difficulty": "easy",
+    "question": "How does a Spring Boot web app run without deploying a WAR to an external server?",
+    "answer": "`spring-boot-starter-web` includes an **embedded servlet container** (Tomcat by default). `java -jar app.jar` boots the container in-process and starts serving — no external Tomcat/WildFly to install or deploy a WAR into. You can swap to Jetty or Undertow by excluding Tomcat and adding the alternative starter.",
+    "explanation": "This is core to Boot's \"just run it\" model and is ideal for containers/microservices — the runnable fat JAR contains everything. The default port is 8080, configurable via `server.port`.",
+    "tags": ["web", "embedded-server", "tomcat"]
+  },
+  {
+    "id": "sb-data-001",
+    "topic": "Data & JPA",
+    "subtopic": "Spring Data JPA",
+    "difficulty": "medium",
+    "question": "What does Spring Data JPA give you over writing JDBC/Hibernate by hand?",
+    "answer": "You declare a **repository interface** and Spring Data generates the implementation at runtime: CRUD methods (`save`, `findById`, `findAll`, `delete`) plus derived queries from method names. You write almost no boilerplate DAO code — just the interface and your entities.",
+    "explanation": "It sits on top of JPA/Hibernate. `JpaRepository<Entity, ID>` provides the standard operations; you add query methods by naming convention (`findByEmail`) or `@Query`. The framework wires a proxy bean implementing the interface — there's no hand-written class.",
+    "tags": ["data", "jpa", "repository"]
+  },
+  {
+    "id": "sb-data-002",
+    "topic": "Data & JPA",
+    "subtopic": "Entities",
+    "difficulty": "easy",
+    "question": "What do `@Entity`, `@Id`, and `@GeneratedValue` do?",
+    "answer": "`@Entity` marks a class as a JPA-managed table mapping. `@Id` marks the primary-key field. `@GeneratedValue` tells JPA the database/provider generates the key value (e.g. `strategy = IDENTITY` for an auto-increment column).",
+    "explanation": "An entity needs a no-arg constructor and a mapped `@Id`. `@Table`/`@Column` customize names; without them JPA derives names from the class/field. `@GeneratedValue(strategy = IDENTITY)` is common with auto-increment columns; `SEQUENCE` uses a DB sequence.",
+    "tags": ["data", "jpa", "entity"]
+  },
+  {
+    "id": "sb-data-003",
+    "topic": "Data & JPA",
+    "subtopic": "Repositories",
+    "difficulty": "medium",
+    "question": "What is the difference between `CrudRepository`, `JpaRepository`, and `PagingAndSortingRepository`?",
+    "answer": "They form a hierarchy. `CrudRepository` provides basic CRUD. `PagingAndSortingRepository` adds pagination and sorting. `JpaRepository` extends both and adds JPA-specific extras (`flush`, `saveAll`, `getReferenceById`, batch deletes, `findAll` returning `List`). Most apps extend `JpaRepository`.",
+    "explanation": "Choosing a narrower interface limits the exposed API surface, but `JpaRepository` is the practical default for JPA-backed apps because of pagination + the richer JPA operations.",
+    "tags": ["data", "jpa", "repository"]
+  },
+  {
+    "id": "sb-data-004",
+    "topic": "Data & JPA",
+    "subtopic": "Derived queries",
+    "difficulty": "medium",
+    "question": "How do Spring Data \"derived query methods\" work?",
+    "answer": "Spring Data parses the **method name** to build a query. `findByLastNameAndActiveTrue(String lastName)` becomes `WHERE last_name = ?1 AND active = true`. Keywords like `findBy`, `And`, `Or`, `Between`, `LessThan`, `OrderBy`, `Containing`, `True/False` drive the generated query — no SQL/JPQL written.",
+    "explanation": "Great for straightforward queries. When the name would get unwieldy or the query is complex, switch to `@Query` with explicit JPQL/SQL. Return types can be `Optional`, `List`, `Page`, `Stream`, or a count/boolean (`existsBy...`).",
+    "tags": ["data", "jpa", "derived-queries"]
+  },
+  {
+    "id": "sb-data-005",
+    "topic": "Data & JPA",
+    "subtopic": "@Query",
+    "difficulty": "medium",
+    "question": "When do you use `@Query`, and what's the difference between JPQL and native queries?",
+    "answer": "Use `@Query` when a derived method name would be too complex or you need a custom query. By default `@Query` takes **JPQL** (queries entities/fields, DB-agnostic). Set `nativeQuery = true` to write raw **SQL** against actual tables/columns — needed for DB-specific features but ties you to that database.",
+    "explanation": "JPQL: `@Query(\"SELECT u FROM User u WHERE u.email = :email\")`. Bind params with `:name` and `@Param`. Native: `@Query(value = \"SELECT * FROM users WHERE ...\", nativeQuery = true)`. Prefer JPQL for portability; reach for native only when you must.",
+    "tags": ["data", "jpa", "query", "jpql"]
+  },
+  {
+    "id": "sb-data-006",
+    "topic": "Data & JPA",
+    "subtopic": "@Transactional",
+    "difficulty": "medium",
+    "question": "What does `@Transactional` do and what's a key gotcha with it?",
+    "answer": "`@Transactional` wraps a method in a database transaction: it commits on normal return and rolls back on a **runtime (unchecked) exception** by default. **Gotcha:** it works via a Spring proxy, so a `@Transactional` method called from *within the same class* (a self-invocation) bypasses the proxy and the annotation has no effect.",
+    "explanation": "Other gotchas: by default it rolls back on `RuntimeException`/`Error` but **not** checked exceptions (configure with `rollbackFor`); the annotation should be on the service layer; and the method must typically be `public` for the proxy to intercept it. Self-invocation surprising people is the classic bug.",
+    "tags": ["data", "jpa", "transactional", "proxy"]
+  },
+  {
+    "id": "sb-data-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Data & JPA",
+    "subtopic": "Repository return types",
+    "difficulty": "easy",
+    "question": "What does `JpaRepository.findById(id)` return in modern Spring Data?",
+    "options": ["Optional<T>", "T or null", "T (throws if not found)", "List<T>"],
+    "answer": "Optional<T>",
+    "explanation": "`findById` returns `Optional<T>` so callers explicitly handle the not-found case (`.orElseThrow(...)`, `.map(...)`) rather than risking a `NullPointerException`. If you want an exception when absent, use `getReferenceById`/`orElseThrow`.",
+    "tags": ["data", "jpa", "optional", "mcq"]
+  },
+  {
+    "id": "sb-data-007",
+    "topic": "Data & JPA",
+    "subtopic": "Fetching & N+1",
+    "difficulty": "hard",
+    "question": "What is the JPA N+1 select problem and how do you fix it?",
+    "answer": "N+1 happens when you load N parent entities, then a **lazy** association triggers one extra query per parent to load its children — 1 + N queries. Fix by fetching the association in one query: a JPQL `JOIN FETCH`, an `@EntityGraph` on the repository method, or a batch-size hint (`@BatchSize` / `hibernate.default_batch_fetch_size`).",
+    "explanation": "Lazy loading is the right default (don't load what you don't need), but iterating a collection of parents and touching a lazy relationship in a loop is the classic trap. `JOIN FETCH`/`@EntityGraph` make the eager fetch explicit and per-query, avoiding global EAGER which causes its own over-fetching.",
+    "tags": ["data", "jpa", "n+1", "performance", "lazy-loading"]
+  },
+  {
+    "id": "sb-test-001",
+    "topic": "Testing",
+    "subtopic": "@SpringBootTest",
+    "difficulty": "medium",
+    "question": "What does `@SpringBootTest` do, and when is it the wrong choice?",
+    "answer": "`@SpringBootTest` boots the **full application context** for integration tests — all beans wired as in production. It's the wrong choice when you only need to test one slice (a controller or a repository): loading the whole context is slow. Prefer focused slice tests (`@WebMvcTest`, `@DataJpaTest`) for those.",
+    "explanation": "Use `@SpringBootTest` for end-to-end / multi-component behavior, optionally with `webEnvironment = RANDOM_PORT` and `TestRestTemplate`/`WebTestClient` for real HTTP. For pure logic with no Spring, just unit-test the class with `new` and mocks — no context at all.",
+    "tags": ["testing", "spring-boot-test", "integration"]
+  },
+  {
+    "id": "sb-test-002",
+    "topic": "Testing",
+    "subtopic": "@WebMvcTest",
+    "difficulty": "medium",
+    "question": "What is `@WebMvcTest` and how is `MockMvc` used with it?",
+    "answer": "`@WebMvcTest(UserController.class)` loads only the **web layer** (the controller, JSON converters, filters) — not services or repositories. You inject `MockMvc` to perform fake HTTP requests against the controller without a running server, and mock the controller's collaborators with `@MockBean`.",
+    "explanation": "It's fast because it skips the full context. `mockMvc.perform(get(\"/users/1\")).andExpect(status().isOk())` exercises routing, deserialization, validation, and your handler logic. Service beans aren't loaded, so you provide them as `@MockBean`s.",
+    "tags": ["testing", "web-mvc-test", "mockmvc"]
+  },
+  {
+    "id": "sb-test-003",
+    "topic": "Testing",
+    "subtopic": "@MockBean",
+    "difficulty": "medium",
+    "question": "What does `@MockBean` do in a Spring test?",
+    "answer": "`@MockBean` adds a Mockito mock to the application context, **replacing** any existing bean of that type. The controller/service under test gets the mock injected, and you stub its behavior with `when(...).thenReturn(...)`. It's how you isolate a layer in a slice test.",
+    "explanation": "Distinct from plain `@Mock` (which has no Spring context). `@MockBean` is for when the bean must live *in the context* so Spring injects it. Overusing it in `@SpringBootTest` defeats the purpose of an integration test — keep it for slice tests or for stubbing external systems.",
+    "tags": ["testing", "mockbean", "mockito"]
+  },
+  {
+    "id": "sb-test-004",
+    "topic": "Testing",
+    "subtopic": "@DataJpaTest",
+    "difficulty": "medium",
+    "question": "What does `@DataJpaTest` configure for testing repositories?",
+    "answer": "`@DataJpaTest` loads only JPA components (entities, repositories, an `EntityManager`), configures an **in-memory database** by default (e.g. H2), and wraps each test in a transaction that **rolls back** afterward — so tests are isolated and don't pollute data.",
+    "explanation": "It's a slice test for the persistence layer: fast, no full context, no services/controllers. `TestEntityManager` helps set up fixtures. Use `@AutoConfigureTestDatabase(replace = NONE)` if you want to test against a real database instead of the in-memory default.",
+    "tags": ["testing", "data-jpa-test", "repository"]
+  },
+  {
+    "id": "sb-test-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Testing",
+    "subtopic": "Slice tests",
+    "difficulty": "medium",
+    "question": "You want to test a single REST controller's request mapping and JSON serialization quickly, without loading services or the database. Which annotation is the best fit?",
+    "options": ["@WebMvcTest", "@SpringBootTest", "@DataJpaTest", "@Component"],
+    "answer": "@WebMvcTest",
+    "explanation": "`@WebMvcTest` loads only the web slice and provides `MockMvc` — fast and focused. `@SpringBootTest` would boot the whole context (overkill/slow), `@DataJpaTest` tests the persistence slice, and `@Component` isn't a test annotation at all.",
+    "tags": ["testing", "slice-tests", "mcq"]
+  },
+  {
+    "id": "sb-actuator-001",
+    "topic": "Actuator & Production",
+    "subtopic": "What is Actuator",
+    "difficulty": "easy",
+    "question": "What does Spring Boot Actuator provide?",
+    "answer": "Actuator adds production-ready **monitoring and management endpoints** over HTTP (or JMX): health checks, metrics, environment/config info, loggers, thread dumps, and more — out of the box once you add `spring-boot-starter-actuator`.",
+    "explanation": "It's the operational layer: load balancers hit `/actuator/health`, monitoring scrapes `/actuator/metrics` (or Prometheus). You control which endpoints are exposed and secured because some reveal sensitive internals.",
+    "tags": ["actuator", "monitoring", "production"]
+  },
+  {
+    "id": "sb-actuator-002",
+    "topic": "Actuator & Production",
+    "subtopic": "Health endpoint",
+    "difficulty": "easy",
+    "question": "What is the `/actuator/health` endpoint used for?",
+    "answer": "It reports whether the application and its dependencies are healthy — aggregating built-in and custom health indicators (database, disk space, message broker, …) into an overall `UP`/`DOWN` status. Container orchestrators and load balancers use it for **liveness/readiness** probes.",
+    "explanation": "By default it shows just the status; set `management.endpoint.health.show-details=always` (or `when-authorized`) to see component breakdowns. You add custom checks by implementing `HealthIndicator`. Kubernetes can use the dedicated liveness/readiness groups.",
+    "tags": ["actuator", "health", "kubernetes"]
+  },
+  {
+    "id": "sb-actuator-003",
+    "topic": "Actuator & Production",
+    "subtopic": "Exposing endpoints",
+    "difficulty": "medium",
+    "question": "Why are most Actuator endpoints hidden by default, and how do you expose them?",
+    "answer": "For security — many endpoints leak sensitive data (env vars, beans, heap dumps). Only `health` is exposed over HTTP by default. Expose others explicitly with `management.endpoints.web.exposure.include=health,info,metrics` (or `*` for all — and then secure them).",
+    "explanation": "The principle is least exposure. In production you typically expose a small set and put them behind authentication/network rules, or move them to a separate management port (`management.server.port`). Never blanket-expose `*` on a public interface without security.",
+    "tags": ["actuator", "security", "configuration"]
+  },
+  {
+    "id": "sb-actuator-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Actuator & Production",
+    "subtopic": "Dependencies",
+    "difficulty": "easy",
+    "question": "Which dependency must you add to enable Actuator endpoints?",
+    "options": ["spring-boot-starter-actuator", "spring-boot-starter-web", "spring-boot-starter-data-jpa", "spring-boot-devtools"],
+    "answer": "spring-boot-starter-actuator",
+    "explanation": "Actuator endpoints come from `spring-boot-starter-actuator`. `starter-web` provides MVC, `starter-data-jpa` provides persistence, and `devtools` provides dev-time conveniences (auto-restart) — none of those enable Actuator.",
+    "tags": ["actuator", "dependencies", "mcq"]
+  },
+  {
+    "id": "sb-sec-001",
+    "topic": "Security",
+    "subtopic": "Defaults",
+    "difficulty": "medium",
+    "question": "What happens when you add `spring-boot-starter-security` to an app with no extra configuration?",
+    "answer": "Spring Security auto-configures and **secures every endpoint** by default: it requires authentication, enables HTTP Basic and a generated login form, creates a default user `user` with a random password printed to the console at startup, and applies sensible protections (CSRF, security headers).",
+    "explanation": "This \"secure by default\" stance means adding the starter immediately locks things down — you then *open up* what should be public via a `SecurityFilterChain`. The console-printed password is for getting started only; you replace it with real user storage.",
+    "tags": ["security", "defaults", "authentication"]
+  },
+  {
+    "id": "sb-sec-002",
+    "topic": "Security",
+    "subtopic": "SecurityFilterChain",
+    "difficulty": "hard",
+    "question": "How do you customize which endpoints are public vs protected in modern Spring Security?",
+    "answer": "Define a `SecurityFilterChain` bean in a `@Configuration` class and configure authorization rules with the lambda DSL: `http.authorizeHttpRequests(auth -> auth.requestMatchers(\"/public/**\").permitAll().anyRequest().authenticated())`. This replaced the older `WebSecurityConfigurerAdapter` (removed in Spring Security 6).",
+    "explanation": "You build up the `HttpSecurity` (request authorization, login mechanism, CSRF, CORS, session policy) and return the built chain as a bean. The component-based `SecurityFilterChain` approach is the current idiom; subclassing `WebSecurityConfigurerAdapter` is deprecated/removed.",
+    "tags": ["security", "filter-chain", "authorization"]
+  },
+  {
+    "id": "sb-sec-003",
+    "topic": "Security",
+    "subtopic": "AuthN vs AuthZ",
+    "difficulty": "easy",
+    "question": "What is the difference between authentication and authorization in Spring Security?",
+    "answer": "**Authentication** verifies *who* you are (validating credentials → an `Authentication` in the `SecurityContext`). **Authorization** decides *what* an authenticated principal is allowed to do (role/authority checks on endpoints or methods). AuthN happens first; AuthZ uses its result.",
+    "explanation": "In Spring Security, authentication is handled by `AuthenticationManager`/providers; authorization by request matchers in the filter chain and method-level annotations like `@PreAuthorize(\"hasRole('ADMIN')\")`. Keeping the two concepts distinct clarifies most security design questions.",
+    "tags": ["security", "authentication", "authorization"]
+  },
+  {
+    "id": "sb-sec-004",
+    "topic": "Security",
+    "subtopic": "Password encoding",
+    "difficulty": "medium",
+    "question": "How should passwords be stored in a Spring Security app, and what does `PasswordEncoder` do?",
+    "answer": "Never store plaintext. Expose a `PasswordEncoder` bean — typically `BCryptPasswordEncoder` — which **hashes** passwords with a salt and adaptive work factor. Spring Security uses it to encode passwords on registration and to match raw input against the stored hash at login.",
+    "explanation": "`DelegatingPasswordEncoder` (the default from `PasswordEncoderFactories`) stores the algorithm id as a `{bcrypt}` prefix so you can migrate algorithms over time. BCrypt is deliberately slow to resist brute force; never use plain MD5/SHA for passwords.",
+    "tags": ["security", "passwords", "bcrypt"]
+  }
+]

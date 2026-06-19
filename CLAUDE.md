@@ -142,7 +142,7 @@ graphql: {
 
 Data files are dynamic-imported per subject, so Vite code-splits each bank into its own chunk. Progress is stored per subject under `srs:<id>` (or in the cloud for signed-in users — see Part 3); "Reset progress" clears only the active subject. `loadData` is wrapped so that when `VITE_CARDS_FROM_API=true` it fetches the bank from the cards API and falls back to the bundled import; default (flag off) is the bundled JSON, unchanged.
 
-Current subjects: `javascript`, `react`, `node`, `typescript`, `aws`, `graphql`.
+Current subjects: `javascript`, `react`, `node`, `typescript`, `aws`, `graphql`, `springboot`.
 
 ### Routes
 
@@ -208,6 +208,7 @@ As of June 2026:
 | Node.js | 61 | Authored from nodejs.org + expressjs.com: Event Loop, Modules, Events, Core API, Streams & Buffers, HTTP, Error Handling, Express |
 | AWS SAA | 184 | SAA-C03 exam-style scenario questions, weighted by official domain percentages (Secure 56, Resilient 50, High-Performing 42, Cost-Optimized 36); heaviest user of multiple-response cards |
 | GraphQL | 72 | Authored from graphql.org/learn + interview staples: Introduction/REST, Queries, Mutations, Schema & Type System, Resolvers & Execution, Subscriptions, Performance (N+1/DataLoader/caching), Best Practices & Security, Ecosystem & Tooling |
+| Spring Boot | 55 | Authored from docs.spring.io + interview staples: Introduction (IoC/DI, starters, auto-config), Dependency Injection & Beans, Auto-Configuration, Configuration & Properties, Web & REST, Data & JPA, Testing, Actuator & Production, Security |
 
 ### Adding questions
 
@@ -251,7 +252,7 @@ An optional teaching-grade write-up per card: a prose explanation, a copy-pastea
 - **Source of truth / storage** — kept out of the bank files to keep session/library loads lean. One file per subject, `app/data/deepdives/<subject>.json`, keyed by card id (`{ explanation, example?, resources? }` — the `DeepDive` type in `types.ts`). Dynamic-imported per subject by `lib/deepdives.ts` (cached in `hooks/useDeepDives.ts`, mirroring `useSubjectData`), so each subject's deep dives are their own chunk. `SubjectHome` loads the map and threads it through `Session` → the card components.
 - **Rendering** — explanation + example go through `RichText`, so the example's fenced code block reuses the existing **Copy** button (now with `ts`/`tsx` Prism grammars). `DeepDive` inserts a blank line before each bold section label (`**The problem:**`, `**Why it happens:**`, …) so the explanation reads as separate blocks — purely presentational, content is untouched. Examples are complete copy-paste-ready `App.tsx` files (all imports included; no `import React` needed thanks to the JSX runtime). Resources render as an external link list.
 - **API path** — `useProgress`-style: `CardDetail`/`Session` resolve `card.deepDive ?? deepDives[card.id]`, so when `VITE_CARDS_FROM_API=true` the deep dive rides along on the card (see Part 3); otherwise it comes from the bundled file.
-- **Authoring** — run the per-subject prompt in `documents/prompts/` against a card, then merge the result via `app/scripts/dd-batch.mjs` and verify the example compiles: `app/scripts/verify-deepdive-examples.mjs <subject>` (tsx type-check, for React/TS), `app/scripts/verify-node-examples.mjs <subject>` (`node --check` syntax pass, for JS/Node `js` snippets), or `app/scripts/verify-graphql-examples.mjs graphql` (routes ` ```graphql ` blocks through `parse()` from the `graphql` package and ` ```js ` blocks through `node --check`). **Author in small per-topic batches, never one giant pass** (a one-shot agent attempt faked 187/200 cards). Write the explanation's bold section labels ending in a **colon** (`**The problem:**`) — the `DeepDive` spacing regex only fires on `:**`. **Status: React, Node.js, TypeScript, JavaScript, and GraphQL are 100% done; AWS not started.** Full runbook + per-subject/per-topic content status + the next-batch recipe in **`documents/DEEP_DIVES.md`**.
+- **Authoring** — run the per-subject prompt in `documents/prompts/` against a card, then merge the result via `app/scripts/dd-batch.mjs` and verify the example compiles: `app/scripts/verify-deepdive-examples.mjs <subject>` (tsx type-check, for React/TS), `app/scripts/verify-node-examples.mjs <subject>` (`node --check` syntax pass, for JS/Node `js` snippets), or `app/scripts/verify-graphql-examples.mjs graphql` (routes ` ```graphql ` blocks through `parse()` from the `graphql` package and ` ```js ` blocks through `node --check`). **Author in small per-topic batches, never one giant pass** (a one-shot agent attempt faked 187/200 cards). Write the explanation's bold section labels ending in a **colon** (`**The problem:**`) — the `DeepDive` spacing regex only fires on `:**`. **Status: React, Node.js, TypeScript, JavaScript, GraphQL, and Spring Boot are 100% done; AWS not started.** Full runbook + per-subject/per-topic content status + the next-batch recipe in **`documents/DEEP_DIVES.md`**.
 
 ### Card library (`/:subject/card-library`)
 
@@ -271,7 +272,7 @@ All filter state lives in the URL via `useSearchParams` (replace mode) — share
 
 Question, answer, and explanation text supports markdown-like formats via the `<RichText text={…} />` component:
 
-- **Fenced code blocks** — ` ```js\n...\n``` ` are rendered as highlighted `<pre>` blocks using **Prism.js** (One Dark token colors; the only `dangerouslySetInnerHTML` in the app — Prism output over our own JSON). `js`/`ts`/`jsx`/`tsx` grammars are loaded; other languages fall back to the JS grammar. Each block has a hover **Copy** button.
+- **Fenced code blocks** — ` ```js\n...\n``` ` are rendered as highlighted `<pre>` blocks using **Prism.js** (One Dark token colors; the only `dangerouslySetInnerHTML` in the app — Prism output over our own JSON). `js`/`ts`/`jsx`/`tsx`/`graphql`/`java` grammars are loaded; other languages fall back to the JS grammar. Each block has a hover **Copy** button.
 - **Inline code** — `` `backtick` `` spans are rendered as styled `<code>` chips.
 - **Emphasis** — `*italic*` and `**bold**` render as `<em>`/`<strong>`. Code spans are protected: a literal `*` inside backticks (e.g. `` `s3:*` ``) is never treated as emphasis.
 - `plainText(str)` — strips code fences to `[code]` for library table previews.

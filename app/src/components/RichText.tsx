@@ -7,6 +7,8 @@ import 'prismjs/components/prism-jsx';
 import 'prismjs/components/prism-tsx';
 // GraphQL SDL/queries appear in the GraphQL subject's cards and deep dives.
 import 'prismjs/components/prism-graphql';
+// Java appears in the Spring Boot subject's cards and deep dives.
+import 'prismjs/components/prism-java';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
