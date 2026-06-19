@@ -1,0 +1,456 @@
+{
+  "java-basics-001": {
+    "explanation": "**The problem:** Java promises \"write once, run anywhere,\" but your machine's CPU only understands its own native instructions — not Java. **Why it works:** `javac` compiles your `.java` source into platform-neutral **bytecode** (`.class` files). The **JVM** is a program that reads that bytecode and executes it on the current OS/CPU, so the same `.class` runs on Windows, macOS, or Linux as long as a JVM exists there. **The three layers:** the **JVM** executes bytecode; the **JRE** bundles the JVM with the standard class libraries (`java.util`, `java.io`, …) so programs can actually do useful work; the **JDK** adds the compiler and tooling so you can build programs in the first place. **Common mistakes:** installing only a JRE and wondering why `javac` isn't found — you need the JDK to compile. Modern downloads (JDK 11+) usually ship the JDK and you rarely install a standalone JRE anymore.",
+    "example": "```java\n// 1. Write source: Hello.java\npublic class Hello {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, world!\");\n    }\n}\n\n// 2. Compile with the JDK's compiler  ->  produces Hello.class (bytecode)\n//    javac Hello.java\n\n// 3. Run the bytecode on the JVM\n//    java Hello\n//    => Hello, world!\n```",
+    "resources": [
+      {
+        "label": "Oracle — About the Java Technology",
+        "url": "https://docs.oracle.com/javase/tutorial/getStarted/intro/definition.html"
+      },
+      {
+        "label": "dev.java — Getting Started",
+        "url": "https://dev.java/learn/getting-started/"
+      }
+    ]
+  },
+  "java-basics-002": {
+    "explanation": "**The problem:** When you run `java MyApp`, the JVM needs one well-known method to start at — but it can't create an object first (which constructor? what arguments?). **Why this signature:** `static` means the method belongs to the class itself, so the JVM can invoke `MyApp.main(...)` with no instance. `public` lets the JVM (outside your class) call it. `void` because there's no caller to receive a return value — use `System.exit(code)` for exit status. `String[] args` carries whatever you typed after the class name on the command line. **Why it works:** the JVM reflectively looks up this precise shape; the parameter may also be written `String... args` (varargs) and the name `args` is just convention. **Common mistakes:** forgetting `static` (compiles fine, then \"Error: Main method not found\"), or typing `String args` instead of `String[] args`.",
+    "example": "```java\npublic class Greet {\n    public static void main(String[] args) {\n        // args holds command-line tokens. Run: java Greet Ana\n        String who = args.length > 0 ? args[0] : \"world\";\n        System.out.println(\"Hello, \" + who + \"!\");\n    }\n}\n// java Greet        => Hello, world!\n// java Greet Ana    => Hello, Ana!\n```",
+    "resources": [
+      {
+        "label": "Oracle — A Closer Look at HelloWorld",
+        "url": "https://docs.oracle.com/javase/tutorial/getStarted/application/index.html"
+      }
+    ]
+  },
+  "java-basics-003": {
+    "explanation": "**The problem:** New Java developers often assume `String` is a primitive like in some languages — it isn't. **The eight primitives:** integer types `byte` (8-bit), `short` (16), `int` (32, the default for whole numbers), `long` (64, suffix `L`); floating-point `float` (32, suffix `f`) and `double` (64, the default for decimals); `char` (a single 16-bit Unicode unit, single quotes); and `boolean` (`true`/`false`). **Why it matters:** primitives hold their value directly (fast, no `null`), while everything else — `String`, arrays, your own classes — is a **reference type** that holds a pointer to an object on the heap and can be `null`. **Common mistakes:** using `==` to compare `String`s (that compares references — use `.equals`); writing `float x = 1.5;` without the `f` suffix (1.5 is a `double`, won't fit) — write `1.5f`; and forgetting `long big = 3000000000L;` needs the `L` or it overflows `int`.",
+    "example": "```java\nbyte    b = 100;\nshort   s = 30000;\nint     i = 42;          // default for integers\nlong    big = 9_000_000_000L; // L suffix; underscores allowed for readability\nfloat   f = 1.5f;        // f suffix required\ndouble  d = 3.14159;     // default for decimals\nchar    c = 'A';         // single quotes, one Unicode unit\nboolean flag = true;\n\nString  name = \"Ana\";   // NOT a primitive — a class instance\n```",
+    "resources": [
+      {
+        "label": "Oracle — Primitive Data Types",
+        "url": "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html"
+      }
+    ]
+  },
+  "java-basics-004": {
+    "explanation": "**The problem:** `a = b` does very different things depending on whether the variables are primitives or objects, and this surprises beginners. **Why it happens:** a primitive variable is a box containing the actual value; copying it copies the value. A reference variable is a box containing the *address* of an object on the heap; copying it copies the address, so both variables now point at the **same** object. **Why it matters:** mutating the object through one reference is visible through the other — but reassigning one reference doesn't affect the other. Also, only reference types can hold `null` (\"points at nothing\"), which is why dereferencing a `null` throws `NullPointerException`. **Common mistakes:** expecting changes to a copied object not to be visible (they are — same object); and confusing reassignment (`b = new ...`) with mutation (`b.setX(...)`).",
+    "example": "```java\nint x = 10;\nint y = x;   // copies the value 10\ny = 99;\nSystem.out.println(x); // 10 — x untouched\n\nint[] a = {1, 2, 3};\nint[] b = a;  // copies the reference — same array\nb[0] = 99;\nSystem.out.println(a[0]); // 99 — a and b are the same object\n\nString n = null; // legal: references can be null\n// n.length();   // would throw NullPointerException\n```",
+    "resources": [
+      {
+        "label": "Oracle — Creating Objects",
+        "url": "https://docs.oracle.com/javase/tutorial/java/javaOO/objectcreation.html"
+      }
+    ]
+  },
+  "java-basics-005": {
+    "explanation": "**The problem:** Java's collections and generics work only with objects (reference types), but you constantly want to store `int`s, `double`s, etc. **Why wrappers exist:** each primitive has a class counterpart — `Integer`, `Long`, `Double`, `Boolean`, `Character`, `Byte`, `Short`, `Float` — that wraps the value in an object. **How autoboxing helps:** since Java 5 the compiler auto-inserts the conversion, so `list.add(5)` boxes `5` into `Integer.valueOf(5)`, and `int n = list.get(0)` unboxes it back. **Common mistakes:** (1) **NullPointerException on unboxing** — if an `Integer` is `null`, `int n = obj` throws, because there's no value to unbox. (2) **Comparing wrappers with `==`** compares references, not values; use `.equals()` or unbox first. (3) Autoboxing in a tight loop creates many objects — fine usually, but prefer primitives in hot numeric code.",
+    "example": "```java\nimport java.util.*;\n\nList<Integer> nums = new ArrayList<>();\nnums.add(5);          // autobox: int 5 -> Integer\nnums.add(10);\nint first = nums.get(0); // unbox: Integer -> int\n\nInteger a = 1000, b = 1000;\nSystem.out.println(a == b);        // false — different objects!\nSystem.out.println(a.equals(b));   // true  — compares values\n\nInteger maybe = null;\n// int bad = maybe; // NullPointerException on unboxing\n```",
+    "resources": [
+      {
+        "label": "Oracle — Autoboxing and Unboxing",
+        "url": "https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html"
+      }
+    ]
+  },
+  "java-basics-006": {
+    "explanation": "**The problem:** Java is verbose — `Map<String, List<Integer>> m = new HashMap<String, List<Integer>>();` repeats the type twice. **What `var` does:** introduced in Java 10, it asks the compiler to infer the variable's type from the right-hand side. The variable is still **strongly, statically typed** — `var` is not dynamic and not `Object`; the inferred type is locked in at compile time. **Why it works:** the initializer unambiguously determines the type, so the compiler fills it in. **Where you can use it:** local variables *with an initializer*, and loop variables. **Where you cannot:** fields, method parameters, return types, or a `var x;` with no initializer (nothing to infer from), or `var x = null` (ambiguous). **Common mistakes:** overusing it where it hurts readability (e.g. `var x = getThing();` hides the type) — prefer it when the type is obvious from the right side.",
+    "example": "```java\nvar message = \"hello\";          // inferred String\nvar count = 42;                 // inferred int\nvar list = new ArrayList<String>(); // inferred ArrayList<String>\n\nfor (var s : list) {            // inferred String\n    System.out.println(s);\n}\n\n// Not allowed:\n// var x;            // no initializer\n// var y = null;     // can't infer\n// field/param/return types can't use var\n```",
+    "resources": [
+      {
+        "label": "Oracle — Local Variable Type Inference",
+        "url": "https://docs.oracle.com/en/java/javase/17/language/local-variable-type-inference.html"
+      }
+    ]
+  },
+  "java-basics-007": {
+    "explanation": "**The problem:** `7 / 2` giving `3` instead of `3.5` is a classic surprise that causes subtle bugs in calculations. **Why it happens:** in Java the result type of an operator depends on its operands. `int / int` produces an `int`, so the fractional part is **truncated** (toward zero, not rounded) — `7 / 2` is `3`, `-7 / 2` is `-3`. **Why the fix works:** if at least one operand is `double` (or `float`), Java *promotes* the other to floating point and does floating-point division. **How to fix:** make one operand a decimal literal (`7 / 2.0`), or cast (`(double) 7 / 2`). **Common mistakes:** casting too late — `(double)(7 / 2)` is `3.0`, because the integer division already happened *before* the cast. Cast an operand, not the result. Also `%` (remainder) follows the same int/double rules: `7 % 2` is `1`.",
+    "example": "```java\nSystem.out.println(7 / 2);          // 3   (int division, truncated)\nSystem.out.println(7 / 2.0);        // 3.5 (one operand is double)\nSystem.out.println((double) 7 / 2); // 3.5 (cast an operand first)\nSystem.out.println((double)(7 / 2));// 3.0 (too late — already truncated)\nSystem.out.println(7 % 2);          // 1   (remainder)\n```",
+    "resources": [
+      {
+        "label": "Oracle — Operators",
+        "url": "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html"
+      }
+    ]
+  },
+  "java-basics-008": {
+    "explanation": "**The problem:** index-based loops are noisy and a common source of off-by-one and `IndexOutOfBoundsException` bugs when you only want the elements. **What for-each does:** `for (Type item : iterable)` walks every element of any array or `Iterable` (List, Set, …) in order, with no counter to mismanage. **Why it works:** the compiler turns it into an iterator (for collections) or index walk (for arrays) behind the scenes. **When to use the classic for:** you need the index, you iterate backwards, you step by more than one, or you remove elements while iterating (removing inside a for-each throws `ConcurrentModificationException` — use an explicit `Iterator.remove()` instead). **Common mistakes:** trying to modify the collection's structure during a for-each; and expecting to change array elements via the loop variable — reassigning `item` doesn't write back to the array (use the index for that).",
+    "example": "```java\nint[] nums = {10, 20, 30};\n\n// Classic for: you have the index\nfor (int i = 0; i < nums.length; i++) {\n    System.out.println(i + \" -> \" + nums[i]);\n}\n\n// Enhanced for-each: just the values\nint sum = 0;\nfor (int n : nums) {\n    sum += n;\n}\nSystem.out.println(\"sum = \" + sum); // 60\n```",
+    "resources": [
+      {
+        "label": "Oracle — The for Statement",
+        "url": "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html"
+      }
+    ]
+  },
+  "java-oop-001": {
+    "explanation": "**The problem:** beginners conflate the definition of a thing with an actual thing. **The distinction:** a **class** is the design — it lists what fields each instance will have and what methods they can run, but it holds no per-object data itself. An **object** is what you get when you `new` the class: a live instance on the heap with its own field values. **Why it works:** `new Dog()` allocates memory, runs the constructor, and returns a reference to that instance; each `new` produces a separate object, so two `Dog`s can have different names. **Common mistakes:** putting data that should be per-object into `static` fields (then all instances share it — see static vs instance); and thinking the class \"runs\" — only objects (or static members) do. A useful mantra: the class is the noun's *definition*; objects are the nouns.",
+    "example": "```java\nclass Dog {            // the blueprint\n    String name;       // each object gets its own name\n    void bark() { System.out.println(name + \" says woof\"); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Dog a = new Dog();  // object #1\n        Dog b = new Dog();  // object #2 — independent\n        a.name = \"Rex\";\n        b.name = \"Fido\";\n        a.bark();           // Rex says woof\n        b.bark();           // Fido says woof\n    }\n}\n```",
+    "resources": [
+      {
+        "label": "Oracle — Classes and Objects",
+        "url": "https://docs.oracle.com/javase/tutorial/java/javaOO/index.html"
+      }
+    ]
+  },
+  "java-oop-002": {
+    "explanation": "**The problem:** if any code can read and write an object's fields directly, you can't enforce rules (a bank balance going negative) and you can never change the internals without breaking callers. **What encapsulation does:** mark fields `private` so only the class itself touches them, and expose a *deliberate* public surface (methods) that guards every change. **The four access levels:** `private` (this class only), *package-private* (no keyword — same package), `protected` (package + subclasses), `public` (everyone). **Why it works:** callers depend on your methods, not your fields, so you can validate inputs and later swap the implementation freely. **Common mistakes:** auto-generating a public getter+setter for every field (that's barely better than public fields) — only expose what callers genuinely need, and put validation/behavior in methods rather than leaking raw state.",
+    "example": "```java\nclass Account {\n    private double balance;          // hidden state\n\n    public double getBalance() { return balance; }\n\n    public void deposit(double amount) {\n        if (amount <= 0) throw new IllegalArgumentException(\"must be positive\");\n        balance += amount;           // change is guarded\n    }\n}\n\nAccount acc = new Account();\nacc.deposit(100);\n// acc.balance = -50;  // won't compile — balance is private\n```",
+    "resources": [
+      {
+        "label": "Oracle — Controlling Access to Members",
+        "url": "https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html"
+      }
+    ]
+  },
+  "java-oop-003": {
+    "explanation": "**The problem:** objects often need valid starting state, and forgetting how default constructors work causes confusing \"constructor not found\" errors. **What a constructor is:** a special initializer with the class's exact name and no return type, run once by `new`. You can overload it (several constructors with different parameters) and chain with `this(...)`. **The default rule:** if you declare *no* constructor, the compiler silently adds a public no-arg one so `new Foo()` works. The moment you write *any* constructor, that freebie disappears — so if you only wrote `Foo(int x)`, then `new Foo()` no longer compiles unless you add it back. **Why it works:** the compiler only fills the gap when you've provided nothing. **Common mistakes:** assuming a no-arg constructor always exists (frameworks/`new Foo()` may need one — add it explicitly); and shadowing fields without `this` (`name = name` assigns the parameter to itself — use `this.name = name`).",
+    "example": "```java\nclass Point {\n    int x, y;\n\n    Point(int x, int y) {   // custom constructor\n        this.x = x;         // this.x = field, x = parameter\n        this.y = y;\n    }\n    Point() {               // must add no-arg back explicitly\n        this(0, 0);         // chain to the other constructor\n    }\n}\n\nPoint origin = new Point();     // works only because Point() exists\nPoint p = new Point(3, 4);\n```",
+    "resources": [
+      {
+        "label": "Oracle — Providing Constructors",
+        "url": "https://docs.oracle.com/javase/tutorial/java/javaOO/constructors.html"
+      }
+    ]
+  },
+  "java-oop-004": {
+    "explanation": "**The problem:** related classes often share behavior, and copy-pasting it duplicates bugs. **What inheritance does:** `class Dog extends Animal` makes `Dog` an `Animal` — it inherits `Animal`'s non-private members and can add or override behavior. **Constructors and `super`:** a subclass object *is* a superclass object underneath, so the superclass part must be initialized first. The compiler inserts an implicit `super()` (no-arg) as the first line of every subclass constructor unless you call `super(args)` yourself; if the superclass has no no-arg constructor, you *must* call `super(args)` explicitly. `super.foo()` reaches the parent's version of an overridden method. **Why single inheritance:** Java allows only one direct superclass (to avoid the diamond problem) but a class can implement many interfaces. **Common mistakes:** expecting to inherit `private` members (you don't — use `protected` or the parent's public API); and overusing inheritance where composition (\"has-a\") fits better than \"is-a\".",
+    "example": "```java\nclass Animal {\n    String name;\n    Animal(String name) { this.name = name; }\n    void speak() { System.out.println(name + \" makes a sound\"); }\n}\n\nclass Dog extends Animal {\n    Dog(String name) { super(name); }   // init the Animal part first\n    @Override void speak() {\n        super.speak();                  // call Animal's version too\n        System.out.println(name + \" barks\");\n    }\n}\n\nnew Dog(\"Rex\").speak(); // Rex makes a sound / Rex barks\n```",
+    "resources": [
+      {
+        "label": "Oracle — Inheritance",
+        "url": "https://docs.oracle.com/javase/tutorial/java/IandI/subclasses.html"
+      }
+    ]
+  },
+  "java-oop-005": {
+    "explanation": "**The problem:** you want one piece of code (e.g. a loop over `List<Animal>`) to do the right thing for each concrete type without `if/else` on the type. **What polymorphism does:** when a subclass **overrides** a method, calling it through a superclass reference runs the *subclass's* implementation, decided by the object's real type at runtime — this is **dynamic dispatch** (a.k.a. late/virtual binding). **Why it works:** the variable's *declared* type decides which methods you may call (compile-time), but the *object's* type decides which override actually runs (runtime). **Why it's powerful:** you program to the abstraction (`Animal`, an interface) and add new subclasses without touching the calling code — the open/closed principle. **Common mistakes:** confusing it with overloading (overloading is resolved by argument types at compile time, not by the object's runtime type); forgetting `@Override` (so a typo silently creates a *new* method instead of overriding); and that `static` and `private` methods are *not* polymorphic.",
+    "example": "```java\nclass Shape { double area() { return 0; } }\nclass Circle extends Shape {\n    double r;\n    Circle(double r) { this.r = r; }\n    @Override double area() { return Math.PI * r * r; }\n}\nclass Square extends Shape {\n    double s;\n    Square(double s) { this.s = s; }\n    @Override double area() { return s * s; }\n}\n\nShape[] shapes = { new Circle(2), new Square(3) };\nfor (Shape sh : shapes) {\n    System.out.println(sh.area()); // each runs ITS OWN area()\n}\n```",
+    "resources": [
+      {
+        "label": "Oracle — Polymorphism",
+        "url": "https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html"
+      }
+    ]
+  },
+  "java-oop-006": {
+    "explanation": "**The problem:** the two words look alike and beginners mix them up, but they are unrelated mechanisms. **Overloading:** several methods in the *same* class share a name but differ in parameter list (count or types). The compiler picks which one to call based on the *arguments at the call site* — this is **static/compile-time** resolution. Return type alone can't distinguish overloads. **Overriding:** a *subclass* provides a new body for an inherited method with the *same* signature; the JVM picks the version based on the object's *runtime* type (polymorphism). **Why it works:** overloading is just a naming convenience; overriding is the engine of dynamic dispatch. **Common mistakes:** thinking changing only the return type overloads a method (it doesn't compile); and forgetting `@Override` so a mismatched signature accidentally *overloads* instead of overrides, and your method never gets called polymorphically.",
+    "example": "```java\nclass Printer {\n    // Overloading: same name, different params, same class\n    void print(int x)    { System.out.println(\"int: \" + x); }\n    void print(String s) { System.out.println(\"str: \" + s); }\n}\n\nclass Base { String who() { return \"Base\"; } }\nclass Derived extends Base {\n    @Override String who() { return \"Derived\"; } // overriding\n}\n\nBase b = new Derived();\nSystem.out.println(b.who()); // \"Derived\" — runtime type wins\n```",
+    "resources": [
+      {
+        "label": "Oracle — Defining Methods / Overriding",
+        "url": "https://docs.oracle.com/javase/tutorial/java/IandI/override.html"
+      }
+    ]
+  },
+  "java-oop-007": {
+    "explanation": "**The problem:** sometimes a base type is meaningful as a concept but has no sensible standalone instance — a generic `Shape` has no area until it's a `Circle` or `Square`. **What abstract gives you:** mark the class `abstract` so `new Shape()` is forbidden, and mark methods that every subclass *must* define as `abstract` (no body). The class can still hold concrete fields and fully-implemented helper methods that all subclasses inherit. **Why it works:** the compiler forces each concrete subclass to implement every abstract method, guaranteeing the contract while letting the base supply shared code. **Abstract class vs interface:** use an abstract class when subclasses share *state* and *implementation*, not just a contract. **Common mistakes:** trying to instantiate an abstract class; and forgetting that a subclass which doesn't implement *all* abstract methods must itself be declared `abstract`.",
+    "example": "```java\nabstract class Shape {\n    String name;\n    Shape(String name) { this.name = name; }  // shared state\n    abstract double area();                    // each subclass must define\n    void describe() {                          // shared concrete method\n        System.out.println(name + \" area = \" + area());\n    }\n}\n\nclass Circle extends Shape {\n    double r;\n    Circle(double r) { super(\"circle\"); this.r = r; }\n    @Override double area() { return Math.PI * r * r; }\n}\n\nnew Circle(2).describe(); // circle area = 12.566...\n// new Shape(\"x\");        // won't compile — abstract\n```",
+    "resources": [
+      {
+        "label": "Oracle — Abstract Methods and Classes",
+        "url": "https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html"
+      }
+    ]
+  },
+  "java-oop-008": {
+    "explanation": "**The problem:** you want unrelated classes to be usable interchangeably based on *what they can do*, not their inheritance chain. **What an interface is:** a named set of method signatures (a contract). A class declares `implements Foo` and must provide every method, after which it can be used wherever a `Foo` is expected. **Why it's powerful:** a class can implement *many* interfaces (Java forbids multiple class inheritance but not multiple interface implementation), and code depending on the interface doesn't care which concrete class it gets — that's loose coupling, and it's what makes mocking/testing and swapping implementations easy. **Modern features:** interface methods are implicitly `public abstract`; constants are `public static final`; since Java 8 interfaces may add `default` methods (with a body) and `static` methods. **Common mistakes:** forgetting interface methods are public (you can't reduce visibility in the implementer); and reaching for an abstract class when you only need a contract (no shared state) — prefer an interface.",
+    "example": "```java\ninterface Shape {\n    double area();                 // implicitly public abstract\n    default String label() {       // default method (Java 8+)\n        return \"shape with area \" + area();\n    }\n}\n\nclass Circle implements Shape {\n    double r;\n    Circle(double r) { this.r = r; }\n    public double area() { return Math.PI * r * r; }\n}\n\nShape s = new Circle(1);  // program to the interface\nSystem.out.println(s.label());\n```",
+    "resources": [
+      {
+        "label": "Oracle — Interfaces",
+        "url": "https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html"
+      }
+    ]
+  },
+  "java-oop-009": {
+    "explanation": "**The problem:** both can declare methods subclasses must implement, so it's unclear which to reach for. **The deciding factors:** (1) **Multiple inheritance** — a class can implement many interfaces but extend only one class, so a capability that cross-cuts unrelated types must be an interface. (2) **State** — abstract classes can have instance fields and constructors; interfaces cannot hold instance state (only constants). (3) **Shared implementation** — abstract classes are the natural home for common concrete code; interfaces can add `default` methods but those can't use instance fields. **Rule of thumb:** model a *capability* (\"is comparable\", \"is runnable\") as an interface; model a closely-related *family with shared data/behavior* as an abstract class. **Why it works:** interfaces maximize flexibility and decoupling; abstract classes maximize code reuse within one hierarchy. **Common mistakes:** using an abstract class purely for a contract (locks subclasses out of other parents); and cramming state into interfaces via hacks. Modern Java often favors interfaces + composition.",
+    "example": "```java\n// Capability — many unrelated types can be comparable/runnable\ninterface Discountable { double priceAfterDiscount(); }\n\n// Closely-related family sharing state + code\nabstract class Employee {\n    protected String name;          // shared state\n    Employee(String name) { this.name = name; }\n    String badge() { return \"EMP:\" + name; } // shared code\n    abstract double monthlyPay();   // subclass-specific\n}\n\nclass Contractor extends Employee implements Discountable {\n    double rate;\n    Contractor(String n, double rate) { super(n); this.rate = rate; }\n    double monthlyPay() { return rate * 160; }\n    public double priceAfterDiscount() { return rate * 0.9; }\n}\n```",
+    "resources": [
+      {
+        "label": "Oracle — Abstract Classes Compared to Interfaces",
+        "url": "https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html"
+      }
+    ]
+  },
+  "java-oop-010": {
+    "explanation": "**The problem:** not everything belongs to an object — `Math.sqrt` needs no `Math` instance, and a shared counter shouldn't be duplicated per object. **What `static` means:** the member belongs to the *class*, so there is exactly one copy regardless of how many objects exist, and you access it via the class name. **Instance members** belong to each object — every `new` gets its own copy of the fields. **Why it works:** static members exist as soon as the class loads, before any object is created, which is exactly why a static method can't use `this` or read instance fields (there's no particular object). **When to use static:** stateless utility methods, constants (`static final`), and genuinely class-wide state like a counter or cache. **Common mistakes:** making everything static (kills polymorphism and testability — statics aren't overridable); and accidental shared state — a `static` field is shared by *all* instances, so mutating it from one object affects them all.",
+    "example": "```java\nclass Counter {\n    static int total = 0;     // ONE copy, shared\n    int id;                   // one per object\n\n    Counter() {\n        total++;              // affects everyone\n        id = total;           // unique per instance\n    }\n    static int howMany() { return total; } // no `this` available\n}\n\nnew Counter(); new Counter();\nSystem.out.println(Counter.howMany()); // 2 (via class name)\n```",
+    "resources": [
+      {
+        "label": "Oracle — Class Members (static)",
+        "url": "https://docs.oracle.com/javase/tutorial/java/javaOO/classvars.html"
+      }
+    ]
+  },
+  "java-oop-011": {
+    "explanation": "**The problem:** you sometimes want to guarantee something won't change — a constant, an un-overridable method, an un-subclassable class. **The three uses:** (1) `final` **variable** can be assigned exactly once; combined with `static` it's the idiom for constants (`static final double PI`). (2) `final` **method** can't be overridden, locking in critical behavior. (3) `final` **class** can't be subclassed (e.g. `String`, `Integer`), which also helps make a class immutable and secure. **The key subtlety:** for a reference variable, `final` freezes the *reference*, not the *object*. `final List<String> xs = new ArrayList<>();` still allows `xs.add(\"a\")` — you just can't do `xs = somethingElse`. **Why it works:** the compiler enforces single assignment and the JVM/compiler block overriding/extension. **Common mistakes:** thinking `final` makes the pointed-at object immutable (it doesn't); and that `final` on a parameter only stops reassigning the parameter, not mutating what it refers to.",
+    "example": "```java\nclass Circle {\n    static final double PI = 3.14159; // constant\n    final double radius;              // set once, in constructor\n    Circle(double radius) { this.radius = radius; }\n}\n\nfinal int[] arr = {1, 2, 3};\narr[0] = 99;       // OK — mutating the object\n// arr = new int[5]; // ERROR — can't reassign a final variable\n```",
+    "resources": [
+      {
+        "label": "Oracle — final variables",
+        "url": "https://docs.oracle.com/javase/tutorial/java/javaOO/classvars.html"
+      }
+    ]
+  },
+  "java-oop-012": {
+    "explanation": "**The problem:** you give a class a meaningful `equals` (two `Point`s are equal if x and y match), put it in a `HashSet`/`HashMap`, and lookups mysteriously fail. **Why it happens:** hash collections first compute `hashCode()` to pick a bucket, then use `equals()` only among items in that bucket. The default `hashCode()` (from `Object`) is based on object identity, so two logically-equal objects get *different* hash codes, land in *different* buckets, and are never compared — the set thinks they're distinct and `get` returns `null`. **The contract:** if `a.equals(b)` is true, then `a.hashCode() == b.hashCode()` *must* hold (the reverse need not). **Why the fix works:** overriding both so equal objects hash the same routes them to the same bucket where `equals` can confirm the match. **Common mistakes:** overriding only one of the two; and including mutable fields in `equals`/`hashCode` then mutating a key already in a map (it becomes unfindable). Use `Objects.equals`/`Objects.hash` to implement both correctly.",
+    "example": "```java\nimport java.util.*;\n\nclass Point {\n    final int x, y;\n    Point(int x, int y) { this.x = x; this.y = y; }\n\n    @Override public boolean equals(Object o) {\n        if (!(o instanceof Point p)) return false;\n        return x == p.x && y == p.y;\n    }\n    @Override public int hashCode() { return Objects.hash(x, y); }\n}\n\nSet<Point> set = new HashSet<>();\nset.add(new Point(1, 2));\nSystem.out.println(set.contains(new Point(1, 2))); // true (both overridden)\n```",
+    "resources": [
+      {
+        "label": "Oracle — Object.hashCode contract",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()"
+      }
+    ]
+  },
+  "java-str-001": {
+    "explanation": "**The problem:** beginners call `s.trim()` or `s.replace(...)` and are confused that `s` is unchanged. **What immutable means:** once a `String` exists, its contents are fixed forever. Every \"modifying\" method actually builds and returns a *brand-new* `String`, leaving the original alone. **Why Java does this:** immutable strings can be safely shared across threads without locking, cached/interned in the **string pool** (so identical literals reuse one object), and used as reliable `HashMap` keys (their hash never changes). **Why the fix works:** to keep a change you must reassign — `s = s.trim();` — capturing the new object. **Common mistakes:** discarding the return value (`s.toUpperCase();` does nothing); and building strings by `+=` in a loop, which creates a new object each iteration (O(n²)) — use `StringBuilder` for that.",
+    "example": "```java\nString s = \"  hello  \";\ns.trim();                 // result thrown away — s unchanged\nSystem.out.println(\"[\" + s + \"]\"); // [  hello  ]\n\ns = s.trim();             // capture the new String\nSystem.out.println(\"[\" + s + \"]\"); // [hello]\n\nString up = s.toUpperCase(); // new String; s still \"hello\"\n```",
+    "resources": [
+      {
+        "label": "Oracle — Strings",
+        "url": "https://docs.oracle.com/javase/tutorial/java/data/strings.html"
+      }
+    ]
+  },
+  "java-str-002": {
+    "explanation": "**The problem:** `a == b` sometimes appears to work for strings (because of the string pool) and then suddenly fails, causing intermittent bugs. **Why it happens:** `==` on reference types tests whether both variables point to the *same object*. String *literals* are interned in a shared pool, so `\"hi\" == \"hi\"` may be `true` — but a string built at runtime (`new String(\"hi\")`, concatenation, user input) is a different object, so `==` is `false` even when the text matches. **Why `.equals` works:** `String` overrides `equals` to compare contents character by character. **Best practices:** use `.equals`; for case-insensitive use `.equalsIgnoreCase`; to avoid NPE when one side might be null, call it on a known-non-null literal (`\"yes\".equals(input)`) or use `Objects.equals(a, b)`. `compareTo` returns an `int` (<0, 0, >0) for ordering, not a boolean. **Common mistakes:** using `==`; and calling `.equals` on a possibly-null reference.",
+    "example": "```java\nString a = \"hi\";\nString b = new String(\"hi\");\n\nSystem.out.println(a == b);        // false — different objects\nSystem.out.println(a.equals(b));   // true  — same content\n\nString input = null;\nSystem.out.println(\"hi\".equals(input));        // false, no NPE\nSystem.out.println(java.util.Objects.equals(a, input)); // false, null-safe\n```",
+    "resources": [
+      {
+        "label": "Oracle — Comparing Strings",
+        "url": "https://docs.oracle.com/javase/tutorial/java/data/comparestrings.html"
+      }
+    ]
+  },
+  "java-str-003": {
+    "explanation": "**The problem:** assembling a string in a loop with `result += part` gets slow for large inputs. **Why it happens:** strings are immutable, so each `+=` allocates a new `String` and copies all existing characters — over n iterations that's O(n²) copying and lots of garbage. **What StringBuilder does:** it holds a *mutable* char buffer; `append` writes into it (growing the buffer occasionally), so building the whole string is O(n). Call `toString()` once at the end. **When NOT to bother:** for a fixed handful of concatenations, plain `+` is clearer and the compiler already compiles it efficiently (often into a StringBuilder for you). The rule is: *loops and dynamic assembly → StringBuilder; simple one-liners → `+`.* **Common mistakes:** using `StringBuilder` everywhere (premature, hurts readability); forgetting `toString()`; and `StringBuffer` — it's the older thread-safe (synchronized, slower) version; prefer `StringBuilder` unless you truly share it across threads.",
+    "example": "```java\n// Slow: O(n^2), n new String objects\nString slow = \"\";\nfor (int i = 0; i < 1000; i++) slow += i + \",\";\n\n// Fast: one mutable buffer, O(n)\nStringBuilder sb = new StringBuilder();\nfor (int i = 0; i < 1000; i++) sb.append(i).append(\",\");\nString fast = sb.toString();\n\n// A couple of concatenations? Plain + is fine and clearer:\nString msg = \"Hello, \" + name + \"!\";\n```",
+    "resources": [
+      {
+        "label": "Oracle — StringBuilder",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html"
+      }
+    ]
+  },
+  "java-col-001": {
+    "explanation": "**The problem:** plain arrays have a fixed size you must know up front, hold no convenience methods, and can't easily grow. **What a List gives you:** `List<E>` is the interface for an ordered, indexable, *resizable* sequence; `ArrayList<E>` is the default implementation backed by a growable array. You get `add`, `remove`, `get`, `size`, `contains`, iteration, etc., and generics keep it type-safe (`List<String>` only holds Strings). **Why program to `List`:** declaring `List<String> xs = new ArrayList<>();` lets you swap the implementation later without changing callers. **Performance shape:** `get`/`set` by index are O(1); `add` at the end is amortized O(1); inserting/removing in the middle is O(n) (shifts elements). **Common mistakes:** trying to store primitives directly (use wrappers — `List<Integer>`, autoboxing helps); and using `Arrays.asList(...)` then calling `add`/`remove` on it (that returns a *fixed-size* view and throws) — wrap it in `new ArrayList<>(...)` if you need to modify it.",
+    "example": "```java\nimport java.util.*;\n\nList<String> names = new ArrayList<>(); // program to the interface\nnames.add(\"Ana\");\nnames.add(\"Beto\");\nnames.add(1, \"Cira\");          // insert at index 1\nSystem.out.println(names.get(0));   // Ana\nSystem.out.println(names.size());   // 3\nnames.remove(\"Beto\");\nSystem.out.println(names.contains(\"Beto\")); // false\n```",
+    "resources": [
+      {
+        "label": "Oracle — The List Interface",
+        "url": "https://docs.oracle.com/javase/tutorial/collections/interfaces/list.html"
+      }
+    ]
+  },
+  "java-col-002": {
+    "explanation": "**The problem:** both implement `List`, so it's tempting to think they're interchangeable — but their performance profiles differ. **ArrayList** stores elements in a contiguous backing array: `get(i)`/`set(i)` are O(1), iteration is cache-friendly and fast, and appending is amortized O(1). Its weakness is inserting/removing in the *middle* (O(n) to shift). **LinkedList** is a doubly-linked chain of nodes: inserting/removing at a node you already hold (e.g. the ends, via `Deque` operations) is O(1), but `get(i)` is O(n) because it must walk from an end, and it uses more memory per element (two pointers per node) with poor cache locality. **The practical answer:** default to `ArrayList`; it wins for random access and is usually faster overall even for many mid-list operations because of memory locality. Reach for `LinkedList` only when you genuinely need queue/deque behavior at the ends. **Common mistakes:** choosing `LinkedList` for index-heavy code; and indexing a `LinkedList` in a loop (turns an O(n) loop into O(n²)).",
+    "example": "```java\nimport java.util.*;\n\nList<Integer> arr = new ArrayList<>(List.of(0,1,2,3,4));\nList<Integer> linked = new LinkedList<>(List.of(0,1,2,3,4));\n\narr.get(3);    // O(1) — direct array index\nlinked.get(3); // O(n) — walks nodes from an end\n\n// LinkedList shines as a queue/deque:\nDeque<Integer> dq = new LinkedList<>();\ndq.addFirst(1); dq.addLast(2); dq.pollFirst(); // all O(1)\n```",
+    "resources": [
+      {
+        "label": "Oracle — List Implementations",
+        "url": "https://docs.oracle.com/javase/tutorial/collections/implementations/list.html"
+      }
+    ]
+  },
+  "java-col-003": {
+    "explanation": "**The problem:** you need a collection of *unique* things and fast \"have I seen this?\" checks, which a `List` does poorly (`contains` is O(n) and duplicates slip in). **What a Set gives you:** it rejects duplicates (`add` returns `false` if already present) and offers fast membership tests. **HashSet** uses hashing for O(1) average `add`/`contains`/`remove` but gives **no order** guarantee. Variants: **LinkedHashSet** preserves insertion order; **TreeSet** keeps elements sorted (O(log n), requires `Comparable`/`Comparator`). **Why it works:** like `HashMap`, `HashSet` relies on `hashCode()`/`equals()` to detect duplicates — so for your own classes you must override both or duplicates won't be caught. **Common mistakes:** depending on `HashSet` iteration order (undefined); expecting indexed access (`set.get(0)` doesn't exist); and storing mutable objects whose hash changes after insertion (they become unfindable).",
+    "example": "```java\nimport java.util.*;\n\nSet<String> tags = new HashSet<>();\ntags.add(\"java\");\ntags.add(\"oop\");\nboolean added = tags.add(\"java\"); // false — duplicate ignored\nSystem.out.println(tags.size());       // 2\nSystem.out.println(tags.contains(\"oop\")); // true (O(1) avg)\n\n// Need order? LinkedHashSet keeps insertion order; TreeSet sorts.\nSet<String> sorted = new TreeSet<>(tags); // [java, oop]\n```",
+    "resources": [
+      {
+        "label": "Oracle — The Set Interface",
+        "url": "https://docs.oracle.com/javase/tutorial/collections/interfaces/set.html"
+      }
+    ]
+  },
+  "java-col-004": {
+    "explanation": "**The problem:** you need to associate values with lookup keys (username → user, word → count) with fast retrieval. **What a Map is:** a collection of key→value entries with *unique keys*; `HashMap` gives O(1) average `put`/`get`/`containsKey`. `put` on an existing key overwrites the old value and returns it; `get` on a missing key returns `null`. **Iteration:** `keySet()`, `values()`, and `entrySet()` (iterate entries to get key and value together — the efficient way). **Useful helpers:** `getOrDefault(k, d)`, `putIfAbsent`, `computeIfAbsent`, and `merge` (great for counting). **Why it works:** keys are hashed to buckets, relying on the key's `hashCode()`/`equals()` — so mutable or improperly-implemented keys break lookups. **Variants:** `LinkedHashMap` (insertion order), `TreeMap` (sorted keys). **Common mistakes:** treating a `null` from `get` as \"key absent\" when the stored value itself might be `null` (use `containsKey`); and using mutable objects as keys.",
+    "example": "```java\nimport java.util.*;\n\nMap<String, Integer> ages = new HashMap<>();\nages.put(\"Ana\", 30);\nages.put(\"Beto\", 25);\nages.put(\"Ana\", 31);          // overwrites 30\n\nSystem.out.println(ages.get(\"Ana\"));            // 31\nSystem.out.println(ages.getOrDefault(\"X\", -1)); // -1 (absent)\n\nfor (Map.Entry<String, Integer> e : ages.entrySet()) {\n    System.out.println(e.getKey() + \" = \" + e.getValue());\n}\n```",
+    "resources": [
+      {
+        "label": "Oracle — The Map Interface",
+        "url": "https://docs.oracle.com/javase/tutorial/collections/interfaces/map.html"
+      }
+    ]
+  },
+  "java-col-005": {
+    "explanation": "**The problem:** the naive count loop needs a null check every time (`if (map.containsKey(k)) ... else ...`), which is verbose and error-prone. **The idioms:** (1) `getOrDefault` — `map.put(k, map.getOrDefault(k, 0) + 1)` reads the current count (or 0) and writes back the increment. (2) `merge` — `map.merge(k, 1, Integer::sum)` says \"if k is absent, store 1; otherwise replace the value with sum(old, 1)\". (3) `computeIfAbsent` shines for map-of-lists: `map.computeIfAbsent(k, x -> new ArrayList<>()).add(item)`. **Why merge works:** it folds the absent/present cases into one call, eliminating the branch and the boxing pitfalls. **Common mistakes:** `map.get(k) + 1` when `k` is absent throws NPE (unboxing `null`) — that's exactly what `getOrDefault`/`merge` avoid; and recomputing the lookup twice (get then put) when `merge` does it in one.",
+    "example": "```java\nimport java.util.*;\n\nString[] words = {\"a\", \"b\", \"a\", \"c\", \"a\", \"b\"};\nMap<String, Integer> counts = new HashMap<>();\n\nfor (String w : words) {\n    counts.merge(w, 1, Integer::sum); // clean increment\n}\nSystem.out.println(counts); // {a=3, b=2, c=1}\n\n// Map of lists: group without manual null checks\nMap<Integer, List<String>> byLen = new HashMap<>();\nfor (String w : words)\n    byLen.computeIfAbsent(w.length(), k -> new ArrayList<>()).add(w);\n```",
+    "resources": [
+      {
+        "label": "Oracle — Map.merge",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html#merge(K,V,java.util.function.BiFunction)"
+      }
+    ]
+  },
+  "java-col-006": {
+    "explanation": "**The problem:** picking the wrong collection leads to duplicates you didn't want, missing order, or slow lookups. **The mental model:** **List** = ordered sequence, *allows duplicates*, indexable (`ArrayList`). **Set** = *no duplicates*, membership-focused, not indexable (`HashSet` unordered, `LinkedHashSet` insertion order, `TreeSet` sorted). **Map** = key→value with *unique keys* (`HashMap` unordered, `LinkedHashMap` insertion order, `TreeMap` sorted keys). **Why the wrong options are wrong:** a `List` *does* allow duplicates and *does* preserve insertion order; a plain `HashMap`/`HashSet` makes *no* ordering promise — relying on its iteration order is a classic bug. **How to choose:** need order + duplicates + index → List; need uniqueness → Set; need lookup by key → Map; need sorting → the Tree* variant. **Common mistakes:** assuming HashMap/HashSet are ordered; and using a List with `contains` for uniqueness (O(n)) when a Set is the right tool.",
+    "example": "```java\nimport java.util.*;\n\nList<Integer> list = new ArrayList<>(List.of(1, 1, 2)); // duplicates OK, ordered\nSet<Integer>  set  = new HashSet<>(list);              // -> {1, 2}\nMap<String,Integer> map = new HashMap<>();\nmap.put(\"a\", 1); map.put(\"a\", 2);                     // unique key -> {a=2}\n\nSystem.out.println(list); // [1, 1, 2]\nSystem.out.println(set);  // [1, 2] (order not guaranteed)\nSystem.out.println(map);  // {a=2}\n```",
+    "resources": [
+      {
+        "label": "Oracle — Collections Framework Overview",
+        "url": "https://docs.oracle.com/javase/tutorial/collections/intro/index.html"
+      }
+    ]
+  },
+  "java-exc-001": {
+    "explanation": "**The problem:** Java sometimes *forces* you to handle an exception and sometimes doesn't, which is confusing until you see the hierarchy. **The hierarchy:** everything throwable is a `Throwable`, split into `Error` (JVM-level, don't catch — e.g. `OutOfMemoryError`) and `Exception`. Within `Exception`, `RuntimeException` and its subclasses are **unchecked**; all *other* `Exception` subclasses are **checked**. **Checked** (e.g. `IOException`, `SQLException`) represent recoverable external conditions; the compiler insists you either `catch` them or declare `throws`. **Unchecked** (e.g. `NullPointerException`, `IllegalArgumentException`, `IndexOutOfBoundsException`) usually mean a *bug* in your code — the compiler doesn't force handling because the right fix is to correct the code. **Why the design:** checked exceptions document and enforce failure modes a caller can reasonably handle. **Common mistakes:** catching exceptions just to silence the compiler (`catch (Exception e) {}` swallows real bugs); wrapping everything in `RuntimeException` to dodge `throws`; and catching `Error`.",
+    "example": "```java\nimport java.io.*;\n\n// Checked: compiler forces catch-or-declare\nvoid readFile(String path) throws IOException {\n    BufferedReader r = new BufferedReader(new FileReader(path));\n    r.readLine();\n    r.close();\n}\n\n// Unchecked: no declaration needed; signals a bug\nint parse(String s) {\n    return Integer.parseInt(s); // throws NumberFormatException (unchecked)\n}\n```",
+    "resources": [
+      {
+        "label": "Oracle — Unchecked Exceptions, The Controversy",
+        "url": "https://docs.oracle.com/javase/tutorial/essential/exceptions/runtime.html"
+      }
+    ]
+  },
+  "java-exc-002": {
+    "explanation": "**The problem:** cleanup code (close a file, release a lock) must run whether or not an exception was thrown — duplicating it in both the success and failure paths is fragile. **What finally does:** the `finally` block executes after `try`/`catch` *no matter how* the block exits — normal completion, a caught or uncaught exception, or even a `return` inside `try`/`catch`. That makes it the reliable home for cleanup. **Why it works:** the JVM guarantees the `finally` runs during unwinding before control leaves the method. **The footguns:** a `return` or `throw` *inside* `finally` overrides whatever the `try`/`catch` was returning/throwing — silently swallowing the original exception, so never `return`/`throw` from `finally`. **The exceptions to \"always\":** `System.exit()` or a JVM crash skips it. **Modern preference:** for closing resources, **try-with-resources** is cleaner and avoids manual `finally` + null checks. **Common mistakes:** returning from `finally`; and forgetting that `finally` runs even after a `try` `return` (it can change the result).",
+    "example": "```java\nimport java.util.concurrent.locks.*;\n\nReentrantLock lock = new ReentrantLock();\nlock.lock();\ntry {\n    doWork();        // may throw\n} finally {\n    lock.unlock();   // ALWAYS runs — lock is released either way\n}\n\n// Footgun: never do this — it swallows exceptions/returns\n// finally { return 0; }\n```",
+    "resources": [
+      {
+        "label": "Oracle — The finally Block",
+        "url": "https://docs.oracle.com/javase/tutorial/essential/exceptions/finally.html"
+      }
+    ]
+  },
+  "java-exc-003": {
+    "explanation": "**The problem:** the old pattern — open a resource, use it in `try`, close it in `finally` — is verbose, easy to get wrong (null checks, close() itself throwing), and a frequent source of leaks. **What try-with-resources does:** declare resources in the `try (...)` header; any object implementing `AutoCloseable` (files, streams, JDBC connections, …) is closed automatically when the block exits — whether normally or via exception — in *reverse* order of declaration. **Why it works:** the compiler generates the `finally`-and-close logic for you, including correctly handling an exception thrown by `close()` itself (it's attached as a *suppressed* exception rather than masking the original). **Why prefer it:** less code, no leaks, correct exception semantics. **Common mistakes:** still writing manual `finally { x.close(); }` (use this instead); declaring a resource that isn't `AutoCloseable`; and reusing a resource variable after the block (it's already closed).",
+    "example": "```java\nimport java.io.*;\n\n// Auto-closes the reader, even if readLine() throws.\ntry (BufferedReader r = new BufferedReader(new FileReader(\"data.txt\"))) {\n    String first = r.readLine();\n    System.out.println(first);\n}\n// Multiple resources close in reverse order:\ntry (var in = new FileInputStream(\"a\");\n     var out = new FileOutputStream(\"b\")) {\n    out.write(in.readAllBytes());\n}\n```",
+    "resources": [
+      {
+        "label": "Oracle — The try-with-resources Statement",
+        "url": "https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html"
+      }
+    ]
+  },
+  "java-exc-004": {
+    "explanation": "**The problem:** the two keywords differ by one letter and do completely different things. **`throw`** is a *statement* that raises an exception *right now*: `throw new IllegalStateException(\"bad\");` — it stops normal flow and starts unwinding the stack looking for a `catch`. **`throws`** is part of a *method's declaration* that lists which **checked** exceptions the method may let propagate to its caller: `void load() throws IOException`. **Why both exist:** `throw` is the action; `throws` is the contract that the compiler uses to enforce catch-or-declare for checked exceptions. **Why it works:** declaring `throws IOException` lets you `throw` (or call something that throws) a checked `IOException` without catching it locally — the obligation moves to the caller. **Common mistakes:** writing `throws` when you mean `throw` (and vice versa); declaring `throws` for unchecked exceptions (legal but pointless — the compiler doesn't require it); and over-broad `throws Exception` that hides what can really go wrong.",
+    "example": "```java\nimport java.io.*;\n\n// `throws` in the signature: this method may propagate IOException\nString readFirst(String path) throws IOException {\n    if (path == null)\n        throw new IllegalArgumentException(\"path required\"); // `throw` an object\n    try (var r = new BufferedReader(new FileReader(path))) {\n        return r.readLine(); // may throw IOException -> propagated\n    }\n}\n```",
+    "resources": [
+      {
+        "label": "Oracle — Specifying the Exceptions Thrown by a Method",
+        "url": "https://docs.oracle.com/javase/tutorial/essential/exceptions/declaring.html"
+      }
+    ]
+  },
+  "java-exc-005": {
+    "explanation": "**The problem:** throwing generic `Exception`/`RuntimeException` forces callers to catch everything and loses meaning about *what* went wrong. **What a custom exception gives you:** a named type (`InsufficientFundsException`) that callers can catch *specifically*, carrying domain-relevant data and a clear message. **How to write one:** extend `RuntimeException` (unchecked — for programming errors or when you don't want to force handling) or `Exception` (checked — when callers should recover); add constructors that forward a message and an optional `cause` to `super(...)`. **Why preserve the cause:** passing the original exception as the cause keeps the full stack trace when you wrap a low-level error in a domain one. **Why it works:** the type hierarchy lets `catch (InsufficientFundsException e)` match only that case. **Common mistakes:** swallowing the original cause when wrapping (always pass it to `super`); creating a checked exception that callers can't actually recover from (prefer unchecked then); and making dozens of near-identical exception classes.",
+    "example": "```java\nclass InsufficientFundsException extends RuntimeException {\n    InsufficientFundsException(String message) { super(message); }\n    InsufficientFundsException(String message, Throwable cause) {\n        super(message, cause); // preserve the original cause\n    }\n}\n\nvoid withdraw(double balance, double amount) {\n    if (amount > balance)\n        throw new InsufficientFundsException(\"short by \" + (amount - balance));\n}\n\ntry { withdraw(50, 80); }\ncatch (InsufficientFundsException e) { System.out.println(e.getMessage()); }\n```",
+    "resources": [
+      {
+        "label": "Oracle — Creating Exception Classes",
+        "url": "https://docs.oracle.com/javase/tutorial/essential/exceptions/creating.html"
+      }
+    ]
+  },
+  "java-gen-001": {
+    "explanation": "**The problem:** pre-generics collections stored `Object`, so you could accidentally put a `String` into a list meant for `Integer`s, and every read needed a manual cast that could blow up with `ClassCastException` at runtime. **What generics do:** they let a type or method take a *type parameter* — `List<String>` — checked by the compiler. The compiler rejects adding the wrong type and lets `get()` return the right type with no cast. **Why it works:** all the checking happens at *compile* time; at runtime the type parameter is erased (type erasure), so there's no per-object overhead. **The payoff:** bugs that were runtime `ClassCastException`s become compile errors. **Common mistakes:** using *raw types* (`List` without `<>`), which disables the checks and brings back the old dangers; and confusing generics with arrays (arrays are covariant and check at runtime; generics are invariant and check at compile time).",
+    "example": "```java\nimport java.util.*;\n\n// Without generics (raw): unsafe, needs casts\nList raw = new ArrayList();\nraw.add(\"hi\");\nraw.add(42);                       // oops, compiles\nString s1 = (String) raw.get(1);   // ClassCastException at runtime!\n\n// With generics: compile-time safety, no casts\nList<String> safe = new ArrayList<>();\nsafe.add(\"hi\");\n// safe.add(42);                   // compile error\nString s2 = safe.get(0);           // no cast needed\n```",
+    "resources": [
+      {
+        "label": "Oracle — Why Use Generics?",
+        "url": "https://docs.oracle.com/javase/tutorial/java/generics/why.html"
+      }
+    ]
+  },
+  "java-gen-002": {
+    "explanation": "**The problem:** you want one class or method to work for *any* type without duplicating code or losing type safety. **Generic class:** put type parameters in angle brackets after the class name — `class Box<T>` — and use `T` as a stand-in type for fields, parameters, and return types. The caller picks the type: `new Box<String>()`. **Generic method:** declare the type parameter *before the return type* — `static <T> T first(List<T> xs)` — so the method introduces its own type variable independent of the class. The compiler usually *infers* `T` from the arguments, so you rarely specify it explicitly. **Why it works:** the compiler substitutes the concrete type at each call site and checks everything, then erases it. **Conventions:** `T`/`E`/`K`/`V`/`R`. **Common mistakes:** forgetting the `<T>` before the return type on a generic method; trying to do `new T()` or `T.class` (erased — not allowed); and creating generic arrays (`new T[]`) which the language forbids.",
+    "example": "```java\nimport java.util.*;\n\n// Generic class\nclass Box<T> {\n    private T value;\n    void set(T value) { this.value = value; }\n    T get() { return value; }\n}\n\n// Generic method — <T> before the return type\nstatic <T> T firstOf(List<T> list) {\n    return list.isEmpty() ? null : list.get(0);\n}\n\nBox<String> b = new Box<>();\nb.set(\"hi\");\nString s = firstOf(List.of(\"a\", \"b\")); // T inferred as String\n```",
+    "resources": [
+      {
+        "label": "Oracle — Generic Types & Methods",
+        "url": "https://docs.oracle.com/javase/tutorial/java/generics/types.html"
+      }
+    ]
+  },
+  "java-gen-003": {
+    "explanation": "**The problem:** generics are *invariant* — a `List<Integer>` is NOT a `List<Number>` — which blocks flexible method signatures like \"sum any list of numbers.\" **What wildcards do:** `? extends T` means \"some unknown type that *is a* T\" (upper bound) and `? super T` means \"some unknown type that T *is a*\" (lower bound). **PECS — Producer Extends, Consumer Super:** if the structure *produces* values you'll read as `T`, use `? extends T` (you can read them as `T`, but can't safely add anything because the exact subtype is unknown). If it *consumes* values you'll write, use `? super T` (you can add `T` and its subtypes, but reads come back only as `Object`). **Why it works:** the bounds tell the compiler exactly which operations stay type-safe given the uncertainty. **Common mistakes:** trying to `add` to a `? extends` collection (rejected); expecting typed reads from a `? super` collection (they're `Object`); and reaching for wildcards when a simple generic method type parameter would be clearer.",
+    "example": "```java\nimport java.util.*;\n\n// Producer: read numbers out -> ? extends\nstatic double sum(List<? extends Number> nums) {\n    double total = 0;\n    for (Number n : nums) total += n.doubleValue();\n    // nums.add(1); // compile error — unknown exact subtype\n    return total;\n}\n\n// Consumer: write integers in -> ? super\nstatic void addInts(List<? super Integer> sink) {\n    sink.add(1);\n    sink.add(2); // OK — Integer fits any supertype list\n}\n\nsum(List.of(1, 2, 3.5));            // works for Integer & Double\nList<Number> dst = new ArrayList<>();\naddInts(dst);                        // List<Number> accepts Integers\n```",
+    "resources": [
+      {
+        "label": "Oracle — Wildcards",
+        "url": "https://docs.oracle.com/javase/tutorial/java/generics/wildcards.html"
+      }
+    ]
+  },
+  "java-mod-001": {
+    "explanation": "**The problem:** passing a small piece of behavior (a comparator, a click handler) used to require a bulky anonymous inner class — lots of boilerplate for one method. **What a lambda is:** a compact literal for an anonymous function, `(args) -> expressionOrBlock`. **What it targets:** a **functional interface** — any interface with exactly one abstract method (`Runnable`, `Comparator`, `Function`, `Predicate`, …). The lambda *is* an implementation of that single method; the compiler infers parameter types from the interface. **Why it works:** `Runnable r = () -> System.out.println(\"hi\");` is shorthand for an anonymous class implementing `run()`. Single-expression bodies return implicitly; block bodies use `{ }` and explicit `return`. **Why it matters:** behavior becomes a value you can store, pass, and compose — the basis of the Streams API. **Common mistakes:** lambdas can only capture *effectively final* local variables (you can't reassign a captured local); and `this` inside a lambda refers to the *enclosing* instance, not the lambda (unlike anonymous classes).",
+    "example": "```java\nimport java.util.*;\nimport java.util.function.*;\n\nRunnable r = () -> System.out.println(\"running\");\nr.run();\n\nComparator<String> byLen = (a, b) -> a.length() - b.length();\nList<String> words = new ArrayList<>(List.of(\"ccc\", \"a\", \"bb\"));\nwords.sort(byLen);                 // [a, bb, ccc]\n\nPredicate<Integer> isEven = n -> n % 2 == 0;\nFunction<Integer, Integer> square = n -> n * n;\nSystem.out.println(isEven.test(4) + \" \" + square.apply(5)); // true 25\n```",
+    "resources": [
+      {
+        "label": "Oracle — Lambda Expressions",
+        "url": "https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html"
+      }
+    ]
+  },
+  "java-mod-002": {
+    "explanation": "**The problem:** lambdas need a *type* — Java is statically typed, so `() -> ...` must correspond to some interface. **What a functional interface is:** an interface with exactly **one abstract method** (SAM — Single Abstract Method). That single method is what a lambda or method reference implements. `default` and `static` methods don't count, so an interface can have many of those and still be functional. **The `@FunctionalInterface` annotation** is optional but makes the compiler *enforce* the one-abstract-method rule, catching accidental additions. **The built-in toolkit (`java.util.function`):** `Function<T,R>` (T→R), `Predicate<T>` (T→boolean), `Consumer<T>` (T→void), `Supplier<T>` (()→T), `BiFunction`, `UnaryOperator`, plus classics `Runnable` and `Comparator`. **Why it works:** these standard types mean you rarely write your own; APIs accept them so any lambda fits. **Common mistakes:** writing custom interfaces when a built-in fits; and adding a second abstract method (breaks lambda compatibility — `@FunctionalInterface` would flag it).",
+    "example": "```java\nimport java.util.function.*;\n\n@FunctionalInterface\ninterface Transformer { String apply(String input); } // one abstract method\n\nTransformer shout = s -> s.toUpperCase() + \"!\";\nSystem.out.println(shout.apply(\"hi\")); // HI!\n\n// Built-ins cover most needs:\nFunction<Integer,Integer> dbl = n -> n * 2;\nPredicate<String> nonEmpty   = s -> !s.isEmpty();\nSupplier<Double> rnd         = Math::random;\nConsumer<String> log         = System.out::println;\n```",
+    "resources": [
+      {
+        "label": "Oracle — java.util.function",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/package-summary.html"
+      }
+    ]
+  },
+  "java-mod-003": {
+    "explanation": "**The problem:** loops that filter-map-collect are verbose and mix *what* you want with *how* to iterate. **What streams do:** they let you express a data pipeline declaratively — `source.stream().filter(...).map(...).collect(...)` — reading like the transformation itself. **Two operation kinds:** **intermediate** ops (`filter`, `map`, `sorted`, `distinct`, `limit`) are *lazy* — they just build the pipeline and return a new stream, doing no work yet. **Terminal** ops (`collect`, `forEach`, `count`, `reduce`, `findFirst`, `anyMatch`) *trigger* execution and produce a result or side effect. **Why laziness matters:** the pipeline is fused into a single pass and can short-circuit (e.g. `findFirst` stops early), so it's efficient. **One-shot:** a stream is consumed by its terminal op and can't be reused — create a new one from the source. **Common mistakes:** expecting intermediate ops to run without a terminal (nothing happens); reusing a consumed stream (IllegalStateException); and side-effecting inside `map`/`filter` (keep them pure; use `forEach`/`collect` for effects).",
+    "example": "```java\nimport java.util.*;\nimport java.util.stream.*;\n\nList<String> names = List.of(\"Ana\", \"Beto\", \"Cira\", \"Ed\");\n\nList<String> result = names.stream() // source\n    .filter(n -> n.length() > 2)     // intermediate (lazy)\n    .map(String::toUpperCase)        // intermediate (lazy)\n    .sorted()                        // intermediate (lazy)\n    .collect(Collectors.toList());   // terminal -> runs the pipeline\n\nSystem.out.println(result); // [ANA, BETO, CIRA]\nlong count = names.stream().filter(n -> n.startsWith(\"A\")).count(); // terminal\n```",
+    "resources": [
+      {
+        "label": "Oracle — Aggregate Operations (Streams)",
+        "url": "https://docs.oracle.com/javase/tutorial/collections/streams/index.html"
+      }
+    ]
+  },
+  "java-mod-004": {
+    "explanation": "**The problem:** people assume each `filter`/`map` loops over the data immediately, then are surprised that a pipeline with no terminal op does nothing. **Why collect triggers it:** intermediate operations (`filter`, `map`) are *lazy* — they only record what to do and return a new stream. The **terminal** operation (`collect` here) is what actually pulls elements through the entire chain. **Why this is efficient:** because execution is deferred, the elements flow through `filter` then `map` *one at a time in a single pass* (loop fusion), not in separate passes per operation — and short-circuiting terminals like `findFirst`/`anyMatch` can stop early. **The mental model:** building a pipeline (intermediate) vs running it (terminal). **Common mistakes:** forgetting the terminal op (nothing executes); assuming multiple intermediate ops mean multiple passes (it's one pass); and relying on side effects inside intermediates that never run because there's no terminal.",
+    "example": "```java\nimport java.util.*;\nimport java.util.stream.*;\n\nList<Integer> nums = List.of(1, 2, 3, 4);\n\n// No terminal -> peek never prints, nothing runs\nnums.stream().peek(System.out::println).map(n -> n * 10);\n\n// Terminal collect -> the whole pipeline runs in one pass\nList<Integer> out = nums.stream()\n    .filter(x -> x > 2)   // lazy\n    .map(x -> x * 10)     // lazy\n    .collect(Collectors.toList()); // triggers execution\nSystem.out.println(out); // [30, 40]\n```",
+    "resources": [
+      {
+        "label": "Oracle — Stream operations and pipelines",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/package-summary.html"
+      }
+    ]
+  },
+  "java-mod-005": {
+    "explanation": "**The problem:** returning `null` to mean \"no value\" is invisible in the type signature, so callers forget to check and get `NullPointerException`s. **What Optional does:** `Optional<T>` makes \"might be absent\" explicit — a method returning `Optional<User>` forces the caller to acknowledge the empty case. **How to use it well:** prefer the functional methods — `map`/`flatMap` to transform if present, `filter` to drop values, `orElse(default)` / `orElseGet(supplier)` for a fallback, `orElseThrow()` to fail loudly, `ifPresent(consumer)` to act only when present. **Avoid** `if (o.isPresent()) o.get()` — that's just a null check in disguise, and bare `get()` throws if empty. **Where to use it:** as a *return type*; **not** as a field or method parameter (overkill, and it's not serializable-friendly). **Why it works:** the type system carries the maybe-ness, so the compiler and reader can't ignore it. **Common mistakes:** `Optional.of(maybeNull)` (throws — use `ofNullable`); calling `get()` without checking; and wrapping things in Optional everywhere.",
+    "example": "```java\nimport java.util.*;\n\nOptional<String> found = Optional.of(\"Ana\");\nOptional<String> empty = Optional.empty();\nOptional<String> maybe = Optional.ofNullable(System.getenv(\"USER\"));\n\n// Prefer functional handling over isPresent/get:\nString name = found.map(String::toUpperCase).orElse(\"UNKNOWN\"); // ANA\nint len = empty.map(String::length).orElse(0);                 // 0\nmaybe.ifPresent(u -> System.out.println(\"user=\" + u));\n// String bad = empty.get(); // NoSuchElementException\n```",
+    "resources": [
+      {
+        "label": "Oracle — Optional",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html"
+      }
+    ]
+  },
+  "java-mod-006": {
+    "explanation": "**The problem:** lambdas that *only* forward their arguments to an existing method (`x -> System.out.println(x)`) are noisy. **What a method reference does:** `Type::method` is shorthand for exactly that lambda, letting you name the method directly. **The four forms:** (1) **static** — `Integer::parseInt` ≡ `s -> Integer.parseInt(s)`. (2) **bound instance** (a specific object) — `System.out::println` ≡ `x -> System.out.println(x)`. (3) **unbound instance** (an arbitrary object of a type, which becomes the first argument) — `String::toUpperCase` ≡ `s -> s.toUpperCase()`. (4) **constructor** — `ArrayList::new` ≡ `() -> new ArrayList<>()`. **Why it works:** the target functional interface determines how the parameters map to the method's receiver/arguments. **Why use it:** more readable and intention-revealing than the equivalent lambda. **Common mistakes:** reaching for a method reference when the lambda does extra work (then a lambda is required); and confusing the unbound form (instance method via the type name) with the static form — both look like `Type::name`.",
+    "example": "```java\nimport java.util.*;\nimport java.util.stream.*;\n\nList<String> words = new ArrayList<>(List.of(\"b\", \"a\", \"c\"));\n\nwords.forEach(System.out::println);   // bound instance\nwords.sort(String::compareTo);        // unbound instance\n\nList<Integer> lengths = Stream.of(\"aa\", \"bbb\")\n    .map(String::length)              // unbound instance\n    .collect(Collectors.toList());\n\nList<Integer> ints = Stream.of(\"1\", \"2\")\n    .map(Integer::parseInt)           // static\n    .collect(Collectors.toCollection(ArrayList::new)); // constructor\n```",
+    "resources": [
+      {
+        "label": "Oracle — Method References",
+        "url": "https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html"
+      }
+    ]
+  },
+  "java-mod-007": {
+    "explanation": "**The problem:** overriding relies on matching the parent method's *exact* signature — one typo and you've accidentally written a brand-new method that never gets called, a bug that's invisible at compile time. **What @Override does:** it's an annotation that declares intent — \"this method overrides a supertype method.\" The compiler then verifies a matching method really exists in a superclass or interface; if not, it errors. **The classic save:** writing `public boolean equals(MyType o)` instead of `equals(Object o)` compiles fine as an *overload* and silently breaks collections — `@Override` turns that into a compile error. **Why it works:** it converts a runtime mystery into a compile-time check, and documents intent for readers. **It's optional but recommended on every override.** **Common mistakes:** omitting it and shipping a broken `equals`/`hashCode`/`toString`; and thinking it *causes* overriding (it doesn't — it only *verifies* it).",
+    "example": "```java\nclass Animal { public String sound() { return \"...\"; } }\n\nclass Dog extends Animal {\n    @Override\n    public String sound() { return \"woof\"; } // verified to override\n\n    // @Override\n    // public String Sound() { return \"x\"; } // compile error: nothing to override\n}\n\nSystem.out.println(new Dog().sound()); // woof\n```",
+    "resources": [
+      {
+        "label": "Oracle — Predefined Annotation Types",
+        "url": "https://docs.oracle.com/javase/tutorial/java/annotations/predefined.html"
+      }
+    ]
+  },
+  "java-mod-008": {
+    "explanation": "**The problem:** `NullPointerException` is Java's most common runtime error, and knowing what actually triggers it prevents most of them. **The two real causes here:** (1) **dereferencing null** — calling a method or accessing a field/array element on a reference that is `null` (`s.length()` when `s == null`). (2) **unboxing a null wrapper** — `int n = someInteger;` where the `Integer` is `null` has no value to unbox, so it throws. **Why the others don't:** assigning `null` to a reference variable is perfectly legal; `\"x\".equals(maybeNull)` is safe because the *receiver* is non-null (it's calling `.equals` *on* a null that would throw); and an uninitialized *local* primitive is a *compile* error, not a runtime NPE (fields default to 0/false). **Why it works to know this:** most NPEs trace to a value you assumed was present but wasn't — guard with null checks, `Optional`, or `Objects.requireNonNull`. **Common mistakes:** chaining calls on possibly-null results; and `map.get(k).something()` when the key is absent.",
+    "example": "```java\nString s = null;\n// s.length();              // NPE — method call on null\n\nInteger boxed = null;\n// int n = boxed;           // NPE — unboxing null\n\nString a = null;           // fine — assigning null\nSystem.out.println(\"hi\".equals(a)); // false, no NPE (receiver non-null)\n\n// Guarding:\nif (s != null) s.length();\nint safe = (boxed != null) ? boxed : 0;\n```",
+    "resources": [
+      {
+        "label": "Oracle — Helpful NullPointerExceptions (JEP 358)",
+        "url": "https://openjdk.org/jeps/358"
+      }
+    ]
+  }
+}

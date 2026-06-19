@@ -1,0 +1,691 @@
+[
+  {
+    "id": "java-basics-001",
+    "topic": "Language Basics",
+    "subtopic": "Platform",
+    "difficulty": "easy",
+    "question": "What is the difference between the JDK, the JRE, and the JVM?",
+    "answer": "The **JVM** (Java Virtual Machine) runs compiled bytecode. The **JRE** (Java Runtime Environment) is the JVM plus the standard libraries needed to *run* programs. The **JDK** (Java Development Kit) is the JRE plus development tools (`javac`, `jar`, debugger) needed to *write and compile* programs.",
+    "explanation": "Think of it as nesting dolls: JDK contains the JRE, which contains the JVM. You need the JDK to develop, but only the JRE to run.",
+    "tags": [
+      "jvm",
+      "jdk",
+      "jre"
+    ]
+  },
+  {
+    "id": "java-basics-002",
+    "topic": "Language Basics",
+    "subtopic": "Entry Point",
+    "difficulty": "easy",
+    "question": "What is the exact signature of the `main` method, and why must each part be there?",
+    "answer": "`public static void main(String[] args)`. **public** so the JVM can call it from outside the class; **static** so it runs without creating an instance; **void** because it returns nothing; **String[] args** receives command-line arguments.",
+    "explanation": "The JVM looks for this exact signature as the program entry point. If any part is wrong (e.g. missing `static`), the program compiles but fails at launch with \"main method not found\".",
+    "tags": [
+      "main",
+      "entry-point",
+      "static"
+    ]
+  },
+  {
+    "id": "java-basics-003",
+    "type": "multiple-choice",
+    "topic": "Language Basics",
+    "subtopic": "Primitives",
+    "difficulty": "easy",
+    "question": "How many primitive types does Java have, and which list is correct?",
+    "options": [
+      "byte, short, int, long, float, double, char, boolean",
+      "int, long, float, double, String, char, boolean",
+      "int, double, char, boolean, String, Object",
+      "number, string, boolean, char, byte, object"
+    ],
+    "answer": "byte, short, int, long, float, double, char, boolean",
+    "explanation": "There are exactly **8** primitives. `String` is NOT a primitive — it is a class (reference type). The numeric ones are four integers (byte/short/int/long), two floating point (float/double), plus char and boolean.",
+    "tags": [
+      "primitives",
+      "types"
+    ]
+  },
+  {
+    "id": "java-basics-004",
+    "topic": "Language Basics",
+    "subtopic": "Reference vs Primitive",
+    "difficulty": "medium",
+    "question": "What is the difference between a primitive type and a reference type in terms of what the variable holds?",
+    "answer": "A primitive variable holds the **value itself** (e.g. the number 42). A reference variable holds a **reference (pointer) to an object** stored on the heap, not the object itself. Reference variables can be `null`; primitives cannot.",
+    "explanation": "This is why assigning one object variable to another makes both point at the same object, while assigning one int to another copies the number. It also explains why only reference types can be `null`.",
+    "tags": [
+      "references",
+      "primitives",
+      "heap"
+    ]
+  },
+  {
+    "id": "java-basics-005",
+    "topic": "Language Basics",
+    "subtopic": "Wrappers & Autoboxing",
+    "difficulty": "medium",
+    "question": "What are wrapper classes, and what do autoboxing and unboxing do?",
+    "answer": "Each primitive has a **wrapper class** (`int`→`Integer`, `double`→`Double`, `boolean`→`Boolean`, …) — an object form usable where objects are required (e.g. collections). **Autoboxing** automatically converts a primitive to its wrapper; **unboxing** converts back.",
+    "explanation": "Generics and collections only work with objects, not primitives, so `List<Integer>` needs `Integer`. The compiler inserts the boxing/unboxing for you, so you can write `list.add(5)` and `int n = list.get(0)`.",
+    "tags": [
+      "wrappers",
+      "autoboxing",
+      "Integer"
+    ]
+  },
+  {
+    "id": "java-basics-006",
+    "topic": "Language Basics",
+    "subtopic": "Type Inference",
+    "difficulty": "easy",
+    "question": "What does the `var` keyword do, and where can you use it?",
+    "answer": "`var` (Java 10+) lets the compiler **infer** a local variable's type from its initializer, so you write `var list = new ArrayList<String>();` instead of repeating the type. It is only for **local variables with an initializer** — not fields, method parameters, or return types.",
+    "explanation": "It is still statically typed: `var` is not `Object` or dynamic typing. The type is fixed at compile time from the right-hand side and never changes.",
+    "tags": [
+      "var",
+      "type-inference"
+    ]
+  },
+  {
+    "id": "java-basics-007",
+    "type": "multiple-choice",
+    "topic": "Language Basics",
+    "subtopic": "Arithmetic",
+    "difficulty": "medium",
+    "question": "What does `System.out.println(7 / 2)` print in Java?",
+    "options": [
+      "3",
+      "3.5",
+      "4",
+      "3.0"
+    ],
+    "answer": "3",
+    "explanation": "Both operands are `int`, so Java performs **integer division** and truncates toward zero, giving `3`. To get `3.5` you need at least one operand to be a floating-point type, e.g. `7 / 2.0` or `7.0 / 2`.",
+    "tags": [
+      "arithmetic",
+      "integer-division"
+    ]
+  },
+  {
+    "id": "java-basics-008",
+    "topic": "Language Basics",
+    "subtopic": "Control Flow",
+    "difficulty": "easy",
+    "question": "What is the difference between a traditional `for` loop and the enhanced for-each loop?",
+    "answer": "A traditional `for` loop manages an index/counter explicitly (`for (int i = 0; i < n; i++)`), giving you the index and full control. The **enhanced for** (`for (var x : collection)`) iterates each element directly with no index — cleaner when you just need the values.",
+    "explanation": "Use for-each when you only need each element. Use the indexed for when you need the position, want to skip elements, iterate backwards, or modify the structure while looping.",
+    "tags": [
+      "for",
+      "for-each",
+      "loops"
+    ]
+  },
+  {
+    "id": "java-oop-001",
+    "topic": "OOP",
+    "subtopic": "Classes & Objects",
+    "difficulty": "easy",
+    "question": "What is the difference between a class and an object?",
+    "answer": "A **class** is a blueprint/template that defines fields (state) and methods (behavior). An **object** is a concrete **instance** of a class, created with `new`, with its own copy of the fields. One class can produce many independent objects.",
+    "explanation": "Class = the cookie cutter; objects = the cookies. The class exists once; you create as many objects from it as you need, each holding its own data.",
+    "tags": [
+      "class",
+      "object",
+      "instance"
+    ]
+  },
+  {
+    "id": "java-oop-002",
+    "topic": "OOP",
+    "subtopic": "Encapsulation",
+    "difficulty": "easy",
+    "question": "What is encapsulation, and how do access modifiers support it?",
+    "answer": "Encapsulation means hiding an object's internal state and exposing it only through controlled methods. You make fields `private` and provide `public` getters/setters (or behavior methods), so callers can't put the object in an invalid state. Access modifiers (`private`, default, `protected`, `public`) control visibility.",
+    "explanation": "By keeping fields private, you can validate changes (e.g. reject a negative balance) and change the internal representation later without breaking callers.",
+    "tags": [
+      "encapsulation",
+      "access-modifiers",
+      "private"
+    ]
+  },
+  {
+    "id": "java-oop-003",
+    "topic": "OOP",
+    "subtopic": "Constructors",
+    "difficulty": "medium",
+    "question": "What is a constructor, and what happens if you don't write one?",
+    "answer": "A constructor is a special method (same name as the class, no return type) that initializes a new object. If you write **no** constructor, the compiler provides a **default no-argument constructor**. But if you write *any* constructor, the default is no longer added automatically.",
+    "explanation": "This trips people up: once you add a constructor that takes arguments, `new MyClass()` stops compiling unless you also add an explicit no-arg constructor.",
+    "tags": [
+      "constructor",
+      "this",
+      "default-constructor"
+    ]
+  },
+  {
+    "id": "java-oop-004",
+    "topic": "OOP",
+    "subtopic": "Inheritance",
+    "difficulty": "medium",
+    "question": "What does inheritance give you, and what do `extends` and `super` do?",
+    "answer": "Inheritance lets a subclass reuse and extend a superclass. `class B extends A` makes `B` inherit `A`'s accessible fields and methods. `super(...)` calls the superclass constructor; `super.method()` calls the superclass version of an overridden method.",
+    "explanation": "A subclass constructor must call a superclass constructor first — if you don't write `super(...)`, the compiler inserts a call to the no-arg `super()`. Java supports single class inheritance only (one direct parent).",
+    "tags": [
+      "inheritance",
+      "extends",
+      "super"
+    ]
+  },
+  {
+    "id": "java-oop-005",
+    "topic": "OOP",
+    "subtopic": "Polymorphism",
+    "difficulty": "medium",
+    "question": "What is polymorphism (method overriding), and how does dynamic dispatch work?",
+    "answer": "Polymorphism lets a superclass reference point to a subclass object and call **overridden** methods, with the JVM choosing the actual object's version at runtime (dynamic dispatch). So `Animal a = new Dog(); a.speak();` runs `Dog`'s `speak()`.",
+    "explanation": "This lets you write code against the superclass/interface type and have it work for any subclass — the cornerstone of flexible, extensible OOP designs.",
+    "tags": [
+      "polymorphism",
+      "overriding",
+      "dynamic-dispatch"
+    ]
+  },
+  {
+    "id": "java-oop-006",
+    "type": "multiple-choice",
+    "topic": "OOP",
+    "subtopic": "Overloading vs Overriding",
+    "difficulty": "medium",
+    "question": "Which statement correctly distinguishes overloading from overriding?",
+    "options": [
+      "Overloading = same method name, different parameters, in the same class; overriding = a subclass redefines a superclass method with the same signature",
+      "Overloading = a subclass redefines a superclass method; overriding = same name with different parameters",
+      "They are two names for the same feature",
+      "Overloading changes the return type only; overriding changes the parameters only"
+    ],
+    "answer": "Overloading = same method name, different parameters, in the same class; overriding = a subclass redefines a superclass method with the same signature",
+    "explanation": "Overloading is resolved at compile time by the argument types (it is just multiple methods sharing a name). Overriding is resolved at runtime by the object's actual type (polymorphism).",
+    "tags": [
+      "overloading",
+      "overriding"
+    ]
+  },
+  {
+    "id": "java-oop-007",
+    "topic": "OOP",
+    "subtopic": "Abstract Classes",
+    "difficulty": "medium",
+    "question": "What is an abstract class and an abstract method?",
+    "answer": "An **abstract class** (`abstract class Shape`) cannot be instantiated directly — it exists to be extended. An **abstract method** has no body (`abstract double area();`) and must be implemented by concrete subclasses. Abstract classes can also have normal (concrete) methods and fields.",
+    "explanation": "Use an abstract class when subclasses share common state/behavior but some operations only make sense per-subclass. The subclass must implement every abstract method or be abstract itself.",
+    "tags": [
+      "abstract",
+      "abstract-method"
+    ]
+  },
+  {
+    "id": "java-oop-008",
+    "topic": "OOP",
+    "subtopic": "Interfaces",
+    "difficulty": "medium",
+    "question": "What is an interface, and how does a class use one?",
+    "answer": "An interface is a **contract** of method signatures (and constants) that implementing classes must fulfill. A class uses `implements` to promise it provides those methods. A class can implement **many** interfaces (unlike single class inheritance).",
+    "explanation": "Interfaces define \"what\" without \"how\". Code written against an interface works with any implementation, enabling loose coupling and easy substitution (e.g. for testing).",
+    "tags": [
+      "interface",
+      "implements",
+      "contract"
+    ]
+  },
+  {
+    "id": "java-oop-009",
+    "topic": "OOP",
+    "subtopic": "Interface vs Abstract Class",
+    "difficulty": "hard",
+    "question": "When should you choose an interface versus an abstract class?",
+    "answer": "Use an **interface** to define a capability/contract that possibly-unrelated classes can implement (and a class can implement many). Use an **abstract class** when subclasses are closely related and should share **state (fields) and common implementation**, since a class can extend only one.",
+    "explanation": "Rule of thumb: \"can-do\" capabilities → interface (e.g. `Comparable`, `Runnable`); \"is-a\" with shared code/state → abstract class. Interfaces (Java 8+) can have default methods but still no instance state.",
+    "tags": [
+      "interface",
+      "abstract",
+      "design"
+    ]
+  },
+  {
+    "id": "java-oop-010",
+    "topic": "OOP",
+    "subtopic": "Static Members",
+    "difficulty": "medium",
+    "question": "What is the difference between a static member and an instance member?",
+    "answer": "A **static** field/method belongs to the **class itself** — one copy shared by all instances, accessed via the class name (`Math.PI`, `Integer.parseInt`). An **instance** member belongs to each object, with its own copy per instance, accessed through an object reference.",
+    "explanation": "Static methods can't use `this` or instance fields directly (there is no instance). Use static for utility functions and shared constants/counters; use instance members for per-object state and behavior.",
+    "tags": [
+      "static",
+      "instance",
+      "class-member"
+    ]
+  },
+  {
+    "id": "java-oop-011",
+    "topic": "OOP",
+    "subtopic": "final",
+    "difficulty": "easy",
+    "question": "What does the `final` keyword do on a variable, method, and class?",
+    "answer": "On a **variable**: it can be assigned only once (a constant reference). On a **method**: it cannot be overridden by subclasses. On a **class**: it cannot be extended (e.g. `String` is final).",
+    "explanation": "A `final` reference variable can't be reassigned, but the object it points to can still be mutated (final is about the reference, not the object's contents).",
+    "tags": [
+      "final",
+      "immutability",
+      "constants"
+    ]
+  },
+  {
+    "id": "java-oop-012",
+    "topic": "OOP",
+    "subtopic": "Object methods",
+    "difficulty": "hard",
+    "question": "Why must you override `hashCode()` whenever you override `equals()`?",
+    "answer": "The contract says equal objects (`a.equals(b)`) must have equal hash codes. Hash-based collections (`HashMap`, `HashSet`) use `hashCode()` to find the bucket and `equals()` to confirm a match. If you override only `equals()`, equal objects may land in different buckets and the collection misbehaves.",
+    "explanation": "A `HashSet` could then contain two \"equal\" objects, or `map.get(key)` could return null for a key that is logically present. Always override both together (IDEs and `Objects.hash`/`Objects.equals` make this easy).",
+    "tags": [
+      "equals",
+      "hashCode",
+      "collections"
+    ]
+  },
+  {
+    "id": "java-str-001",
+    "topic": "Strings",
+    "subtopic": "Immutability",
+    "difficulty": "easy",
+    "question": "What does it mean that `String` is immutable in Java?",
+    "answer": "A `String` object's characters can never change after creation. Methods like `toUpperCase()` or `concat()` don't modify the original — they **return a new String**. The original is unchanged.",
+    "explanation": "So `s.toUpperCase();` alone does nothing useful — you must capture the result: `s = s.toUpperCase();`. Immutability makes strings safe to share and cache (the string pool).",
+    "tags": [
+      "string",
+      "immutability"
+    ]
+  },
+  {
+    "id": "java-str-002",
+    "type": "multiple-choice",
+    "topic": "Strings",
+    "subtopic": "Comparison",
+    "difficulty": "medium",
+    "question": "How should you compare two `String`s for equal content?",
+    "options": [
+      "a.equals(b)",
+      "a == b",
+      "a = b",
+      "a.compareTo(b) (returns true when equal)"
+    ],
+    "answer": "a.equals(b)",
+    "explanation": "`==` compares **references** (whether they are the same object), not contents. Use `.equals()` for content equality. `compareTo` returns an int (0 when equal), not a boolean.",
+    "tags": [
+      "string",
+      "equals",
+      "=="
+    ]
+  },
+  {
+    "id": "java-str-003",
+    "topic": "Strings",
+    "subtopic": "StringBuilder",
+    "difficulty": "medium",
+    "question": "When should you use `StringBuilder` instead of `String` concatenation?",
+    "answer": "Use `StringBuilder` when building a string through **many appends**, especially in a loop. Because `String` is immutable, `+=` in a loop creates a new object each iteration (O(n²) work); `StringBuilder` mutates one internal buffer and is far more efficient.",
+    "explanation": "For a few concatenations the compiler already optimizes `+`, so plain `+` is fine and clearer. Reach for `StringBuilder` specifically in loops or when assembling large strings piece by piece.",
+    "tags": [
+      "StringBuilder",
+      "string",
+      "performance"
+    ]
+  },
+  {
+    "id": "java-col-001",
+    "topic": "Collections",
+    "subtopic": "List",
+    "difficulty": "easy",
+    "question": "What is a `List`, and how does `ArrayList` differ from a plain array?",
+    "answer": "A `List` is an ordered, index-accessible collection that can grow and shrink. `ArrayList` is the common implementation. Unlike a fixed-size array (`int[]`), an `ArrayList` resizes automatically, stores objects (with generics for type safety), and offers rich methods (`add`, `remove`, `contains`, `size`).",
+    "explanation": "Use arrays for fixed-size primitive data with maximum performance; use `ArrayList` (and the `List` interface) for the common case of a growable, convenient collection of objects.",
+    "tags": [
+      "list",
+      "arraylist",
+      "collections"
+    ]
+  },
+  {
+    "id": "java-col-002",
+    "type": "multiple-choice",
+    "topic": "Collections",
+    "subtopic": "ArrayList vs LinkedList",
+    "difficulty": "hard",
+    "question": "For frequent random access by index, which is generally better and why?",
+    "options": [
+      "ArrayList — index access is O(1) because it is backed by an array",
+      "LinkedList — index access is O(1) because nodes are linked",
+      "They are identical in performance",
+      "LinkedList — because it uses less memory per element"
+    ],
+    "answer": "ArrayList — index access is O(1) because it is backed by an array",
+    "explanation": "`ArrayList.get(i)` is O(1) (direct array indexing). `LinkedList.get(i)` is O(n) — it must walk the nodes. `LinkedList` only wins for frequent insertion/removal at the ends/known nodes. In practice `ArrayList` is the default choice.",
+    "tags": [
+      "arraylist",
+      "linkedlist",
+      "complexity"
+    ]
+  },
+  {
+    "id": "java-col-003",
+    "topic": "Collections",
+    "subtopic": "Set",
+    "difficulty": "easy",
+    "question": "What is a `Set`, and how is it different from a `List`?",
+    "answer": "A `Set` is a collection that holds **no duplicate elements**. Adding an element already present has no effect. Unlike a `List`, a `Set` (e.g. `HashSet`) has no positional index and `HashSet` makes no ordering guarantee.",
+    "explanation": "Use a `Set` when uniqueness matters (e.g. unique user IDs). `HashSet` is fast (O(1) add/contains) but unordered; `LinkedHashSet` preserves insertion order; `TreeSet` keeps elements sorted.",
+    "tags": [
+      "set",
+      "hashset",
+      "uniqueness"
+    ]
+  },
+  {
+    "id": "java-col-004",
+    "topic": "Collections",
+    "subtopic": "Map",
+    "difficulty": "easy",
+    "question": "What is a `Map`, and what are its core operations?",
+    "answer": "A `Map` stores **key → value** pairs with unique keys. `HashMap` is the common implementation. Core operations: `put(key, value)` to store/overwrite, `get(key)` to look up (returns `null` if absent), `containsKey`, `remove`, and `keySet`/`values`/`entrySet` to iterate.",
+    "explanation": "A `Map` is not a `Collection` (it doesn't extend that interface). Keys are unique; putting a value for an existing key replaces the old value.",
+    "tags": [
+      "map",
+      "hashmap",
+      "key-value"
+    ]
+  },
+  {
+    "id": "java-col-005",
+    "topic": "Collections",
+    "subtopic": "Map idioms",
+    "difficulty": "medium",
+    "question": "What is a clean way to count occurrences of items using a `Map`?",
+    "answer": "Use `map.merge(key, 1, Integer::sum)` or `map.put(key, map.getOrDefault(key, 0) + 1)`. Both increment the count for a key, initializing it to 1 the first time it is seen.",
+    "explanation": "`merge` is the idiomatic one-liner: if the key is absent it stores `1`; otherwise it applies the remapping function (`Integer::sum`) to the old value and `1`.",
+    "tags": [
+      "map",
+      "merge",
+      "counting"
+    ]
+  },
+  {
+    "id": "java-col-006",
+    "type": "multiple-response",
+    "topic": "Collections",
+    "subtopic": "Choosing a collection",
+    "difficulty": "medium",
+    "question": "Which statements about the core collection types are correct? (Select TWO)",
+    "options": [
+      "A Set does not allow duplicate elements",
+      "A Map stores key-value pairs with unique keys",
+      "A List cannot contain duplicate elements",
+      "A HashMap guarantees keys are iterated in sorted order",
+      "A List does not preserve insertion order"
+    ],
+    "answers": [
+      "A Set does not allow duplicate elements",
+      "A Map stores key-value pairs with unique keys"
+    ],
+    "explanation": "A `List` allows duplicates and preserves insertion order. A `HashMap` makes no ordering guarantee (use `TreeMap` for sorted keys, `LinkedHashMap` for insertion order). Sets forbid duplicates; Maps key on unique keys.",
+    "tags": [
+      "collections",
+      "set",
+      "map",
+      "list"
+    ]
+  },
+  {
+    "id": "java-exc-001",
+    "topic": "Exceptions",
+    "subtopic": "Checked vs Unchecked",
+    "difficulty": "medium",
+    "question": "What is the difference between checked and unchecked exceptions?",
+    "answer": "**Checked** exceptions (subclasses of `Exception` but not `RuntimeException`, e.g. `IOException`) must be declared with `throws` or caught — the compiler enforces it. **Unchecked** exceptions (`RuntimeException` and subclasses, e.g. `NullPointerException`, `IllegalArgumentException`) need no declaration and usually signal programming bugs.",
+    "explanation": "Checked = recoverable conditions the caller should handle (file missing, network error). Unchecked = bugs you should fix, not catch (null deref, bad index). Errors (e.g. `OutOfMemoryError`) are a separate, unrecoverable category.",
+    "tags": [
+      "exceptions",
+      "checked",
+      "unchecked"
+    ]
+  },
+  {
+    "id": "java-exc-002",
+    "topic": "Exceptions",
+    "subtopic": "try/catch/finally",
+    "difficulty": "easy",
+    "question": "What does the `finally` block do, and when does it run?",
+    "answer": "A `finally` block runs **always** after the `try` (and any matching `catch`), whether the try completed normally, threw an exception, or even returned. It is used for cleanup (closing resources, releasing locks).",
+    "explanation": "It runs even if the `try` or `catch` executes a `return`. The main exception to \"always\" is JVM termination (`System.exit`) or the thread being killed. For closing resources, try-with-resources is now preferred.",
+    "tags": [
+      "try",
+      "catch",
+      "finally"
+    ]
+  },
+  {
+    "id": "java-exc-003",
+    "topic": "Exceptions",
+    "subtopic": "try-with-resources",
+    "difficulty": "medium",
+    "question": "What is try-with-resources and what problem does it solve?",
+    "answer": "A `try (Resource r = ...) { ... }` form that automatically closes any resource implementing `AutoCloseable` when the block exits — normally or via exception. It replaces verbose `finally { r.close(); }` blocks and avoids resource leaks.",
+    "explanation": "Resources are closed in reverse order of opening, even if the body throws. It also avoids the \"suppressed exception\" pitfalls of manual close-in-finally.",
+    "tags": [
+      "try-with-resources",
+      "autocloseable",
+      "resources"
+    ]
+  },
+  {
+    "id": "java-exc-004",
+    "type": "multiple-choice",
+    "topic": "Exceptions",
+    "subtopic": "throw vs throws",
+    "difficulty": "medium",
+    "question": "What is the difference between `throw` and `throws`?",
+    "options": [
+      "`throw` actually raises an exception object; `throws` declares in a method signature which checked exceptions it may propagate",
+      "`throws` raises an exception; `throw` declares it in the signature",
+      "They are interchangeable keywords",
+      "`throw` is for checked exceptions, `throws` is for unchecked exceptions"
+    ],
+    "answer": "`throw` actually raises an exception object; `throws` declares in a method signature which checked exceptions it may propagate",
+    "explanation": "`throw new IllegalArgumentException(...)` raises an exception at runtime. `void m() throws IOException` is part of the method declaration, telling callers (and the compiler) that `m` may propagate an `IOException`.",
+    "tags": [
+      "throw",
+      "throws",
+      "exceptions"
+    ]
+  },
+  {
+    "id": "java-exc-005",
+    "topic": "Exceptions",
+    "subtopic": "Custom exceptions",
+    "difficulty": "medium",
+    "question": "How do you create and use a custom exception?",
+    "answer": "Extend `Exception` (checked) or `RuntimeException` (unchecked), typically adding constructors that pass a message (and cause) to `super`. Then `throw new MyException(\"...\")` where appropriate and catch it like any other exception.",
+    "explanation": "Custom exceptions make error handling expressive and let callers catch your specific failure type. Extend `RuntimeException` for programming-error style failures, `Exception` when callers are expected to recover.",
+    "tags": [
+      "custom-exception",
+      "exceptions"
+    ]
+  },
+  {
+    "id": "java-gen-001",
+    "topic": "Generics",
+    "subtopic": "Basics",
+    "difficulty": "medium",
+    "question": "What are generics, and what problem do they solve?",
+    "answer": "Generics let you parameterize types — e.g. `List<String>` — so a class/method works with a type supplied by the caller while staying type-safe. They give **compile-time type checking** and remove the need for casts when reading elements.",
+    "explanation": "Before generics, collections held `Object` and required casts (risking `ClassCastException` at runtime). `List<String>` guarantees only Strings go in, and `get()` returns a String with no cast.",
+    "tags": [
+      "generics",
+      "type-safety"
+    ]
+  },
+  {
+    "id": "java-gen-002",
+    "topic": "Generics",
+    "subtopic": "Generic methods & classes",
+    "difficulty": "hard",
+    "question": "How do you write a generic class and a generic method?",
+    "answer": "A generic **class** declares type parameters after its name: `class Box<T> { T value; }`. A generic **method** declares its own type parameters before the return type: `static <T> T first(List<T> list) { return list.get(0); }`. The caller supplies (or the compiler infers) the actual type.",
+    "explanation": "Type parameters are conventionally single letters: `T` (type), `E` (element), `K`/`V` (key/value), `R` (result). They let one definition serve many types with full type safety.",
+    "tags": [
+      "generics",
+      "generic-method",
+      "generic-class"
+    ]
+  },
+  {
+    "id": "java-gen-003",
+    "topic": "Generics",
+    "subtopic": "Wildcards",
+    "difficulty": "hard",
+    "question": "What do the wildcards `? extends T` and `? super T` mean?",
+    "answer": "`? extends T` is an **upper-bounded** wildcard: some unknown subtype of `T` — good for **reading** (producers). `? super T` is a **lower-bounded** wildcard: some unknown supertype of `T` — good for **writing** (consumers). Summarized by PECS: *Producer Extends, Consumer Super*.",
+    "explanation": "A `List<? extends Number>` lets you read elements as `Number` but not add (you don't know the exact subtype). A `List<? super Integer>` lets you add `Integer`s but reads come back as `Object`.",
+    "tags": [
+      "generics",
+      "wildcards",
+      "pecs"
+    ]
+  },
+  {
+    "id": "java-mod-001",
+    "topic": "Modern Java",
+    "subtopic": "Lambdas",
+    "difficulty": "medium",
+    "question": "What is a lambda expression, and what can it be assigned to?",
+    "answer": "A lambda is a concise anonymous function: `(params) -> body`. It can be assigned to a **functional interface** — an interface with exactly one abstract method — providing that method's implementation inline (e.g. `Runnable r = () -> System.out.println(\"hi\");`).",
+    "explanation": "Lambdas let you pass behavior as data without writing a full anonymous class. The compiler matches the lambda to the single abstract method of the target functional interface.",
+    "tags": [
+      "lambda",
+      "functional-interface"
+    ]
+  },
+  {
+    "id": "java-mod-002",
+    "topic": "Modern Java",
+    "subtopic": "Functional interfaces",
+    "difficulty": "medium",
+    "question": "What is a functional interface, and name a few built-in ones.",
+    "answer": "A functional interface has **exactly one abstract method**, so it can be the target of a lambda or method reference. Built-ins in `java.util.function` include `Function<T,R>` (transform), `Predicate<T>` (boolean test), `Consumer<T>` (side effect), `Supplier<T>` (produce a value), plus `Runnable` and `Comparator`.",
+    "explanation": "The optional `@FunctionalInterface` annotation makes the compiler verify there is exactly one abstract method. Default and static methods don't count against the \"one abstract method\" rule.",
+    "tags": [
+      "functional-interface",
+      "lambda"
+    ]
+  },
+  {
+    "id": "java-mod-003",
+    "topic": "Modern Java",
+    "subtopic": "Streams",
+    "difficulty": "medium",
+    "question": "What is the Stream API, and what are the two kinds of stream operations?",
+    "answer": "Streams (Java 8+) process sequences of elements in a declarative, pipeline style. Operations are either **intermediate** (lazy, return a new stream — `filter`, `map`, `sorted`) or **terminal** (trigger execution and produce a result — `collect`, `forEach`, `count`, `reduce`).",
+    "explanation": "Nothing runs until a terminal operation is invoked; intermediate ops are lazy and fused. A stream is consumed once — you can't reuse it after a terminal operation.",
+    "tags": [
+      "streams",
+      "intermediate",
+      "terminal"
+    ]
+  },
+  {
+    "id": "java-mod-004",
+    "type": "multiple-choice",
+    "topic": "Modern Java",
+    "subtopic": "Stream pipeline",
+    "difficulty": "medium",
+    "question": "In `list.stream().filter(x -> x > 2).map(x -> x * 10).collect(Collectors.toList())`, which call actually triggers execution?",
+    "options": [
+      "collect — it is the terminal operation",
+      "stream — it starts processing immediately",
+      "filter — the first intermediate operation runs eagerly",
+      "map — execution starts at the first map"
+    ],
+    "answer": "collect — it is the terminal operation",
+    "explanation": "`filter` and `map` are lazy intermediate operations that only build the pipeline. Nothing is processed until the **terminal** operation `collect` runs, at which point the elements flow through the whole pipeline in a single pass.",
+    "tags": [
+      "streams",
+      "lazy",
+      "terminal"
+    ]
+  },
+  {
+    "id": "java-mod-005",
+    "topic": "Modern Java",
+    "subtopic": "Optional",
+    "difficulty": "medium",
+    "question": "What is `Optional`, and how should you use it?",
+    "answer": "`Optional<T>` is a container that either holds a value or is empty, used to represent \"maybe a value\" explicitly instead of returning `null`. Use `isPresent`/`get` sparingly; prefer `map`, `filter`, `orElse`, `orElseGet`, `orElseThrow`, and `ifPresent` to handle both cases safely.",
+    "explanation": "It makes the absence of a value explicit in the type, nudging callers to handle it and reducing `NullPointerException`s. Intended mainly as a method **return** type — not for fields or parameters.",
+    "tags": [
+      "optional",
+      "null-safety"
+    ]
+  },
+  {
+    "id": "java-mod-006",
+    "topic": "Modern Java",
+    "subtopic": "Method references",
+    "difficulty": "medium",
+    "question": "What is a method reference, and what are its main forms?",
+    "answer": "A method reference (`::`) is shorthand for a lambda that just calls an existing method. Forms: static (`Integer::parseInt`), instance of a particular object (`System.out::println`), instance of an arbitrary object of a type (`String::toUpperCase`), and constructor (`ArrayList::new`).",
+    "explanation": "When a lambda does nothing but call one method, a method reference is more concise and readable: `list.forEach(System.out::println)` instead of `list.forEach(x -> System.out.println(x))`.",
+    "tags": [
+      "method-reference",
+      "lambda"
+    ]
+  },
+  {
+    "id": "java-mod-007",
+    "topic": "Modern Java",
+    "subtopic": "equals & null",
+    "difficulty": "easy",
+    "question": "What does the `@Override` annotation do, and why use it?",
+    "answer": "`@Override` tells the compiler you intend to override a superclass/interface method. If the method does not actually override anything (e.g. a typo in the name or wrong parameters), the compiler reports an error — catching silent bugs.",
+    "explanation": "It is optional but strongly recommended. Without it, a misspelled `equals(Object)` written as `equals(MyType)` silently becomes an unrelated overload that never gets called.",
+    "tags": [
+      "override",
+      "annotations"
+    ]
+  },
+  {
+    "id": "java-mod-008",
+    "type": "multiple-response",
+    "topic": "Modern Java",
+    "subtopic": "NullPointerException",
+    "difficulty": "medium",
+    "question": "Which of the following can cause a `NullPointerException`? (Select TWO)",
+    "options": [
+      "Calling a method on a reference that is null",
+      "Unboxing a null Integer into an int",
+      "Comparing two strings with .equals()",
+      "Assigning null to a String variable",
+      "Declaring an int variable without initializing it"
+    ],
+    "answers": [
+      "Calling a method on a reference that is null",
+      "Unboxing a null Integer into an int"
+    ],
+    "explanation": "Dereferencing `null` (calling a method/field on it) and auto-unboxing a `null` wrapper both throw NPE. Assigning `null` to a reference is fine; `.equals()` is null-safe on the receiver if the receiver is non-null; uninitialized local primitives are a *compile* error, not an NPE.",
+    "tags": [
+      "nullpointerexception",
+      "null",
+      "unboxing"
+    ]
+  }
+]

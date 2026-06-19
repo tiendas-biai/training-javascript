@@ -84,6 +84,14 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:springboot',
     loadData: loader('springboot', () => load(import('../../data/springboot.json'))),
   },
+  java: {
+    id: 'java',
+    label: 'Java',
+    icon: 'JA',
+    color: '#e76f00',
+    storageKey: 'srs:java',
+    loadData: loader('java', () => load(import('../../data/java.json'))),
+  },
 };
 
 export function getSubject(id: string | undefined): Subject | null {
