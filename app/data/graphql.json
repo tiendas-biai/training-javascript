@@ -752,5 +752,91 @@
       "resolvers",
       "mr"
     ]
+  },
+  {
+    "id": "graphql-sub-001",
+    "topic": "Subscriptions",
+    "subtopic": "What they are",
+    "difficulty": "easy",
+    "question": "What is a GraphQL subscription?",
+    "answer": "A **subscription** is the third operation type: a **long-lived** operation that pushes data to the client whenever a server-side event occurs. Unlike a query (one request → one response), a subscription opens a stream and delivers a new result each time the subscribed event fires — e.g. `subscription { commentAdded(postId: \"1\") { … } }` emits every time a comment is added.",
+    "explanation": "Subscriptions are defined on the `Subscription` root type and selected just like query fields, but they return a stream of results over time rather than a single payload.",
+    "tags": [
+      "subscriptions",
+      "realtime"
+    ]
+  },
+  {
+    "id": "graphql-sub-002",
+    "topic": "Subscriptions",
+    "subtopic": "Transport",
+    "difficulty": "medium",
+    "question": "What transport do GraphQL subscriptions typically use, and why not plain HTTP?",
+    "answer": "Subscriptions need a **persistent, bidirectional channel**, so they almost always run over **WebSockets** (via the `graphql-ws` protocol; the older `subscriptions-transport-ws` is deprecated). Plain request/response HTTP can’t push multiple messages over time on one connection, though Server-Sent Events (SSE) is an alternative one-way transport some servers support.",
+    "explanation": "Queries and mutations stay on HTTP; only subscriptions upgrade to a WebSocket, which is why servers wire a separate subscription server alongside the HTTP endpoint.",
+    "tags": [
+      "subscriptions",
+      "websockets",
+      "transport"
+    ]
+  },
+  {
+    "id": "graphql-sub-003",
+    "topic": "Subscriptions",
+    "subtopic": "Pub/sub",
+    "difficulty": "medium",
+    "question": "How does the server implement a subscription internally with pub/sub?",
+    "answer": "A subscription resolver returns an **async iterator** over an event stream. The server uses a **publish/subscribe** mechanism: when something changes (e.g. a mutation runs), code **publishes** an event to a topic, and each client subscribed to that topic receives it, runs the subscription’s selection, and gets a result pushed down its socket.",
+    "explanation": "In-memory PubSub works for a single instance; across multiple servers you back the pub/sub with Redis, Kafka, or similar so an event published on one node reaches subscribers on another.",
+    "tags": [
+      "subscriptions",
+      "pubsub"
+    ]
+  },
+  {
+    "id": "graphql-sub-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Subscriptions",
+    "subtopic": "When to use",
+    "difficulty": "medium",
+    "question": "When is a subscription a better choice than simply polling with a repeated query?",
+    "options": [
+      "Always — subscriptions are strictly superior to queries.",
+      "When updates are frequent/low-latency and event-driven (chat, live feeds, presence), so pushing beats repeatedly re-querying.",
+      "When the data almost never changes.",
+      "When you need URL-based HTTP caching."
+    ],
+    "answer": "When updates are frequent/low-latency and event-driven (chat, live feeds, presence), so pushing beats repeatedly re-querying.",
+    "explanation": "Subscriptions shine for real-time, frequently-changing data. For rarely-changing data, occasional polling (or refetching) is simpler and avoids the cost of maintaining stateful WebSocket connections.",
+    "tags": [
+      "subscriptions",
+      "polling",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-sub-mr-001",
+    "type": "multiple-response",
+    "topic": "Subscriptions",
+    "subtopic": "Scaling caveats",
+    "difficulty": "hard",
+    "question": "Which are real considerations when scaling GraphQL subscriptions? (Select TWO)",
+    "options": [
+      "WebSocket connections are stateful, so each open subscription consumes server resources and complicates horizontal scaling/load balancing.",
+      "Across multiple server instances you need a shared pub/sub backend (e.g. Redis) so events reach subscribers on any node.",
+      "Subscriptions are automatically cached by CDNs like REST GETs.",
+      "Subscriptions cannot take arguments.",
+      "A subscription replaces the need for a database."
+    ],
+    "answers": [
+      "WebSocket connections are stateful, so each open subscription consumes server resources and complicates horizontal scaling/load balancing.",
+      "Across multiple server instances you need a shared pub/sub backend (e.g. Redis) so events reach subscribers on any node."
+    ],
+    "explanation": "Stateful connections and cross-node event delivery are the core scaling challenges. Subscriptions aren’t CDN-cached, do accept arguments (e.g. a `postId` to scope events), and don’t replace storage.",
+    "tags": [
+      "subscriptions",
+      "scaling",
+      "mr"
+    ]
   }
 ]

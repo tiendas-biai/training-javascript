@@ -453,5 +453,53 @@
         "url": "https://graphql.org/learn/execution/"
       }
     ]
+  },
+  "graphql-sub-001": {
+    "explanation": "**What it is:** A subscription is a long-lived operation that streams data to the client as events happen, rather than returning once like a query.\n\n**The shape:** It’s defined on the `Subscription` root type and selected like any field, but each emitted event runs the selection and pushes a result.\n\n**Why it exists:** Real-time UIs (chat, live scores, notifications) need the server to push updates; polling wastes requests and adds latency.\n\n**Common mistake:** Using a subscription for data that changes rarely — the connection overhead isn’t worth it; a query (or occasional poll) is simpler.",
+    "example": "```graphql\ntype Subscription {\n  commentAdded(postId: ID!): Comment!\n}\n\nsubscription OnComment {\n  commentAdded(postId: \"1\") {\n    id\n    text\n    author { name }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "apollographql.com — Subscriptions",
+        "url": "https://www.apollographql.com/docs/apollo-server/data/subscriptions/"
+      }
+    ]
+  },
+  "graphql-sub-002": {
+    "explanation": "**Why not HTTP:** Classic HTTP is one request → one response; it can’t push a stream of messages over time on a single connection.\n\n**The transport:** Subscriptions use WebSockets, a persistent bidirectional channel, via the modern `graphql-ws` protocol (the older `subscriptions-transport-ws` is unmaintained). Some servers also support Server-Sent Events for one-way streaming.\n\n**The split:** Queries and mutations keep using HTTP; only subscriptions upgrade to WS, so servers run a subscription handler alongside the HTTP endpoint.\n\n**Common mistake:** Adopting the deprecated `subscriptions-transport-ws` library in new code — use `graphql-ws`.",
+    "example": "```js\nimport { createClient } from 'graphql-ws';\n\nconst client = createClient({ url: 'ws://localhost:4000/graphql' });\n\nconst unsubscribe = client.subscribe(\n  { query: 'subscription { commentAdded(postId: \"1\") { id text } }' },\n  {\n    next: (data) => console.log('event', data),\n    error: (err) => console.error(err),\n    complete: () => console.log('done'),\n  },\n);\n```",
+    "resources": [
+      {
+        "label": "the-guild.dev — graphql-ws",
+        "url": "https://the-guild.dev/graphql/ws"
+      }
+    ]
+  },
+  "graphql-sub-003": {
+    "explanation": "**The mechanism:** A subscription resolver returns an async iterator over an event stream. The server’s pub/sub layer feeds that iterator.\n\n**The flow:** Something happens (often a mutation) → code publishes an event to a named topic → every client subscribed to that topic has the subscription’s selection executed → the result is pushed down its socket.\n\n**Single vs multi-instance:** An in-memory PubSub works on one server. With several instances, back pub/sub with Redis/Kafka so an event published on node A reaches subscribers on node B.\n\n**Common mistake:** Using the default in-memory PubSub in a horizontally-scaled deployment — subscribers on other nodes never see the event.",
+    "example": "```js\nconst resolvers = {\n  Mutation: {\n    addComment: async (_p, { postId, text }, { pubsub, db }) => {\n      const comment = await db.comment.create({ postId, text });\n      pubsub.publish(`COMMENT_ADDED_${postId}`, { commentAdded: comment });\n      return comment;\n    },\n  },\n  Subscription: {\n    commentAdded: {\n      subscribe: (_p, { postId }, { pubsub }) =>\n        pubsub.asyncIterator(`COMMENT_ADDED_${postId}`),\n    },\n  },\n};\n```",
+    "resources": [
+      {
+        "label": "apollographql.com — Subscriptions",
+        "url": "https://www.apollographql.com/docs/apollo-server/data/subscriptions/"
+      }
+    ]
+  },
+  "graphql-sub-mcq-001": {
+    "explanation": "**The trade-off:** Subscriptions hold a stateful WebSocket open and push updates instantly; polling re-runs a query on a timer.\n\n**Pick subscriptions when:** Updates are frequent, event-driven, and latency matters — chat messages, live presence, collaborative editing, dashboards.\n\n**Pick polling when:** Data changes rarely or a few seconds of staleness is fine — a periodic refetch avoids the overhead and ops complexity of WebSockets.\n\n**Why ‘always’ is wrong:** Every open subscription costs a connection and server state; using them everywhere scales poorly.\n\n**Common mistake:** Adding subscriptions for low-frequency data where a refetch-on-focus or short poll would be simpler and cheaper.",
+    "resources": [
+      {
+        "label": "apollographql.com — When to use subscriptions",
+        "url": "https://www.apollographql.com/docs/react/data/subscriptions/"
+      }
+    ]
+  },
+  "graphql-sub-mr-001": {
+    "explanation": "**Why these two:** WebSocket connections are stateful — each open subscription pins resources and makes load-balancing/scaling harder (sticky sessions, connection limits). And across multiple instances you must publish events through a shared backend (Redis, Kafka) so subscribers on any node receive them.\n\n**Why the others are false:** Subscriptions aren’t CDN/URL-cached like REST GETs; they *can* take arguments (e.g. scope to a `postId`); and they don’t replace a database — they stream events about data you still store.\n\n**Takeaway:** Treat subscriptions as stateful infrastructure with real operational cost, not a free real-time switch.",
+    "resources": [
+      {
+        "label": "apollographql.com — Scaling subscriptions",
+        "url": "https://www.apollographql.com/docs/apollo-server/data/subscriptions/#scaling-subscriptions"
+      }
+    ]
   }
 }
