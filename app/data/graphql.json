@@ -299,5 +299,102 @@
       "queries",
       "mr"
     ]
+  },
+  {
+    "id": "graphql-mutation-001",
+    "topic": "Mutations",
+    "subtopic": "Writing data",
+    "difficulty": "easy",
+    "question": "What is a mutation in GraphQL, and how does it differ from a query?",
+    "answer": "A **mutation** is the operation type used to **create, update, or delete** data — anything with side effects. Syntactically it looks like a query (fields, arguments, a selection set on the result), but it starts with the `mutation` keyword and maps to fields on the special `Mutation` root type. Queries are meant to be read-only; mutations are the write side.",
+    "explanation": "Nothing in GraphQL physically prevents a query field from writing, but by convention all writes go through `Mutation` so the contract is clear and tooling can treat reads and writes differently.",
+    "tags": [
+      "mutations",
+      "basics"
+    ]
+  },
+  {
+    "id": "graphql-mutation-002",
+    "topic": "Mutations",
+    "subtopic": "Input types",
+    "difficulty": "medium",
+    "question": "Why do mutations commonly take a single `input` argument of an *input type*?",
+    "answer": "An **input type** (`input CreateUserInput { … }`) bundles many arguments into one named, validated object. Mutations often need several fields, so passing one `input:` argument is cleaner than a long argument list, is easier to evolve (add optional fields without breaking callers), and pairs naturally with a single typed variable on the client.",
+    "explanation": "Input types may only contain scalars, enums, and other input types — never object types — because they describe data going *in*, which has no resolvers.",
+    "tags": [
+      "mutations",
+      "input-types"
+    ]
+  },
+  {
+    "id": "graphql-mutation-003",
+    "topic": "Mutations",
+    "subtopic": "Returning data",
+    "difficulty": "medium",
+    "question": "What can a mutation return, and why is that useful?",
+    "answer": "A mutation field has a **return type with its own selection set**, so the client chooses which fields of the result to get back in the same round-trip. Returning the **modified object** (or a payload wrapping it) lets the client update its cache/UI without a follow-up query — e.g. `createReview(...) { stars commentary }` returns the new review’s fields.",
+    "explanation": "A common pattern is a dedicated payload type (`CreateUserPayload { user: User, errors: [UserError!]! }`) so the mutation can return the entity plus structured, recoverable error info.",
+    "tags": [
+      "mutations",
+      "payload"
+    ]
+  },
+  {
+    "id": "graphql-mutation-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Mutations",
+    "subtopic": "Serial execution",
+    "difficulty": "hard",
+    "question": "If a single mutation operation lists three top-level mutation fields, how are they executed?",
+    "options": [
+      "In parallel, like the fields of a query.",
+      "Serially, one after another in the order written, so earlier ones complete before later ones begin.",
+      "In a random order chosen by the server.",
+      "Only the first field runs; the rest are ignored."
+    ],
+    "answer": "Serially, one after another in the order written, so earlier ones complete before later ones begin.",
+    "explanation": "The GraphQL spec guarantees that top-level **Mutation** fields run in series to avoid race conditions between writes. Top-level **query** fields, by contrast, may resolve in parallel because they’re side-effect-free.",
+    "tags": [
+      "mutations",
+      "execution",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-mutation-004",
+    "topic": "Mutations",
+    "subtopic": "Naming conventions",
+    "difficulty": "medium",
+    "question": "What naming conventions are recommended for mutations?",
+    "answer": "Name mutations as **verb + object** describing the action (`createUser`, `updatePost`, `deleteComment`, `addReview`), not as nouns. A widely-used convention pairs each mutation with a single `input:` argument of type `<Mutation>Input` and a `<Mutation>Payload` return type. This keeps the API self-documenting and the input/output shapes easy to evolve.",
+    "explanation": "The input/payload pattern is popularized by the Relay server spec and adopted broadly; it gives every mutation a predictable, extensible shape.",
+    "tags": [
+      "mutations",
+      "conventions"
+    ]
+  },
+  {
+    "id": "graphql-mutation-mr-001",
+    "type": "multiple-response",
+    "topic": "Mutations",
+    "subtopic": "Best practices",
+    "difficulty": "medium",
+    "question": "Which statements about GraphQL mutations are true? (Select TWO)",
+    "options": [
+      "Top-level mutation fields in one operation execute serially.",
+      "A mutation can return the modified object so the client avoids a refetch.",
+      "Input types may contain object types with resolvers.",
+      "Mutations cannot take arguments.",
+      "Queries and mutations cannot appear in the same document."
+    ],
+    "answers": [
+      "Top-level mutation fields in one operation execute serially.",
+      "A mutation can return the modified object so the client avoids a refetch."
+    ],
+    "explanation": "Serial execution and returning modified data are real, defining behaviors. Input types hold only scalars/enums/other inputs (no resolvers); mutations take arguments (usually an `input`); and a single document may define multiple operations of different types (you just name and pick one to run).",
+    "tags": [
+      "mutations",
+      "mr"
+    ]
   }
 ]

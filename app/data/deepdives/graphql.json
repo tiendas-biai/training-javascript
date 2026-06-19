@@ -178,5 +178,68 @@
         "url": "https://graphql.org/learn/queries/"
       }
     ]
+  },
+  "graphql-mutation-001": {
+    "explanation": "**What a mutation is:** The operation type for writes — create, update, delete. It mirrors query syntax but begins with `mutation` and resolves fields on the `Mutation` root type.\n\n**Why a separate operation:** Reads and writes have different semantics (caching, idempotency, execution order). Routing all side effects through `Mutation` makes that boundary explicit for humans and tools.\n\n**Why the result still has a selection set:** Even a write returns data; you pick which fields of the result to read back in the same request.\n\n**Common mistake:** Performing writes inside query resolvers. It technically runs, but it breaks the contract and the spec’s parallel-query assumption can corrupt your data.",
+    "example": "```graphql\nmutation {\n  createReview(episode: JEDI, review: { stars: 5, commentary: \"Great!\" }) {\n    stars\n    commentary\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Mutations",
+        "url": "https://graphql.org/learn/queries/#mutations"
+      }
+    ]
+  },
+  "graphql-mutation-002": {
+    "explanation": "**The problem:** A create/update often needs many fields. A long positional-feeling argument list is noisy and brittle to evolve.\n\n**The fix:** Define an `input` type that bundles those fields, and give the mutation a single `input:` argument of that type.\n\n**Why it works:** Adding a new *optional* input field doesn’t break existing callers, and the client can pass one typed variable for the whole object.\n\n**The rule to remember:** Input types contain only scalars, enums, and other input types — never object types — because input data has no resolvers to satisfy object fields.\n\n**Common mistake:** Trying to reuse an output object type (like `User`) as an input. Define a separate `UserInput`.",
+    "example": "```graphql\ninput CreateUserInput {\n  name: String!\n  email: String!\n  age: Int\n}\n\ntype Mutation {\n  createUser(input: CreateUserInput!): User!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Input types",
+        "url": "https://graphql.org/learn/schema/#input-types"
+      }
+    ]
+  },
+  "graphql-mutation-003": {
+    "explanation": "**The opportunity:** Because a mutation’s return type has a selection set, the server can hand back the freshly-changed data in the same response.\n\n**Why that’s valuable:** The client updates its cache/UI immediately, with no extra query round-trip, and it gets server-computed fields (ids, timestamps, derived values).\n\n**The payload pattern:** Return a wrapper type holding the entity plus a structured `errors` list, so partial/validation failures travel as data instead of crashing the whole operation.\n\n**Common mistake:** Returning only a Boolean `success`. Returning the object (or a payload) saves a refetch and keeps client caches consistent.",
+    "example": "```graphql\ntype CreateUserPayload {\n  user: User\n  errors: [UserError!]!\n}\n\ntype UserError {\n  field: String\n  message: String!\n}\n\ntype Mutation {\n  createUser(input: CreateUserInput!): CreateUserPayload!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Mutations",
+        "url": "https://graphql.org/learn/queries/#mutations"
+      }
+    ]
+  },
+  "graphql-mutation-mcq-001": {
+    "explanation": "**The guarantee:** Top-level mutation fields in one operation run **serially**, in source order — each completes before the next starts.\n\n**Why:** Writes have side effects; running them in parallel could race (e.g. two updates to the same record). Serial execution makes their order predictable.\n\n**Contrast with queries:** Top-level query fields are side-effect-free, so the executor is free to resolve them in parallel.\n\n**Caveat to know:** The serial guarantee applies to *top-level* mutation fields. Nested selections under each field resolve like normal query fields.\n\n**Common mistake:** Assuming you can batch independent writes in one mutation and expect them concurrently — they’ll be sequential.",
+    "example": "```graphql\nmutation {\n  first: createUser(input: { name: \"A\", email: \"a@x.com\" }) { id }\n  second: createUser(input: { name: \"B\", email: \"b@x.com\" }) { id }\n  # `first` fully completes before `second` begins.\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Multiple fields in mutations",
+        "url": "https://graphql.org/learn/queries/#multiple-fields-in-mutations"
+      }
+    ]
+  },
+  "graphql-mutation-004": {
+    "explanation": "**Name by action:** Use verb-first names — `createUser`, `updatePost`, `deletePhoto`, `publishArticle`. They read as commands and stay distinct from query (noun) fields.\n\n**The input/payload pattern:** Give each mutation a single `input:` argument of `<Name>Input` and a `<Name>Payload` return type. Both can grow new optional fields without breaking clients.\n\n**Why conventions matter here:** Mutations are where APIs accrete the most one-off shapes; a predictable pattern keeps them learnable and codegen-friendly.\n\n**Common mistake:** Naming mutations like nouns (`user`) or overloading one mutation to do many things — prefer several focused, well-named mutations.",
+    "example": "```graphql\ntype Mutation {\n  createUser(input: CreateUserInput!): CreateUserPayload!\n  updateUser(input: UpdateUserInput!): UpdateUserPayload!\n  deleteUser(input: DeleteUserInput!): DeleteUserPayload!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Mutations",
+        "url": "https://graphql.org/learn/queries/#mutations"
+      },
+      {
+        "label": "apollographql.com — Designing mutations",
+        "url": "https://www.apollographql.com/docs/apollo-server/schema/schema/"
+      }
+    ]
+  },
+  "graphql-mutation-mr-001": {
+    "explanation": "**Why these two are true:** Top-level mutation fields execute serially (spec guarantee), and returning the modified object lets clients refresh state without a second request.\n\n**Why the others are false:** Input types may contain only scalars, enums, and other input types — never resolver-backed object types. Mutations *do* take arguments (typically a single `input`). And one document can hold multiple operations of different types; you name them and choose which to run.\n\n**Takeaway:** Think of mutations as ordered, data-returning writes with structured inputs.",
+    "resources": [
+      {
+        "label": "graphql.org — Mutations",
+        "url": "https://graphql.org/learn/queries/#mutations"
+      }
+    ]
   }
 }
