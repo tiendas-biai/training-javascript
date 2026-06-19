@@ -1,1 +1,355 @@
-{}
+{
+  "aws-sec-mcq-001": {
+    "explanation": "**The problem:** An app on EC2 needs to call S3, and the tempting shortcuts (long-lived access keys in a config file, root keys, a public bucket) all create credentials that can leak and never expire. **Why roles win:** an IAM role attached to the instance delivers *temporary, auto-rotated* credentials through the Instance Metadata Service (IMDS) — the SDK fetches and refreshes them with nothing stored on disk. **Why the answer is most secure:** there's no secret to exfiltrate, the permissions are scoped to exactly `s3:GetObject` on the one bucket, and you revoke access by detaching the role. **Why the distractors fail:** keys in a config file are the #1 leaked-credential source; root keys should never exist; a public bucket abandons least privilege entirely. **Common mistakes:** baking access keys into AMIs/user-data, and over-scoping the role to `s3:*` instead of the single action needed.",
+    "example": "```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:GetObject\",\n      \"Resource\": \"arn:aws:s3:::my-app-bucket/*\"\n    }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — IAM roles for EC2", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html" }
+    ]
+  },
+  "aws-sec-mcq-002": {
+    "explanation": "**The problem:** You allow inbound 443 in a security group but add no outbound rule, yet HTTPS responses still flow — which seems to contradict the rules. **Why it happens:** security groups are **stateful** — they track each connection, so when an inbound flow is permitted, its return traffic is automatically allowed regardless of outbound rules (and vice versa). **Why this matters:** you only write rules for the direction you initiate; the response is implied. **The contrast that the exam tests:** network ACLs are **stateless** — they evaluate every packet independently in each direction, so NACLs must explicitly allow ephemeral return ports. **Another security-group fact:** they have no deny rules, only allows (everything not allowed is implicitly denied). **Common mistakes:** adding redundant outbound SG rules thinking they're required, and assuming NACLs behave statefully like SGs (they don't — see the ephemeral-port trap).",
+    "resources": [
+      { "label": "AWS — Security groups (stateful)", "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html" }
+    ]
+  },
+  "aws-sec-mr-001": {
+    "explanation": "**The problem:** Sensitive S3 documents must be guaranteed never publicly exposed, even if someone later writes a bad policy or ACL. **Why the two answers work together:** Block Public Access is the *guardrail* — an account/bucket-level setting that overrides any current or future policy/ACL that would grant public access — and removing existing public grants closes the holes that already exist. **Why guardrail + cleanup:** the guardrail prevents future mistakes; the cleanup fixes present ones. **Why the distractors fail:** Versioning (recoverability), Cross-Region Replication (durability/DR), and Transfer Acceleration (upload speed) are unrelated to *public exposure*. **Common mistakes:** enabling Block Public Access but assuming it retroactively rewrites existing policies (it blocks the *effect* but you should still remove the grants), and applying it only at the bucket level when an account-level setting is the stronger blanket control.",
+    "example": "```bash\n# Account-wide guardrail against public S3 exposure\naws s3control put-public-access-block --account-id 123456789012 \\\n  --public-access-block-configuration \\\n  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true\n```",
+    "resources": [
+      { "label": "AWS — S3 Block Public Access", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html" }
+    ]
+  },
+  "aws-sec-mcq-003": {
+    "explanation": "**The problem:** External auditors need read-only access for two weeks, and creating IAM users or sharing keys leaves standing, hard-to-revoke credentials. **Why a cross-account role wins:** the role's trust policy names the auditors' AWS account as a principal; they call `sts:AssumeRole` and receive *temporary* credentials scoped to a read-only permissions policy. **Why it fits the requirement:** nothing long-lived is created, the access is least-privilege, and you end it cleanly by deleting the role. **Why the distractors fail:** IAM users + emailed passwords and admin access keys create durable secrets that outlive the engagement; sharing *root* credentials is the worst possible option. **Common mistakes:** forgetting to scope the permissions policy to read-only, and over-broadening the trust policy's principal (pin the specific external account, optionally with an external ID for third parties).",
+    "resources": [
+      { "label": "AWS — Cross-account access with roles", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html" }
+    ]
+  },
+  "aws-sec-mcq-004": {
+    "explanation": "**The problem:** You must guarantee member accounts can only operate in `eu-west-1`, even if a local admin grants broader IAM permissions. **Why an SCP enforces it:** Service Control Policies are organization-level guardrails that define the *maximum* permissions available in member accounts — IAM in the account can only grant *within* that ceiling, and even the account root is constrained. **Why a region-deny SCP works:** a `Deny` with a `aws:RequestedRegion` condition removes those actions from the permission ceiling entirely. **Why the distractors fail:** per-user IAM policies can be edited away locally; AWS Config only *detects* after the fact; permissions boundaries are per-principal and also locally manageable. **Key nuance:** SCPs never *grant* permissions — they only filter what IAM can grant. **Common mistakes:** forgetting to allow global services (IAM, CloudFront, Route 53) that have no region, and attaching the SCP to the wrong OU.",
+    "example": "```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"DenyOutsideEuWest1\",\n      \"Effect\": \"Deny\",\n      \"NotAction\": [\"iam:*\", \"organizations:*\", \"route53:*\", \"cloudfront:*\"],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"StringNotEquals\": { \"aws:RequestedRegion\": \"eu-west-1\" }\n      }\n    }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — Service control policies (SCPs)", "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html" }
+    ]
+  },
+  "aws-sec-mcq-005": {
+    "explanation": "**The problem:** Database credentials must rotate automatically every 30 days with no downtime and minimal operational work. **Why Secrets Manager:** its defining feature over Parameter Store is *built-in automatic rotation* — for RDS, Redshift, and DocumentDB it provisions and runs the rotation Lambda for you, coordinating the credential change so connections don't break. **Why least overhead:** you enable rotation and a schedule; AWS owns the rotation machinery. **Why the distractors fail:** Parameter Store SecureString stores secrets but has *no native rotation*; an encrypted S3 object or an env-var cron job is custom plumbing you must build, secure, and operate. **The exam trade:** rotation or cross-account sharing needed → Secrets Manager; simple encrypted config at no cost → Parameter Store. **Common mistakes:** assuming Parameter Store rotates, and hand-rolling rotation when a managed option exists.",
+    "resources": [
+      { "label": "AWS — Secrets Manager rotation", "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html" }
+    ]
+  },
+  "aws-sec-mcq-006": {
+    "explanation": "**The problem:** Private-subnet instances must reach the internet for OS patches but must never be reachable *from* the internet. **Why a NAT gateway:** it allows *outbound-initiated* connections (the instance starts the conversation) while refusing any inbound connections from the internet — exactly the patch-download requirement. **How it's wired:** the NAT gateway sits in a public subnet; the private subnet's route table sends `0.0.0.0/0` to the NAT gateway, which then egresses via the internet gateway. **Why the distractors fail:** attaching an internet gateway to the subnet or giving instances elastic IPs makes them publicly addressable (the opposite of the goal); VPC peering provides no internet egress. **Common mistakes:** putting the NAT gateway in the private subnet (it must be public), and forgetting the private route-table entry so traffic never reaches it.",
+    "resources": [
+      { "label": "AWS — NAT gateways", "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html" }
+    ]
+  },
+  "aws-sec-mcq-007": {
+    "explanation": "**The problem:** Private-subnet traffic to S3 must never cross the public internet, and you want no extra per-GB cost. **Why a gateway VPC endpoint:** gateway endpoints (only for **S3 and DynamoDB**) add a route-table entry that sends traffic to the service privately over the AWS network — with *no hourly or per-GB endpoint charge*. **Why it beats the alternatives on cost:** a NAT gateway routes through public IP space and bills per GB; an *interface* endpoint for S3 also works privately but carries hourly + data-processing charges; Direct Connect links on-premises networks, not subnets to S3. **Common mistakes:** reaching for an interface endpoint (the costlier option) when a free gateway endpoint exists for S3/DynamoDB, and forgetting that gateway endpoints are configured via route tables (and can be locked down with an endpoint policy).",
+    "example": "```bash\naws ec2 create-vpc-endpoint \\\n  --vpc-id vpc-0abc123 \\\n  --service-name com.amazonaws.us-east-1.s3 \\\n  --vpc-endpoint-type Gateway \\\n  --route-table-ids rtb-0private456\n```",
+    "resources": [
+      { "label": "AWS — Gateway VPC endpoints for S3", "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html" }
+    ]
+  },
+  "aws-sec-mr-002": {
+    "explanation": "**The problem:** A public app behind an ALB must be protected against *both* SQL injection and large-scale DDoS. **Why these two services:** AWS WAF (with managed rule groups attached to the ALB) inspects HTTP(S) requests and blocks injection patterns — the SQLi requirement; AWS Shield Advanced adds enhanced L3/L4/L7 DDoS detection, mitigation, and 24×7 response for ALB/CloudFront/Route 53 — the DDoS requirement. **Why two distinct controls:** WAF is application-layer request filtering; Shield is volumetric/DDoS defense — different threat layers. **Why the distractors fail:** GuardDuty *detects* threats from logs but blocks nothing; Macie classifies sensitive S3 data; Inspector scans for vulnerabilities — none filter live attack traffic. **Common mistakes:** expecting GuardDuty/Inspector to block requests, and assuming Shield Standard (free, automatic L3/4) covers application-layer attacks — it doesn't; that's WAF/Shield Advanced.",
+    "resources": [
+      { "label": "AWS — WAF", "url": "https://docs.aws.amazon.com/waf/latest/developerguide/what-is-aws-waf.html" },
+      { "label": "AWS — Shield Advanced", "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-summary.html" }
+    ]
+  },
+  "aws-sec-mcq-008": {
+    "explanation": "**The problem:** Compliance needs to find S3 buckets containing unencrypted PII (names, credit-card numbers) with the least effort. **Why Macie:** it's purpose-built to *discover and classify sensitive data* in S3 using ML and managed pattern matching (PII, financial data, credentials), reporting findings and bucket-level posture. **Why least effort:** it inspects object *contents* automatically — no custom scanning to build. **Why the distractors fail:** GuardDuty detects threats from log/network analysis (not content); Inspector finds software vulnerabilities on EC2/ECR/Lambda; CloudTrail records API calls (useful context, but doesn't read object contents). **The exam pattern:** 'find sensitive data in S3' → Macie. **Common mistakes:** confusing Macie (data classification) with GuardDuty (threat detection) or Inspector (vulnerability scanning).",
+    "resources": [
+      { "label": "AWS — Amazon Macie", "url": "https://docs.aws.amazon.com/macie/latest/user/what-is-macie.html" }
+    ]
+  },
+  "aws-sec-mcq-009": {
+    "explanation": "**The problem:** EBS and RDS data must be encrypted at rest with keys the *security team* controls, plus an audit trail of every key use. **Why customer managed KMS keys:** they give the team a key policy, rotation control, the ability to disable/revoke, and grants — and every `Encrypt`/`Decrypt`/`GenerateDataKey` call is logged in CloudTrail, providing the audit trail. **Why the combination answers both clauses:** CMK = control; CloudTrail = audit. **Why the distractors fail:** AWS *managed* keys encrypt but expose no policy control or rotation choice; a key stored in S3 is self-managed crypto with no HSM backing or usage log; TLS protects data *in transit*, not at rest. **The classic distinction:** at-rest (KMS) vs in-transit (TLS). **Common mistakes:** choosing AWS managed keys when 'team controls the keys' is stated, and conflating transit encryption with rest encryption.",
+    "resources": [
+      { "label": "AWS — KMS customer managed keys", "url": "https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#customer-cmk" }
+    ]
+  },
+  "aws-sec-mcq-010": {
+    "explanation": "**The problem:** Across 50 Organizations accounts, employees should sign in once with their existing Active Directory credentials and reach only the accounts they're entitled to. **Why IAM Identity Center:** it's the *workforce* access service — it federates with an existing directory (AD via AD Connector, or any SAML IdP), provides one sign-in portal, and maps users/groups to *permission sets* across all org accounts. **Why it fits scale:** central identity, no per-account user sprawl. **Why the distractors fail:** IAM users in every account multiply credentials 50×; shared departmental users destroy accountability; Amazon Cognito is for *application end-users (customers)*, not workforce access to AWS accounts. **The exam split:** workforce → IAM Identity Center; app customers → Cognito. **Common mistakes:** reaching for Cognito for employee SSO, and creating duplicate IAM users instead of federating.",
+    "resources": [
+      { "label": "AWS — IAM Identity Center", "url": "https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html" }
+    ]
+  },
+  "aws-sec-mcq-011": {
+    "explanation": "**The problem:** A mobile app needs end-user sign-up/sign-in, social identity providers (Google, Apple), and MFA. **Why Cognito user pools:** they are the *customer identity* service — a managed user directory with hosted sign-up/sign-in UI, social and SAML federation, MFA, and JWT tokens for the app. **Why it fits:** all the stated needs are first-class user-pool features. **The companion piece:** Cognito *identity pools* complement user pools by exchanging those tokens for temporary AWS credentials when the app must call AWS services directly. **Why the distractors fail:** IAM Identity Center and IAM users are for *workforce/AWS* access; Directory Service is managed Microsoft AD for Windows workloads. **Common mistakes:** confusing user pools (authenticate users) with identity pools (authorize against AWS), and using a workforce tool for app customers.",
+    "resources": [
+      { "label": "AWS — Cognito user pools", "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html" }
+    ]
+  },
+  "aws-sec-mr-003": {
+    "explanation": "**The problem:** A brand-new account's root user has unrestricted, unrevokable power, so it must be secured immediately. **Why the two answers:** enabling MFA on root defends the most dangerous credential, and using root only for the handful of tasks that require it (while doing daily work through IAM identities) shrinks its exposure to near zero. **Why this is the standard guidance:** root can't be permission-limited, so the strategy is 'lock it and stop using it'. **Why the distractors fail:** creating root *access keys* is explicitly discouraged (delete them if present); sharing the root password or using root for daily admin eliminates accountability and multiplies risk. **Common mistakes:** leaving root without MFA, and generating root access keys for automation instead of using IAM roles.",
+    "resources": [
+      { "label": "AWS — Root user best practices", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#lock-away-credentials" }
+    ]
+  },
+  "aws-sec-mcq-012": {
+    "explanation": "**The problem:** Every request to an S3 bucket must use HTTPS; plain-HTTP requests must be rejected. **Why a bucket policy with `aws:SecureTransport`:** that condition key is `true` for HTTPS and `false` for HTTP, so an explicit `Deny` on `\"aws:SecureTransport\": \"false\"` rejects unencrypted transport for every principal. **Why a Deny (not an Allow):** it enforces the rule absolutely, overriding any allow. **Why the distractors fail:** default encryption (SSE-S3) protects data *at rest*, a different control; Block Public Access governs public grants; MFA Delete protects against deletions. **The classic distinction:** in-transit vs at-rest encryption. **Common mistakes:** scoping the Deny to only the bucket ARN and forgetting the `/*` object ARN, and confusing transit enforcement with at-rest encryption.",
+    "example": "```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"DenyInsecureTransport\",\n      \"Effect\": \"Deny\",\n      \"Principal\": \"*\",\n      \"Action\": \"s3:*\",\n      \"Resource\": [\n        \"arn:aws:s3:::my-bucket\",\n        \"arn:aws:s3:::my-bucket/*\"\n      ],\n      \"Condition\": { \"Bool\": { \"aws:SecureTransport\": \"false\" } }\n    }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — Enforce HTTPS with aws:SecureTransport", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html" }
+    ]
+  },
+  "aws-sec-mcq-013": {
+    "explanation": "**The problem:** A Lambda needs to read items from *one* DynamoDB table, and broad policies expand the blast radius if the function is compromised. **Why the scoped policy:** least privilege means the *specific actions* needed (`GetItem`, `Query`) on the *specific resource* needed (that table's ARN) — nothing more. **Why this is safest:** a compromised function can do only those reads, not write, delete, or manage tables. **Why the distractors fail:** `dynamodb:*` and `AmazonDynamoDBFullAccess` grant write/delete/admin the function never uses; `*:*` with app-side restriction trusts code to enforce security (it won't, reliably). **Common mistakes:** defaulting to AWS managed FullAccess policies for convenience, and using `Resource: \"*\"` when a single table ARN suffices.",
+    "example": "```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\"dynamodb:GetItem\", \"dynamodb:Query\"],\n      \"Resource\": \"arn:aws:dynamodb:us-east-1:123456789012:table/Orders\"\n    }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — IAM least-privilege", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege" }
+    ]
+  },
+  "aws-sec-mr-004": {
+    "explanation": "**The problem:** An ECS app must connect to RDS with credentials that are never stored in plaintext and are fetched securely at runtime. **Why the two answers:** store the credentials in Secrets Manager (encrypted at rest, rotation available), and grant the *ECS task role* permission to read *that specific secret* so the container retrieves it at startup — secret store + identity-based retrieval, scoped by IAM. **Why no plaintext anywhere:** the secret lives only in Secrets Manager; the task assumes a role to read it. **Why the distractors fail:** plaintext env vars are visible in the console/API; an 'encrypted' file with its key in the same repo protects nothing; a public-read S3 bucket is the opposite of secure. **Common mistakes:** granting the task role `secretsmanager:GetSecretValue` on `*` instead of the one secret ARN, and putting secrets in task-definition environment variables.",
+    "resources": [
+      { "label": "AWS — ECS secrets from Secrets Manager", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data-secrets.html" }
+    ]
+  },
+  "aws-sec-mcq-014": {
+    "explanation": "**The problem:** A SaaS provider must let many customer VPCs reach its service privately — without VPC peering, internet exposure, or overlapping-CIDR headaches. **Why PrivateLink:** the provider publishes the service behind a Network Load Balancer as a *VPC endpoint service*; each customer creates an *interface endpoint* in their own VPC that connects privately to it. **Why it fits:** traffic stays on the AWS network, no route tables are shared, and overlapping CIDRs don't matter (unlike peering). **Why the distractors fail:** peering breaks on overlapping CIDRs and doesn't scale to many customers (full mesh); a public NLB with IP allow-lists adds internet exposure; per-customer Site-to-Site VPNs add operational burden. **Common mistakes:** choosing peering for a one-to-many provider model, and exposing the service publicly when PrivateLink keeps it private.",
+    "resources": [
+      { "label": "AWS — PrivateLink & endpoint services", "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-share-your-services.html" }
+    ]
+  },
+  "aws-sec-mcq-015": {
+    "explanation": "**The problem:** A company scaling from 1 to ~40 accounts wants a *managed* way to stand up a multi-account environment with governance guardrails and standardized account provisioning. **Why Control Tower:** it builds the landing zone — orchestrating AWS Organizations, applying preventive guardrails (SCPs) and detective guardrails (Config rules), centralizing logging/audit, and offering Account Factory for repeatable provisioning. **Why it fits:** it's the opinionated framework, not a single primitive. **Why the distractors fail:** CloudFormation is a building block (you'd assemble everything yourself); AWS Config evaluates compliance but doesn't structure accounts; Trusted Advisor recommends but doesn't provision. **Common mistakes:** trying to hand-build a landing zone from raw Organizations + CloudFormation when Control Tower packages it, and confusing detective (Config) with preventive (SCP) guardrails.",
+    "resources": [
+      { "label": "AWS — Control Tower", "url": "https://docs.aws.amazon.com/controltower/latest/userguide/what-is-control-tower.html" }
+    ]
+  },
+  "aws-sec-mcq-016": {
+    "explanation": "**The problem:** With EC2, you must know which security tasks are yours vs AWS's under the shared responsibility model. **The split:** AWS is responsible for security *OF* the cloud (data-center physical security, hardware, the hypervisor); the customer is responsible for security *IN* the cloud — for EC2 that's guest-OS patching, security-group/firewall configuration, IAM, and data-encryption choices. **Why the answer:** guest-OS patches and security groups are squarely customer-side. **Why the distractors fail:** physical security, hypervisor patching, and hardware replacement are all AWS's responsibility. **The shifting line:** for managed services (Lambda, S3) AWS takes more of the stack (OS/runtime), leaving the customer data, access, and configuration. **Common mistakes:** assuming AWS patches your guest OS on EC2, and forgetting the line moves with the service model.",
+    "resources": [
+      { "label": "AWS — Shared Responsibility Model", "url": "https://aws.amazon.com/compliance/shared-responsibility-model/" }
+    ]
+  },
+  "aws-sec-mcq-017": {
+    "explanation": "**The problem:** A user has an `s3:*` Allow and a separate explicit `Deny` on `s3:DeleteObject` for one bucket — what wins? **Why Deny wins:** IAM evaluation starts at an implicit deny, allows only if *some* policy allows AND *nothing* explicitly denies. An explicit `Deny` is absolute — no number of Allows, from any policy type (identity, resource, SCP), can override it. **Why this design:** it makes Deny the reliable tool for guardrails. **Why the distractors fail:** broad Allows don't out-vote a Deny; there's no 'most recent policy' or evaluation-order randomness — attachment order is irrelevant. **Common mistakes:** assuming a broad Allow beats a narrow Deny, and thinking policy attachment order matters (it doesn't).",
+    "resources": [
+      { "label": "AWS — IAM policy evaluation logic", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html" }
+    ]
+  },
+  "aws-sec-mcq-018": {
+    "explanation": "**The problem:** Admins need shell access to private-subnet EC2 instances with no SSH keys, no bastion, no open inbound ports — and full session logging. **Why Session Manager:** it inverts the connection model — the SSM agent on the instance dials *out* to the service, so there are no inbound ports, keys, or bastions to attack. **Why it fits:** access is governed by IAM and sessions can be logged to CloudWatch Logs or S3 for audit. **Why the distractors fail:** a bastion host, SSH over VPN, and EC2 Instance Connect with port 22 open all keep an SSH listening surface alive somewhere — exactly what the requirement eliminates. **Common mistakes:** keeping a bastion 'just in case' (it's attack surface), and forgetting the instance needs the SSM agent + an instance role with SSM permissions.",
+    "resources": [
+      { "label": "AWS — Systems Manager Session Manager", "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html" }
+    ]
+  },
+  "aws-sec-mcq-019": {
+    "explanation": "**The problem:** S3 content served via CloudFront must not be fetchable directly from the bucket URL. **Why OAC + a scoped bucket policy:** Origin Access Control lets CloudFront sign its origin requests, and the bucket policy then grants `s3:GetObject` *only* to the CloudFront service principal for that specific distribution — so direct bucket URLs return 403. **Why it works:** the bucket stays private; only CloudFront can read it. **Why the distractors fail:** a public-read ACL is exactly what's being prevented; Transfer Acceleration is an upload-speed feature; signed cookies are a *viewer-side* access control, not an origin lockdown. **The detail:** OAC is the successor to the older Origin Access Identity (OAI). **Common mistakes:** leaving Block Public Access off, and forgetting to restrict the bucket policy condition to the specific distribution ARN.",
+    "example": "```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Principal\": { \"Service\": \"cloudfront.amazonaws.com\" },\n      \"Action\": \"s3:GetObject\",\n      \"Resource\": \"arn:aws:s3:::my-site-bucket/*\",\n      \"Condition\": {\n        \"StringEquals\": {\n          \"AWS:SourceArn\": \"arn:aws:cloudfront::123456789012:distribution/E1ABCDEF2GHIJ\"\n        }\n      }\n    }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — Restrict S3 access with OAC", "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html" }
+    ]
+  },
+  "aws-sec-mcq-020": {
+    "explanation": "**The problem:** Premium videos via CloudFront must be downloadable only by the buyer, through a link that expires in 24 hours. **Why CloudFront signed URLs:** each URL embeds an expiry time and a signature from your key pair; the app generates one per purchase, and CloudFront rejects the request after the deadline or if tampered with. **Why it fits:** per-buyer, time-limited, tamper-proof access. **The variant:** signed *cookies* grant access to many files at once (use when restricting a whole library, not a single download). **Why the distractors fail:** a public window exposes content to everyone; IP-based bucket policies break on mobile/NAT and don't expire; WAF doesn't do per-user content authorization. **Common mistakes:** confusing signed URLs (one file) with signed cookies (many files), and trying to enforce per-user access at the S3 layer instead of CloudFront.",
+    "resources": [
+      { "label": "AWS — CloudFront signed URLs", "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-signed-urls.html" }
+    ]
+  },
+  "aws-sec-mr-005": {
+    "explanation": "**The problem:** Critical S3 documents must survive accidental overwrites/deletes, and permanent deletes must require extra authorization. **Why the two answers:** Versioning turns overwrites and deletes into *recoverable* events — the prior version survives and a delete just adds a delete marker; MFA Delete stacks on top so permanently removing a version (or disabling versioning) requires the bucket owner's MFA token. **Why together:** Versioning gives recoverability; MFA Delete adds the extra-authorization gate. **Why the distractors fail:** Transfer Acceleration (speed), Intelligent-Tiering (cost tiering), and Requester Pays (billing) don't protect data. **Common mistakes:** expecting Versioning alone to stop permanent deletes (it doesn't — that's MFA Delete), and forgetting MFA Delete can only be enabled by the root account via CLI.",
+    "resources": [
+      { "label": "AWS — S3 Versioning & MFA Delete", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html" }
+    ]
+  },
+  "aws-sec-mcq-021": {
+    "explanation": "**The problem:** Transaction records must be immutable for 7 years — unmodifiable and undeletable by *anyone*, including administrators and root. **Why Object Lock in compliance mode:** it's true WORM storage — during the retention period no identity, not even root, can shorten retention or delete the version. **Why compliance (not governance):** governance mode lets users with `s3:BypassGovernanceRetention` override it, which fails the 'including administrators' requirement. **Why the distractors fail:** a bucket policy denying delete can be edited by admins; MFA Delete protects against accidents, not determined privileged users. **The prerequisite:** Object Lock requires versioning. **Common mistakes:** choosing governance mode when the requirement is absolute, and forgetting Object Lock must be enabled at/with bucket creation + versioning.",
+    "example": "```bash\naws s3api put-object-retention \\\n  --bucket records-bucket --key txn/2026-001.json \\\n  --retention 'Mode=COMPLIANCE,RetainUntilDate=2033-06-19T00:00:00Z'\n```",
+    "resources": [
+      { "label": "AWS — S3 Object Lock", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html" }
+    ]
+  },
+  "aws-sec-mcq-022": {
+    "explanation": "**The problem:** A third-party SaaS assumes a role in your account; AWS recommends an *external ID* in the trust policy — what attack does it stop? **Why it mitigates the confused deputy:** without an external ID, a malicious *other* customer of the SaaS could supply your role ARN and ask the SaaS to act on 'their' account — the SaaS (the deputy) would assume *your* role using its legitimate access. **Why the external ID fixes it:** it's a per-customer secret the SaaS includes in `AssumeRole`; your trust policy's condition rejects requests carrying the wrong ID, binding the role to the correct customer relationship. **Why the distractors fail:** it's unrelated to brute force, SQL injection, or DDoS. **Common mistakes:** omitting the external-ID condition for third-party roles, and letting the customer (rather than the SaaS) choose the ID.",
+    "example": "```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Principal\": { \"AWS\": \"arn:aws:iam::444455556666:root\" },\n      \"Action\": \"sts:AssumeRole\",\n      \"Condition\": {\n        \"StringEquals\": { \"sts:ExternalId\": \"unique-customer-id-xyz\" }\n      }\n    }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — The confused deputy problem", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html" }
+    ]
+  },
+  "aws-sec-mcq-023": {
+    "explanation": "**The problem:** Every object uploaded to a bucket must be encrypted with a specific KMS key, without touching the many uploading client apps. **Why default bucket encryption:** configure SSE-KMS with your customer managed key as the bucket default, and every object that arrives without its own encryption headers is encrypted with that key — zero client changes. **Why S3 Bucket Keys:** they cut the per-request KMS call cost dramatically by reducing calls to KMS. **Why the distractors fail:** asking every client team to add SDK headers is the coordination problem you're avoiding; a nightly re-upload Lambda leaves a window of unencrypted data; an encrypting proxy is heavy custom infrastructure for a built-in feature. **Common mistakes:** forgetting to grant uploaders `kms:GenerateDataKey` on the key, and omitting Bucket Keys (paying full KMS request cost).",
+    "example": "```bash\naws s3api put-bucket-encryption --bucket my-bucket \\\n  --server-side-encryption-configuration '{\n    \"Rules\": [{\n      \"ApplyServerSideEncryptionByDefault\": {\n        \"SSEAlgorithm\": \"aws:kms\",\n        \"KMSMasterKeyID\": \"arn:aws:kms:us-east-1:123456789012:key/abcd-1234\"\n      },\n      \"BucketKeyEnabled\": true\n    }]\n  }'\n```",
+    "resources": [
+      { "label": "AWS — S3 default encryption", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-encryption.html" }
+    ]
+  },
+  "aws-sec-mcq-024": {
+    "explanation": "**The problem:** An app behind an ALB needs a public HTTPS certificate with automatic renewal and no certificate cost. **Why ACM:** AWS Certificate Manager public certificates are free, validate via DNS, renew automatically, and integrate natively with ALB, NLB, CloudFront, and API Gateway. **Why it fits:** attach the cert to the ALB HTTPS listener and forget about renewals. **Why the distractors fail:** self-signed certs trigger browser warnings; commercial certs add cost and manual-renewal risk; SSH keys aren't TLS certificates. **The caveat worth knowing:** ACM *public* certs can't be exported to run on EC2 directly — they live on AWS-managed endpoints (use ACM Private CA or imported certs for instance-hosted TLS). **Common mistakes:** trying to export a public ACM cert to an EC2 instance, and uploading a purchased cert when a free auto-renewing ACM cert suffices.",
+    "resources": [
+      { "label": "AWS — Certificate Manager", "url": "https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html" }
+    ]
+  },
+  "aws-sec-mcq-025": {
+    "explanation": "**The problem:** App-tier instances must accept traffic only from the web tier, which auto-scales so its IPs constantly change. **Why reference the web tier's security group ID:** SG references are *membership-based* — any instance attached to the web-tier SG matches the rule regardless of its IP, so scaling events need no rule updates. **Why it fits:** dynamic membership tracks Auto Scaling automatically. **Why the distractors fail:** allowing the whole VPC CIDR over-grants (database tier, anything in the VPC); maintaining an IP list rots the moment Auto Scaling acts; allow-all delegates security to application code. **Common mistakes:** using CIDR ranges for intra-VPC tiering instead of SG references, and scripting IP-list updates that race with scaling.",
+    "resources": [
+      { "label": "AWS — Security group rules (SG references)", "url": "https://docs.aws.amazon.com/vpc/latest/userguide/security-group-rules.html" }
+    ]
+  },
+  "aws-sec-mcq-026": {
+    "explanation": "**The problem:** Intermittent connection failures are suspected to be SG/NACL drops, and the team needs to see accepted *and* rejected connection records. **Why VPC Flow Logs:** they capture IP-traffic metadata at the VPC/subnet/ENI level — source, destination, ports, protocol, and crucially ACCEPT or REJECT — delivered to CloudWatch Logs or S3. **Why it fits:** filtering for REJECT pinpoints what the SG/NACL is dropping. **Why the distractors fail:** CloudTrail logs API calls (control plane, not packets); X-Ray traces application requests; Inspector scans for vulnerabilities. **The nuance:** Flow Logs show whether traffic was allowed/denied but not packet payloads. **Common mistakes:** reaching for CloudTrail (API activity) when the question is about network packets, and forgetting Flow Logs must be explicitly enabled.",
+    "resources": [
+      { "label": "AWS — VPC Flow Logs", "url": "https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html" }
+    ]
+  },
+  "aws-sec-mcq-027": {
+    "explanation": "**The problem:** Security wants continuous, intelligent threat detection across accounts — crypto-mining EC2, credential exfiltration, anomalous API calls — with no agents or infrastructure. **Why GuardDuty:** it continuously analyzes CloudTrail events, VPC Flow Logs, and DNS query logs with threat intelligence and ML, one click to enable, no agents, findings ranked by severity. **Why it fits:** crypto-mining and anomalous credential use are its signature detections. **Why the distractors fail:** Macie classifies sensitive S3 data; WAF filters web requests; Config evaluates configuration compliance. **The exam pattern:** 'detect threats from logs, no agents' → GuardDuty. **Common mistakes:** confusing GuardDuty (threat detection) with Inspector (vulnerability scanning) or Macie (data classification).",
+    "resources": [
+      { "label": "AWS — Amazon GuardDuty", "url": "https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html" }
+    ]
+  },
+  "aws-sec-mcq-028": {
+    "explanation": "**The problem:** A review must find every S3 bucket, IAM role, and KMS key reachable from *outside* the organization via resource policies. **Why IAM Access Analyzer:** it uses automated reasoning on resource policies to identify resources shared with principals outside your zone of trust (account or organization), producing findings like 'this bucket policy grants account 1234… read access'. **Why it fits:** purpose-built external-access analysis across resource types. **Why the distractors fail:** Trusted Advisor has only basic open-bucket checks; Detective investigates incidents *after* the fact; Artifact serves compliance documents. **Common mistakes:** using Trusted Advisor's limited checks for a thorough external-access audit, and confusing Access Analyzer (policy reachability) with GuardDuty (active threats).",
+    "resources": [
+      { "label": "AWS — IAM Access Analyzer", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html" }
+    ]
+  },
+  "aws-sec-mcq-029": {
+    "explanation": "**The problem:** Developers must be able to create IAM roles, but no role they create may ever exceed a defined permission ceiling — even if they attach an over-permissive policy. **Why a permissions boundary:** it's a managed policy that caps the *maximum effective* permissions of a principal — the role can do only what *both* its attached policies AND the boundary allow. **Why it enables safe delegation:** an IAM condition (`iam:PermissionsBoundary`) can force developers to attach the approved boundary at role-creation time, so they can create roles without escalating privilege. **Why the distractors fail:** manual review doesn't scale; read-only blocks the legitimate need; MFA authenticates but doesn't limit permissions. **Common mistakes:** confusing a permissions boundary (per-principal cap) with an SCP (account-wide cap), and not enforcing the boundary via a creation-time condition.",
+    "resources": [
+      { "label": "AWS — Permissions boundaries", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html" }
+    ]
+  },
+  "aws-sec-mcq-030": {
+    "explanation": "**The problem:** Across 60 (and future) accounts, all API activity must land in one central, tamper-resistant S3 bucket. **Why an organization trail:** created from the management account, it automatically applies to *all* member accounts — current and future — and delivers events to a central bucket that member accounts can't modify; enable log-file validation for tamper evidence. **Why it fits:** zero per-account setup and automatic coverage of new accounts. **Why the distractors fail:** per-account trails drift and miss new accounts; VPC Flow Logs record network traffic, not API calls; AWS Config tracks resource configuration state (complementary, but different). **Common mistakes:** configuring individual trails per account (drift + gaps), and confusing CloudTrail (API calls) with Config (resource state).",
+    "resources": [
+      { "label": "AWS — Organization CloudTrail trails", "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html" }
+    ]
+  },
+  "aws-sec-mr-006": {
+    "explanation": "**The problem:** A role with `s3:GetObject` still gets Access Denied downloading SSE-KMS-encrypted objects. **Why two permissions are needed:** an SSE-KMS read is a two-step operation — S3 authorizes the object read, then calls KMS on the caller's behalf to decrypt the data key, which requires the caller to hold `kms:Decrypt` on that key (via IAM and/or the key policy). **Why the answers:** `s3:GetObject` (the read) + `kms:Decrypt` (the decrypt) together complete the path. **Why the symptom is confusing:** the S3 permission looks correct, but the missing KMS half produces the denial. **Why the distractors fail:** `kms:CreateKey`, `s3:PutBucketPolicy`, and `iam:PassRole` are unrelated to a read path. **Common mistakes:** granting only the S3 action, and forgetting that the KMS key *policy* may also need to allow the role.",
+    "example": "```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    { \"Effect\": \"Allow\", \"Action\": \"s3:GetObject\",\n      \"Resource\": \"arn:aws:s3:::my-bucket/*\" },\n    { \"Effect\": \"Allow\", \"Action\": \"kms:Decrypt\",\n      \"Resource\": \"arn:aws:kms:us-east-1:123456789012:key/abcd-1234\" }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — Using SSE-KMS (key permissions)", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html" }
+    ]
+  },
+  "aws-sec-mr-007": {
+    "explanation": "**The problem:** A production RDS instance is unencrypted, and RDS won't let you enable encryption on an existing unencrypted instance in place. **Why snapshot → encrypted copy → restore:** snapshots of an unencrypted instance are unencrypted, but *copying* a snapshot lets you enable KMS encryption on the copy; restoring from that encrypted copy yields an encrypted instance, which you then cut the application over to. **Why the two answers:** create the snapshot, then copy-with-encryption and restore + switch. **Why the distractors fail:** there's no in-place toggle; Multi-AZ replicates whatever encryption state exists (none); engine migration (to Aurora) doesn't bypass the restriction. **Common mistakes:** expecting a maintenance-window toggle, and forgetting to plan the endpoint cutover (DNS/connection-string change).",
+    "resources": [
+      { "label": "AWS — Encrypting an existing RDS instance", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html" }
+    ]
+  },
+  "aws-sec-mcq-031": {
+    "explanation": "**The problem:** A CloudFront-fronted login page is hit by credential-stuffing bots making thousands of POSTs/minute from rotating IPs. **Why a WAF rate-based rule:** it counts requests per IP over a sliding window and automatically blocks IPs exceeding the threshold — scoped here to the login URI so normal browsing is untouched; pair with managed bot-control rules for sophistication. **Why it fits:** automatic, per-IP, application-layer throttling. **Why the distractors fail:** Shield Standard mitigates L3/4 network floods, not application-layer credential stuffing; manual NACL entries can't chase rotating IPs; adding servers just absorbs the attack. **Common mistakes:** trying to block rotating IPs manually, and expecting Shield (DDoS) to stop application-layer abuse.",
+    "resources": [
+      { "label": "AWS — WAF rate-based rules", "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based.html" }
+    ]
+  },
+  "aws-sec-mcq-032": {
+    "explanation": "**The problem:** An SSRF vulnerability could trick an app into reading EC2 instance credentials from the metadata service (IMDS). **Why requiring IMDSv2:** it makes metadata access session-oriented — callers must first obtain a token via a `PUT` request with a special header, something a typical SSRF that forwards a `GET` can't do. Enforcing it (`HttpTokens=required`) shuts down the classic credential-theft path. **Why it fits:** it neutralizes the SSRF-to-credentials chain without breaking legitimate access. **Why the distractors fail:** removing the role breaks legitimate AWS access; NACLs don't filter the instance's own link-local (169.254.169.254) traffic; monitoring observes but doesn't prevent. **Common mistakes:** leaving IMDSv1 enabled, and trying to block the link-local metadata IP with network controls.",
+    "example": "```bash\naws ec2 modify-instance-metadata-options \\\n  --instance-id i-0abc123 \\\n  --http-tokens required \\\n  --http-endpoint enabled\n```",
+    "resources": [
+      { "label": "AWS — Use IMDSv2", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html" }
+    ]
+  },
+  "aws-sec-mcq-033": {
+    "explanation": "**The problem:** A KMS customer managed key must rotate its cryptographic material yearly without re-encrypting data or changing key ARNs. **Why automatic key rotation:** it generates fresh backing material on schedule (yearly) while the key ID, ARN, policies, and grants stay identical — KMS keeps the old material to decrypt data encrypted under it, so nothing needs re-encryption and applications notice nothing. **Why it fits:** transparent rotation with stable identifiers. **Why the distractors fail:** creating a new key yearly forces application updates; *imported* key material actually *excludes* automatic rotation; deleting the key destroys the ability to decrypt existing data. **Common mistakes:** assuming rotation re-encrypts existing data (it doesn't), and trying to enable automatic rotation on a key with imported material.",
+    "example": "```bash\naws kms enable-key-rotation --key-id arn:aws:kms:us-east-1:123456789012:key/abcd-1234\n```",
+    "resources": [
+      { "label": "AWS — Rotating KMS keys", "url": "https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html" }
+    ]
+  },
+  "aws-sec-mcq-034": {
+    "explanation": "**The problem:** Policy requires keys in a single-tenant HSM validated to FIPS 140-2 Level 3, with the institution holding exclusive control. **Why CloudHSM:** it provisions dedicated, single-tenant HSMs in your VPC, validated at FIPS 140-2 Level 3, where AWS has no access to your keys — you manage HSM users and crypto operations directly (and can even use it as a KMS custom key store). **Why it fits the phrasing:** 'single-tenant + Level 3 + exclusive control' is the exam's signal for CloudHSM. **Why the distractors fail:** standard KMS is multi-tenant managed infrastructure (FIPS 140-2 validated, but not single-tenant/Level 3 dedicated); Secrets Manager stores secrets; ACM manages TLS certs. **Common mistakes:** choosing KMS when the requirement explicitly says single-tenant/Level 3, and forgetting CloudHSM means *you* run availability/backups for the cluster.",
+    "resources": [
+      { "label": "AWS — CloudHSM", "url": "https://docs.aws.amazon.com/cloudhsm/latest/userguide/introduction.html" }
+    ]
+  },
+  "aws-sec-mcq-035": {
+    "explanation": "**The problem:** You must continuously scan EC2 and ECR images for CVEs and unintended network exposure, with severity-ranked findings. **Why Inspector:** it's the vulnerability scanner — continuously assessing EC2 (via the SSM agent), ECR images, and Lambda against CVE databases and checking network reachability, producing risk-scored findings. **Why it fits:** CVE + reachability scanning is its job. **Why the distractors fail (the key exam distinction):** GuardDuty detects active *threats* from log analysis; Inspector finds *vulnerabilities* before exploitation; Macie classifies sensitive data; Config checks configuration compliance. **Common mistakes:** confusing Inspector (vulnerabilities) with GuardDuty (threats), and forgetting EC2 scanning needs the SSM agent.",
+    "resources": [
+      { "label": "AWS — Amazon Inspector", "url": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html" }
+    ]
+  },
+  "aws-sec-mcq-036": {
+    "explanation": "**The problem:** GuardDuty, Inspector, and Macie run across 40 accounts; security wants ONE place that aggregates findings, runs standards checks (CIS), and shows a security score. **Why Security Hub:** it's the aggregation layer — it ingests findings from GuardDuty, Inspector, Macie, Access Analyzer, and partner tools across accounts, normalizes them into one format (ASFF), and continuously evaluates standards (CIS, AWS Foundational Security Best Practices, PCI DSS) with scores. **Why it fits:** central, normalized, standards-scored. **Why the distractors fail:** CloudTrail is raw API logging; Detective investigates specific findings more deeply; Systems Manager is operations tooling. **Common mistakes:** confusing Security Hub (aggregate + score) with Detective (deep investigation), and expecting GuardDuty alone to provide cross-tool aggregation.",
+    "resources": [
+      { "label": "AWS — Security Hub", "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html" }
+    ]
+  },
+  "aws-sec-mcq-037": {
+    "explanation": "**The problem:** A regulated company must inspect and filter *all* egress from its VPCs — blocking unapproved domains and applying IPS signatures — with a managed service. **Why AWS Network Firewall:** it's the managed network-layer firewall with stateful rules, FQDN/domain filtering for egress, and Suricata-compatible IDS/IPS signatures, scaling automatically at VPC boundaries. **Why it fits:** domain-based egress control + signatures is exactly its remit. **Why the distractors fail:** security groups allow/deny by port and CIDR only — no domain names, no signatures, no deny logging; WAF inspects *inbound* HTTP to web endpoints, not general egress; GuardDuty detects (including DNS exfiltration) but doesn't block. **Common mistakes:** trying to do FQDN egress filtering with security groups, and confusing inbound WAF with outbound Network Firewall.",
+    "resources": [
+      { "label": "AWS — Network Firewall", "url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/what-is-aws-network-firewall.html" }
+    ]
+  },
+  "aws-sec-mcq-038": {
+    "explanation": "**The problem:** Remote employees on laptops must reach private-subnet apps from anywhere using standard OpenVPN clients, without public exposure. **Why AWS Client VPN:** it's the managed *remote-access* VPN — individual users connect with OpenVPN-based clients to a Client VPN endpoint, authenticate (Active Directory, SAML, or certificates), and reach VPC + on-premises resources per authorization rules; it's elastic with no VPN servers to run. **Why it fits:** per-user, roaming, managed. **Why the distractors fail:** Site-to-Site VPN connects *networks* (office ↔ VPC), not roaming laptops; Direct Connect is a physical circuit; Amazon Connect is a contact-center product (name trap). **Common mistakes:** choosing Site-to-Site for individual users, and falling for the Amazon Connect name similarity.",
+    "resources": [
+      { "label": "AWS — Client VPN", "url": "https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/what-is.html" }
+    ]
+  },
+  "aws-sec-mcq-039": {
+    "explanation": "**The problem:** Direct Connect carries traffic privately but *not* encrypted, and a new rule requires all link traffic encrypted in transit. **Why a Site-to-Site VPN over Direct Connect:** layering an IPsec VPN over a public virtual interface adds encryption in transit while keeping DX's consistent bandwidth/latency (MACsec is the alternative on supported 10/100 Gbps ports). **Why it fits:** it satisfies 'encrypted' without giving up DX's benefits. **Why the distractors fail:** 'private' is not 'encrypted' — DX alone doesn't meet the rule; swapping to internet doesn't add encryption either; there's no encryption checkbox on a VIF. **The exam point:** private ≠ encrypted. **Common mistakes:** assuming DX's privacy satisfies encryption requirements, and looking for a non-existent VIF encryption toggle.",
+    "resources": [
+      { "label": "AWS — VPN over Direct Connect", "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/aws-direct-connect-plus-vpn-network-to-amazon.html" }
+    ]
+  },
+  "aws-sec-mcq-040": {
+    "explanation": "**The problem:** A Cognito-authenticated mobile app must upload photos *directly* to S3 — no backend relay and no AWS credentials embedded in the app. **Why a Cognito identity pool:** this is the user-pools-vs-identity-pools division — user pools *authenticate* (issue JWTs); identity pools *authorize against AWS* by trading a valid token for temporary STS credentials tied to an IAM role (which can even scope S3 prefixes per user identity). **Why it fits:** the app gets short-lived, scoped AWS credentials with nothing embedded. **Why the distractors fail:** embedded access keys are extractable from any binary; public-write buckets accept uploads from anyone; user-pool groups map to roles only *via* an identity pool anyway. **Common mistakes:** confusing user pools (authN) with identity pools (AWS authZ), and shipping IAM keys in the app.",
+    "resources": [
+      { "label": "AWS — Cognito identity pools", "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-identity.html" }
+    ]
+  },
+  "aws-sec-mcq-041": {
+    "explanation": "**The problem:** A customer must download one specific *private* S3 object for 15 minutes, with no bucket-policy changes and nothing made public. **Why an S3 presigned URL:** it embeds a signature derived from the backend's own credentials, granting exactly one operation on one object until the expiry — no policy changes, no public exposure, automatically revoked by time. **Why it fits:** scoped, temporary, self-contained. **Why the distractors fail:** per-customer IP policies and new IAM users are heavyweight and error-prone; a temporarily-public ACL is a breach window with a cleanup dependency. **The bonus:** presigned URLs work for uploads (PUT) too. **Common mistakes:** generating the URL with overly long expiry, and using credentials with broader permissions than the single object operation needs.",
+    "example": "```bash\naws s3 presign s3://my-bucket/reports/invoice-42.pdf --expires-in 900\n```",
+    "resources": [
+      { "label": "AWS — S3 presigned URLs", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html" }
+    ]
+  },
+  "aws-sec-mcq-042": {
+    "explanation": "**The problem:** After tightening a NACL to allow only inbound 443, clients stop receiving responses — connections hang, though security groups are correct. **Why the fix is an outbound ephemeral-port rule:** NACLs are *stateless* — they evaluate every packet in each direction independently, with no connection tracking and no 'stateful mode'. A client connects *to* 443 but receives responses on its *ephemeral* source port, so the subnet's outbound NACL must allow the ephemeral range (1024–65535). **Why it fits:** stateless return traffic must be explicitly permitted. **Why the distractors fail:** port 80 isn't involved in HTTPS; there's no stateful toggle on NACLs; routing isn't per-direction-per-flow. **The classic trap:** stateless return traffic. **Common mistakes:** assuming NACLs behave like (stateful) security groups, and forgetting ephemeral outbound rules.",
+    "resources": [
+      { "label": "AWS — Network ACLs (stateless) & ephemeral ports", "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html#nacl-ephemeral-ports" }
+    ]
+  },
+  "aws-sec-mcq-043": {
+    "explanation": "**The problem:** Policy bans long-lived DB passwords for apps connecting to RDS MySQL — connections should use short-lived tokens tied to IAM identities. **Why IAM database authentication:** a database user authenticates with a token generated from the caller's IAM credentials, valid 15 minutes, with no password stored anywhere; access is controlled and revoked through IAM and traffic is forced over SSL. **Why it fits:** no standing secret, IAM-governed. **Why the distractors fail:** an encrypted config file still holds a long-lived secret; a shared master password is the anti-pattern being banned; RDS instances don't take SSH keys. **The scope note:** IAM DB auth is for MySQL/MariaDB/PostgreSQL and suits modest connection rates. **Common mistakes:** assuming it removes the need for any DB user (you still map an IAM identity to a DB user), and using it for very high connection churn.",
+    "resources": [
+      { "label": "AWS — IAM database authentication", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html" }
+    ]
+  },
+  "aws-sec-mcq-044": {
+    "explanation": "**The problem:** Developers keep forgetting the EBS encryption checkbox, leaving unencrypted volumes. **Why 'EBS encryption by default':** it's a per-Region account setting — once on, every new volume and snapshot copy is automatically encrypted with the chosen KMS key, no per-creation flags needed; it covers console, CLI, API, and Auto Scaling launches. **Why it fits:** it guarantees encryption regardless of how a volume is created. **Why the distractors fail:** reminders don't enforce; deletion scripts destroy data after the fact; centralizing creation is an operational bottleneck. **The caveat:** existing unencrypted volumes still need the snapshot-copy migration. **Common mistakes:** assuming the setting retroactively encrypts existing volumes (it doesn't), and forgetting it's per-Region (enable in each Region you use).",
+    "example": "```bash\naws ec2 enable-ebs-encryption-by-default --region us-east-1\n```",
+    "resources": [
+      { "label": "AWS — EBS encryption by default", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default" }
+    ]
+  },
+  "aws-sec-mr-008": {
+    "explanation": "**The problem:** An IAM user's access keys were committed to a public GitHub repo. **Why the two immediate actions:** bots scan public repos within minutes, so first *deactivate or delete the exposed keys* to kill the credential, then *review CloudTrail* to see every API call made with the key — revealing whether resources were created (crypto-mining EC2 is the classic), data was accessed, or persistence was established. **Why this order:** stop the bleeding, then assess the damage. **Why the distractors fail:** deleting the repo doesn't un-leak anything (forks, caches, scrapers already have it); rotating only the *root* password addresses a different credential; waiting for an AWS abuse notice concedes the attacker's head start. **Common mistakes:** deleting the repo and considering it resolved, and revoking the key but skipping the CloudTrail forensic review.",
+    "example": "```bash\n# 1) Kill the credential immediately\naws iam update-access-key --user-name dev1 \\\n  --access-key-id AKIAEXAMPLE --status Inactive\n# (then delete it once confirmed)\naws iam delete-access-key --user-name dev1 --access-key-id AKIAEXAMPLE\n```",
+    "resources": [
+      { "label": "AWS — What to do if you expose access keys", "url": "https://repost.aws/knowledge-center/exposed-iam-key" }
+    ]
+  },
+  "aws-sec-mr-009": {
+    "explanation": "**The problem:** An API Gateway REST API must accept requests only from authenticated Cognito users *and* be protected against web exploits like SQL injection. **Why the two controls:** a Cognito user pool authorizer validates the user pool's JWT on every request (authentication), and an AWS WAF web ACL on the API stage filters exploit patterns like SQLi before they reach the integration (protection). **Why two requirements → two answers:** authN and exploit-filtering are distinct layers. **Why the distractors fail:** CORS is a browser policy, not security; API keys identify *clients for usage plans/throttling* and are explicitly *not* authentication; moving the API to a private subnet addresses exposure, not these two needs. **Common mistakes:** treating API keys as authentication, and assuming CORS provides access control.",
+    "resources": [
+      { "label": "AWS — API Gateway Cognito authorizer", "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-integrate-with-cognito.html" }
+    ]
+  },
+  "aws-sec-mcq-045": {
+    "explanation": "**The problem:** A few config secrets need encryption at rest and IAM-controlled retrieval, with *no* rotation needed and *zero* extra cost. **Why Parameter Store SecureString:** standard parameters are free — SecureString values are KMS-encrypted, retrieved via IAM-controlled API calls, and versioned. **Why it fits:** it meets encryption + IAM access at no cost without paying for features you don't need. **Why the distractors fail:** Secrets Manager charges per secret per month — what it buys is managed rotation and cross-account access, which this scenario explicitly doesn't need; DynamoDB with client-side crypto is custom machinery; plaintext env vars aren't encrypted. **The exam trade:** rotation/cross-account → Secrets Manager; simple encrypted config at no cost → Parameter Store. **Common mistakes:** defaulting to Secrets Manager when rotation isn't required, and using plaintext env vars for secrets.",
+    "resources": [
+      { "label": "AWS — Parameter Store SecureString", "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html" }
+    ]
+  },
+  "aws-sec-mcq-046": {
+    "explanation": "**The problem:** A central VPC's subnets should be usable by several application accounts in the same Organization — without duplicating VPCs or building a peering mesh. **Why AWS RAM:** Resource Access Manager shares resources — VPC subnets, Transit Gateways, Route 53 Resolver rules, license configurations — with accounts or OUs in the org. With *shared VPC*, participant accounts launch resources into the shared subnets while the owner keeps network control: one VPC, centrally managed, no peering or CIDR coordination. **Why it fits:** native subnet sharing across accounts. **Why the distractors fail:** peering connects *separate* VPCs (and needs a mesh); a Direct Connect gateway is for hybrid connectivity; IAM cross-account roles grant API access, not subnet placement. **Common mistakes:** building peering when shared VPC via RAM is intended, and confusing resource sharing (RAM) with permission delegation (IAM).",
+    "resources": [
+      { "label": "AWS — Resource Access Manager", "url": "https://docs.aws.amazon.com/ram/latest/userguide/what-is.html" }
+    ]
+  },
+  "aws-sec-mr-010": {
+    "explanation": "**The problem:** Setting up a Site-to-Site VPN between a data center and a VPC — which two components are required? **Why the two answers:** a Site-to-Site VPN is defined by its two endpoints — the *customer gateway* resource (representing the on-premises VPN device's public IP and ASN) and a *virtual private gateway* (or *transit gateway*) attached on the AWS side. AWS then provisions two IPsec tunnels to distinct endpoints for high availability. **Why these specifically:** they are the on-prem and AWS sides of the tunnel. **Why the distractors fail:** internet and NAT gateways are VPC egress constructs, not VPN endpoints; cross-connects belong to Direct Connect, a different connectivity product. **Common mistakes:** confusing the customer gateway (on-prem representation) with an internet gateway, and mixing up VPN components with Direct Connect.",
+    "resources": [
+      { "label": "AWS — Site-to-Site VPN components", "url": "https://docs.aws.amazon.com/vpn/latest/s2svpn/how_it_works.html" }
+    ]
+  }
+}
