@@ -604,5 +604,153 @@
       "scalars",
       "mr"
     ]
+  },
+  {
+    "id": "graphql-resolver-001",
+    "topic": "Resolvers & Execution",
+    "subtopic": "Resolver signature",
+    "difficulty": "medium",
+    "question": "What are the four arguments a GraphQL resolver function receives?",
+    "answer": "Every resolver is called as `(parent, args, context, info)`:\n\n- **parent** (a.k.a. `root`/`source`) — the value returned by the *parent* field’s resolver.\n- **args** — the arguments passed to this field in the query.\n- **context** — a per-request object shared by all resolvers (auth, db clients, DataLoaders).\n- **info** — AST/metadata about the current field and execution (field name, path, requested selections).",
+    "explanation": "You usually use `parent` and `args` most; `context` for cross-cutting needs like the current user; `info` only for advanced cases like look-ahead optimizations.",
+    "tags": [
+      "resolvers",
+      "signature"
+    ]
+  },
+  {
+    "id": "graphql-resolver-002",
+    "topic": "Resolvers & Execution",
+    "subtopic": "Default resolvers",
+    "difficulty": "medium",
+    "question": "What is a default (trivial) resolver, and when does GraphQL use one?",
+    "answer": "If you don’t supply a resolver for a field, GraphQL uses a **default resolver**: it looks at the `parent` object and returns `parent[fieldName]` (calling it if it’s a function). So a `User.name` field with no explicit resolver just reads `user.name`. You only need to write resolvers for fields whose value isn’t already a matching property on the parent.",
+    "explanation": "This is why a top-level resolver that returns a fully-populated object often needs no per-field resolvers — the defaults read each property.",
+    "tags": [
+      "resolvers",
+      "defaults"
+    ]
+  },
+  {
+    "id": "graphql-resolver-003",
+    "topic": "Resolvers & Execution",
+    "subtopic": "Async resolvers",
+    "difficulty": "easy",
+    "question": "How does a resolver perform asynchronous work like a database or API call?",
+    "answer": "A resolver may **return a Promise** (or be an `async` function). The executor awaits it before resolving that field’s children, so resolvers can `await` database queries, REST calls, or file reads naturally. The query’s response shape is unaffected — async vs sync is purely an implementation detail of each field.",
+    "explanation": "Because each field resolver can be async independently, sibling fields can run their async work concurrently while the executor waits on all of them.",
+    "tags": [
+      "resolvers",
+      "async"
+    ]
+  },
+  {
+    "id": "graphql-resolver-004",
+    "topic": "Resolvers & Execution",
+    "subtopic": "Context",
+    "difficulty": "medium",
+    "question": "What is the `context` argument used for?",
+    "answer": "The **context** is an object built once per request and passed to **every** resolver. It’s the right place for cross-cutting, request-scoped data: the authenticated user, database connections, and per-request **DataLoader** instances. Putting these on context (rather than globals) keeps resolvers pure-ish and ensures per-request isolation.",
+    "explanation": "In Apollo Server you build context in the `context` function from the incoming request (e.g. verifying a JWT and attaching `user`); resolvers then read `context.user`.",
+    "tags": [
+      "resolvers",
+      "context",
+      "auth"
+    ]
+  },
+  {
+    "id": "graphql-resolver-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Resolvers & Execution",
+    "subtopic": "Execution order",
+    "difficulty": "hard",
+    "question": "How does the GraphQL executor resolve a nested query tree?",
+    "options": [
+      "It resolves every field in the whole document at once with no ordering.",
+      "Breadth-first by field name alphabetically.",
+      "Top-down: a parent field resolves first, then its value is passed as `parent` to each child field’s resolver, recursively down the selection set.",
+      "Bottom-up: leaf scalar fields resolve before their parents."
+    ],
+    "answer": "Top-down: a parent field resolves first, then its value is passed as `parent` to each child field’s resolver, recursively down the selection set.",
+    "explanation": "Execution walks the selection set from the root down. Each field resolves to a value that becomes the `parent` for its sub-fields. Sibling fields may resolve concurrently, but a child can’t resolve until its parent has produced the object it operates on.",
+    "tags": [
+      "resolvers",
+      "execution",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-resolver-005",
+    "topic": "Resolvers & Execution",
+    "subtopic": "Error propagation",
+    "difficulty": "hard",
+    "question": "What happens when a resolver for a non-null field throws an error?",
+    "answer": "The error is added to the response’s top-level **`errors`** array, and the field’s value becomes `null`. But a **non-null** field can’t be null, so the null **propagates up** to the nearest **nullable** parent, which becomes null instead — potentially blanking a whole sub-tree. Other unaffected parts of the query still resolve and return data (partial response).",
+    "explanation": "This bubbling is why over-using `!` is risky: a single failing non-null leaf can null out a large branch. Make a field nullable when a partial failure there should be tolerable.",
+    "tags": [
+      "resolvers",
+      "errors",
+      "nullability"
+    ]
+  },
+  {
+    "id": "graphql-resolver-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Resolvers & Execution",
+    "subtopic": "The parent argument",
+    "difficulty": "medium",
+    "question": "In a resolver for `Post.author`, what does the first argument (`parent`) hold?",
+    "options": [
+      "The root Query object.",
+      "The Post object returned by the resolver of the field that produced this post.",
+      "The author User object (the field’s own return value).",
+      "The GraphQL context."
+    ],
+    "answer": "The Post object returned by the resolver of the field that produced this post.",
+    "explanation": "`parent` is always the value the *parent* field resolved to. For `Post.author`, that’s the Post, so you typically use `parent.authorId` to look up and return the author.",
+    "tags": [
+      "resolvers",
+      "parent",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-resolver-006",
+    "topic": "Resolvers & Execution",
+    "subtopic": "Scalar coercion",
+    "difficulty": "medium",
+    "question": "What is scalar coercion, and when does it happen during execution?",
+    "answer": "When a resolver returns a value for a **scalar** field (a leaf), the scalar type **serializes/coerces** it to the proper output form — e.g. an `Int` scalar coerces the resolver’s return to a 32-bit integer, a custom `DateTime` scalar serializes a `Date` to an ISO string. Coercion happens at the leaves, after the resolver runs; an un-coercible value (e.g. `NaN` for `Int`) raises a field error.",
+    "explanation": "This is the output half of a scalar’s job; the input half (parseValue/parseLiteral) coerces incoming argument/variable values the other direction.",
+    "tags": [
+      "resolvers",
+      "scalars",
+      "coercion"
+    ]
+  },
+  {
+    "id": "graphql-resolver-mr-001",
+    "type": "multiple-response",
+    "topic": "Resolvers & Execution",
+    "subtopic": "Resolver facts",
+    "difficulty": "medium",
+    "question": "Which statements about resolvers are true? (Select THREE)",
+    "options": [
+      "A resolver may return a Promise to do async work.",
+      "A field with no explicit resolver falls back to reading the matching property on `parent`.",
+      "The same `context` object is shared across all resolvers in one request.",
+      "Resolvers must be synchronous functions.",
+      "A resolver’s `parent` argument is always the root Query object."
+    ],
+    "answers": [
+      "A resolver may return a Promise to do async work.",
+      "A field with no explicit resolver falls back to reading the matching property on `parent`.",
+      "The same `context` object is shared across all resolvers in one request."
+    ],
+    "explanation": "Resolvers can be async (return Promises), default resolvers read `parent[fieldName]`, and context is per-request and shared. They are not required to be synchronous, and `parent` is the *parent field’s* value — only the root-type resolvers receive the root object.",
+    "tags": [
+      "resolvers",
+      "mr"
+    ]
   }
 ]

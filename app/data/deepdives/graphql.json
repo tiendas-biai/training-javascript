@@ -364,5 +364,94 @@
         "url": "https://graphql.org/learn/schema/#scalar-types"
       }
     ]
+  },
+  "graphql-resolver-001": {
+    "explanation": "**The signature:** `(parent, args, context, info)`. Memorize the order — it’s identical across GraphQL servers.\n\n**What each is for:** `parent` is the value the parent field resolved to; `args` are this field’s query arguments; `context` is per-request shared state (auth, loaders, db); `info` is execution metadata (field name, path, selections).\n\n**Why this shape:** It gives a resolver everything it needs to compute one field: where it sits (parent), what was asked (args), who’s asking and shared tools (context), and fine-grained AST detail (info) for advanced cases.\n\n**Common mistake:** Reaching for `info` for normal work — most resolvers only need `parent`, `args`, and `context`.",
+    "example": "```js\nconst resolvers = {\n  Query: {\n    // parent is the root value; args has { id }\n    user: (parent, args, context, info) => context.db.user.findById(args.id),\n  },\n  User: {\n    // parent is the User returned above\n    posts: (user, args, context) => context.db.post.byAuthor(user.id),\n  },\n};\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Execution",
+        "url": "https://graphql.org/learn/execution/"
+      }
+    ]
+  },
+  "graphql-resolver-002": {
+    "explanation": "**What it is:** When a field has no resolver, GraphQL supplies a default that returns `parent[fieldName]` — and if that property is a function, it calls it with `(args, context, info)`.\n\n**Why it matters:** If a top-level resolver returns a full object whose property names match the schema fields, you don’t need per-field resolvers at all; the defaults read each property.\n\n**Why it works:** Most fields are plain data lookups on an already-fetched object; only fields needing computation or a separate fetch need custom resolvers.\n\n**Common mistake:** Writing trivial pass-through resolvers (`name: (u) => u.name`) that the default already does for free.",
+    "example": "```js\nconst resolvers = {\n  Query: {\n    // returns an object whose keys match User's fields\n    user: () => ({ id: '1', name: 'Ada', email: 'ada@x.com' }),\n  },\n  // No User resolvers needed: defaults read user.id, user.name, user.email.\n};\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Default resolvers",
+        "url": "https://graphql.org/learn/execution/#trivial-resolvers"
+      }
+    ]
+  },
+  "graphql-resolver-003": {
+    "explanation": "**How async works:** A resolver can return a Promise or be `async`. The executor awaits the Promise before resolving that field’s children, so you can `await` a DB or HTTP call inline.\n\n**Why response shape is unaffected:** Async vs sync is an implementation detail; the client just gets the field’s resolved value.\n\n**Concurrency benefit:** Sibling fields’ async work can overlap — the executor kicks off each and awaits them together, so two independent fetches run concurrently.\n\n**Common mistake:** Forgetting to `return`/`await` the Promise, which resolves the field to `undefined`; or doing per-item awaits in a loop that should be batched (the N+1 problem).",
+    "example": "```js\nconst resolvers = {\n  Query: {\n    async user(parent, { id }, context) {\n      const row = await context.db.query('SELECT * FROM users WHERE id = $1', [id]);\n      return row;\n    },\n  },\n};\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Execution",
+        "url": "https://graphql.org/learn/execution/"
+      }
+    ]
+  },
+  "graphql-resolver-004": {
+    "explanation": "**What context is:** An object created once per request and handed to every resolver as the third argument.\n\n**What belongs there:** Request-scoped, cross-cutting things — the authenticated user, database/clients, and per-request DataLoader instances (so batching/caching is isolated per request).\n\n**Why per-request:** Sharing a DataLoader across requests would leak one user’s cached data into another’s; building context per request prevents that.\n\n**Common mistake:** Stashing request-specific data in module-level globals instead of context, which breaks isolation under concurrency.",
+    "example": "```js\n// Apollo Server: build context from the incoming request.\nconst server = new ApolloServer({ typeDefs, resolvers });\nawait startStandaloneServer(server, {\n  context: async ({ req }) => {\n    const user = await getUserFromToken(req.headers.authorization);\n    return { user, db, loaders: createLoaders(db) };\n  },\n});\n```",
+    "resources": [
+      {
+        "label": "apollographql.com — The context argument",
+        "url": "https://www.apollographql.com/docs/apollo-server/data/context/"
+      }
+    ]
+  },
+  "graphql-resolver-mcq-001": {
+    "explanation": "**The model:** Execution starts at a root field, resolves it, then passes that value as `parent` into each selected sub-field’s resolver, recursing down the selection set.\n\n**Why top-down:** A child field (e.g. `User.posts`) needs the parent object (the user) before it can run, so parents must resolve first.\n\n**Concurrency:** Independent sibling fields can resolve in parallel, but the parent→child ordering is fixed.\n\n**Leaves last:** Scalar leaves resolve at the bottom, then get coerced to their output type.\n\n**Common mistake:** Imagining a flat, orderless pass — the parent/child dependency is what enables `parent` to be meaningful in each resolver.",
+    "example": "```graphql\nquery {\n  user(id: \"1\") {   # 1) resolves the User\n    name            # 3) leaf read from the User\n    posts {         # 2) gets the User as `parent`\n      title         # 4) leaf read from each Post\n    }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Execution",
+        "url": "https://graphql.org/learn/execution/"
+      }
+    ]
+  },
+  "graphql-resolver-005": {
+    "explanation": "**What happens on throw:** The error is collected into the response’s top-level `errors` array, and the field would become `null`.\n\n**Non-null propagation:** If that field is non-null (`!`), it can’t be null, so the null bubbles up to the nearest *nullable* ancestor, which becomes null instead. This can blank out an entire branch.\n\n**Partial data:** Unrelated parts of the query still resolve — GraphQL returns both `data` (partial) and `errors`.\n\n**Design lesson:** Use `!` deliberately. Make a field nullable when a localized failure there should degrade gracefully rather than null its parent.\n\n**Common mistake:** Marking everything non-null, then watching one flaky field erase a large response.",
+    "example": "```graphql\ntype User {\n  id: ID!\n  # If profile errors and is non-null, the whole User can null out.\n  # Making it nullable contains the failure to just this field.\n  profile: Profile\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Errors and non-null",
+        "url": "https://graphql.org/learn/validation/"
+      }
+    ]
+  },
+  "graphql-resolver-mcq-002": {
+    "explanation": "**The rule:** `parent` is whatever the *parent field’s* resolver returned. For `Post.author`, the parent field is the one that produced this Post, so `parent` is the Post.\n\n**How you use it:** Typically `parent.authorId` → fetch and return the author User.\n\n**Why not the others:** It isn’t the field’s own return value (that’s what you’re computing), isn’t always the root Query (only root-field resolvers get the root), and isn’t the context (that’s the third arg).\n\n**Common mistake:** Expecting `parent` to already contain nested objects — it holds whatever the parent resolver returned, often just foreign keys you must resolve.",
+    "example": "```js\nconst resolvers = {\n  Post: {\n    // parent is the Post; use its authorId to fetch the author\n    author: (post, args, context) => context.loaders.user.load(post.authorId),\n  },\n};\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Execution",
+        "url": "https://graphql.org/learn/execution/"
+      }
+    ]
+  },
+  "graphql-resolver-006": {
+    "explanation": "**Output coercion:** After a scalar field’s resolver runs, the scalar type coerces the returned value to its wire form — `Int` to a 32-bit integer, `Boolean` to true/false, a custom `DateTime` to an ISO string.\n\n**Where it sits:** At the leaves, as the last step of resolving a scalar field.\n\n**When it errors:** A value that can’t be coerced (e.g. `NaN`/`1.5` for `Int`, or an invalid date for `DateTime`) raises a field error.\n\n**The other direction:** Input coercion (parseValue/parseLiteral) converts incoming arguments/variables into internal values before resolvers run.\n\n**Common mistake:** Returning a value of the wrong shape from a resolver and expecting GraphQL to fix it — coercion validates, it doesn’t reformat arbitrary data.",
+    "example": "```graphql\nscalar DateTime\n\ntype Event {\n  id: ID!\n  # resolver returns a JS Date; the DateTime scalar serializes it to a String\n  startsAt: DateTime!\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Scalar types",
+        "url": "https://graphql.org/learn/schema/#scalar-types"
+      }
+    ]
+  },
+  "graphql-resolver-mr-001": {
+    "explanation": "**Why these three:** Resolvers can return Promises (async work), default resolvers read `parent[fieldName]` when you omit a resolver, and one shared `context` is passed to every resolver in a request.\n\n**Why the others are false:** Resolvers are not required to be synchronous — async is fully supported. And `parent` is the *parent field’s* resolved value, not always the root Query; only the root operation’s field resolvers receive the root object.\n\n**Takeaway:** Think of resolution as a top-down walk where each resolver gets its parent’s value, optional args, shared context, and can work asynchronously.",
+    "resources": [
+      {
+        "label": "graphql.org — Execution",
+        "url": "https://graphql.org/learn/execution/"
+      }
+    ]
   }
 }
