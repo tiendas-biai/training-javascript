@@ -351,5 +351,320 @@
     "resources": [
       { "label": "AWS — Site-to-Site VPN components", "url": "https://docs.aws.amazon.com/vpn/latest/s2svpn/how_it_works.html" }
     ]
+  },
+  "aws-res-mcq-001": {
+    "explanation": "**The problem:** A single EC2 instance in one AZ is a single point of failure — lose the instance or the AZ and the app is down. **Why the ASG + ALB pattern:** an Auto Scaling group spanning multiple AZs keeps the desired number of healthy instances running (replacing failures automatically), and the ALB health-checks targets and distributes traffic only to survivors. **Why it meets the requirement:** an instance failure is self-healed and an AZ failure leaves capacity in the other AZ(s). **Why the distractors fail:** manual AMI restore means downtime (poor RTO); a bigger instance (vertical scaling) is still one instance; a second instance in the *same* AZ leaves the AZ itself as the single point of failure. **Common mistakes:** putting all instances in one AZ, and relying on manual recovery for an availability requirement.",
+    "resources": [
+      { "label": "AWS — Auto Scaling across AZs", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-benefits.html" }
+    ]
+  },
+  "aws-res-mcq-002": {
+    "explanation": "**The problem:** You need RTO of minutes and RPO of seconds, but can't afford a full duplicate environment. **Why warm standby:** the four DR strategies trade cost for speed — backup & restore (hours) → pilot light (tens of minutes) → warm standby (minutes) → active-active (near-zero). A warm standby is a *scaled-down but fully functional* copy already running in the DR Region with live data replication, so failover just scales it up — minutes of RTO, seconds of RPO. **Why the distractors fail:** backup & restore and pilot light must provision/start infrastructure first (too slow for minutes); multi-site active-active meets the RTO but exceeds the cost constraint. **Common mistakes:** confusing warm standby (running, scaled-down full stack) with pilot light (only core data/replication running), and over-buying active-active when warm standby suffices.",
+    "resources": [
+      { "label": "AWS — Disaster recovery options", "url": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html" }
+    ]
+  },
+  "aws-res-mr-001": {
+    "explanation": "**The problem:** A web tier hands jobs to a processing tier over synchronous HTTP, so spikes overwhelm consumers and jobs are dropped. **Why the two answers:** inserting an SQS queue decouples the tiers — bursts buffer durably in the queue instead of overwhelming busy consumers — and scaling the processing tier on *queue depth* (e.g. `ApproximateNumberOfMessagesVisible` per instance) matches capacity to the real backlog. **Why together:** the queue absorbs the spike; depth-based scaling drains it. **Why the distractors fail:** longer HTTP timeouts still lose jobs on instance failure; co-locating tiers couples them harder; switching to HTTPS adds encryption, not resilience. **Common mistakes:** scaling on CPU instead of queue depth, and assuming a bigger timeout fixes a coupling problem.",
+    "resources": [
+      { "label": "AWS — SQS for decoupling", "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html" }
+    ]
+  },
+  "aws-res-mcq-003": {
+    "explanation": "**The problem:** People assume RDS Multi-AZ adds read capacity — it doesn't. **What Multi-AZ provides:** a *synchronously* replicated standby in another AZ that RDS fails over to automatically (the endpoint's DNS switches, typically 1–2 minutes) — it's an *availability* feature, invisible to read traffic. **Why not read scaling:** the classic Multi-AZ standby isn't readable; *read replicas* (asynchronous, with their own endpoints) provide read scaling. **Why the distractors fail:** there are no readable standby endpoints in classic Multi-AZ, it isn't cross-Region by default, and RDS doesn't scale writes horizontally. **Common mistakes:** expecting the standby to serve reads, and conflating Multi-AZ (availability) with read replicas (scaling).",
+    "resources": [
+      { "label": "AWS — RDS Multi-AZ", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html" }
+    ]
+  },
+  "aws-res-mcq-004": {
+    "explanation": "**The problem:** Read-heavy reporting queries slow down production writes on RDS MySQL. **Why read replicas:** they replicate asynchronously and expose their own endpoints, so you direct reporting/analytics reads to a replica and offload the primary — exactly the read-scaling use case. **Why the distractors fail:** a Multi-AZ standby isn't readable (classic Multi-AZ), so it can't absorb read load; constantly resizing the instance is a temporary, costly band-aid; automated backups protect data but don't serve queries. **The exam pairing:** read scaling → read replicas; availability/failover → Multi-AZ. **Common mistakes:** trying to offload reads to the Multi-AZ standby, and vertically scaling instead of offloading.",
+    "resources": [
+      { "label": "AWS — RDS read replicas", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html" }
+    ]
+  },
+  "aws-res-mcq-005": {
+    "explanation": "**The problem:** Active-passive across Regions — DNS should send users to the standby *only* when the primary is unhealthy. **Why failover routing:** Route 53 failover records health-check the primary endpoint and return the secondary record only while the primary fails its checks — purpose-built for active-passive. **Why the distractors fail:** weighted 50/50 sends half of all traffic to the standby permanently (not on-failure); geolocation splits by user location, not health; a simple record never switches by itself, regardless of TTL. **Common mistakes:** using weighted/latency routing for active-passive, and forgetting that the failover decision depends on a configured health check (no health check, no failover).",
+    "resources": [
+      { "label": "AWS — Route 53 failover routing", "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-failover.html" }
+    ]
+  },
+  "aws-res-mcq-006": {
+    "explanation": "**The problem:** In-memory sessions on each web server mean scale-in logs users out — the app can't scale freely. **Why externalize state:** moving session state to a shared, fast store (ElastiCache Redis is typical; DynamoDB also works) makes web instances *stateless* — any instance can serve any request, so instances become disposable and scale in/out without losing sessions. **Why this is the design principle:** statelessness is what makes horizontal scaling and self-healing possible. **Why the distractors fail:** sticky sessions just pin a user to one instance — terminating it still drops the session; custom session replication is fragile; scheduling scale-in for nighttime avoids rather than fixes the problem. **Common mistakes:** relying on stickiness for correctness, and keeping any per-request state on the instance.",
+    "resources": [
+      { "label": "AWS — Well-Architected: stateless apps", "url": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_fault_isolation_use_bulkhead.html" }
+    ]
+  },
+  "aws-res-mcq-007": {
+    "explanation": "**The problem:** Instances across three AZs must read/write the *same* POSIX file system concurrently. **Why EFS:** it's a managed, regional NFS file system — mountable from many instances across all AZs simultaneously, with elastic capacity. **Why the distractors fail:** EBS is single-AZ, and even EBS Multi-Attach is within one AZ and needs a cluster-aware file system; self-hosting NFS on one instance creates a single point of failure on ephemeral storage; S3 is object storage, not a POSIX file system you can mount for concurrent file I/O. **The exam pattern:** 'shared POSIX file system across AZs' → EFS. **Common mistakes:** reaching for EBS Multi-Attach for cross-AZ sharing, and treating S3 as a file system.",
+    "resources": [
+      { "label": "AWS — Amazon EFS", "url": "https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html" }
+    ]
+  },
+  "aws-res-mr-002": {
+    "explanation": "**The problem:** A two-tier app entirely in one AZ must survive an AZ outage. **Why the two answers:** both tiers need AZ redundancy — span the web tier's Auto Scaling group across multiple AZs behind a load balancer, and enable RDS Multi-AZ so the database has a synchronous standby with automatic failover. **Why both:** protecting only one tier still leaves the other as a single point of failure. **Why the distractors fail:** hourly EBS snapshots aid recovery but mean downtime and data loss (RPO = last snapshot); a larger instance class and a second same-AZ web server don't remove the AZ as the single point of failure. **Common mistakes:** hardening only the web tier (forgetting the database), and equating snapshots with high availability.",
+    "resources": [
+      { "label": "AWS — Reliability pillar (AZ redundancy)", "url": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html" }
+    ]
+  },
+  "aws-res-mcq-008": {
+    "explanation": "**The problem:** Poison messages fail processing repeatedly, trapping consumers in retry loops. **Why a dead-letter queue:** a redrive policy moves a message to a DLQ after `maxReceiveCount` failed receives — consumers stop burning cycles on the bad message, and the failures are preserved for debugging or redrive after a fix. **Why the distractors fail:** deleting before processing loses data on any failure; a zero visibility timeout creates a hot, instant retry loop; switching to FIFO changes ordering semantics, not failure handling. **Common mistakes:** setting `maxReceiveCount` to 1 (no legitimate retries) or never monitoring the DLQ, and confusing visibility-timeout tuning with poison-message handling.",
+    "example": "```bash\n# Point a source queue's redrive policy at a DLQ after 5 failed receives\naws sqs set-queue-attributes --queue-url \"$SRC_QUEUE_URL\" \\\n  --attributes '{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:us-east-1:123456789012:orders-dlq\\\",\\\"maxReceiveCount\\\":\\\"5\\\"}\"}'\n```",
+    "resources": [
+      { "label": "AWS — SQS dead-letter queues", "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html" }
+    ]
+  },
+  "aws-res-mcq-009": {
+    "explanation": "**The problem:** Five Lambdas invoke each other directly with branching and per-step retries, and failures are untraceable. **Why Step Functions:** it's the workflow orchestrator — states and branching are declared, per-state retry/catch with exponential backoff is configuration, and every execution's full history is recorded visually. **Why it fits:** sequencing, branching, retries, and an audit trail are all first-class. **Why the distractors fail:** merging into one mega-function hits the 15-minute limit and loses step isolation; an SNS fan-out has no sequencing or state; fixed EventBridge schedules ignore actual completion/failure. **Common mistakes:** chaining Lambdas by direct invocation (no visibility, brittle retries), and using a cron schedule to fake a workflow.",
+    "resources": [
+      { "label": "AWS — Step Functions", "url": "https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html" }
+    ]
+  },
+  "aws-res-mcq-010": {
+    "explanation": "**The problem:** Lambda concurrency opens so many DB connections during spikes that RDS exhausts its connection limit. **Why RDS Proxy:** it sits between the functions and the database, maintaining a warm connection pool and multiplexing thousands of Lambda invocations onto a few database connections (it also speeds up failover). **Why it fits:** it reconciles serverless concurrency with relational connection limits. **Why the distractors fail:** raising `max_connections` hits memory limits and just moves the cliff; random sleeps and sequential scheduling throw away the scalability serverless was chosen for. **Common mistakes:** scaling DB instance size to chase connections instead of pooling, and opening a new connection per invocation without a proxy.",
+    "resources": [
+      { "label": "AWS — RDS Proxy", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html" }
+    ]
+  },
+  "aws-res-mcq-011": {
+    "explanation": "**The problem:** RPO and RTO are easy to swap. **The definitions:** RPO (recovery *point* objective) is the maximum acceptable *data loss* — time since the last recovery point — and drives replication/backup frequency; RTO (recovery *time* objective) is the maximum acceptable *downtime* before service is restored — and drives the choice among backup & restore, pilot light, warm standby, and active-active. **Why it matters:** tighter objectives cost more, and the exam rewards picking the *cheapest* strategy that satisfies both numbers. **Why the distractors fail:** they invert the two or conflate them with backup retention/frequency/size. **Common mistakes:** swapping the two, and choosing an over-engineered DR strategy that beats the required RPO/RTO at needless cost.",
+    "resources": [
+      { "label": "AWS — RPO and RTO", "url": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html" }
+    ]
+  },
+  "aws-res-mcq-012": {
+    "explanation": "**The problem:** Which DR strategy keeps only core elements (data replication, AMIs) running and provisions the rest at failover? **Why pilot light:** the critical 'flame' stays lit — typically live data replication (cross-Region read replica, S3 CRR) plus prepared templates/AMIs — while compute stays *off* until a disaster, when infrastructure is provisioned and scaled around the already-current data. **Why the distractors fail:** warm standby keeps a *running*, scaled-down full environment (faster RTO, higher cost); backup & restore keeps nothing running; active-active runs full capacity everywhere. **Common mistakes:** confusing pilot light (data on, compute off) with warm standby (everything on but small), and assuming pilot light gives minutes-level RTO (it's tens of minutes — you must provision compute).",
+    "resources": [
+      { "label": "AWS — Pilot light strategy", "url": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html" }
+    ]
+  },
+  "aws-res-mr-003": {
+    "explanation": "**The problem:** Each order event must reach three independent consumers, each at its own pace and without loss if it's down for an hour. **Why SNS-to-SQS fan-out:** publish each event to an SNS topic, and subscribe a *separate SQS queue per consumer* — SNS duplicates the event to every queue, and each consumer's own queue buffers durably while it's slow or offline. **Why the two answers together:** SNS does the fan-out; per-consumer SQS gives independent pacing + durability. **Why the distractors fail:** one *shared* queue means each message is consumed by only *one* of the three (competing consumers, not fan-out); synchronous HTTPS couples the producer to every consumer's uptime; EBS isn't a messaging substrate. **Common mistakes:** using a single shared queue for fan-out, and synchronous calls that fail when any consumer is down.",
+    "resources": [
+      { "label": "AWS — SNS fan-out to SQS", "url": "https://docs.aws.amazon.com/sns/latest/dg/sns-sqs-as-subscriber.html" }
+    ]
+  },
+  "aws-res-mcq-013": {
+    "explanation": "**The problem:** A warm-standby failover test failed because Auto Scaling couldn't scale out — it hit an account limit in the DR Region. **Why request quota increases in advance:** service quotas are *per-Region*, so production's raised limits don't follow you to the standby Region; configuring quotas to match the workload in the DR Region is part of DR readiness — and exactly the kind of gap a failover test exists to surface. **Why the distractors fail:** there's no 'fast-launch mode' that bypasses quotas; larger instance types may need *more* of a different quota (vCPUs) and don't address the limit; disabling scale-in protection doesn't raise the ceiling. **Common mistakes:** assuming quotas replicate across Regions, and never load-testing the DR Region's scaling.",
+    "resources": [
+      { "label": "AWS — Service Quotas", "url": "https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html" }
+    ]
+  },
+  "aws-res-mcq-014": {
+    "explanation": "**The problem:** A request crosses API Gateway, three Lambdas, and DynamoDB, and you need to find where latency/errors originate. **Why X-Ray:** distributed tracing follows a single request across service boundaries and renders a service map with per-segment latency and errors — the 'which hop is slow' answer. **Why the distractors fail:** CloudWatch metrics aggregate per service without linking one request's journey; CloudTrail logs API calls for audit (not request latency); Config tracks configuration changes. **Common mistakes:** trying to correlate latency from disjoint CloudWatch metrics, and confusing CloudTrail (audit) with X-Ray (tracing).",
+    "resources": [
+      { "label": "AWS — X-Ray", "url": "https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html" }
+    ]
+  },
+  "aws-res-mcq-015": {
+    "explanation": "**The problem:** Why must an SQS consumer explicitly delete each message after processing? **Why the receive/delete two-step:** receiving only *hides* a message for the visibility timeout — if the consumer crashes mid-processing, the message reappears after the timeout and another consumer picks it up. This is how SQS guarantees no message is lost to a crashed consumer (at-least-once delivery). **The corollary:** because redelivery can happen, consumers must be *idempotent* (duplicate processing is possible). **Why the distractors fail:** deletion isn't automatic on receive; queues aren't limited to 1,000 messages; deletion has nothing to do with FIFO ordering. **Common mistakes:** assuming receive removes the message, and building non-idempotent consumers that mishandle duplicates.",
+    "resources": [
+      { "label": "AWS — SQS visibility timeout", "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html" }
+    ]
+  },
+  "aws-res-mcq-016": {
+    "explanation": "**The problem:** Instances pass EC2 status checks (OS up) but the app is hung, and the ASG never replaces them. **Why ELB health checks:** by default an ASG only considers EC2-level health (hardware/hypervisor/OS reachability) — a hung *application* passes those forever. Setting the ASG health-check type to ELB makes it trust the load balancer's *application-level* checks (e.g. HTTP 200 from a health endpoint), so it terminates and replaces instances the ALB marks unhealthy. **Why the distractors fail:** increasing max capacity, shortening the EC2 check interval, and enabling detailed monitoring change capacity/visibility, not the *replacement trigger*. **Common mistakes:** leaving the ASG on EC2-only health checks for an app behind a load balancer, and pointing the health check at a path that doesn't exercise the app.",
+    "example": "```bash\naws autoscaling update-auto-scaling-group \\\n  --auto-scaling-group-name web-asg \\\n  --health-check-type ELB \\\n  --health-check-grace-period 120\n```",
+    "resources": [
+      { "label": "AWS — ASG health checks (ELB)", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html" }
+    ]
+  },
+  "aws-res-mcq-017": {
+    "explanation": "**The problem:** Payment events must process in exact per-account order with no duplicates. **Why a FIFO queue with account-ID group + dedup:** FIFO guarantees strict ordering *within a message group* — using the account ID as the group ID gives per-customer ordering while still processing different customers in parallel — and content-based (or explicit) deduplication suppresses repeats within a 5-minute window (exactly-once processing). **Why the distractors fail:** standard queues are best-effort ordering and at-least-once by design; a big visibility timeout doesn't add ordering; client-side timestamp sorting can't fix messages that arrive after processing began; SNS with one subscriber isn't a queue. **The trade-off:** FIFO throughput is capped (300 TPS, 3,000 batched) vs standard's near-unlimited. **Common mistakes:** using one group ID for all messages (serializing everything), and expecting standard queues to preserve order.",
+    "example": "```bash\naws sqs send-message --queue-url \"$FIFO_QUEUE_URL\" \\\n  --message-body '{\"event\":\"charge\",\"amount\":4200}' \\\n  --message-group-id \"account-42\"\n```",
+    "resources": [
+      { "label": "AWS — SQS FIFO queues", "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues.html" }
+    ]
+  },
+  "aws-res-mcq-018": {
+    "explanation": "**The problem:** An async-invoked Lambda (from S3 events) occasionally fails all attempts and the event is lost. **Why a DLQ / OnFailure destination:** asynchronous invocations retry twice, then *discard* the event unless you configure a dead-letter queue (SQS/SNS) or — the newer, richer option — an OnFailure destination, which captures the full event plus error context for analysis and reprocessing. **Why the distractors fail:** a longer timeout and reserved concurrency change *how* processing runs, not what happens to exhausted events; S3 event notifications can't simply be made synchronous. **Common mistakes:** assuming failed async events surface to the caller (they don't), and not configuring any failure destination for async functions.",
+    "resources": [
+      { "label": "AWS — Lambda async failure destinations", "url": "https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html" }
+    ]
+  },
+  "aws-res-mcq-019": {
+    "explanation": "**The problem:** A relational (Aurora) database must survive a full Region outage with seconds of RPO and promote a copy in another Region within minutes. **Why Aurora Global Database:** it replicates at the storage layer to secondary Regions with typical lag under a second (the RPO) and supports promoting a secondary to full read-write in around a minute (the RTO). **Why the distractors fail:** Multi-AZ and same-Region read replicas die with the Region; nightly cross-Region snapshots mean up to 24 hours of data loss. **The exam signal:** 'relational + Region failure + seconds of RPO' → Aurora Global Database. **Common mistakes:** thinking Multi-AZ covers Region failure, and using snapshot copies when seconds of RPO are required.",
+    "resources": [
+      { "label": "AWS — Aurora Global Database", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html" }
+    ]
+  },
+  "aws-res-mcq-020": {
+    "explanation": "**The problem:** Users in three Regions must *read and write* their profiles with low latency locally, with changes replicated everywhere. **Why DynamoDB global tables:** they're multi-active — every replica Region accepts writes locally (single-digit-millisecond latency) and DynamoDB replicates changes between Regions, resolving conflicts last-writer-wins. **Why the distractors fail:** RDS cross-Region replicas and Aurora Global Database accept writes only in the *primary* Region (reads scale globally, writes don't); ElastiCache cross-Region snapshots aren't a multi-active database. **The discriminator:** 'low-latency *writes* in every Region' → global tables. **Common mistakes:** choosing Aurora Global Database for multi-Region *writes* (it's single-writer), and ignoring last-writer-wins conflict semantics.",
+    "resources": [
+      { "label": "AWS — DynamoDB global tables", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html" }
+    ]
+  },
+  "aws-res-mcq-021": {
+    "explanation": "**The problem:** Every object written to a us-east-1 bucket must automatically get a copy in eu-west-1. **Why S3 Cross-Region Replication:** CRR asynchronously replicates new objects (and, via Batch Replication, existing ones) to a destination bucket in the other Region — managed and automatic, with versioning required on both buckets. **Why the distractors fail:** lifecycle rules transition between *storage classes*, never between Regions; an hourly `aws s3 sync` cron is infrastructure to babysit with up to an hour of RPO; Transfer Acceleration speeds uploads, it doesn't copy anything. **Common mistakes:** forgetting to enable versioning on both buckets (CRR requires it), and expecting lifecycle rules to move data across Regions.",
+    "resources": [
+      { "label": "AWS — S3 Cross-Region Replication", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html" }
+    ]
+  },
+  "aws-res-mr-004": {
+    "explanation": "**The problem:** A legacy app that can't be modified runs on one instance and must recover from instance/AZ failures (brief downtime acceptable) *without code changes*. **Why the two answers:** an Auto Scaling group with min/max/desired = 1 spanning multiple AZs is the self-healing pattern for a stateful singleton — when the instance or its AZ dies, the ASG launches a replacement in a surviving AZ — and a load balancer adds application-level health detection plus a stable endpoint during replacement. **Why the distractors fail:** refactoring to Lambda violates the no-code-change constraint; nightly reboots and bigger instance types don't address failures. **Common mistakes:** assuming an ASG requires more than one instance (min/max 1 is valid), and refactoring when the constraint forbids it.",
+    "resources": [
+      { "label": "AWS — Auto Scaling for a single instance", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html" }
+    ]
+  },
+  "aws-res-mcq-022": {
+    "explanation": "**The problem:** A destructive UPDATE hit production RDS at 14:32; backups have 7-day retention. **Why point-in-time restore:** automated backups combine daily snapshots with continuous transaction logs, so you can restore to any second within retention (up to ~5 minutes ago) — PITR creates a *new* instance at 14:31, from which you copy the affected rows back, losing only one minute of changes. **Why the distractors fail:** a reboot can't undo *committed* writes; last night's snapshot discards a full day; the Multi-AZ standby faithfully replicated the bad UPDATE — replication is not a backup. **Common mistakes:** treating the Multi-AZ standby as a recovery point, and restoring a whole-day-old snapshot when PITR loses only a minute.",
+    "example": "```bash\naws rds restore-db-instance-to-point-in-time \\\n  --source-db-instance-identifier prod-db \\\n  --target-db-instance-identifier prod-db-recovered \\\n  --restore-time 2026-06-19T14:31:00Z\n```",
+    "resources": [
+      { "label": "AWS — RDS point-in-time recovery", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIT.html" }
+    ]
+  },
+  "aws-res-mcq-023": {
+    "explanation": "**The problem:** 8 instances in AZ-a and 2 in AZ-b behind a load balancer — AZ-b's instances get far more traffic each. **Why cross-zone load balancing:** without it, each load balancer node splits traffic 50/50 between AZs, so AZ-b's 2 instances share the same half that AZ-a's 8 share — 4× the per-instance load. Cross-zone distributes across all 10 instances equally. **The exam detail:** it's *on by default for ALB* but *off by default for NLB* (where it can add inter-AZ data charges). **Why the distractors fail:** manually balancing instance counts is brittle; ALB doesn't offer least-connections the same way; per-AZ load balancers add complexity. **Common mistakes:** forgetting NLB has cross-zone off by default, and rebalancing instance counts instead of enabling cross-zone.",
+    "example": "```bash\naws elbv2 modify-target-group-attributes \\\n  --target-group-arn \"$TG_ARN\" \\\n  --attributes Key=load_balancing.cross_zone.enabled,Value=true\n```",
+    "resources": [
+      { "label": "AWS — Cross-zone load balancing", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html#cross-zone-load-balancing" }
+    ]
+  },
+  "aws-res-mcq-024": {
+    "explanation": "**The problem:** Many systems (plus future ones) must react to order-status changes, each filtering for only the events it cares about, and the producer shouldn't know its consumers. **Why EventBridge:** it's the event bus for this — producers publish once, rules pattern-match event *content* and route to many targets (Lambda, SQS, Step Functions, APIs), and adding a consumer means adding a rule, never changing the producer. **Why the distractors fail:** direct SDK calls couple the producer to every consumer; polling a shared table adds latency and load; one shared SQS queue delivers each message to a *single* consumer, not all of them. **The pairing:** content-filtered routing to many targets → EventBridge; durable fan-out to identical consumers → SNS+SQS. **Common mistakes:** using SNS/SQS when per-consumer content *filtering* is needed, and direct calls that couple producer to consumers.",
+    "resources": [
+      { "label": "AWS — EventBridge", "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is.html" }
+    ]
+  },
+  "aws-res-mcq-025": {
+    "explanation": "**The problem:** One consistent backup policy (daily, 35-day retention, cross-Region copies, compliance reporting) must cover EBS, RDS, DynamoDB, and EFS. **Why AWS Backup:** it's the single control plane for backups across a dozen-plus services — plans define schedule/retention/cross-Region copy, resources join by tag or ARN, vaults can be locked (WORM), and audit reporting is built in. **Why the distractors fail:** per-service snapshot scripts are exactly the sprawl AWS Backup replaces; S3 lifecycle rules manage storage classes of existing objects (not multi-service backups); Config records configuration, not data. **Common mistakes:** scripting per-service backups instead of one plan, and confusing Config (resource state) with backup (data protection).",
+    "resources": [
+      { "label": "AWS — AWS Backup", "url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html" }
+    ]
+  },
+  "aws-res-mr-005": {
+    "explanation": "**The problem:** A fully static marketing site runs on one EC2 instance that keeps failing during campaigns; you want maximum availability with least effort. **Why S3 + CloudFront:** static content needs no servers — S3 static website hosting is 11-nines durable and regionally redundant, and CloudFront adds global caching, HTTPS, and absorbs traffic spikes. **Why the two together:** S3 stores/serves the files; CloudFront fronts them for performance and scale. **Why the distractors fail:** a bigger EC2 instance with AMI backups, two nginx instances behind an ALB, and EFS-backed storage all keep *operating servers* to serve files that don't need one — strictly less available and more work. **Common mistakes:** running servers for static content, and equating 'add another instance' with the simplest highest-availability option.",
+    "resources": [
+      { "label": "AWS — S3 static website + CloudFront", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/website-hosting-cloudfront-walkthrough.html" }
+    ]
+  },
+  "aws-res-mcq-026": {
+    "explanation": "**The problem:** A massive, *predictable* 9:00 AM spike outruns dynamic scaling, causing 10 minutes of degradation. **Why scheduled scaling:** reactive policies scale *after* load arrives, and boot + warm-up creates the gap — for a known schedule, a scheduled action pre-provisions capacity (e.g. at 8:45) so instances are in service when the spike hits. **Why the distractors fail:** raising the CPU threshold or adding a second metric still reacts after the fact; smaller instances launch marginally faster but don't close the gap. **The companion:** predictive scaling (ML) is the option when the pattern is regular but not clock-exact. **Common mistakes:** relying on target tracking for a known schedule, and tuning thresholds instead of pre-scaling.",
+    "example": "```bash\naws autoscaling put-scheduled-update-group-action \\\n  --auto-scaling-group-name trading-asg \\\n  --scheduled-action-name market-open \\\n  --recurrence \"45 8 * * MON-FRI\" \\\n  --desired-capacity 20 --min-size 20\n```",
+    "resources": [
+      { "label": "AWS — Scheduled scaling", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-scheduled-scaling.html" }
+    ]
+  },
+  "aws-res-mcq-027": {
+    "explanation": "**The problem:** Clients hit `ThrottlingException` during bursts, and retrying immediately makes it worse. **Why exponential backoff with jitter:** backoff spreads retries out (1s, 2s, 4s…) so a throttled fleet doesn't immediately re-stampede the API, and jitter (randomization) prevents synchronized retry waves from clients that were throttled together — AWS SDKs implement this by default. **Why the distractors fail:** tight retry loops amplify throttling; ignoring the errors drops work; permanently serializing all calls sacrifices throughput to dodge a transient condition. **Common mistakes:** retrying without jitter (synchronized retry storms), and disabling the SDK's built-in retry/backoff.",
+    "resources": [
+      { "label": "AWS — Exponential backoff and jitter", "url": "https://docs.aws.amazon.com/general/latest/gr/api-retries.html" }
+    ]
+  },
+  "aws-res-mr-006": {
+    "explanation": "**The problem:** A public API must keep working even if its entire primary Region fails. **Why the two answers:** Region-level resilience needs (1) a full copy of the stack in a second Region (warm standby or active-active, with data replicated) and (2) a traffic-steering mechanism that detects the failure and redirects — Route 53 failover routing with health checks (or Global Accelerator endpoint failover). **Why both:** a standby stack with no failover doesn't get traffic; failover routing with nothing to fail over to is useless. **Why the distractors fail:** adding AZs, enabling cross-zone balancing, and bigger ASGs all harden *within* the Region that just failed. **Common mistakes:** improving in-Region redundancy when the requirement is *cross-Region*, and deploying a standby with no automated DNS failover.",
+    "resources": [
+      { "label": "AWS — Multi-Region failover", "url": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html" }
+    ]
+  },
+  "aws-res-mcq-028": {
+    "explanation": "**The problem:** Across three Regions, each user should reach the Region that's *fastest for them*, and unhealthy Regions must drop out automatically. **Why latency-based routing + health checks:** Route 53 answers each query with the Region of lowest measured network latency for that user (not necessarily the nearest geographically), and health checks remove failing Regions from consideration. **Why the distractors fail:** geolocation is for compliance/localization (a fixed mapping, even when slow); failover is active-passive (wastes two Regions); simple records do no steering and no health awareness. **Common mistakes:** confusing latency-based (performance) with geolocation (location/compliance), and forgetting health checks so users get routed to a down Region.",
+    "resources": [
+      { "label": "AWS — Route 53 latency-based routing", "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-latency.html" }
+    ]
+  },
+  "aws-res-mcq-029": {
+    "explanation": "**The problem:** A license-bound app must run on exactly one instance (no ASG), but should auto-recover on hardware failure keeping its instance ID, private IP, and Elastic IP. **Why EC2 automatic recovery:** a CloudWatch alarm on `StatusCheckFailed_System` with the `recover` action migrates the instance to healthy hardware while preserving its identity — instance ID, private/Elastic IPs, and metadata — perfect for license-bound singletons (newer instance types enable simplified automatic recovery by default). **Why the distractors fail:** a second instance behind an ALB violates the single-instance constraint; manual AMI relaunch means downtime and a *new* identity; Spot capacity rebalancing is a Spot feature, not recovery. **The detail:** the recover action handles *system* status failures (host issues), not in-guest crashes. **Common mistakes:** using an ASG when licensing forbids it, and expecting recovery to fix instance (in-guest) status failures.",
+    "example": "```bash\naws cloudwatch put-metric-alarm \\\n  --alarm-name ec2-system-recover \\\n  --namespace AWS/EC2 --metric-name StatusCheckFailed_System \\\n  --statistic Maximum --period 60 --evaluation-periods 2 --threshold 1 \\\n  --comparison-operator GreaterThanOrEqualToThreshold \\\n  --dimensions Name=InstanceId,Value=i-0abc123 \\\n  --alarm-actions arn:aws:automate:us-east-1:ec2:recover\n```",
+    "resources": [
+      { "label": "AWS — EC2 instance recovery", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-recover.html" }
+    ]
+  },
+  "aws-res-mcq-030": {
+    "explanation": "**The problem:** On scale-in, terminated instances lose in-memory job state and unshipped logs — you need a drain window before termination. **Why a termination lifecycle hook:** it pauses the instance in `Terminating:Wait` between 'selected for termination' and 'terminated', fires a notification (EventBridge/SNS/SQS), and your script drains jobs and ships logs, then calls `complete-lifecycle-action` (or the timeout elapses). Launch hooks exist symmetrically for warm-up. **Why the distractors fail:** suspending the Terminate process or protecting every instance forever breaks scale-in entirely; the health-check grace period governs evaluation after *launch*, not termination. **Common mistakes:** forgetting to call `complete-lifecycle-action` (instance waits for the full timeout), and disabling scale-in instead of draining gracefully.",
+    "example": "```bash\naws autoscaling put-lifecycle-hook \\\n  --auto-scaling-group-name worker-asg \\\n  --lifecycle-hook-name drain-on-terminate \\\n  --lifecycle-transition autoscaling:EC2_INSTANCE_TERMINATING \\\n  --heartbeat-timeout 300 --default-result CONTINUE\n```",
+    "resources": [
+      { "label": "AWS — Auto Scaling lifecycle hooks", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/lifecycle-hooks.html" }
+    ]
+  },
+  "aws-res-mcq-031": {
+    "explanation": "**The problem:** During deployments users see errors as instances leave the ALB target group while still serving in-flight requests. **Why deregistration delay (connection draining):** when a target deregisters, the ALB immediately stops sending it *new* requests but keeps existing connections alive for the deregistration delay (default 300s) so in-flight requests complete — tune it to the longest expected request and deployment errors vanish. **Why the distractors fail:** idle timeout closes inactive connections (different concern); sticky sessions pin users to instances, making removal *worse*; cross-zone is about distribution, not draining. **Common mistakes:** setting the delay shorter than the longest request, and confusing idle timeout with deregistration delay.",
+    "example": "```bash\naws elbv2 modify-target-group-attributes \\\n  --target-group-arn \"$TG_ARN\" \\\n  --attributes Key=deregistration_delay.timeout_seconds,Value=120\n```",
+    "resources": [
+      { "label": "AWS — Deregistration delay", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html#deregistration-delay" }
+    ]
+  },
+  "aws-res-mcq-032": {
+    "explanation": "**The problem:** An app takes 4 minutes to initialize, but the ASG terminates brand-new instances as unhealthy before they finish booting — an infinite churn loop. **Why the health check grace period:** it tells the ASG how long to *ignore* health-check results after launch, giving slow-booting apps time to come up; set it above the real init time and instances are judged only once ready. **Why the distractors fail:** disabling checks removes self-healing; a *faster* ALB health-check interval makes the (premature) judgment come sooner; cooldown spacing governs scaling-activity pacing, not health evaluation after launch. **Common mistakes:** leaving the default grace period below the real boot time, and shortening health-check intervals to 'fix' the loop (it worsens it).",
+    "example": "```bash\naws autoscaling update-auto-scaling-group \\\n  --auto-scaling-group-name web-asg \\\n  --health-check-grace-period 300\n```",
+    "resources": [
+      { "label": "AWS — Health check grace period", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html" }
+    ]
+  },
+  "aws-res-mcq-033": {
+    "explanation": "**The problem:** A DynamoDB table must be restorable to any point in the last 35 days after accidental writes/deletes. **Why point-in-time recovery:** PITR maintains continuous backups, restorable to any second in the preceding 35 days — into a *new* table, from which you recover the data (on-demand backups complement it for long-term snapshots). **Why the distractors fail:** Streams capture change events for triggers (not a restore mechanism); global tables replicate corruption faithfully across Regions; DAX is a cache. **The exam vocabulary:** 'restore to any point in time' → PITR. **Common mistakes:** assuming Streams or global tables provide recovery, and forgetting PITR restores to a new table (not in place).",
+    "example": "```bash\naws dynamodb update-continuous-backups \\\n  --table-name Orders \\\n  --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true\n```",
+    "resources": [
+      { "label": "AWS — DynamoDB PITR", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.html" }
+    ]
+  },
+  "aws-res-mcq-034": {
+    "explanation": "**The problem:** A critical EFS file system needs a cross-Region copy kept current automatically, with minutes-level failover. **Why EFS replication:** it continuously replicates the file system to another Region (or AZ) with an RPO/RTO of minutes — managed, no agents or sync jobs — and for failover you stop replication and the replica becomes writable. **Why the distractors fail:** hand-rolled rsync from an instance is operational toil with hours of RPO; EBS snapshots don't apply to EFS; an EFS file system's mount targets exist only within its own Region (mounting cross-Region over peering is a latency trap, not DR). **Common mistakes:** scripting rsync for EFS DR, and trying to mount one EFS file system from another Region.",
+    "resources": [
+      { "label": "AWS — EFS replication", "url": "https://docs.aws.amazon.com/efs/latest/ug/efs-replication.html" }
+    ]
+  },
+  "aws-res-mcq-035": {
+    "explanation": "**The problem:** You want DNS to return up to eight *healthy* IPs for clients to pick among, with unhealthy ones excluded — without paying for a load balancer. **Why multivalue answer routing:** it returns up to eight records, each individually health-checked — unhealthy IPs drop out of responses and clients spread across the rest. It's DNS-level pseudo-load-balancing: cheaper than an ELB but without connection awareness, draining, or instant failover (DNS TTL caching applies). **Why the distractors fail:** simple records with multiple values can't attach per-value health checks; failover is active-passive; weighted 100/0 sends everything to one target. **Common mistakes:** expecting ELB-grade behavior (no connection draining/instant failover at DNS), and using simple multi-value records that ignore health.",
+    "resources": [
+      { "label": "AWS — Multivalue answer routing", "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-multivalue.html" }
+    ]
+  },
+  "aws-res-mcq-036": {
+    "explanation": "**The problem:** A confirmation job must not be processed for at least 10 minutes (to allow cancellations) after it's sent. **Why a delay queue / message timers:** `DelaySeconds` on the queue (or per-message timers) hides a message from consumers for up to 15 minutes *from when it's sent* — exactly 'don't process before X'. **Why not visibility timeout:** that hides a message *after it's received*, governing retry windows — the exam's favorite confusion pair. **Why the distractors fail:** long polling waits at most 20 seconds; a FIFO queue orders messages but doesn't delay them. **Common mistakes:** using visibility timeout to delay *initial* delivery, and expecting delays longer than 15 minutes (use Step Functions wait states or EventBridge Scheduler instead).",
+    "example": "```bash\naws sqs send-message --queue-url \"$QUEUE_URL\" \\\n  --message-body '{\"order\":1234,\"type\":\"confirmation\"}' \\\n  --delay-seconds 600\n```",
+    "resources": [
+      { "label": "AWS — SQS delay queues", "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html" }
+    ]
+  },
+  "aws-res-mcq-037": {
+    "explanation": "**The problem:** Direct Connect carries critical traffic and needs a cost-effective failover path if the circuit drops. **Why a Site-to-Site VPN backup over the internet:** BGP prefers the DX path while it's healthy and routing fails over to the IPsec VPN when the circuit fails — lower bandwidth, but connectivity survives, at low cost. **Why the distractors fail:** a second DX through the *same* provider/location shares failure modes and costs far more (appropriate only when bandwidth must also survive, via *separate* locations); a single DX has no built-in redundancy; Transfer Acceleration is an S3 upload feature. **Common mistakes:** assuming DX is inherently redundant, and buying a second co-located DX when a VPN backup meets the cost-effective failover need.",
+    "resources": [
+      { "label": "AWS — DX resiliency (VPN backup)", "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/aws-direct-connect-vpn.html" }
+    ]
+  },
+  "aws-res-mr-007": {
+    "explanation": "**The problem:** You want canary releases on an ALB — shift a small % of live traffic to a new version, watch error rates, then continue or roll back instantly. **Why the two answers:** deploy the new version to a *separate* target group (green) alongside the current one (blue), and use ALB *weighted target groups* to shift traffic gradually (1% → 10% → 100%, or back to 0% instantly on errors — the rollback is a weight change, not a redeploy). **Why both:** two independently routable environments + weighted routing = blue/green with canary. **Why the distractors fail:** in-place instance replacement has no rollback path and mixes versions in one pool; health-threshold and instance-size changes don't direct traffic between versions. **Common mistakes:** rolling instances in place (no instant rollback), and conflating health checks with traffic shifting.",
+    "resources": [
+      { "label": "AWS — ALB weighted target groups", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-update-rules.html" }
+    ]
+  },
+  "aws-res-mcq-038": {
+    "explanation": "**The problem:** SQS messages must be processed by Lambda, auto-scaling with queue depth, batching, returning failures to the queue — with no poller to manage. **Why an event source mapping:** it's Lambda's managed poller — it long-polls the queue, invokes the function with batches, scales pollers up/down with traffic, and leaves failed batches (or items, with partial batch responses) to reappear per the queue's redrive policy. **Why the distractors fail:** a scheduled poller adds latency and fixed cadence; SNS inverts the pattern and drops the buffering; an EC2 poller fleet is exactly the infrastructure this feature eliminates. **Common mistakes:** building a custom poller, and not enabling partial batch responses (so one bad message fails the whole batch).",
+    "example": "```bash\naws lambda create-event-source-mapping \\\n  --function-name process-orders \\\n  --event-source-arn arn:aws:sqs:us-east-1:123456789012:orders \\\n  --batch-size 10 \\\n  --function-response-types ReportBatchItemFailures\n```",
+    "resources": [
+      { "label": "AWS — Lambda with SQS (event source mapping)", "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html" }
+    ]
+  },
+  "aws-res-mcq-039": {
+    "explanation": "**The problem:** A small team wants containers with AWS handling servers entirely, tasks auto-restarted, and a service maintaining desired count. **Why ECS services on Fargate:** Fargate is serverless container compute — no instances to patch, size, or scale — and an ECS *service* adds the resilience contract: it monitors tasks, replaces failures, maintains desired count across AZs, and integrates load-balancer health checks. **Why the distractors fail:** the EC2 launch type reintroduces fleet management; one big Docker host is a single point of failure; Lambda suits short functions, not arbitrary long-running containers. **Common mistakes:** choosing the EC2 launch type when 'no servers to manage' is the requirement, and running containers on a single host.",
+    "resources": [
+      { "label": "AWS — ECS on Fargate", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html" }
+    ]
+  },
+  "aws-res-mcq-040": {
+    "explanation": "**The problem:** In-place SSH patching causes configuration drift and mysterious incidents. **Why immutable infrastructure:** every change produces a new artifact (AMI / launch-template version) and deployment means *replacing* instances — ASG instance refresh rolls the fleet gradually with health checks — so drift becomes impossible (servers are reproducible from the artifact) and rollback is redeploying the previous version. **Why the distractors fail:** stricter SSH approval and quarterly audits *manage* drift but don't remove its mechanism; bigger instances just change less often (drift still accrues). **The principle:** don't modify running servers — rebuild and replace. **Common mistakes:** patching in place and auditing for drift, instead of baking immutable images.",
+    "resources": [
+      { "label": "AWS — ASG instance refresh", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html" }
+    ]
+  },
+  "aws-res-mr-008": {
+    "explanation": "**The problem:** A mistaken script nearly deleted a production RDS database. **Why the two answers (defense in depth):** deletion protection makes `DeleteDBInstance` fail outright until the flag is deliberately removed (a separate, conscious step), and automated backups guarantee point-in-time recovery if data is lost anyway. **Why both:** one prevents the delete; the other recovers if something slips through. **Why the distractors actively reduce safety:** wider `rds:DeleteDBInstance` permissions, skipping the final snapshot, and disabling Multi-AZ all make things worse. **The complement:** IAM least privilege on delete actions. **Common mistakes:** relying on a single control, and granting broad delete permissions 'for accountability'.",
+    "example": "```bash\naws rds modify-db-instance \\\n  --db-instance-identifier prod-db \\\n  --deletion-protection \\\n  --backup-retention-period 14 \\\n  --apply-immediately\n```",
+    "resources": [
+      { "label": "AWS — RDS deletion protection", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html#USER_DeletionProtection" }
+    ]
+  },
+  "aws-res-mcq-041": {
+    "explanation": "**The problem:** Bursts from API clients overwhelm a backend; you want API Gateway to reject excess with HTTP 429 *before* the backend, with different limits per consumer. **Why throttling + usage plans + API keys:** API Gateway throttles with a token bucket (rate + burst) at account, stage, method, and — via *usage plans with API keys* — per-consumer levels, returning 429 when exceeded, so the backend only ever sees in-contract traffic and noisy clients can't starve others. **Why the distractors fail:** a larger backend pays for abuse; documentation isn't enforcement; API Gateway doesn't embed an SQS queue (that's a separate integration pattern). **Common mistakes:** scaling the backend instead of throttling at the edge, and treating client-side guidelines as a control.",
+    "example": "```bash\naws apigateway create-usage-plan \\\n  --name premium \\\n  --throttle burstLimit=200,rateLimit=100 \\\n  --quota limit=1000000,period=MONTH\n```",
+    "resources": [
+      { "label": "AWS — API Gateway throttling & usage plans", "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-request-throttling.html" }
+    ]
+  },
+  "aws-res-mcq-042": {
+    "explanation": "**The problem:** What happens when an Aurora cluster's writer fails? **Why automatic promotion:** Aurora replicas share the same distributed storage volume as the writer, so promotion needs no data copying — failover typically completes in under 30 seconds, choosing the candidate by failover *priority tier* (0–15, lower first, then largest instance). The cluster endpoint follows the new writer automatically; apps just reconnect. **Why no data loss:** storage is six copies across three AZs. **Why the distractors fail:** it doesn't stay read-only awaiting an admin; no data is lost; the endpoint doesn't need manual repointing. **The nuance:** with *no* replica, Aurora recreates the writer instead, which is slower. **Common mistakes:** assuming manual intervention is needed, and not configuring failover priority tiers for the preferred target.",
+    "resources": [
+      { "label": "AWS — Aurora failover", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.AuroraHighAvailability.html" }
+    ]
   }
 }
