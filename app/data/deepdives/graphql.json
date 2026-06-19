@@ -1,1 +1,82 @@
-{}
+{
+  "graphql-intro-001": {
+    "explanation": "**What it is:** GraphQL is a query language for your API plus a runtime that executes those queries. You describe your data as a typed schema, clients send queries selecting the fields they want, and the server returns JSON shaped exactly like the query.\n\n**Why it matters:** The response shape is driven by the client, not hard-coded per endpoint. A single request can traverse related objects — a user, their posts, each post's comments — that would otherwise take several REST calls.\n\n**Common misconception:** GraphQL is not a database and does not replace your storage layer. It is an API layer; behind it, resolvers call whatever data sources you already have.",
+    "example": "```graphql\n# A client asks for exactly these fields and nothing more.\nquery {\n  user(id: \"1\") {\n    name\n    posts {\n      title\n    }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Introduction to GraphQL",
+        "url": "https://graphql.org/learn/"
+      }
+    ]
+  },
+  "graphql-intro-002": {
+    "explanation": "**The REST model:** REST spreads data across many URLs — `GET /users/1`, `GET /users/1/posts` — and the server fixes each payload's shape.\n\n**The GraphQL model:** One endpoint (typically `POST /graphql`) receives the query in the request body. The URL never changes; the query selects the data.\n\n**Why it helps:** Adding a field or following a new relationship is a query change on the client, not a new endpoint or a version bump on the server.\n\n**Common mistake:** Assuming the single endpoint is a bottleneck. It is only a dispatcher — each field still runs its own resolver, and servers scale it like any other HTTP handler.",
+    "example": "```js\n// Every GraphQL request hits the same URL; the body carries the query.\nawait fetch('https://api.example.com/graphql', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    query: `{ user(id: \"1\") { name email } }`,\n  }),\n});\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Queries and Mutations",
+        "url": "https://graphql.org/learn/queries/"
+      }
+    ]
+  },
+  "graphql-intro-003": {
+    "explanation": "**The problem:** With fixed REST payloads, a client often gets fields it never uses (over-fetching) or has to make several calls to gather everything a screen needs (under-fetching).\n\n**Why it happens:** Each REST endpoint serves one shape for all callers, so it can't be tailored to a specific screen.\n\n**Why GraphQL solves it:** The client states exactly which fields it wants and can follow relationships in the same query, so the server returns one right-sized response.\n\n**Common mistake:** Believing GraphQL automatically makes things faster. It eliminates wasted fields and round-trips, but a careless query can still be expensive on the server — see N+1 and query-cost limiting.",
+    "example": "```graphql\n# One request replaces a /user call + a /user/:id/posts call,\n# and returns only the three fields this screen renders.\nquery HomeScreen {\n  user(id: \"1\") {\n    name\n    posts {\n      title\n    }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Thinking in Graphs",
+        "url": "https://graphql.org/learn/thinking-in-graphs/"
+      }
+    ]
+  },
+  "graphql-intro-mcq-001": {
+    "explanation": "**The idea:** GraphQL is a query language and execution runtime that sits *in front of* your data, not a place to store data.\n\n**Why the right answer is right:** Each field in the schema is backed by a resolver function that fetches from whatever source you choose — a SQL row, a REST call, a cache, memory.\n\n**Why the others are wrong:** It has no storage engine, it doesn't require a graph database (the 'graph' is the network of related types), and clients exist for many languages, not just JavaScript.\n\n**Common mistake:** Reaching for a special 'GraphQL database'. You keep your existing databases and services and expose them through resolvers.",
+    "resources": [
+      {
+        "label": "graphql.org — Introduction",
+        "url": "https://graphql.org/learn/"
+      }
+    ]
+  },
+  "graphql-intro-004": {
+    "explanation": "**What 'strongly typed' means:** The schema declares every type and field, including which are required (non-null) and what arguments they accept. Queries are checked against the schema before execution.\n\n**Why it helps:** Invalid queries fail fast with a clear error, and editors/tools can autocomplete fields, show inline docs, and generate typed client code from the schema.\n\n**Why the solution works:** The schema is a single shared contract between client and server, so both sides agree on shapes without out-of-band documentation.\n\n**Common mistake:** Forgetting that validation is structural only — the schema can't guarantee a resolver returns *correct* data, just that the query's shape and types are legal.",
+    "example": "```graphql\ntype User {\n  id: ID!\n  name: String!\n  posts: [Post!]!\n}\n\ntype Post {\n  id: ID!\n  title: String!\n}\n\ntype Query {\n  user(id: ID!): User\n}\n```",
+    "resources": [
+      {
+        "label": "graphql.org — Schemas and Types",
+        "url": "https://graphql.org/learn/schema/"
+      }
+    ]
+  },
+  "graphql-intro-005": {
+    "explanation": "**The point:** GraphQL is defined by a specification, not by one implementation or vendor.\n\n**Why it's portable:** Server libraries exist for JavaScript, Java, Go, Python, Ruby, and more; the same query syntax works against any of them. It usually rides on HTTP but the spec doesn't require HTTP, and it imposes no database.\n\n**Why this matters:** You can adopt GraphQL as a thin layer over existing REST services or databases and swap data sources behind resolvers without changing the schema's contract.\n\n**Common mistake:** Picturing GraphQL as a runtime you must install like a database. It's a language + execution model; `graphql-js` is just the JavaScript reference implementation.",
+    "resources": [
+      {
+        "label": "GraphQL Specification",
+        "url": "https://spec.graphql.org/"
+      },
+      {
+        "label": "graphql-js — reference implementation",
+        "url": "https://graphql-js.org/"
+      }
+    ]
+  },
+  "graphql-intro-mcq-002": {
+    "explanation": "**The trade-off:** REST resources map to URLs, so browsers, CDNs, and proxies cache GET responses by URL almost for free. GraphQL sends most queries as POST to one URL, so that layer of caching no longer applies directly.\n\n**Why the right answer is right:** It names a real cost teams hit when moving from REST to GraphQL.\n\n**Why the others are wrong:** GraphQL returns JSON, supports deeply nested selections, and needs no graph database.\n\n**How teams mitigate it:** Normalized client caches (Apollo, Relay), persisted/automatic persisted queries (which let you GET by a query hash), CDN support for those hashes, and server-side field caching.",
+    "resources": [
+      {
+        "label": "graphql.org — Caching",
+        "url": "https://graphql.org/learn/caching/"
+      }
+    ]
+  },
+  "graphql-intro-mr-001": {
+    "explanation": "**Why these two:** Precise per-field selection in one request and a strongly-typed, introspectable schema are the defining advantages GraphQL has over fixed REST endpoints — they enable right-sized responses and rich tooling.\n\n**Why the others are wrong:** URL-based HTTP caching is *harder* in GraphQL, not easier. Sharding is a database concern GraphQL says nothing about, and GraphQL makes no CPU guarantee — an unbounded query can cost more than a REST call.\n\n**Common mistake:** Selling GraphQL as universally faster or cache-friendly. Frame the wins accurately: flexibility and tooling, at the cost of trickier caching and the need for query-cost controls.",
+    "resources": [
+      {
+        "label": "graphql.org — Best Practices",
+        "url": "https://graphql.org/learn/best-practices/"
+      }
+    ]
+  }
+}

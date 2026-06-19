@@ -1,1 +1,136 @@
-[]
+[
+  {
+    "id": "graphql-intro-001",
+    "topic": "Introduction",
+    "subtopic": "What is GraphQL",
+    "difficulty": "easy",
+    "question": "What is GraphQL?",
+    "answer": "GraphQL is a **query language for APIs** and a **server-side runtime** for fulfilling those queries against a type system you define. A client sends a query describing exactly the data and shape it wants, and the server returns JSON matching that shape. It is independent of any particular database or storage engine.",
+    "explanation": "GraphQL was created at Facebook in 2012, open-sourced in 2015, and is now governed by the GraphQL Foundation. The query language is the same regardless of backend language or data source.",
+    "tags": [
+      "intro",
+      "basics"
+    ]
+  },
+  {
+    "id": "graphql-intro-002",
+    "topic": "Introduction",
+    "subtopic": "Single endpoint",
+    "difficulty": "easy",
+    "question": "How does GraphQL's endpoint model differ from a typical REST API?",
+    "answer": "A GraphQL API is usually served from a **single endpoint** (commonly `POST /graphql`) that accepts any query, whereas REST exposes **many endpoints**, one per resource or representation (`/users`, `/users/1/posts`, …). In GraphQL the *query in the request body* — not the URL — selects what data comes back.",
+    "explanation": "Because the URL is constant, adding a field or following a new relationship is a client-side query change rather than a new server endpoint or API version.",
+    "tags": [
+      "intro",
+      "rest"
+    ]
+  },
+  {
+    "id": "graphql-intro-003",
+    "topic": "Introduction",
+    "subtopic": "Over/under-fetching",
+    "difficulty": "medium",
+    "question": "What are over-fetching and under-fetching, and how does GraphQL address them?",
+    "answer": "**Over-fetching** is receiving more fields than you need — a REST endpoint returns a fixed payload regardless of what the client uses. **Under-fetching** is when one endpoint returns too little, forcing extra round-trips to assemble a screen. GraphQL fixes both: the client lists exactly the fields it needs, and can traverse related objects, in **one request**.",
+    "explanation": "A mobile screen needing a user’s name plus their latest post titles is one GraphQL query, versus a `/user` call followed by a `/user/:id/posts` call in REST (under-fetching), each of which may also return unused fields (over-fetching).",
+    "tags": [
+      "intro",
+      "rest",
+      "fetching"
+    ]
+  },
+  {
+    "id": "graphql-intro-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Introduction",
+    "subtopic": "Not a database",
+    "difficulty": "easy",
+    "question": "Which statement about GraphQL is correct?",
+    "options": [
+      "GraphQL is a database with its own query engine and storage.",
+      "GraphQL is a query language and runtime that sits in front of your existing data sources.",
+      "GraphQL replaces SQL and must be backed by a graph database.",
+      "GraphQL can only be used from JavaScript clients."
+    ],
+    "answer": "GraphQL is a query language and runtime that sits in front of your existing data sources.",
+    "explanation": "GraphQL is an API layer, not storage. Your resolvers can read from SQL, NoSQL, REST services, files, or memory. The “graph” refers to how types relate, not to a graph database.",
+    "tags": [
+      "intro",
+      "mcq"
+    ]
+  },
+  {
+    "id": "graphql-intro-004",
+    "topic": "Introduction",
+    "subtopic": "Strongly typed",
+    "difficulty": "medium",
+    "question": "What does it mean that a GraphQL API is 'strongly typed', and what defines the type system?",
+    "answer": "Every GraphQL service defines a **schema** — a set of types and the fields each exposes, written in the **Schema Definition Language (SDL)**. The schema is the contract: every query is **validated against it before execution**, so unknown fields and wrong argument types are rejected up front, and tooling (autocomplete, docs, codegen) is generated from it.",
+    "explanation": "Validation against the schema happens before any resolver runs, which is why GraphQL clients can offer rich editor support without calling the server.",
+    "tags": [
+      "intro",
+      "schema",
+      "types"
+    ]
+  },
+  {
+    "id": "graphql-intro-005",
+    "topic": "Introduction",
+    "subtopic": "Spec & portability",
+    "difficulty": "medium",
+    "question": "Is GraphQL tied to a particular programming language, transport, or database?",
+    "answer": "No. GraphQL is a **specification**. Server and client libraries exist for many languages; it commonly runs over HTTP but is transport-agnostic; and it mandates **no database** — resolvers read from whatever sources you already have. The reference implementation is `graphql-js`.",
+    "explanation": "Treating GraphQL as a spec (not a product) is why the same query syntax works against a Node, Java, Go, or Python server.",
+    "tags": [
+      "intro",
+      "spec"
+    ]
+  },
+  {
+    "id": "graphql-intro-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Introduction",
+    "subtopic": "GraphQL vs REST",
+    "difficulty": "hard",
+    "question": "Which is a genuine trade-off of GraphQL compared with REST?",
+    "options": [
+      "GraphQL cannot return JSON.",
+      "HTTP/URL caching is harder, because all queries hit one endpoint (typically via POST), so caching by URL no longer applies directly.",
+      "GraphQL queries cannot select nested data.",
+      "GraphQL requires a graph database to store data."
+    ],
+    "answer": "HTTP/URL caching is harder, because all queries hit one endpoint (typically via POST), so caching by URL no longer applies directly.",
+    "explanation": "REST gets URL-based HTTP caching almost for free. GraphQL trades that away for query flexibility, and instead leans on client-side normalized caches (Apollo/Relay), persisted queries, or server-side field caching.",
+    "tags": [
+      "intro",
+      "rest",
+      "mcq",
+      "caching"
+    ]
+  },
+  {
+    "id": "graphql-intro-mr-001",
+    "type": "multiple-response",
+    "topic": "Introduction",
+    "subtopic": "GraphQL vs REST",
+    "difficulty": "medium",
+    "question": "Which of the following are advantages GraphQL offers over a typical REST API? (Select TWO)",
+    "options": [
+      "Clients fetch exactly the fields they need in a single request",
+      "A strongly-typed schema enables validation, introspection, and tooling",
+      "Built-in URL-based HTTP caching for every query",
+      "Automatic horizontal database sharding",
+      "Guaranteed lower server CPU usage than REST"
+    ],
+    "answers": [
+      "Clients fetch exactly the fields they need in a single request",
+      "A strongly-typed schema enables validation, introspection, and tooling"
+    ],
+    "explanation": "Precise field selection and a typed, introspectable schema are core GraphQL strengths. URL caching is actually harder than in REST, and GraphQL says nothing about sharding or guaranteeing lower CPU.",
+    "tags": [
+      "intro",
+      "mr",
+      "rest"
+    ]
+  }
+]
