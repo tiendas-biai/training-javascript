@@ -7,7 +7,7 @@ detail page (`/:subject/card/:id`).
 ## Workflow
 
 1. Pick the prompt for the card's subject (`react-deep-dive.md`, `javascript-deep-dive.md`,
-   `typescript-deep-dive.md`, `node-deep-dive.md`, `aws-deep-dive.md`).
+   `typescript-deep-dive.md`, `node-deep-dive.md`, `aws-deep-dive.md`, `docker-deep-dive.md`).
 2. Paste the card's JSON (from `app/data/<subject>.json`) where the prompt says **Card**.
 3. Run it. The model returns a single JSON object.
 4. Paste that object into `app/data/deepdives/<subject>.json` under the card's `id`.

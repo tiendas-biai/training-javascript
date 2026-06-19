@@ -181,8 +181,29 @@ runtime-spot-checked with `python3` to confirm the inline output comments. Autho
 bold labels. Also added the `prismjs/components/prism-python` grammar to `RichText.tsx` so
 ` ```python ` blocks highlight (previously they'd fall back to the JS grammar).
 
+**Docker — DONE: all 56 cards / 13 topics** — integration-focused bank (Docker fundamentals →
+Kubernetes → AWS container services). Fundamentals (16): Images & Dockerfile, Containers & Runtime,
+Storage & Networking, Compose & Registries. Kubernetes (20): Pods & Workloads, Services & Networking,
+Config & Secrets, Kubernetes Storage, Health & Scaling. AWS (20): ECR, ECS & Fargate, EKS, AWS
+Observability & Secrets. 55 of 56 carry an `example` (`docker-ecs-mr-001`, a conceptual Fargate-tradeoffs
+multiple-response card, omits it). Fences are ` ```dockerfile ` (Dockerfiles), ` ```yaml ` (k8s manifests
++ compose), ` ```bash ` (docker/kubectl/aws/eksctl CLI), and ` ```json ` (ECS task definitions). Verified
+with **`verify-docker-examples.mjs docker`** — yaml parsed by the `yaml` package, shell via `bash -n`,
+Dockerfiles via instruction lint (or hadolint if present); JSON examples are validated separately
+(`JSON.parse`). Authored with colon-ending bold labels. Also added prism `bash`/`yaml`/`docker` grammars
+to `RichText.tsx` so Dockerfile/YAML/shell fences highlight.
+
 **Remaining subject — not started:** `aws` deepdives file is still `{}`. AWS cards are scenario-based —
 examples optional.
+
+**Docker verifier** — `verify-docker-examples.mjs <subject>`: routes each `example` by fence language —
+` ```yaml `/` ```yml ` parsed with the `yaml` package (added as a devDependency, like `graphql`), ` ```bash `/
+` ```sh `/` ```shell ` through `bash -n` (SKIPs shell examples cleanly if no bash), ` ```dockerfile `/` ```docker `
+via `hadolint` when on PATH else a dependency-free instruction lint (every logical line must start with a
+known Dockerfile instruction, respecting `\` continuations). Other fence languages (e.g. `json`) are skipped.
+Reports failing ids; prints `✓ All examples parse clean.`. Scratch dir `.docker-verify/` (gitignored) is
+removed in both branches. Like the Node/Python verifiers this is a parse/structure gate, not execution — and
+the injected-import caveat doesn't apply (no compilation).
 
 **Python verifier** — `verify-python-examples.mjs <subject>`: finds `python3` (falls back to `python`),
 SKIPs cleanly (exit 0) if neither is on PATH; only fences tagged `python`/`py`/bare are compiled (a
