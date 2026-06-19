@@ -926,5 +926,230 @@
     "resources": [
       { "label": "AWS — gp2 vs gp3 / burst balance", "url": "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html" }
     ]
+  },
+  "aws-cost-mcq-001": {
+    "explanation": "**The problem:** Audit logs must be kept 7 years; after 30 days they're rarely read and a 12-hour retrieval is acceptable. **Why Standard → Glacier Deep Archive via lifecycle:** Deep Archive is the cheapest class (~$1/TB-month) and its standard 12-hour retrieval is explicitly acceptable here; a lifecycle rule automates the transition after 30 days. **Why the distractors fail:** Standard for 7 years pays ~23× too much; Standard-IA still costs ~$12.5/TB-month; One Zone-IA trades AZ redundancy for a discount — risky for compliance data and still far pricier than Deep Archive. **The mapping:** rarely accessed + slow retrieval acceptable → Deep Archive. **Common mistakes:** leaving cold data in Standard, and using One Zone-IA for compliance-critical data.",
+    "example": "```json\n{\n  \"Rules\": [\n    {\n      \"ID\": \"logs-archive\",\n      \"Filter\": { \"Prefix\": \"logs/\" },\n      \"Status\": \"Enabled\",\n      \"Transitions\": [\n        { \"Days\": 30, \"StorageClass\": \"DEEP_ARCHIVE\" }\n      ],\n      \"Expiration\": { \"Days\": 2555 }\n    }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — S3 storage classes", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html" }
+    ]
+  },
+  "aws-cost-mcq-002": {
+    "explanation": "**The problem:** A data lake's objects have *unpredictable* access — some hot for months, others never read again — and the team wants automatic optimization with no retrieval fees and no rules to maintain. **Why S3 Intelligent-Tiering:** it moves each object between access tiers automatically based on actual usage, charges *no retrieval fees*, and needs no lifecycle rules — only a small per-object monitoring charge. **Why the distractors fail:** static IA classes impose retrieval fees and penalize wrong guesses; Glacier classes are for genuinely archival data with retrieval delays. **The signal:** 'unknown/unpredictable access patterns' → Intelligent-Tiering. **Common mistakes:** using Standard-IA for unpredictable access (retrieval fees bite), and hand-maintaining lifecycle rules where Intelligent-Tiering is simpler.",
+    "resources": [
+      { "label": "AWS — S3 Intelligent-Tiering", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/intelligent-tiering.html" }
+    ]
+  },
+  "aws-cost-mcq-003": {
+    "explanation": "**The problem:** A steady 24/7 workload committed for 3+ years, but instance families may change with modernization. **Why a 3-year Compute Savings Plan:** it gives up to ~66% off for a $/hour commitment while staying flexible across instance family, size, Region, OS — and even applies to Fargate and Lambda. **Why the distractors fail:** Standard RIs offer similar discounts but lock the family (conflicting with modernization); On-Demand leaves the discount unclaimed for steady usage; Spot can be reclaimed anytime (wrong for always-on production). **The pairing:** steady usage + flexibility → Compute Savings Plan; steady usage + fixed config → Standard RI. **Common mistakes:** buying family-locked Standard RIs when plans will change, and paying On-Demand for predictable 24/7 load.",
+    "resources": [
+      { "label": "AWS — Savings Plans", "url": "https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html" }
+    ]
+  },
+  "aws-cost-mcq-004": {
+    "explanation": "**The problem:** A nightly, fault-tolerant, checkpointable batch job should cost the least. **Why Spot:** EC2 Spot uses spare capacity at up to 90% off, with the trade-off that AWS can reclaim instances on a two-minute warning — which checkpointable batch work absorbs easily. **Why the distractors fail:** RIs/Savings Plans suit steady 24/7 usage, not a few hours nightly; Dedicated Hosts solve licensing/compliance at the highest price; On-Demand is far pricier than Spot for interruptible work. **The signal words:** interruptible / fault-tolerant / flexible timing → Spot. **Common mistakes:** reserving capacity for part-time work, and avoiding Spot for genuinely interruptible jobs.",
+    "resources": [
+      { "label": "AWS — EC2 Spot Instances", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html" }
+    ]
+  },
+  "aws-cost-mr-001": {
+    "explanation": "**The problem:** A multi-account org needs monthly cost reporting by team and project. **Why the two answers:** define and *activate* cost allocation tags (e.g. `team`, `project`) on resources — tags don't appear in billing data until activated — then slice the tagged costs in Cost Explorer or the Cost and Usage Report, which consolidated billing aggregates across all member accounts. **Why both:** tagging produces the dimension; activation + analysis exposes it. **Why the distractors fail:** Shield Advanced (DDoS), IAM users, and Transfer Acceleration have nothing to do with cost reporting. **Common mistakes:** tagging but forgetting to *activate* the tags (no billing breakdown), and expecting per-account reporting without consolidated billing.",
+    "resources": [
+      { "label": "AWS — Cost allocation tags", "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html" }
+    ]
+  },
+  "aws-cost-mcq-005": {
+    "explanation": "**The problem:** A team wants an automatic email when *forecasted* monthly spend exceeds $10,000, before month-end. **Why AWS Budgets:** it's the proactive tool — set a budget and alert on actual *or forecasted* spend crossing thresholds, optionally triggering actions (like applying a restrictive policy). **Why the distractors fail:** Cost Explorer is for interactive analysis after the fact; the invoice arrives too late by definition; Trusted Advisor flags optimization opportunities, not budget thresholds. **The pairing:** proactive threshold/forecast alerts → Budgets; interactive analysis → Cost Explorer. **Common mistakes:** using Cost Explorer for alerting, and waiting on the invoice to catch overruns.",
+    "resources": [
+      { "label": "AWS — AWS Budgets", "url": "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" }
+    ]
+  },
+  "aws-cost-mcq-006": {
+    "explanation": "**The problem:** A private-subnet app moves terabytes to/from S3 through a NAT gateway, racking up NAT data-processing charges. **Why a gateway VPC endpoint for S3:** it carries S3 (and DynamoDB) traffic over the AWS network with *no hourly or per-GB charge*, so the S3 traffic simply stops traversing the NAT gateway (~$0.045/GB processing) — it's the cost answer *and* the security answer. **Why the distractors fail:** a NAT *instance* trades managed reliability for marginal savings; Transfer Acceleration *adds* cost; moving to a public subnet changes security posture without addressing the charge. **Common mistakes:** routing S3 traffic through NAT when a free gateway endpoint exists, and reaching for interface endpoints (which do charge) for S3/DynamoDB.",
+    "example": "```bash\naws ec2 create-vpc-endpoint --vpc-id vpc-0abc123 \\\n  --service-name com.amazonaws.us-east-1.s3 \\\n  --vpc-endpoint-type Gateway --route-table-ids rtb-0private456\n```",
+    "resources": [
+      { "label": "AWS — Gateway endpoints (cost)", "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html" }
+    ]
+  },
+  "aws-cost-mcq-007": {
+    "explanation": "**The problem:** A public S3 dataset's downloads by thousands of external researchers drive up the *owner's* transfer bill. **Why Requester Pays:** it flips the billing — downloaders authenticate with their own AWS credentials and pay the request + data-transfer charges, while the owner keeps paying only storage. **Why the distractors fail:** storage class changes affect storage cost, not transfer; pre-signed URLs and throttling control *access*, but the owner still pays for every byte. **The mapping:** shift download cost to consumers → Requester Pays. **Common mistakes:** trying to reduce transfer cost by changing storage class, and assuming access controls change who pays.",
+    "example": "```bash\naws s3api put-bucket-request-payment --bucket public-dataset \\\n  --request-payment-configuration Payer=Requester\n```",
+    "resources": [
+      { "label": "AWS — S3 Requester Pays", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/RequesterPaysBuckets.html" }
+    ]
+  },
+  "aws-cost-mcq-008": {
+    "explanation": "**The problem:** A dev database is heavy during sprints, idle for weeks, and unpredictable. **Why Aurora Serverless v2:** it bills by Aurora Capacity Units that scale in fine-grained steps with actual load — scaling near zero between sprints — exactly matching 'intermittent, unpredictable'. **Why the distractors fail:** a large provisioned instance pays full price for idle weeks; a Reserved Instance doubles down on that commitment; Spot can be reclaimed mid-transaction, which databases tolerate badly. **The signal:** intermittent/spiky/unpredictable database load → Aurora Serverless v2. **Common mistakes:** provisioning a fixed large instance for bursty dev use, and reserving capacity for an intermittent workload.",
+    "resources": [
+      { "label": "AWS — Aurora Serverless v2", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html" }
+    ]
+  },
+  "aws-cost-mcq-009": {
+    "explanation": "**The problem:** Thousands of gp2 EBS volumes with ordinary needs cost more than necessary. **Why migrate gp2 → gp3:** gp3 is ~20% cheaper per GB and provides a 3,000 IOPS / 125 MBps baseline *independent of size* (gp2 ties IOPS to capacity), with performance configurable separately if needed — and migration is an online volume modification (no downtime). **Why the distractors fail:** io2 is the premium tier (more cost); st1 HDD doesn't fit random I/O; deleting volumes nightly isn't serious for persistent data. **The mapping:** cheaper general-purpose EBS with no performance loss → gp3. **Common mistakes:** staying on gp2 out of inertia, and over-provisioning to io2 for ordinary workloads.",
+    "example": "```bash\naws ec2 modify-volume --volume-id vol-0abc123 --volume-type gp3\n```",
+    "resources": [
+      { "label": "AWS — Migrate gp2 to gp3", "url": "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html" }
+    ]
+  },
+  "aws-cost-mr-002": {
+    "explanation": "**The problem:** Dev EC2 instances run 24/7 but are used only weekday business hours, and most are over-provisioned. **Why the two answers (independent multipliers):** stopping instances outside business hours cuts running hours by ~75% (stopped instances don't bill for compute), and right-sizing down (per Compute Optimizer / Cost Explorer recommendations) cuts the rate for the hours that remain. **Why both:** fewer hours × cheaper-per-hour compounds the savings. **Why the distractors fail:** 3-year RIs for part-time, shrinking workloads lock in the waste; Dedicated Hosts are the most expensive model; doubling sizes increases spend on already-underutilized machines. **Common mistakes:** reserving capacity for part-time dev, and oversizing 'for headroom'.",
+    "resources": [
+      { "label": "AWS — Compute Optimizer", "url": "https://docs.aws.amazon.com/compute-optimizer/latest/ug/what-is-compute-optimizer.html" }
+    ]
+  },
+  "aws-cost-mcq-010": {
+    "explanation": "**The problem:** An API at a few hundred sub-second requests/day runs on two always-on EC2 instances behind an ALB. **Why API Gateway + Lambda:** the workload is idle >99.9% of the time — the definition of a serverless fit; Lambda bills per invocation and per ms (with a permanent free tier that may cover this entirely), and API Gateway replaces the always-on ALB. **Why the distractors fail:** every EC2/ECS variant keeps paying for idle hours; an RI just discounts the waste. **The signal:** very low, spiky, idle-heavy traffic → serverless. **Common mistakes:** keeping always-on compute for near-idle APIs, and discounting waste with RIs instead of removing it.",
+    "resources": [
+      { "label": "AWS — Lambda pricing model", "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-billing.html" }
+    ]
+  },
+  "aws-cost-mcq-011": {
+    "explanation": "**The problem:** A new DynamoDB table has wildly unpredictable traffic — near-zero for hours, then sudden spikes. **Why on-demand capacity mode:** it bills per request with no capacity planning and absorbs sudden spikes without pre-provisioning — near-zero idle hours cost near zero. **Why the distractors fail:** provisioning for peak pays for the spike 24/7; auto scaling reacts in minutes so unannounced spikes throttle first; reserved capacity commits to a baseline this workload doesn't have. **The crossover:** steady, predictable traffic eventually makes *provisioned* cheaper — the exam tests recognizing which side you're on. **Common mistakes:** provisioning for peak (paying for idle), and relying on auto scaling for sudden unannounced spikes.",
+    "resources": [
+      { "label": "AWS — DynamoDB capacity modes", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html" }
+    ]
+  },
+  "aws-cost-mcq-012": {
+    "explanation": "**The problem:** The S3 bill shows storage charges that don't match visible objects, and the bucket gets many large uploads from unreliable clients. **Why abandoned incomplete multipart uploads:** parts of a multipart upload that's never completed or aborted sit invisibly — they don't appear in object listings but bill as storage indefinitely, and unreliable clients accumulate them fast. **The fix:** a lifecycle rule with `AbortIncompleteMultipartUpload` (e.g. after 7 days); Storage Lens and `ListMultipartUploads` reveal the backlog. **Why the distractors fail:** delete markers, access logs, and replication copies describe costs that are *visible* or intentional. **Common mistakes:** ignoring incomplete multipart cleanup, and hunting visible objects for phantom storage.",
+    "example": "```json\n{\n  \"Rules\": [\n    {\n      \"ID\": \"abort-stale-mpu\",\n      \"Filter\": {},\n      \"Status\": \"Enabled\",\n      \"AbortIncompleteMultipartUpload\": { \"DaysAfterInitiation\": 7 }\n    }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — Abort incomplete multipart uploads", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpu-abort-incomplete-mpu-lifecycle-config.html" }
+    ]
+  },
+  "aws-cost-mcq-013": {
+    "explanation": "**The problem:** A containerized Linux workload on m5 (x86) wants better price-performance with minimal change. **Why Graviton (ARM):** Graviton instances (e.g. m7g) deliver up to ~40% better price-performance than comparable x86, and containerized Linux is the easiest migration — rebuild multi-arch images for arm64 and redeploy. **Why the distractors fail:** newer x86 generations help single-digit percentages; t3.micro is a size, not a strategy (undersizing throttles); Windows adds license cost. **Watch the constraint:** closed-source x86-only binaries block the move. **Common mistakes:** assuming x86-only dependencies can run on ARM, and chasing marginal gains from same-architecture upgrades.",
+    "resources": [
+      { "label": "AWS — Graviton", "url": "https://aws.amazon.com/ec2/graviton/" }
+    ]
+  },
+  "aws-cost-mcq-014": {
+    "explanation": "**The problem:** A dev VPC has one NAT gateway per AZ (three), and dev tolerates downtime. **Why consolidate to one NAT gateway:** each NAT gateway bills hourly (~$32/month) plus per-GB processing, so three triple the hourly cost; dev environments that tolerate downtime can route all private subnets to a single NAT gateway — the documented cost optimization, with the explicit trade-off that an AZ failure breaks egress for the others. **Why the distractors fail:** internet gateways don't provide NAT for private instances; a fourth NAT gateway adds cost; public IPs change the security posture. **Why production differs:** prod keeps one NAT per AZ (availability + avoiding cross-AZ data charges). **Common mistakes:** consolidating NAT in production, and replacing NAT with an internet gateway.",
+    "resources": [
+      { "label": "AWS — NAT gateway pricing/design", "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html" }
+    ]
+  },
+  "aws-cost-mcq-015": {
+    "explanation": "**The problem:** A popular site serves large downloads directly from S3, generating big data-transfer-out charges. **Why CloudFront:** origin-to-CloudFront transfer is free, CloudFront's per-GB internet rates undercut S3's, caching means popular files leave the origin once instead of millions of times, and users download from nearby edges — cheaper *and* faster. **Why the distractors fail:** compression helps but doesn't change rates; Region arbitrage saves cents while adding latency; Transfer Acceleration is for *uploads* and adds cost. **The mapping:** reduce S3 internet egress cost for popular content → front with CloudFront. **Common mistakes:** serving heavy downloads straight from S3, and confusing Transfer Acceleration (uploads) with CDN delivery.",
+    "resources": [
+      { "label": "AWS — CloudFront + S3 cost", "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html" }
+    ]
+  },
+  "aws-cost-mr-003": {
+    "explanation": "**The problem:** A high-volume Lambda (already efficient code) dominates the serverless bill. **Why the two answers:** Lambda bills GB-seconds, so migrating to arm64 (Graviton) cuts the per-ms price ~20% (and often runs faster), and tuning the memory setting finds the point where added CPU shortens duration enough to lower memory × time (Lambda Power Tuning automates the sweep — sometimes *more* memory is cheaper). **Why both:** cheaper per-ms rate + optimal memory×duration. **Why the distractors fail:** timeout is a safety cap, not a billing factor; always-on provisioned concurrency *adds* an hourly charge; more invocations means more request fees and overhead. **Common mistakes:** raising the timeout to cut cost, and assuming lower memory is always cheaper.",
+    "resources": [
+      { "label": "AWS — Lambda on Graviton / power tuning", "url": "https://docs.aws.amazon.com/lambda/latest/dg/foundation-arch.html" }
+    ]
+  },
+  "aws-cost-mcq-016": {
+    "explanation": "**The problem:** Restore 500 TB from Glacier Flexible Retrieval for a review due in a week, with cost over speed. **Why bulk retrieval:** Flexible Retrieval offers three tiers — expedited (1–5 min, priciest), standard (3–5 h), and bulk (5–12 h, lowest cost, designed for large planned restores) — and a week of lead time makes bulk's window irrelevant. **Why the distractors fail:** expedited at 500 TB maximizes spend for unneeded speed; provisioned capacity exists to guarantee *expedited* throughput; 'copy to Standard first' still performs a retrieval underneath. **The mapping:** large planned restore, cost-sensitive → bulk retrieval. **Common mistakes:** paying for expedited when time allows bulk, and thinking a copy avoids the retrieval cost.",
+    "resources": [
+      { "label": "AWS — Glacier retrieval options", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/restoring-objects-retrieval-options.html" }
+    ]
+  },
+  "aws-cost-mcq-017": {
+    "explanation": "**The problem:** Internal tools average 5% CPU with brief bursts to 60%, on m5.large. **Why T-family burstable instances:** they price for a low CPU baseline and accrue credits while idle to spend during bursts — a 5%-average workload runs comfortably and costs notably less than the equivalent m5. **Why the distractors fail:** C (compute) and R (memory) target sustained heavy use; P (GPU) is for ML/graphics. **Watch the failure mode (also tested):** sustained high CPU drains credits and throttles to baseline unless `unlimited` mode is on — which can quietly cost more than a fixed-performance instance. **Common mistakes:** running steady high-CPU work on T instances, and ignoring unlimited-mode charges.",
+    "resources": [
+      { "label": "AWS — Burstable (T) instances", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html" }
+    ]
+  },
+  "aws-cost-mcq-018": {
+    "explanation": "**The problem:** A Spot fleet on a *single* instance type suffers frequent simultaneous interruptions when that pool is reclaimed. **Why a mixed-instances policy + capacity-optimized:** Spot interruptions happen per *capacity pool* (instance type × AZ), so diversifying across many types and AZs means one pool's reclamation takes out only a slice of the fleet, and the capacity-optimized allocation strategy launches into the deepest pools, statistically reducing interruptions. **Why the distractors fail:** 'bidding' higher doesn't help (the strategy is capacity-driven; you pay the market price); full On-Demand forfeits ~90% savings; one AZ is maximum blast radius. **Common mistakes:** running Spot on a single type/AZ, and thinking a higher max price reduces interruptions.",
+    "resources": [
+      { "label": "AWS — Spot allocation strategies", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html" }
+    ]
+  },
+  "aws-cost-mcq-019": {
+    "explanation": "**The problem:** Thousands of ad-hoc EBS snapshots accumulate; the policy should be daily snapshots, keep 14 days, then auto-delete. **Why Data Lifecycle Manager:** DLM automates EBS snapshot (and AMI) lifecycles — tag-targeted policies create snapshots on schedule and expire them by age or count, exactly 'daily, keep 14, delete'. (AWS Backup is the broader alternative when one plan spans multiple services.) **Why the distractors fail:** S3 lifecycle rules don't govern EBS snapshots (even though snapshots live in S3 internally); Trusted Advisor reports, it doesn't delete; manual cleanup is how the problem grew. **Common mistakes:** trying S3 lifecycle rules on snapshots, and relying on manual cleanup.",
+    "resources": [
+      { "label": "AWS — Data Lifecycle Manager", "url": "https://docs.aws.amazon.com/ebs/latest/userguide/snapshot-lifecycle.html" }
+    ]
+  },
+  "aws-cost-mr-004": {
+    "explanation": "**The problem:** A monthly review should surface idle/underused resources with concrete recommendations. **Why the two tools:** Trusted Advisor's cost checks flag idle resources (unassociated Elastic IPs, idle load balancers, low-utilization instances, unattached volumes), and Compute Optimizer goes deeper on sizing — ML over CloudWatch metrics yields specific instance-type recommendations (also for EBS, Lambda, ECS). **Why both:** 'what's wasted' (Trusted Advisor) + 'what's oversized' (Compute Optimizer). **Why the distractors fail:** CloudTrail is an API audit log; Route 53 health checks test endpoints; Artifact downloads compliance documents. **Common mistakes:** expecting CloudTrail to surface waste, and using only one of the two tools.",
+    "resources": [
+      { "label": "AWS — Trusted Advisor", "url": "https://docs.aws.amazon.com/awssupport/latest/user/trusted-advisor.html" }
+    ]
+  },
+  "aws-cost-mcq-020": {
+    "explanation": "**The problem:** Non-prod RDS instances run 24/7 but are used only weekday business hours; snapshots must be retained. **Why stop them outside business hours:** stopped RDS instances stop billing instance-hours (storage and backups still bill), cutting runtime ~75%. **The caveat worth knowing:** RDS auto-starts stopped instances after 7 days, so a scheduler must re-stop them. **Why the distractors fail:** delete/recreate loses configuration and takes time daily; Multi-AZ *doubles* instance cost; io2 raises storage cost. **Pair with right-sizing** for the remaining hours. **Common mistakes:** forgetting the 7-day auto-start, and enabling Multi-AZ on cost-sensitive non-prod.",
+    "resources": [
+      { "label": "AWS — Stopping an RDS instance temporarily", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_StopInstance.html" }
+    ]
+  },
+  "aws-cost-mcq-021": {
+    "explanation": "**The problem:** Medical images are written once, read ~quarterly, but must load in milliseconds when opened. **Why S3 Glacier Instant Retrieval:** it's the archive class with *millisecond* access — about 68% cheaper storage than Standard-IA for data touched roughly once a quarter, trading a higher per-GB retrieval fee that rare access keeps small. **Why the distractors fail:** Flexible Retrieval and Deep Archive take minutes to hours (fails the doctor's click); Standard pays full price for data idle 99.9% of the time. **The mapping:** rarely accessed but instant when needed → Glacier Instant Retrieval. **Common mistakes:** using Flexible/Deep Archive where millisecond access is required, and leaving rarely-read data in Standard.",
+    "resources": [
+      { "label": "AWS — Glacier Instant Retrieval", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html#sc-glacier" }
+    ]
+  },
+  "aws-cost-mcq-022": {
+    "explanation": "**The problem:** Thumbnails that can be regenerated from originals are accessed infrequently — what's the cheapest fit? **Why S3 One Zone-IA:** it stores data in a single AZ at ~20% less than Standard-IA; the trade-off (data loss if that AZ is destroyed) is precisely acceptable when the data is derivative/re-creatable (thumbnails, transcodes, replicas of on-prem data). **Why the distractors fail:** Standard-IA and Standard pay for multi-AZ redundancy this data doesn't need; Deep Archive's hours-long retrieval can't serve images. **The cue:** re-creatable/derivative + infrequent → One Zone-IA; primary/irreplaceable → multi-AZ classes. **Common mistakes:** using One Zone-IA for irreplaceable data, and overpaying for redundancy on regenerable data.",
+    "resources": [
+      { "label": "AWS — S3 One Zone-IA", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html#sc-infreq-data-access" }
+    ]
+  },
+  "aws-cost-mcq-023": {
+    "explanation": "**The problem:** An EFS file system bills entirely at Standard rate though most files are untouched for months, and access patterns can't change for users. **Why EFS lifecycle management:** it automatically moves files unaccessed for a configured window into EFS IA (up to ~92% cheaper per GB; an Archive class goes further) and transparently moves them back on access — same paths, same NFS semantics, users notice only a slightly slower first read. **Why the distractors fail:** instance store is ephemeral local disk; read-only mounts and mount-target counts don't affect storage rates. **The mapping:** cold files on EFS, transparent savings → lifecycle management to IA. **Common mistakes:** leaving all EFS data in Standard, and assuming IA changes the user experience.",
+    "example": "```bash\naws efs put-lifecycle-configuration --file-system-id fs-0abc123 \\\n  --lifecycle-policies TransitionToIA=AFTER_30_DAYS\n```",
+    "resources": [
+      { "label": "AWS — EFS lifecycle management", "url": "https://docs.aws.amazon.com/efs/latest/ug/lifecycle-management-efs.html" }
+    ]
+  },
+  "aws-cost-mcq-024": {
+    "explanation": "**The problem:** DynamoDB session items are useless after 24h but accumulate, and scheduled scan-and-delete consumes write capacity. **Why DynamoDB TTL:** set an epoch-timestamp attribute and DynamoDB deletes expired items in a background process consuming *no write capacity* and costing nothing — built for sessions, tokens, and event data with natural lifetimes (deletions happen within a window, typically minutes to ~48h). **Why the distractors fail:** the scan-and-delete Lambda pays RCUs for the scan and WCUs per delete (the exact cost being eliminated); daily table recreation drops *all* data; capacity-mode changes billing math, not data volume. **Common mistakes:** building scan-and-delete jobs, and expecting TTL deletions to be instantaneous.",
+    "example": "```bash\naws dynamodb update-time-to-live --table-name Sessions \\\n  --time-to-live-specification 'Enabled=true,AttributeName=expiresAt'\n```",
+    "resources": [
+      { "label": "AWS — DynamoDB TTL", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html" }
+    ]
+  },
+  "aws-cost-mcq-025": {
+    "explanation": "**The problem:** The CloudWatch Logs bill climbs because log groups retain every line forever. **Why set retention policies:** CloudWatch Logs groups default to **Never Expire** — a quiet cost accumulator; setting retention (e.g. 30–90 days per compliance needs) expires old events automatically. For logs needed long-term, export to S3 and lifecycle them into Glacier tiers at a fraction of the price. **Why the distractors fail:** turning logging off trades cost for blindness; printing to stdout without CloudWatch and creating a second account dodge rather than manage the data. **Common mistakes:** leaving log groups on Never Expire, and disabling logging to save money.",
+    "example": "```bash\naws logs put-retention-policy --log-group-name /aws/lambda/my-fn --retention-in-days 30\n```",
+    "resources": [
+      { "label": "AWS — CloudWatch Logs retention", "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Working-with-log-groups-and-streams.html" }
+    ]
+  },
+  "aws-cost-mcq-026": {
+    "explanation": "**The problem:** Finance wants alerts when any service deviates abnormally from its historical spending pattern (e.g. a misconfigured job tripling NAT costs overnight) without per-service thresholds. **Why Cost Anomaly Detection:** it learns each monitored segment's spending pattern with ML and alerts on deviations — no thresholds to define or maintain — with root-cause hints (service, account, usage type). **Why the distractors fail:** Budgets are great for *known* limits, but a tripled NAT bill can hide inside a healthy monthly total until too late; weekly manual checks find anomalies after days; Trusted Advisor flags static optimization, not spend deviations. **The pairing:** known limits → Budgets; unknown anomalies → Cost Anomaly Detection. **Common mistakes:** relying only on a fixed monthly Budget to catch spikes.",
+    "resources": [
+      { "label": "AWS — Cost Anomaly Detection", "url": "https://docs.aws.amazon.com/cost-management/latest/userguide/getting-started-ad.html" }
+    ]
+  },
+  "aws-cost-mcq-027": {
+    "explanation": "**The problem:** In a 30-account org with consolidated billing, the platform team buys Savings Plans in the management account; a member account starts matching compute — does the discount apply? **Why it applies org-wide:** under consolidated billing, Savings Plans and RI discounts float across the organization — the commitment first covers the purchasing account's usage, then any member account's matching usage; volume-tiered pricing (S3, data transfer) also aggregates across accounts. **Why the distractors fail:** discounts aren't confined to the purchasing account, and accounts don't each need their own plans. **The nuance:** discount sharing can be *disabled* per account when chargeback models require it. **Common mistakes:** buying duplicate plans per account, and assuming discounts are account-local.",
+    "resources": [
+      { "label": "AWS — Savings Plans & consolidated billing", "url": "https://docs.aws.amazon.com/savingsplans/latest/userguide/sp-applying.html" }
+    ]
+  },
+  "aws-cost-mcq-028": {
+    "explanation": "**The problem:** Per-socket Windows/SQL Server BYOL licenses require visibility and control of the physical sockets/cores the software runs on. **Why Dedicated Hosts:** you get a physical server allocated to you with socket/core visibility, placement control (host affinity), and License Manager tracking — satisfying socket-bound license terms. **The exam trap:** Dedicated *Instances* are also single-tenant hardware but *without* socket visibility or placement control, which per-socket licenses require. **Why the other distractors fail:** standard On-Demand with 'license tags' documents nothing binding; Spot on isolated hardware doesn't address licensing terms. **The mapping:** per-socket/core BYOL → Dedicated Hosts. **Common mistakes:** choosing Dedicated Instances for socket-bound licenses, and thinking tags satisfy license terms.",
+    "resources": [
+      { "label": "AWS — Dedicated Hosts (BYOL)", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-overview.html" }
+    ]
+  },
+  "aws-cost-mcq-029": {
+    "explanation": "**The problem:** A Fargate batch service tolerates interruptions and auto-reruns failed tasks — cut its compute cost. **Why Fargate Spot:** it runs tasks on spare capacity at up to ~70% off with a two-minute interruption warning — the same bargain as EC2 Spot, without managing instances; capacity providers can mix regular Fargate (must-run baseline) with Spot (the bulk). **Why the distractors fail:** bigger Fargate sizes bill proportionally more; ECS on On-Demand EC2 reintroduces fleet ops; Lambda has its own limits and pricing model. **The signal:** interruption-tolerant, retry-capable containers → Fargate Spot. **Common mistakes:** running interruptible batch on full-price Fargate, and reintroducing EC2 fleet management for cost.",
+    "resources": [
+      { "label": "AWS — Fargate Spot", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-capacity-providers.html" }
+    ]
+  },
+  "aws-cost-mcq-030": {
+    "explanation": "**The problem:** A storage team needs org-wide S3 visibility — object counts, storage-class distribution, incomplete multipart uploads, and recommendations — in one dashboard across 25 accounts. **Why S3 Storage Lens:** it aggregates S3 metrics across an entire organization into dashboards (storage by class, object counts, incomplete-multipart bytes, replication/encryption coverage) with contextual recommendations; advanced metrics add prefix-level depth. **Why the distractors fail:** access logs record requests (not inventory) and parsing them across 25 accounts is a project; billing alarms watch totals; per-bucket Inventory reports are the raw material Storage Lens already rolls up. **The mapping:** org-wide S3 usage analytics → Storage Lens. **Common mistakes:** stitching together per-bucket Inventory by hand, and using billing alarms for usage analytics.",
+    "resources": [
+      { "label": "AWS — S3 Storage Lens", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage_lens.html" }
+    ]
+  },
+  "aws-cost-mr-005": {
+    "explanation": "**The problem:** ~1 TB/day of logs — queried frequently for 2 weeks, occasionally to 90 days, deleted after 1 year. **Why the two lifecycle actions:** lifecycle rules have exactly two action types — *transitions* and *expirations* — and this pattern maps cleanly: Standard for the hot 2 weeks, Standard-IA at ~14–30 days, a Glacier tier at 90, expire at 365 (which also enforces the retention limit automatically). **Why both:** transitions cut storage cost as access drops; expiration deletes (and enforces retention). **Why the distractors fail:** replication *doubles* cost; Transfer Acceleration is unrelated; format conversion helps query cost but isn't a lifecycle action. **Common mistakes:** keeping logs in Standard the whole year, and not setting an expiration to enforce retention.",
+    "example": "```json\n{\n  \"Rules\": [\n    {\n      \"ID\": \"logs-tiering\",\n      \"Filter\": { \"Prefix\": \"logs/\" },\n      \"Status\": \"Enabled\",\n      \"Transitions\": [\n        { \"Days\": 14, \"StorageClass\": \"STANDARD_IA\" },\n        { \"Days\": 90, \"StorageClass\": \"GLACIER\" }\n      ],\n      \"Expiration\": { \"Days\": 365 }\n    }\n  ]\n}\n```",
+    "resources": [
+      { "label": "AWS — S3 lifecycle configuration", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html" }
+    ]
+  },
+  "aws-cost-mr-006": {
+    "explanation": "**The problem:** 10 instances 24/7 (steady baseline) plus up to 30 extra during unpredictable, fault-tolerant bursts — minimize cost. **Why the two answers (layered purchasing):** cover the always-on baseline with a Savings Plan or RIs (predictable → ~60–70% savings), and serve the burst capacity from Spot in an Auto Scaling group (unpredictable + fault-tolerant → up to 90% off, scaled only when needed). **Why both:** match commitment to certainty — commit the baseline, Spot the bursts. **Why the distractors fail:** reserving all 40 pays for 30 mostly-idle commitments; full On-Demand leaves every discount unclaimed; Spot for the *baseline* risks losing capacity the workload must always have. **Common mistakes:** reserving peak capacity, and putting must-run baseline load on Spot.",
+    "resources": [
+      { "label": "AWS — Mixing purchase options", "url": "https://docs.aws.amazon.com/whitepapers/latest/cost-optimization-reservation-models/cost-optimization-reservation-models.html" }
+    ]
   }
 }

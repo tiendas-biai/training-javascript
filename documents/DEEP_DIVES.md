@@ -193,8 +193,16 @@ Dockerfiles via instruction lint (or hadolint if present); JSON examples are val
 (`JSON.parse`). Authored with colon-ending bold labels. Also added prism `bash`/`yaml`/`docker` grammars
 to `RichText.tsx` so Dockerfile/YAML/shell fences highlight.
 
-**Remaining subject — not started:** `aws` deepdives file is still `{}`. AWS cards are scenario-based —
-examples optional.
+**AWS — DONE: all 184 cards / 4 domains** — Secure Architectures (56), Resilient Architectures (50),
+High-Performing Architectures (42), Cost-Optimized Architectures (36). Scenario-based exam cards, so deep
+dives lead with **problem → why the right answer → why each distractor fails → common mistakes** (mapped to
+SAA-C03 reasoning). 48 of 184 carry an `example` where a concrete artifact helps (IAM/bucket-policy ` ```json `,
+` ```bash ` CLI for `aws`/lifecycle/quotas, etc.); the rest are conceptual service-choice cards with no example.
+Verified with **`verify-aws-examples.mjs aws`** — `json` via `JSON.parse`, `yaml` via the `yaml` package,
+`bash` via `bash -n`; all 48 parse clean. Authored with colon-ending bold labels.
+
+**No remaining subjects** — all ten banks (javascript, react, node, typescript, graphql, springboot, java,
+python, docker, aws) are 100% covered.
 
 **Docker verifier** — `verify-docker-examples.mjs <subject>`: routes each `example` by fence language —
 ` ```yaml `/` ```yml ` parsed with the `yaml` package (added as a devDependency, like `graphql`), ` ```bash `/
