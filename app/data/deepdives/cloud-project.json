@@ -3,124 +3,1020 @@
     "explanation": "**In one line:** GraphQL is a query language for your API plus a server-side runtime that answers those queries against your data.\n\n**The core idea:** Instead of the server deciding the response shape, the *client* sends a query that names exactly the fields it wants, and gets back JSON in that same shape. One endpoint can serve every screen, each asking for just what it needs.\n\n**The three building blocks:** a **schema** (a typed contract of what data exists and which operations are allowed), **operations** (queries to read, mutations to write, subscriptions for real-time), and **resolvers** (functions that fetch the data behind each field).\n\n**How it fits this project:** `infra/schema.graphql` declares a `Product` type and two queries, `getProduct(id)` and `listProducts`. AppSync is the runtime; the resolvers in `infra/resolvers/` fetch from DynamoDB. The Express app is a *client* that sends queries (`app/appsync.js`).\n\n**Common beginner mistake:** thinking GraphQL is a database or an AWS product. It's an open specification — AppSync, Apollo, and many others are implementations of it.",
     "example": "```graphql\n# A query asks for exactly the fields it needs:\nquery GetProduct($id: ID!) {\n  getProduct(id: $id) {\n    id\n    name\n    price\n  }\n}\n\n# The response mirrors the query's shape:\n# { \"data\": { \"getProduct\": { \"id\": \"cel-1\", \"name\": \"iPhone 12\", \"price\": 1500000 } } }\n```",
     "resources": [
-      { "label": "GraphQL — Introduction (graphql.org/learn)", "url": "https://graphql.org/learn/" },
-      { "label": "GraphQL — Queries and Mutations", "url": "https://graphql.org/learn/queries/" },
-      { "label": "AWS AppSync — What is AppSync?", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/what-is-appsync.html" }
+      {
+        "label": "GraphQL — Introduction (graphql.org/learn)",
+        "url": "https://graphql.org/learn/"
+      },
+      {
+        "label": "GraphQL — Queries and Mutations",
+        "url": "https://graphql.org/learn/queries/"
+      },
+      {
+        "label": "AWS AppSync — What is AppSync?",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/what-is-appsync.html"
+      }
     ]
   },
   "cp-graphql-basic-002": {
     "explanation": "**The problem REST has:** with REST you hit fixed endpoints (`/products`, `/products/:id`) that return a server-defined shape. If a screen needs less, you still download everything (**over-fetching**); if it needs more, you make several calls (**under-fetching** / N+1 round-trips).\n\n**What GraphQL changes:** one endpoint, and the client's query declares the exact fields and nesting it wants — so you get precisely the data in a single round-trip. The schema is strongly typed, so tools can validate queries and autocomplete fields.\n\n**Other practical differences:** REST leans on HTTP verbs (GET/POST/PUT/DELETE) and status codes; GraphQL usually POSTs every operation to one URL and returns HTTP **200** even on errors (failures live in an `errors` array). REST responses are easy to cache with standard HTTP caching; GraphQL caching is more work.\n\n**Honest take for an interview:** neither is universally better. REST is simpler and HTTP-cacheable; GraphQL wins when many different clients need flexible, precise data from possibly many sources. This project deliberately uses GraphQL (via AppSync) for the product read API.",
     "example": "```text\n# REST: two calls, fixed shapes, possibly over-fetching\nGET /products        -> [{ id, name, price, description, specs, ... }]\nGET /products/cel-1  -> { id, name, price, description, specs, ... }\n\n# GraphQL: one endpoint, client picks the fields\nPOST /graphql\n{ \"query\": \"{ listProducts(limit: 24) { items { id name price } } }\" }\n```",
     "resources": [
-      { "label": "AWS — GraphQL vs REST", "url": "https://aws.amazon.com/compare/the-difference-between-graphql-and-rest/" },
-      { "label": "GraphQL — Best Practices: Thinking in Graphs", "url": "https://graphql.org/learn/thinking-in-graphs/" },
-      { "label": "GraphQL — Serving over HTTP", "url": "https://graphql.org/learn/serving-over-http/" }
+      {
+        "label": "AWS — GraphQL vs REST",
+        "url": "https://aws.amazon.com/compare/the-difference-between-graphql-and-rest/"
+      },
+      {
+        "label": "GraphQL — Best Practices: Thinking in Graphs",
+        "url": "https://graphql.org/learn/thinking-in-graphs/"
+      },
+      {
+        "label": "GraphQL — Serving over HTTP",
+        "url": "https://graphql.org/learn/serving-over-http/"
+      }
     ]
   },
   "cp-graphql-basic-mcq-001": {
     "explanation": "**Definitions:** **Over-fetching** is downloading more data than the UI needs (REST returns 30 fields, the card shows 2). **Under-fetching** is when one endpoint doesn't return enough, so the client makes additional calls — often the **N+1 problem** (one list call, then one call per item).\n\n**Why GraphQL helps:** the client query lists only the fields it wants, so the server returns just those — no over-fetching — and nested selections can pull related data in a single request, avoiding under-fetching.\n\n**Watch out:** GraphQL solves over-fetching *on the wire*, but a naive resolver can still over-fetch from the database. That's a separate concern you fix with batching (e.g. DataLoader) — not relevant to this project's simple Scan/GetItem resolvers, but a great follow-up to know.",
     "resources": [
-      { "label": "GraphQL — Queries (selecting fields)", "url": "https://graphql.org/learn/queries/" },
-      { "label": "Apollo — Operation best practices", "url": "https://www.apollographql.com/docs/react/data/operation-best-practices" }
+      {
+        "label": "GraphQL — Queries (selecting fields)",
+        "url": "https://graphql.org/learn/queries/"
+      },
+      {
+        "label": "Apollo — Operation best practices",
+        "url": "https://www.apollographql.com/docs/react/data/operation-best-practices"
+      }
     ]
   },
   "cp-graphql-basic-003": {
     "explanation": "**Schema:** the typed contract. It declares the object types (`Product`), the fields and their types (`price: Float`), and the entry points (`type Query { getProduct(id: ID!): Product }`). Clients and servers both agree on it.\n\n**Query:** a client request that walks the schema and selects fields. It can pass arguments (`getProduct(id: \"cel-1\")`) and choose nesting. The response shape always mirrors the query.\n\n**Resolver:** a server function attached to a field/operation that knows how to produce its value — read a database, call another API, compute something. AppSync runs your resolver and assembles the typed response.\n\n**How it fits this project:** schema = `infra/schema.graphql`; the query strings are in `app/appsync.js`; the resolvers are `infra/resolvers/getProduct.js` (DynamoDB GetItem) and `listProducts.js` (DynamoDB Scan). Each resolver also maps the table's snake_case columns to the schema's camelCase fields.",
     "example": "```graphql\n# schema.graphql — the contract\ntype Query {\n  getProduct(id: ID!): Product\n}\n\n# A query against it\nquery {\n  getProduct(id: \"cel-apple-iphone-12-128gb\") { id name price }\n}\n\n# The resolver (APPSYNC_JS) decides how to fetch it:\n#   request()  -> DynamoDB GetItem on the id\n#   response() -> map the item to the Product fields\n```",
     "resources": [
-      { "label": "GraphQL — Schemas and Types", "url": "https://graphql.org/learn/schema/" },
-      { "label": "GraphQL — Execution (resolvers)", "url": "https://graphql.org/learn/execution/" },
-      { "label": "AppSync — JavaScript resolvers overview", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/resolver-reference-overview-js.html" }
+      {
+        "label": "GraphQL — Schemas and Types",
+        "url": "https://graphql.org/learn/schema/"
+      },
+      {
+        "label": "GraphQL — Execution (resolvers)",
+        "url": "https://graphql.org/learn/execution/"
+      },
+      {
+        "label": "AppSync — JavaScript resolvers overview",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/resolver-reference-overview-js.html"
+      }
     ]
   },
   "cp-appsync-basic-001": {
     "explanation": "**In one line:** AWS AppSync is a fully managed service for building GraphQL and real-time (Pub/Sub) APIs without running your own GraphQL server.\n\n**What AWS handles for you:** hosting the GraphQL endpoint, executing your schema and resolvers, connecting to **data sources** (DynamoDB, Lambda, HTTP, Aurora/RDS, OpenSearch), authorization, scaling, optional caching, and WebSocket-based real-time subscriptions.\n\n**The mental model:** you provide three things — a **schema** (the API contract), one or more **data sources** (where the data lives), and **resolvers** (the glue that turns a GraphQL field into a data-source operation). AppSync runs the rest.\n\n**How it fits this project:** AppSync exposes the existing `items-dev` DynamoDB table as a GraphQL API. The data source is the table, the resolvers are APPSYNC_JS functions, and auth is an API key for now (with a planned move to IAM). The ECS app just sends queries to the AppSync URL.",
     "resources": [
-      { "label": "AppSync — What is AWS AppSync?", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/what-is-appsync.html" },
-      { "label": "AppSync — Product page", "url": "https://aws.amazon.com/appsync/" },
-      { "label": "AppSync — Resolver mapping overview", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-overview.html" }
+      {
+        "label": "AppSync — What is AWS AppSync?",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/what-is-appsync.html"
+      },
+      {
+        "label": "AppSync — Product page",
+        "url": "https://aws.amazon.com/appsync/"
+      },
+      {
+        "label": "AppSync — Resolver mapping overview",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-overview.html"
+      }
     ]
   },
   "cp-appsync-basic-002": {
     "explanation": "**Why use AppSync instead of hand-rolling a GraphQL server:**\n\n**No servers:** there's nothing to provision, patch, or scale — AppSync is fully managed and scales with traffic.\n\n**Built-in data connectors:** resolvers map GraphQL fields directly onto DynamoDB, Lambda, HTTP, or RDS, so for simple cases you write little or no backend code.\n\n**Auth modes out of the box:** API key, IAM (SigV4), Amazon Cognito user pools, and OIDC/JWT — and you can combine them per API.\n\n**Real-time & caching:** GraphQL subscriptions over WebSockets for live updates, plus an optional server-side cache.\n\n**Cost model:** pay per request/resolver rather than for an always-on server.\n\n**Concretely in this project:** because AppSync fronts the data, the ECS task needs **no DynamoDB permissions** and there's **no GraphQL server code** to maintain — a real reduction in moving parts. The trade-off is an extra managed service and network hop.",
     "resources": [
-      { "label": "AppSync — Features (product page)", "url": "https://aws.amazon.com/appsync/" },
-      { "label": "AppSync — Authorization and authentication", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/security-authz.html" },
-      { "label": "AppSync — Real-time data (subscriptions)", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/aws-appsync-real-time-data.html" }
+      {
+        "label": "AppSync — Features (product page)",
+        "url": "https://aws.amazon.com/appsync/"
+      },
+      {
+        "label": "AppSync — Authorization and authentication",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/security-authz.html"
+      },
+      {
+        "label": "AppSync — Real-time data (subscriptions)",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/aws-appsync-real-time-data.html"
+      }
     ]
   },
   "cp-docker-basic-001": {
     "explanation": "**The problem it solves:** software behaves differently across machines because of mismatched OS libraries, language versions, and config — the classic 'works on my machine'.\n\n**What Docker does:** it packages your app *and* its dependencies into a single, isolated, portable unit called a **container**. The container carries its own filesystem and runtime, so it runs identically on your laptop, a CI runner, or AWS.\n\n**How it differs from a VM:** containers share the host OS kernel and isolate at the process level, so they're far lighter and faster to start than full virtual machines (which each boot a whole OS).\n\n**The basic workflow:** write a **Dockerfile** -> `docker build` produces an **image** -> `docker run` starts a **container** from that image -> push the image to a **registry** (like AWS ECR) so other machines can run it.\n\n**How it fits this project:** the Express app is built into an image and run as containers on ECS Fargate, with the image stored in ECR.",
     "example": "```bash\n# Build an image from the Dockerfile in the current directory\ndocker build -t products-web .\n\n# Run a container from that image, mapping host:container ports\ndocker run -p 3000:3000 products-web\n\n# See running containers\ndocker ps\n```",
     "resources": [
-      { "label": "Docker — What is Docker? (overview)", "url": "https://docs.docker.com/get-started/docker-overview/" },
-      { "label": "Docker concepts — What is a container?", "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" },
-      { "label": "Docker — Get started", "url": "https://docs.docker.com/get-started/" }
+      {
+        "label": "Docker — What is Docker? (overview)",
+        "url": "https://docs.docker.com/get-started/docker-overview/"
+      },
+      {
+        "label": "Docker concepts — What is a container?",
+        "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/"
+      },
+      {
+        "label": "Docker — Get started",
+        "url": "https://docs.docker.com/get-started/"
+      }
     ]
   },
   "cp-docker-basic-002": {
     "explanation": "**Image:** an immutable, read-only template — a snapshot of a filesystem plus metadata (the command to run, env, exposed ports). You build it once from a Dockerfile and store it in a registry such as ECR. Images are made of stacked, cacheable **layers**.\n\n**Container:** a running (or stopped) instance of an image, with a thin writable layer on top. You can start many containers from the same image; each is isolated.\n\n**The analogy:** image is to container what a **class** is to an **object**, or what a recipe is to a cooked meal. One image -> many containers.\n\n**Why the distinction matters here:** ECS pulls one image (by tag) from ECR and runs `desired_count` identical containers from it behind the ALB. Scaling = more containers from the same image; a new deploy = a new image tag.",
     "example": "```bash\n# One image...\ndocker build -t products-web:latest .\n\n# ...many containers from it\ndocker run -d --name web1 products-web:latest\ndocker run -d --name web2 products-web:latest\n\ndocker images       # list images (templates)\ndocker ps           # list containers (running instances)\n```",
     "resources": [
-      { "label": "Docker concepts — What is an image?", "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/" },
-      { "label": "Docker concepts — What is a container?", "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+      {
+        "label": "Docker concepts — What is an image?",
+        "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/"
+      },
+      {
+        "label": "Docker concepts — What is a container?",
+        "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/"
+      }
     ]
   },
   "cp-docker-basic-003": {
     "explanation": "**What it is:** a Dockerfile is a plain text script of instructions that `docker build` executes top-to-bottom to assemble an image. Each instruction produces a **layer**, and Docker caches layers so unchanged steps are reused on rebuild.\n\n**The common instructions:** `FROM` (base image), `WORKDIR` (set the working directory), `COPY` (copy files in), `RUN` (run a build command like installing deps), `ENV` (set env vars), `EXPOSE` (document a port), `USER` (drop privileges), and `CMD` (the default command when a container starts).\n\n**Two practical rules this project follows:** order instructions least- to most-frequently-changed so the dependency-install layer stays cached, and use a **multi-stage build** so build-only files never reach the final image.\n\n**How it fits this project:** the Dockerfile copies `package*.json`, runs `npm ci --omit=dev` in a `deps` stage, then a slim `runtime` stage copies the result, sets `USER node`, and runs `node app/index.js`.",
     "example": "```dockerfile\n# A minimal Dockerfile (the project's is multi-stage)\nFROM node:22-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --omit=dev\nCOPY app ./app\nUSER node\nEXPOSE 3000\nCMD [\"node\", \"app/index.js\"]\n```",
     "resources": [
-      { "label": "Docker — Dockerfile reference", "url": "https://docs.docker.com/reference/dockerfile/" },
-      { "label": "Docker concepts — Writing a Dockerfile", "url": "https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/" },
-      { "label": "Docker — Building best practices", "url": "https://docs.docker.com/build/building/best-practices/" }
+      {
+        "label": "Docker — Dockerfile reference",
+        "url": "https://docs.docker.com/reference/dockerfile/"
+      },
+      {
+        "label": "Docker concepts — Writing a Dockerfile",
+        "url": "https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/"
+      },
+      {
+        "label": "Docker — Building best practices",
+        "url": "https://docs.docker.com/build/building/best-practices/"
+      }
     ]
   },
   "cp-ecs-basic-001": {
     "explanation": "**In one line:** Amazon ECS (Elastic Container Service) is AWS's container orchestrator — it runs and manages your containers for you.\n\n**What you give it:** a **task definition** — a blueprint naming the container image, CPU/memory, ports, environment variables, secrets, logging, and the IAM roles. A **service** then keeps a desired number of copies (**tasks**) of that definition running.\n\n**What it does for you:** schedules tasks onto compute, restarts unhealthy ones to maintain `desired_count`, performs rolling deployments, and registers tasks with a load balancer's target group.\n\n**Two launch types:** **Fargate** (serverless — AWS runs the compute, you just pick CPU/memory) and **EC2** (you manage a cluster of instances). This project uses Fargate, so there are no servers to patch.\n\n**Two IAM roles to remember:** the **execution role** (used by ECS to pull the image, write logs, and read secrets at launch) vs the **task role** (assumed by your app code at runtime — empty here, since the app only calls AppSync over HTTPS).",
     "resources": [
-      { "label": "Amazon ECS — What is Amazon ECS?", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html" },
-      { "label": "ECS — What is AWS Fargate?", "url": "https://docs.aws.amazon.com/AmazonECS/latest/userguide/what-is-fargate.html" },
-      { "label": "ECS — Task definitions", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html" }
+      {
+        "label": "Amazon ECS — What is Amazon ECS?",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html"
+      },
+      {
+        "label": "ECS — What is AWS Fargate?",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/userguide/what-is-fargate.html"
+      },
+      {
+        "label": "ECS — Task definitions",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html"
+      }
     ]
   },
   "cp-ecs-basic-002": {
     "explanation": "**In one line:** an Application Load Balancer (ALB) is a managed Layer-7 (HTTP/HTTPS) load balancer that spreads incoming requests across your healthy app instances.\n\n**The pieces:** a **listener** accepts traffic on a port/protocol (here, HTTP :80) and forwards it, based on rules, to a **target group**. The target group holds the **targets** (here, Fargate task IPs) and continuously **health-checks** them, sending traffic only to healthy ones.\n\n**Why 'Layer 7':** it understands HTTP, so it can route by path/host/header, terminate TLS, and do host/path-based routing — unlike a Network Load Balancer (Layer 4), which just forwards TCP/UDP.\n\n**How it fits this project:** the ALB is the single public entry point. Its security group allows :80 from anywhere, but the tasks' security group only accepts traffic *from the ALB* — so the containers are never directly exposed. The target group health-checks `/healthz`.",
     "resources": [
-      { "label": "ELB — What is an Application Load Balancer?", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html" },
-      { "label": "ALB — Target groups", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html" },
-      { "label": "ELB — What is Elastic Load Balancing?", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html" }
+      {
+        "label": "ELB — What is an Application Load Balancer?",
+        "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html"
+      },
+      {
+        "label": "ALB — Target groups",
+        "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html"
+      },
+      {
+        "label": "ELB — What is Elastic Load Balancing?",
+        "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html"
+      }
     ]
   },
   "cp-ecs-basic-mcq-001": {
     "explanation": "**What `docker run` on a box gives you:** a single container, running until it (or the box) dies. No automatic restart on a different host, no scaling, no load balancing, no rolling updates, and a single point of failure.\n\n**What an orchestrator like ECS adds:**\n\n**Desired state:** you declare 'run N copies' and ECS keeps exactly N running, replacing any that crash or fail health checks.\n\n**Scaling:** change the desired count (or attach auto scaling) and ECS adds/removes tasks.\n\n**Load balancing:** ECS registers/deregisters tasks with an ALB target group automatically.\n\n**Safe deploys:** rolling updates start new tasks, wait for health, then drain old ones.\n\n**Why it matters here:** the project runs the Express container as an ECS Fargate **service** behind an ALB, so it self-heals and can scale — things a lone `docker run` can't do.",
     "resources": [
-      { "label": "Amazon ECS — What is Amazon ECS?", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html" },
-      { "label": "ECS — Services", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html" }
+      {
+        "label": "Amazon ECS — What is Amazon ECS?",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html"
+      },
+      {
+        "label": "ECS — Services",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html"
+      }
     ]
   },
   "cp-tf-basic-001": {
     "explanation": "**Infrastructure as Code (IaC):** the practice of defining your infrastructure (networks, databases, servers, IAM, APIs) in version-controlled configuration files instead of clicking through a console. The files become the source of truth and can be reviewed, diffed, and re-applied.\n\n**Terraform specifically:** an open-source IaC tool by HashiCorp. You write declarative config in **HCL** describing the *desired* end state; Terraform compares it to the current real state and figures out what to create, change, or destroy.\n\n**The core workflow:** `terraform init` (download providers) -> `terraform plan` (preview the changes) -> `terraform apply` (make them) -> `terraform destroy` (tear it all down). Terraform records what it manages in a **state file**.\n\n**Declarative, not scripted:** you describe *what* you want, not the step-by-step *how* — Terraform derives the order from resource dependencies.\n\n**How it fits this project:** everything under `infra/` (AppSync, IAM, ECR, ECS, ALB, Secrets Manager) is Terraform, so the whole stack can be created or destroyed with one command.",
     "example": "```hcl\n# An HCL resource block: declare what you want to exist\nresource \"aws_ecr_repository\" \"app\" {\n  name = \"products-web\"\n}\n\n# The workflow (run in the terminal):\n#   terraform init     download the AWS provider\n#   terraform plan     preview what will change\n#   terraform apply    create/update real resources\n#   terraform destroy  remove everything this config manages\n```",
     "resources": [
-      { "label": "Terraform — What is Terraform? (intro)", "url": "https://developer.hashicorp.com/terraform/intro" },
-      { "label": "Terraform — Core workflow", "url": "https://developer.hashicorp.com/terraform/intro/core-workflow" },
-      { "label": "AWS — What is Infrastructure as Code?", "url": "https://aws.amazon.com/what-is/iac/" }
+      {
+        "label": "Terraform — What is Terraform? (intro)",
+        "url": "https://developer.hashicorp.com/terraform/intro"
+      },
+      {
+        "label": "Terraform — Core workflow",
+        "url": "https://developer.hashicorp.com/terraform/intro/core-workflow"
+      },
+      {
+        "label": "AWS — What is Infrastructure as Code?",
+        "url": "https://aws.amazon.com/what-is/iac/"
+      }
     ]
   },
   "cp-tf-basic-002": {
     "explanation": "**Reproducibility:** the same config produces the same infrastructure every time — you can recreate the whole stack in a new account or region instead of remembering which buttons you clicked.\n\n**Reviewability:** infra changes arrive as a code diff in a pull request, so they can be reviewed (and in this repo, reviewed by the Claude CI action) before they touch AWS.\n\n**Safe previews:** `terraform plan` shows exactly what will change before anything happens — no surprise deletions.\n\n**Easy teardown:** `terraform destroy` removes the whole stack — invaluable for a learning project that runs always-on, billable resources (ALB, Fargate).\n\n**Self-documenting & ordered:** the files *are* the documentation of the architecture, and Terraform automatically orders dependent resources from their references (e.g. the secret is created before the task definition that consumes it).\n\n**No click-ops:** avoids manual, undocumented, error-prone console changes that drift over time.",
     "resources": [
-      { "label": "Terraform — Use cases / why Terraform", "url": "https://developer.hashicorp.com/terraform/intro/use-cases" },
-      { "label": "Terraform — What is Terraform?", "url": "https://developer.hashicorp.com/terraform/intro" },
-      { "label": "AWS — Benefits of Infrastructure as Code", "url": "https://aws.amazon.com/what-is/iac/" }
+      {
+        "label": "Terraform — Use cases / why Terraform",
+        "url": "https://developer.hashicorp.com/terraform/intro/use-cases"
+      },
+      {
+        "label": "Terraform — What is Terraform?",
+        "url": "https://developer.hashicorp.com/terraform/intro"
+      },
+      {
+        "label": "AWS — Benefits of Infrastructure as Code",
+        "url": "https://aws.amazon.com/what-is/iac/"
+      }
     ]
   },
   "cp-ddb-basic-001": {
     "explanation": "**In one line:** Amazon DynamoDB is a fully managed, serverless NoSQL database that delivers fast, predictable performance at any scale.\n\n**The data model:** you store **items** (JSON-like records) in **tables**. Every item is found by its **primary key** — either just a **partition key**, or a partition key + **sort key**. Beyond the key, the schema is flexible: different items in the same table can have different attributes.\n\n**Key vs query:** you read a single item fast with **GetItem** by primary key. To fetch many matching items efficiently you use **Query** (on a key or a secondary index). With no suitable key/index, the only way to read 'everything' is a **Scan**, which reads the whole table.\n\n**Managed & serverless:** no servers, automatic scaling, single-digit-millisecond latency, and on-demand or provisioned capacity modes.\n\n**How it fits this project:** the `items-dev` table has only a partition key (`id`) and no secondary indexes — which is exactly why `getProduct` can use GetItem but `listProducts` must use a Scan.",
     "resources": [
-      { "label": "DynamoDB — What is Amazon DynamoDB?", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html" },
-      { "label": "DynamoDB — Core components (tables, items, keys)", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html" },
-      { "label": "DynamoDB — Working with Queries", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html" }
+      {
+        "label": "DynamoDB — What is Amazon DynamoDB?",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html"
+      },
+      {
+        "label": "DynamoDB — Core components (tables, items, keys)",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html"
+      },
+      {
+        "label": "DynamoDB — Working with Queries",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html"
+      }
+    ]
+  },
+  "cp-arch-001": {
+    "explanation": "**The shape of the system:** this is a classic three-tier read path — a load balancer in front, stateless app servers in the middle, and a managed data layer behind. Each hop has one job, which makes the system easy to reason about and to scale.\n\n**The hops, in order:** (1) the **ALB** receives the browser request on :80 and forwards it to a target group; (2) the target group routes to a healthy **Fargate task** running Express; (3) the `/products` route calls `listProducts()` which POSTs a **GraphQL** query to AppSync over HTTPS with an `x-api-key` header; (4) the **APPSYNC_JS resolver** turns that into a DynamoDB **Scan**; (5) the result flows back up and Express renders server-side **HTML**.\n\n**Why each layer exists:** the ALB gives one stable public entry point + health checking; ECS keeps the app running and scalable; AppSync owns the GraphQL contract and the DynamoDB access; DynamoDB stores the data. Crucially, the app holds no AWS data permissions — AppSync does.\n\n**Interview tip:** being able to name every hop *and why it's there* (not just list services) is what separates a memorized answer from understanding.",
+    "example": "```text\nBrowser\n  │  GET /products  (HTTP :80)\n  ▼\nALB ──► Target group ──► Fargate task (Express)\n                              │  POST GraphQL  (HTTPS + x-api-key)\n                              ▼\n                           AppSync ──► APPSYNC_JS resolver\n                                            │  DynamoDB Scan\n                                            ▼\n                                        items-dev (DynamoDB)\n```",
+    "resources": [
+      {
+        "label": "AppSync — What is AWS AppSync?",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/what-is-appsync.html"
+      },
+      {
+        "label": "ECS — What is Amazon ECS?",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html"
+      },
+      {
+        "label": "ELB — What is an Application Load Balancer?",
+        "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html"
+      }
+    ]
+  },
+  "cp-arch-002": {
+    "explanation": "**The decision:** put a managed GraphQL layer (AppSync) between the app and the database instead of letting Express call DynamoDB directly with the AWS SDK.\n\n**Why it's a good trade here:** the app needs **zero AWS data permissions** — its ECS task role is empty, so a compromised container can't touch DynamoDB. AppSync also owns the typed schema, the resolvers, built-in auth modes, and gives you a natural home for caching and real-time subscriptions later.\n\n**What it costs:** an extra network hop and an extra managed service to pay for and operate. For a simple read-only path, calling DynamoDB directly (or running Apollo in-process) is a legitimate alternative — the architecture plan notes this under 'Open questions'.\n\n**How to talk about it:** frame it as a deliberate trade-off, not dogma. 'AppSync buys a clean security boundary and a managed GraphQL contract at the cost of a hop; for a read path this simple it's arguably over-engineered, but it sets up future features and keeps the app permission-free.'",
+    "resources": [
+      {
+        "label": "AppSync — DynamoDB resolvers",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/tutorial-dynamodb-resolvers-js.html"
+      },
+      {
+        "label": "AWS — GraphQL vs REST",
+        "url": "https://aws.amazon.com/compare/the-difference-between-graphql-and-rest/"
+      }
+    ]
+  },
+  "cp-arch-mcq-001": {
+    "explanation": "**Stateless = no per-request memory on the server.** Each Express task keeps nothing client-specific between requests; all state lives in DynamoDB (via AppSync). Any task can serve any request identically.\n\n**Why that unlocks scaling and load balancing:** because no task 'owns' a user's data, the ALB can round-robin requests across all healthy tasks, and you can raise or lower `desired_count` freely — new tasks need no warm-up state, and killing one loses nothing. No **sticky sessions** required.\n\n**The contrast:** if the app stored session state in memory (e.g. a login session or an in-process cache of cart data), you'd need sticky sessions or a shared session store, and scaling would be far more delicate.\n\n**Rule of thumb:** push state to a shared backing store (DynamoDB, Redis, etc.) and keep the compute tier stateless — it's the foundation of horizontal scaling.",
+    "resources": [
+      {
+        "label": "AWS — Stateless application design (Well-Architected)",
+        "url": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_scaling_workload_design_stateless.html"
+      },
+      {
+        "label": "ECS — Service Auto Scaling",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html"
+      }
+    ]
+  },
+  "cp-appsync-001": {
+    "explanation": "**The root cause:** DynamoDB is schemaless beyond the primary key, and `items-dev` mixes item shapes — a phone (`celular`) and a screen protector (`repuesto`) carry different attributes. So for any given product, many fields simply don't exist.\n\n**What non-null would do:** in GraphQL a `String!` field that resolves to `null` is an **error** that can null out the parent object. If `marca` were `String!`, every repuesto query would error because repuestos have no `marca`.\n\n**The fix:** make fields nullable (`String`, not `String!`) so a missing attribute just comes back as `null`. Only `id` is `ID!` because the partition key is guaranteed present on every item.\n\n**The principle:** your GraphQL nullability should reflect the *guarantees of your data source*, not your wishes. Mark a field non-null only when the data layer truly always provides it.",
+    "example": "```graphql\ntype Product {\n  id: ID!           # partition key — always present\n  name: String      # nullable: not guaranteed across item types\n  marca: String     # phone-only — null for a repuesto\n  specs: ProductSpecs  # phone-only\n}\n```",
+    "resources": [
+      {
+        "label": "GraphQL — Schemas and Types (non-null)",
+        "url": "https://graphql.org/learn/schema/#lists-and-non-null"
+      },
+      {
+        "label": "DynamoDB — Core components (schemaless items)",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html"
+      }
+    ]
+  },
+  "cp-appsync-002": {
+    "explanation": "**The problem:** the table stores `available_quantity` as a DynamoDB **String** (`S`), not a number — real, slightly messy data.\n\n**Option taken — mirror it as `String`:** the schema is honest about the source, and the resolver does no parsing, so there's zero risk of a runtime coercion error on a bad value (e.g. an empty string or `\"N/A\"`).\n\n**Why not `Int`:** typing it `Int` forces the resolver to parse every value; any non-numeric entry would throw and surface as a GraphQL error. You'd be promising a guarantee the data can't keep.\n\n**The cleaner long-term fix:** normalize at the source — a one-off backfill so the attribute is genuinely numeric — then you can safely type it `Int`. Coercing in the resolver (with a guard) is a middle ground. For a read-only learning project, mirroring as `String` is the pragmatic choice.\n\n**Takeaway:** model types to match the data you actually have, and clean data at the source rather than papering over it in the API layer.",
+    "resources": [
+      {
+        "label": "DynamoDB — Data types (String vs Number)",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html"
+      },
+      {
+        "label": "GraphQL — Scalar types",
+        "url": "https://graphql.org/learn/schema/#scalar-types"
+      }
+    ]
+  },
+  "cp-appsync-mcq-001": {
+    "explanation": "**GetItem (for `getProduct`):** a direct, primary-key lookup of one item. It's the cheapest, fastest read DynamoDB offers — O(1), one item, one read unit. Perfect when you have the `id`.\n\n**Scan (for `listProducts`):** reads **every item** in the table, page by page. It's used here only because there's no other indexed access path — `items-dev` has a partition key and nothing else.\n\n**The one you'd want but can't use — Query:** Query reads items by a known partition key (optionally narrowed by sort key/index) and touches only matching items. Listing 'all products' has no single partition key to query by, and there's no GSI, so Query isn't available for the list operation.\n\n**Mnemonic:** GetItem = one known key; Query = many items sharing an indexed key; Scan = everything (last resort).",
+    "example": "```js\n// getProduct -> GetItem (one item by primary key)\nreturn { operation: 'GetItem',\n         key: util.dynamodb.toMapValues({ id: ctx.args.id }) };\n\n// listProducts -> Scan (no GSI, so read the whole table)\nreturn { operation: 'Scan', limit, nextToken };\n```",
+    "resources": [
+      {
+        "label": "DynamoDB — GetItem",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStartedDynamoDB.html"
+      },
+      {
+        "label": "DynamoDB — Query vs Scan",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html"
+      },
+      {
+        "label": "AppSync — JS resolver DynamoDB functions",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/js-resolver-reference-dynamodb.html"
+      }
+    ]
+  },
+  "cp-appsync-003": {
+    "explanation": "**The choice:** AppSync supports two resolver runtimes — the legacy **VTL** (Velocity templates) and **APPSYNC_JS** (JavaScript). This project uses APPSYNC_JS at `runtime_version 1.0.0`.\n\n**Why JS over VTL:** you write plain `request(ctx)` / `response(ctx)` functions in JavaScript instead of Velocity syntax. It's far easier to read, reason about, and debug; you get real language constructs and a `util` helper library; and it's the direction AWS is investing in. VTL is powerful but notoriously fiddly.\n\n**How it works:** `request(ctx)` returns a DynamoDB operation descriptor (GetItem/Scan/…); AppSync executes it; `response(ctx)` shapes the result (and checks `ctx.error`). The JS runtime is a constrained sandbox — not full Node — so not every npm module is available.\n\n**Takeaway:** for new AppSync work, default to APPSYNC_JS unless you have a specific reason to maintain existing VTL.",
+    "example": "```js\nimport { util } from '@aws-appsync/utils';\n\nexport function request(ctx) {\n  return { operation: 'GetItem',\n           key: util.dynamodb.toMapValues({ id: ctx.args.id }) };\n}\n\nexport function response(ctx) {\n  if (ctx.error) util.error(ctx.error.message, ctx.error.type);\n  return ctx.result;\n}\n```",
+    "resources": [
+      {
+        "label": "AppSync — JavaScript resolvers overview",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/resolver-reference-overview-js.html"
+      },
+      {
+        "label": "AppSync — Resolver util reference",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/built-in-util-js.html"
+      }
+    ]
+  },
+  "cp-appsync-mcq-002": {
+    "explanation": "**The surprising part:** GraphQL is transport-agnostic but, over HTTP, a request that runs resolvers and hits an error still returns **HTTP 200**. The failure shows up as an `errors` array in the JSON body, often alongside partial `data`.\n\n**Why:** a single GraphQL request can resolve many fields; some may succeed and some fail. There's no single HTTP status that captures 'half worked', so the spec puts per-field errors in the body and reserves non-2xx for transport/parse-level problems.\n\n**What the client must do:** check **both** — throw on a non-2xx status (network/auth/parse) *and* throw when `body.errors` is present. The project's `query()` does exactly this; relying on status alone would silently treat resolver errors as success.\n\n**Where the error originates:** the resolver's `response(ctx)` calls `util.error(...)` when `ctx.error` is set, which populates that `errors` array.",
+    "example": "```js\nconst res = await fetch(APPSYNC_URL, { /* ... */ });\nif (!res.ok) throw new Error(`AppSync HTTP ${res.status}`);  // transport\nconst body = await res.json();\nif (body.errors) throw new Error(JSON.stringify(body.errors)); // resolver\nreturn body.data;\n```",
+    "resources": [
+      {
+        "label": "GraphQL — Serving over HTTP (response)",
+        "url": "https://graphql.org/learn/serving-over-http/"
+      },
+      {
+        "label": "GraphQL spec — Errors",
+        "url": "https://spec.graphql.org/draft/#sec-Errors"
+      }
+    ]
+  },
+  "cp-appsync-004": {
+    "explanation": "**Where it is today — API key:** the simplest auth mode to stand up. The client sends an `x-api-key` header; AppSync checks it. Great for learning, but the key is a long-lived shared secret that **expires** (7-day default, 365-day max) and must be stored and rotated.\n\n**The target — IAM auth:** the caller signs each request with **SigV4** using AWS credentials. On ECS, the **task role** provides those credentials automatically, so there's no key to store at all.\n\n**What changes on migration:** the (currently empty) task role gains `appsync:GraphQL` on the specific API ARN; the app SigV4-signs the request instead of sending `x-api-key`; and the Secrets Manager secret + the `APPSYNC_API_KEY` env injection disappear.\n\n**Other modes worth naming:** Amazon Cognito user pools and OIDC/JWT for end-user auth. You can even combine modes on one API. Pick by *who* the caller is: service-to-service → IAM; end users → Cognito/OIDC; quick demo → API key.",
+    "resources": [
+      {
+        "label": "AppSync — Authorization and authentication",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/security-authz.html"
+      },
+      {
+        "label": "AppSync — IAM authorization",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/security-authz.html#aws-iam-authorization"
+      },
+      {
+        "label": "AWS — Signature Version 4 (SigV4)",
+        "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv.html"
+      }
+    ]
+  },
+  "cp-appsync-005": {
+    "explanation": "**The smell:** `getProduct.js` and `listProducts.js` each define a near-identical `toProduct()` that maps snake_case table attributes (`picture_url`, `tipo_producto`) to camelCase GraphQL fields. That's duplicated logic — a DRY violation.\n\n**Why it bites:** add or rename a field and you must edit **both** files identically. Miss one and they silently drift — `getProduct` returns a field that `listProducts` doesn't, and the bug hides until someone notices.\n\n**The fix:** extract the mapping into one shared place both resolvers import — a small util module, or an AppSync **pipeline resolver** function. One definition, one place to change.\n\n**The nuance for an interview:** duplication across *two tiny* resolvers is tolerable and arguably clearer than premature abstraction — but call it out as the first thing you'd refactor as the schema grows. Naming the trade-off (DRY vs. simplicity) shows judgment, not just rule-following.",
+    "example": "```js\n// shared mapper imported by both resolvers\nexport function toProduct(item) {\n  if (!item) return null;\n  return {\n    id: item.id,\n    name: item.name,\n    pictureUrl: item.picture_url,\n    tipoProducto: item.tipo_producto,\n    // ...one definition, used everywhere\n  };\n}\n```",
+    "resources": [
+      {
+        "label": "AppSync — Pipeline resolvers",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/pipeline-resolvers-js.html"
+      },
+      {
+        "label": "Refactoring — Extract Function",
+        "url": "https://refactoring.com/catalog/extractFunction.html"
+      }
+    ]
+  },
+  "cp-appsync-006": {
+    "explanation": "**What 'pagination' means here:** the result set is too big to return at once, so it's served in pages, with a token that says 'continue from here'.\n\n**The end-to-end chain:** DynamoDB returns a `LastEvaluatedKey` when a Scan is truncated → AppSync surfaces it as **`nextToken`** in the `ProductConnection` → the resolver passes `limit`/`nextToken` straight through and returns `ctx.result.nextToken` → the Express route reads `req.query.nextToken` → the render layer builds a 'Siguiente página →' link with the token **URL-encoded**.\n\n**The golden rule:** treat `nextToken` as **opaque**. Don't parse, decode, or construct it — just round-trip it back unchanged to get the next page. Its internal format is an implementation detail and can change.\n\n**A subtlety:** with a filtered Scan, a page can come back with few (or zero) items but still include a `nextToken` — meaning 'more to check'. So loop until `nextToken` is absent, not until you see an empty page.",
+    "example": "```graphql\nquery ListProducts($limit: Int, $nextToken: String) {\n  listProducts(limit: $limit, nextToken: $nextToken) {\n    items { id name price }\n    nextToken   # pass this back unchanged for the next page\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "DynamoDB — Paginating Scan/Query results",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.Pagination"
+      },
+      {
+        "label": "GraphQL — Pagination",
+        "url": "https://graphql.org/learn/pagination/"
+      }
+    ]
+  },
+  "cp-ddb-001": {
+    "explanation": "**The key schema:** `items-dev` has a single-attribute primary key — `id` (String), the **partition key** (HASH). There is **no sort key and no GSI**.\n\n**Why this one fact drives everything:** in DynamoDB your access patterns are dictated by your keys. A lone partition key means you can do exactly one efficient thing — fetch a single item by its `id` (**GetItem**). There's no second dimension (sort key) and no alternate index (GSI), so any 'list' or 'filter by some other attribute' has nowhere to go but a full-table **Scan**.\n\n**Partition vs sort key:** the partition key decides which physical partition an item lives in; a sort key (if present) lets you store and range-query many items under one partition key. With no sort key, every item is its own partition-key value.\n\n**The lesson:** in DynamoDB you design the keys around your queries *first*. This table was clearly designed for 'get one product by id', and the listing feature is bolted on via Scan.",
+    "resources": [
+      {
+        "label": "DynamoDB — Core components (primary key)",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey"
+      },
+      {
+        "label": "DynamoDB — Best practices for primary keys",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html"
+      }
+    ]
+  },
+  "cp-ddb-mcq-001": {
+    "explanation": "**Query needs an indexed key to anchor on:** it reads items by a known **partition key** value (optionally narrowed by sort key or a secondary index), and only touches matching items.\n\n**The problem here:** 'list all products' has no single partition-key value to anchor a Query on, and `items-dev` has **no GSI** to query an alternate attribute. So there's no indexed path for 'everything'.\n\n**Therefore Scan:** Scan walks the entire table, page by page, returning items regardless of key. It's the only built-in way to read all items when no index fits.\n\n**The cost contrast:** a Query bills for the items it matches; a Scan bills for reading the *whole table* every page, then optionally filters in memory. That's why Scan is the operation of last resort — fine at ~300 items, painful at scale.\n\n**The fix if filtering grows:** add a GSI on the attribute you filter by (e.g. `tipo_producto`) and switch to Query.",
+    "resources": [
+      {
+        "label": "DynamoDB — Working with Scan",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html"
+      },
+      {
+        "label": "DynamoDB — Working with Query",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html"
+      }
+    ]
+  },
+  "cp-ddb-002": {
+    "explanation": "**Why it's fine now:** with ~296 items on **on-demand** billing, a full Scan reads a tiny amount of data — a few read units per page, fractions of a cent. At this size, the simplicity of Scan beats the effort of designing an index.\n\n**When it stops being fine:** (1) the table grows large — Scan cost and latency scale with table size, not result size; (2) you start **filtering** (e.g. only active phones). A DynamoDB `FilterExpression` is applied *after* the Scan reads items, so you pay to read rows you then throw away. Filtering does **not** reduce read cost.\n\n**The fix:** add a **GSI** keyed on the attribute you filter by (e.g. partition key `tipo_producto`) and switch that resolver to a **Query** — then you read only matching items.\n\n**The headline an interviewer wants:** 'Scan cost is proportional to table size, not to how many rows you keep. Filters don't save reads. Index the access pattern instead.'",
+    "resources": [
+      {
+        "label": "DynamoDB — Scan and filter expressions",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.FilterExpression"
+      },
+      {
+        "label": "DynamoDB — Global secondary indexes",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html"
+      }
+    ]
+  },
+  "cp-ddb-mcq-002": {
+    "explanation": "**On-demand (PAY_PER_REQUEST):** you pay per read/write request with no capacity to plan. It instantly absorbs spikes and costs nothing when idle (beyond storage). Ideal for unpredictable, low, or new workloads — exactly a learning project.\n\n**Provisioned capacity:** you reserve read/write capacity units (optionally with auto scaling). Cheaper per request at steady, predictable, high volume — but under-provisioning causes **throttling** and you pay for reserved capacity even when idle.\n\n**Why on-demand fits here:** the traffic is spiky and tiny; nobody wants to capacity-plan a demo. On-demand removes that decision entirely.\n\n**How to choose in general:** unpredictable/spiky/new → on-demand; steady and high-volume with a known baseline → provisioned + auto scaling. You can switch a table between modes (with limits), so starting on-demand and moving later is a valid path.",
+    "resources": [
+      {
+        "label": "DynamoDB — Read/write capacity modes",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html"
+      },
+      {
+        "label": "DynamoDB — On-demand capacity mode",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html#HowItWorks.OnDemand"
+      }
+    ]
+  },
+  "cp-ddb-003": {
+    "explanation": "**'Heterogeneous' in DynamoDB terms:** because the table is schemaless beyond the primary key, items in the *same* table can have completely different attribute sets. A `celular` item has `marca`, `modelo`, `specs`; a `repuesto` doesn't. They only reliably share `id` (and roughly `name`/`price`).\n\n**Why it's actually common:** DynamoDB single-table designs lean on this on purpose, storing multiple entity types in one table. Here it's more incidental, but the coping strategy is the same.\n\n**How the project copes:** (1) GraphQL fields are **nullable** so a missing attribute is just `null`; (2) the resolver's `toProduct()` reads attributes that may be `undefined` and lets them map to `null` — the comment literally says 'Missing keys come back as undefined -> GraphQL null, which is fine here.'\n\n**The mindset shift:** don't expect a fixed row shape like SQL. Read each attribute defensively, and let the API surface absence as `null` rather than erroring.",
+    "resources": [
+      {
+        "label": "DynamoDB — Core components (items & attributes)",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html"
+      },
+      {
+        "label": "DynamoDB — Single-table design guidance",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-general-nosql-design.html"
+      }
+    ]
+  },
+  "cp-ddb-mr-001": {
+    "explanation": "**The goal:** stop reading the whole table just to return active phones. That requires an *indexed access path* for the attribute(s) you filter on.\n\n**Why a GSI on `tipo_producto`:** a Global Secondary Index gives the table an alternate key. Index the partition key on `tipo_producto` and DynamoDB maintains a separate, queryable view keyed by product type — so you can ask for just `celular` items directly.\n\n**Why switch the resolver to Query:** the GSI only helps if you actually **Query** it. A Query against the index reads only matching items, instead of Scanning everything and filtering after.\n\n**Why the distractors don't help:** raising `limit` just changes page size (still a Scan); on-demand billing changes pricing, not the access pattern; and you **can't add a sort key to an existing table's primary key** after creation — you'd create a new table or a GSI. Together, 'add GSI' + 'Query the GSI' is the real fix.\n\n**Refinement:** to filter on *two* attributes efficiently, model a composite GSI (e.g. partition `tipo_producto`, sort `is_active`) or a derived key.",
+    "resources": [
+      {
+        "label": "DynamoDB — Global secondary indexes",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html"
+      },
+      {
+        "label": "DynamoDB — Best practices for using secondary indexes",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-indexes-general.html"
+      }
+    ]
+  },
+  "cp-express-001": {
+    "explanation": "**The distinction:** a GraphQL **server** owns the schema and executes resolvers; a GraphQL **client** just sends query strings to a server and reads the response. This Express app is purely a **client**.\n\n**What that means in the code:** `app/appsync.js` holds two query strings (`LIST_PRODUCTS`, `GET_PRODUCT`) and a `query()` helper that POSTs them to the AppSync URL. There's no schema, no resolver, no GraphQL execution engine in the Node process — AppSync is the server.\n\n**Why it matters:** keeping the app a thin client is what lets it run with zero AWS data permissions and no GraphQL-server dependencies. The heavy lifting (schema validation, resolver execution, DynamoDB access) lives in the managed service.\n\n**Common confusion:** 'we use GraphQL in the Node app' is ambiguous — be precise about *which side*. Here: client.",
+    "resources": [
+      {
+        "label": "GraphQL — Serving over HTTP (clients)",
+        "url": "https://graphql.org/learn/serving-over-http/"
+      },
+      {
+        "label": "AppSync — What is AWS AppSync?",
+        "url": "https://docs.aws.amazon.com/appsync/latest/devguide/what-is-appsync.html"
+      }
+    ]
+  },
+  "cp-express-mcq-001": {
+    "explanation": "**The context:** Node 18+ ships a global `fetch` (the undici implementation), so making an HTTP POST needs no dependency at all.\n\n**Why that beats a GraphQL client library here:** the entire GraphQL surface is two queries. A library like `graphql-request` or Apollo Client adds install size, API surface, and version maintenance to save a few lines of `fetch`. For two queries that's a poor trade.\n\n**The recurring theme:** the project deliberately minimizes dependencies — it also hand-rolls HTML with template strings instead of pulling in a view engine. Fewer dependencies = smaller image, smaller attack surface, less to upgrade.\n\n**When a client library *would* pay off:** many operations, the need for normalized caching, fragments, code generation from the schema, subscriptions, or optimistic UI. At that point Apollo/urql earn their weight. Match the tool to the size of the problem.",
+    "example": "```js\nconst res = await fetch(APPSYNC_URL, {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json', 'x-api-key': KEY },\n  body: JSON.stringify({ query, variables }),\n});\nconst { data, errors } = await res.json();\n```",
+    "resources": [
+      {
+        "label": "Node.js — Global fetch",
+        "url": "https://nodejs.org/api/globals.html#fetch"
+      },
+      {
+        "label": "MDN — Using the Fetch API",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch"
+      }
+    ]
+  },
+  "cp-express-002": {
+    "explanation": "**Why three layers:** a call to AppSync can fail in three distinct ways, and each needs catching or you get silent wrong behavior.\n\n**Layer 1 — config:** if `APPSYNC_URL`/`APPSYNC_API_KEY` are unset, throw immediately. Fail-fast on misconfiguration beats a confusing downstream error.\n\n**Layer 2 — transport:** if `res.ok` is false (non-2xx), throw with the status and body text. This catches network/auth/throttling/parse problems at the HTTP level.\n\n**Layer 3 — GraphQL:** even on HTTP 200, check `body.errors` and throw — because GraphQL reports resolver failures in the body, not the status code.\n\n**How routes use it:** each route wraps the call in `try/catch` and forwards with `next(err)`, so all three failure types funnel into the single Express error-handling middleware. The design goal stated in the code is to **fail loudly** during the learning phase rather than render half-broken pages.",
+    "example": "```js\nif (!URL || !KEY) throw new Error('APPSYNC_URL and APPSYNC_API_KEY must be set');\nconst res = await fetch(URL, { /* ... */ });\nif (!res.ok) throw new Error(`AppSync HTTP ${res.status}: ${await res.text()}`);\nconst body = await res.json();\nif (body.errors) throw new Error(`GraphQL: ${JSON.stringify(body.errors)}`);\nreturn body.data;\n```",
+    "resources": [
+      {
+        "label": "Express — Error handling",
+        "url": "https://expressjs.com/en/guide/error-handling.html"
+      },
+      {
+        "label": "GraphQL — Errors over HTTP",
+        "url": "https://graphql.org/learn/serving-over-http/"
+      }
+    ]
+  },
+  "cp-express-mcq-002": {
+    "explanation": "**What makes it error-handling middleware:** the **four-argument signature** `(err, req, res, next)`. Express specifically detects four params and routes errors to it — a normal `(req, res, next)` handler will never receive the error.\n\n**Why placement matters:** Express runs middleware in registration order. Error handlers must be registered **after** the routes so that errors those routes pass via `next(err)` actually reach the handler. Put it first and it sees nothing.\n\n**How errors get there:** synchronous throws are caught automatically; for async work you must call `next(err)` yourself (the routes do this in their `catch`). In Express 5, rejected promises returned from handlers are also forwarded automatically — but the explicit `next(err)` here is clear and version-safe.\n\n**Mnemonic:** 'four args, registered last' = the catch-all.",
+    "example": "```js\napp.get('/products', async (req, res, next) => {\n  try { res.send(productsPage(await listProducts())); }\n  catch (err) { next(err); }      // forward to the handler below\n});\n\napp.use((err, req, res, next) => { // 4 args, registered last\n  console.error(err);\n  res.status(500).send(`error: ${err.message}`);\n});\n```",
+    "resources": [
+      {
+        "label": "Express — Writing error-handling middleware",
+        "url": "https://expressjs.com/en/guide/error-handling.html#writing-error-handlers"
+      },
+      {
+        "label": "Express — Using middleware",
+        "url": "https://expressjs.com/en/guide/using-middleware.html"
+      }
+    ]
+  },
+  "cp-express-003": {
+    "explanation": "**Two different 'failures':** 'this id doesn't exist' is a normal, expected outcome (a 404). 'AppSync/DynamoDB blew up' is an unexpected error (a 500). Conflating them hides real problems and confuses clients.\n\n**How the route separates them:** `getProduct(id)` returns **`null`** for a missing item (the resolver returns null when DynamoDB finds nothing). The route checks that value and sets status `product ? 200 : 404`, rendering a friendly 'no encontrado' page for the 404.\n\n**The error path is different:** if the AppSync call *throws* (network error, GraphQL error), the route doesn't reach the status line — it goes to `next(err)` and the 500 handler.\n\n**Why correct status codes matter:** caches, monitoring, and clients all key off them. A 404 says 'gone/never existed, don't retry the same way'; a 500 says 'something broke, maybe retry/alert'. Returning 200 with an error page (a 'soft 404') breaks all of that.",
+    "example": "```js\napp.get('/products/:id', async (req, res, next) => {\n  try {\n    const product = await getProduct(req.params.id);\n    res.status(product ? 200 : 404).send(productPage(product)); // null -> 404\n  } catch (err) {\n    next(err); // real failure -> 500 handler\n  }\n});\n```",
+    "resources": [
+      {
+        "label": "MDN — HTTP 404 Not Found",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"
+      },
+      {
+        "label": "Express — res.status()",
+        "url": "https://expressjs.com/en/4x/api.html#res.status"
+      }
+    ]
+  },
+  "cp-express-004": {
+    "explanation": "**The risk — XSS:** the app builds HTML by string interpolation, and some interpolated values (`name`, `description`) come from the database. If a value contained `<script>...</script>` or an event-handler attribute, an unescaped insert would execute in the visitor's browser — stored cross-site scripting.\n\n**What prevents it:** every interpolated value is wrapped in `esc()`, which replaces the HTML-significant characters `&`, `<`, `>`, and `\"` with entities. So `<script>` becomes harmless text. The discipline is: **escape at the point of output**, around every `${...}`.\n\n**Where the gaps still are:** (1) `esc()` makes a value safe inside an element body and inside a double-quoted attribute, but URLs like `pictureUrl` aren't validated as `http(s)` — a `javascript:` URL in an `href`/`src` is a theoretical hole; (2) the 500 handler echoes `err.message` to the client, which can leak internal details. In production you'd validate URL schemes and return a generic error.\n\n**Takeaway:** output-encoding is contextual (HTML body vs attribute vs URL vs JS). A single `esc()` covers the first two; URLs need their own check.",
+    "example": "```js\nfunction esc(v) {\n  if (v == null) return '';\n  return String(v)\n    .replace(/&/g, '&amp;').replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\n}\n// every interpolation is escaped:\n`<h3>${esc(p.name)}</h3>`\n```",
+    "resources": [
+      {
+        "label": "OWASP — Cross Site Scripting (XSS)",
+        "url": "https://owasp.org/www-community/attacks/xss/"
+      },
+      {
+        "label": "OWASP — XSS Prevention Cheat Sheet",
+        "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html"
+      }
+    ]
+  },
+  "cp-express-mcq-003": {
+    "explanation": "**Liveness vs readiness:** a **liveness** probe answers 'is the process up?' A **readiness** probe answers 'can it serve traffic right now (deps included)?' The ALB health check here is effectively a liveness check.\n\n**Why `/healthz` must stay cheap and dependency-free:** if it called AppSync/DynamoDB and that dependency had a blip, every task would fail the check at once and the ALB would mark them all unhealthy — taking the whole service down over a transient upstream hiccup. A flapping dependency would cause flapping deregistration.\n\n**What it does instead:** returns `{ ok: true }` immediately, testing only that the Node process can accept a request and respond.\n\n**The nuance:** dependency health *is* worth knowing — but put it behind a **separate readiness/deep-health endpoint** used by humans/dashboards, not the load-balancer liveness check. Keep the thing that decides 'kill this task' as narrow and stable as possible.",
+    "example": "```js\napp.get('/healthz', (req, res) => {\n  res.json({ ok: true }); // no AppSync/DynamoDB call on purpose\n});\n```",
+    "resources": [
+      {
+        "label": "ALB — Health checks for target groups",
+        "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html"
+      },
+      {
+        "label": "AWS — Implementing health checks",
+        "url": "https://aws.amazon.com/builders-library/implementing-health-checks/"
+      }
+    ]
+  },
+  "cp-docker-001": {
+    "explanation": "**What multi-stage means:** one Dockerfile, several `FROM` stages. Earlier stages do build work; the final stage copies only the finished artifacts it needs. Tools and intermediate files from earlier stages are discarded.\n\n**This project's two stages:** a `deps` stage runs `npm ci --omit=dev` to install **production** dependencies; the `runtime` stage starts fresh from `node:22-alpine` and `COPY --from=deps` brings over just `node_modules`, then adds `package*.json` and `app/`.\n\n**The payoff:** the final image contains no build cache, no dev dependencies, no leftover layers from installing — so it's smaller and has a smaller attack surface. (For a pure-JS app the win is modest; for apps that compile native deps or use a bundler it's dramatic, because compilers/toolchains never reach the runtime image.)\n\n**Other good practices in the same file:** `ENV NODE_ENV=production`, a non-root `USER node`, and a minimal Alpine base. Multi-stage is the structural piece that makes 'ship only what you run' easy.",
+    "example": "```dockerfile\nFROM node:22-alpine AS deps\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --omit=dev\n\nFROM node:22-alpine AS runtime\nENV NODE_ENV=production\nWORKDIR /app\nCOPY --from=deps /app/node_modules ./node_modules\nCOPY package*.json ./\nCOPY app ./app\nUSER node\nEXPOSE 3000\nCMD [\"node\", \"app/index.js\"]\n```",
+    "resources": [
+      {
+        "label": "Docker — Multi-stage builds",
+        "url": "https://docs.docker.com/build/building/multi-stage/"
+      },
+      {
+        "label": "Docker — Building best practices",
+        "url": "https://docs.docker.com/build/building/best-practices/"
+      }
+    ]
+  },
+  "cp-docker-mcq-001": {
+    "explanation": "**`npm ci` = clean, reproducible install.** It installs strictly from `package-lock.json`, deletes any existing `node_modules` first, and **fails** if `package.json` and the lockfile are out of sync. The result is identical every time — exactly what a build needs.\n\n**`npm install` is for development.** It resolves versions against the semver ranges in `package.json`, may update the lockfile, and may pull newer patch/minor versions than last time — non-deterministic, and it can silently change what ships.\n\n**Why determinism matters in an image:** you want the artifact you tested to be byte-for-byte the artifact you deploy. `npm ci` guarantees the dependency tree the lockfile pins; `npm install` doesn't.\n\n**`--omit=dev`:** drops `devDependencies` (test runners, linters, build tools) from the install, shrinking the production image. (It's the modern spelling of the old `--production` flag.)",
+    "example": "```bash\n# Reproducible, lockfile-exact, prod-only deps (use in Docker/CI)\nnpm ci --omit=dev\n\n# Dev-time: may update the lockfile / resolve newer versions\nnpm install\n```",
+    "resources": [
+      {
+        "label": "npm — npm ci docs",
+        "url": "https://docs.npmjs.com/cli/v10/commands/npm-ci"
+      },
+      {
+        "label": "npm — npm install docs",
+        "url": "https://docs.npmjs.com/cli/v10/commands/npm-install"
+      }
+    ]
+  },
+  "cp-docker-mcq-002": {
+    "explanation": "**How layer caching works:** each Dockerfile instruction becomes a layer. On rebuild, Docker reuses a cached layer as long as that instruction and its inputs are unchanged — but the moment one layer's input changes, that layer **and every layer after it** are rebuilt.\n\n**The optimization:** copy the files that change *least often* first. Dependencies change rarely, source code changes constantly. So `COPY package*.json` + `RUN npm ci` come **before** `COPY app ./app`. Now editing app code invalidates only the cheap final copy layer; the expensive `npm ci` layer stays cached.\n\n**What breaks it:** `COPY . .` early (copies everything, so any source edit busts the deps layer) — which is why this project copies the manifest separately first.\n\n**The general rule:** order Dockerfile instructions from least- to most-frequently-changed to maximize cache hits and minimize rebuild time.",
+    "example": "```dockerfile\nCOPY package*.json ./   # changes rarely -> npm layer stays cached\nRUN npm ci --omit=dev\nCOPY app ./app          # changes often -> only this layer rebuilds\n```",
+    "resources": [
+      {
+        "label": "Docker — Cache management with builds",
+        "url": "https://docs.docker.com/build/cache/"
+      },
+      {
+        "label": "Docker — Best practices: leverage the build cache",
+        "url": "https://docs.docker.com/build/building/best-practices/#leverage-build-cache"
+      }
+    ]
+  },
+  "cp-docker-002": {
+    "explanation": "**What it does:** `USER node` switches the user the container runs as to the unprivileged `node` account that the official Node images ship with. Every process after that line (including the `CMD`) runs as `node`, not root.\n\n**Why it matters — defense in depth:** by default a container runs as **root**. If an attacker exploits the app, root in the container is a much stronger foothold (write anywhere in the container FS, and a better launchpad for container-escape bugs). Dropping to a non-root user shrinks the blast radius.\n\n**What breaks if you forget it:** nothing functionally — the app still runs — which is exactly why it's easy to miss. But image scanners, the CIS Docker Benchmark, and the project's own Claude CI reviewer all flag 'runs as root'.\n\n**Gotcha:** after `USER node`, the process can't write to root-owned paths or bind ports <1024. The app listens on 3000 and writes nowhere privileged, so it's fine; if you needed to write files, you'd `chown` the directory to `node` first.",
+    "example": "```dockerfile\n# ...copy app in as root, then drop privileges before running\nUSER node\nEXPOSE 3000\nCMD [\"node\", \"app/index.js\"]   # runs as 'node', not root\n```",
+    "resources": [
+      {
+        "label": "Docker — USER instruction",
+        "url": "https://docs.docker.com/reference/dockerfile/#user"
+      },
+      {
+        "label": "Docker — Best practices (run as non-root)",
+        "url": "https://docs.docker.com/build/building/best-practices/"
+      }
+    ]
+  },
+  "cp-docker-mcq-003": {
+    "explanation": "**The misconception:** `EXPOSE 3000` does *not* open or publish a port. Containers can reach each other on any port regardless of `EXPOSE`, and the host cannot reach the container just because of it.\n\n**What it actually is:** metadata/documentation. It records 'this image's app listens on 3000' for humans and for tooling (e.g. `docker run -P` uses it to pick ports to auto-publish).\n\n**Where publishing really happens:** at **run time** — `docker run -p 8080:3000` maps a host port to the container port locally, and on ECS the task definition's `portMappings` declares the container port the ALB target group routes to.\n\n**Why keep it then:** it's good self-documentation and it cooperates with `-P`. Just don't expect it to affect connectivity on its own.",
+    "example": "```dockerfile\nEXPOSE 3000   # documentation only\n```\n```bash\n# publishing actually happens at run time:\ndocker run -p 8080:3000 products-web   # host 8080 -> container 3000\n```",
+    "resources": [
+      {
+        "label": "Docker — EXPOSE instruction",
+        "url": "https://docs.docker.com/reference/dockerfile/#expose"
+      },
+      {
+        "label": "Docker — Published ports",
+        "url": "https://docs.docker.com/engine/network/#published-ports"
+      }
+    ]
+  },
+  "cp-docker-mr-001": {
+    "explanation": "**What `.dockerignore` controls:** the **build context** — the set of files the Docker CLI sends to the daemon before building. Patterns listed there are excluded from that upload (similar to `.gitignore`).\n\n**Benefit 1 — smaller/faster context:** without it, the daemon would receive `node_modules`, the entire `.git` history, logs, etc. Excluding them makes the upload fast and avoids accidentally `COPY`ing huge or stale directories into the image.\n\n**Benefit 2 — safety:** it keeps secrets and irrelevant material out of the image. This project excludes `.env`, `infra/` (Terraform, incl. state), `documents/`, `*.md`, and the Dockerfile itself — so a stray `COPY . .` could never bake the `.env` or tfstate into a shipped image.\n\n**Why the distractors are wrong:** multi-stage builds work without it; it doesn't replace `USER`; and it doesn't compress layers. (Note `node_modules` is also excluded simply because the image installs its own via `npm ci`.)",
+    "example": "```text\nnode_modules\n.git\n*.log\ninfra\ndocuments\n.env\n*.md\nDockerfile\n```",
+    "resources": [
+      {
+        "label": "Docker — .dockerignore file",
+        "url": "https://docs.docker.com/build/concepts/context/#dockerignore-files"
+      },
+      {
+        "label": "Docker — Build context",
+        "url": "https://docs.docker.com/build/concepts/context/"
+      }
+    ]
+  },
+  "cp-docker-003": {
+    "explanation": "**The gotcha:** a container image is built for a specific CPU architecture. If the image's architecture doesn't match what the host expects, the container fails to start — typically with `exec format error`.\n\n**Where it bites here:** the build happens on an Apple Silicon (arm64) Mac, so the local image is arm64. The ECS task definition therefore sets `runtime_platform { cpu_architecture = \"ARM64\" }` to match. Mismatch either way (build amd64, run arm64, or vice versa) = the task won't run.\n\n**How to control it deliberately:** build for the target with `docker build --platform linux/arm64 ...`, or use `docker buildx` to produce a **multi-arch** image so the same tag runs on both arm64 and amd64. Fargate supports both architectures (arm64 is often cheaper).\n\n**The rule:** architecture must agree across the whole chain — the image you push to ECR and the platform the task declares. Pick one and be explicit, or build multi-arch.",
+    "example": "```bash\n# Build explicitly for the target architecture\ndocker build --platform linux/arm64 -t products-web .\n\n# Or build a multi-arch image that runs on arm64 and amd64\ndocker buildx build --platform linux/amd64,linux/arm64 -t products-web --push .\n```",
+    "resources": [
+      {
+        "label": "Docker — Multi-platform builds",
+        "url": "https://docs.docker.com/build/building/multi-platform/"
+      },
+      {
+        "label": "ECS — Fargate on ARM (Graviton)",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-arm64.html"
+      }
+    ]
+  },
+  "cp-ecs-001": {
+    "explanation": "**Fargate = serverless containers.** You hand ECS a task definition and say 'run N of these'; AWS provisions and manages the underlying compute. There are no EC2 instances for you to launch, patch, scale, or right-size.\n\n**What you control vs what AWS controls:** you pick the task's CPU/memory (here 256/512), the image, env, and IAM roles. AWS owns the host, the OS patching, and the capacity. You pay per vCPU- and GB-second the task runs.\n\n**EC2 launch type by contrast:** you run and maintain a cluster of EC2 instances that host the containers — more operational work, but more control (custom AMIs, GPUs, specific instance types, bin-packing for cost at scale, daemon containers).\n\n**When to pick which:** Fargate for most web/services where you don't want to babysit servers (this project); EC2 when you need hardware control, special instance types, or maximum cost optimization at large, steady scale.\n\n**Interview-ready line:** 'Fargate trades a per-resource price premium for zero instance management.'",
+    "resources": [
+      {
+        "label": "ECS — What is AWS Fargate?",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/userguide/what-is-fargate.html"
+      },
+      {
+        "label": "ECS — Launch types (Fargate vs EC2)",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_types.html"
+      }
+    ]
+  },
+  "cp-ecs-mcq-001": {
+    "explanation": "**`docker run` on a box gives you one container and nothing else.** If it crashes, it stays down. If the box dies, the app dies. There's no scaling, no load balancing, no rolling deploys, and a single point of failure.\n\n**What an orchestrator adds:**\n\n**Desired-state reconciliation:** you declare 'run N tasks' and ECS continuously makes reality match — restarting/replacing tasks that crash or fail health checks.\n\n**Scaling:** change `desired_count` (or attach Service Auto Scaling) and ECS adds/removes tasks.\n\n**Load-balancer integration:** ECS registers new task IPs into the ALB target group and deregisters stopped ones automatically.\n\n**Safe deploys:** rolling updates bring up new tasks, wait for health, then drain old ones — no manual downtime window.\n\n**Why the distractors are wrong:** ECS doesn't shrink images, `docker run` runs Node fine, and you don't need ECS to build images. The value is *operating* containers in production, not running one.",
+    "resources": [
+      {
+        "label": "ECS — Services (desired count, scheduling)",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html"
+      },
+      {
+        "label": "ECS — What is Amazon ECS?",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html"
+      }
+    ]
+  },
+  "cp-ecs-002": {
+    "explanation": "**Two roles, two jobs — the most-asked ECS distinction:**\n\n**Execution role (`ecs_execution`):** assumed by the **ECS agent/infrastructure** to *start* the task. It needs to pull the image from ECR, write to CloudWatch Logs, and — here — read the AppSync key from Secrets Manager to inject it. This project attaches the managed `AmazonECSTaskExecutionRolePolicy` plus a tight policy allowing `secretsmanager:GetSecretValue` on exactly one secret ARN.\n\n**Task role (`ecs_task`):** assumed by **your application code** at runtime for any AWS API it calls. Here it's **empty** by design — the app only talks to AppSync over HTTPS with an API key, so it needs no AWS permissions of its own. That's least privilege: grant nothing you don't use.\n\n**The trap:** people dump app permissions into the execution role (or vice versa). Rule of thumb: 'pull the image / fetch secrets / write logs to start the task' → execution role; 'what my code does once running' → task role.",
+    "example": "```text\nExecution role  -> ECS agent: pull ECR image, write logs, read the secret (at launch)\nTask role       -> your app code at runtime (empty here; app only calls AppSync)\n```",
+    "resources": [
+      {
+        "label": "ECS — Task execution IAM role",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html"
+      },
+      {
+        "label": "ECS — Task IAM role",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html"
+      }
+    ]
+  },
+  "cp-ecs-mcq-002": {
+    "explanation": "**Why the API key uses Secrets Manager:** the task definition is a normal AWS resource — its JSON is visible to anyone with `ecs:DescribeTaskDefinition`, and it appears in the console. A plain `environment` value is stored in that JSON in **plaintext**. Putting a credential there leaks it to everyone who can read the task def.\n\n**How `secrets` differs:** the `secrets` block holds only a **reference** (`valueFrom` = the secret ARN). At launch, the **execution role** fetches the secret value and ECS injects it as an env var inside the container. The plaintext value never lives in the task definition.\n\n**The split in this project:** `APPSYNC_URL` is not sensitive, so it's a normal `environment` entry; `APPSYNC_API_KEY` goes through `secrets` → Secrets Manager.\n\n**Bonus:** because it's a reference, rotating the secret doesn't require editing the task definition — new tasks pick up the new value.",
+    "example": "```json\n{\n  \"environment\": [{ \"name\": \"APPSYNC_URL\", \"value\": \"https://...\" }],\n  \"secrets\": [{ \"name\": \"APPSYNC_API_KEY\", \"valueFrom\": \"arn:aws:secretsmanager:...:secret:products-web/appsync-api-key\" }]\n}\n```",
+    "resources": [
+      {
+        "label": "ECS — Passing secrets to a container",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data.html"
+      },
+      {
+        "label": "ECS — Secrets via Secrets Manager",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data-secrets.html"
+      }
+    ]
+  },
+  "cp-ecs-003": {
+    "explanation": "**The pattern — the ALB is the only door.** Two security groups chain together so internet traffic can only reach the app through the load balancer.\n\n**ALB security group:** allows inbound `:80` from `0.0.0.0/0` — it's meant to be public.\n\n**Service security group:** allows inbound on the container port (3000) **only from the ALB's security group**, by referencing `aws_security_group.alb.id` as the source — *not* a CIDR. So nothing on the internet can hit the tasks directly; only the ALB can.\n\n**Why source-by-SG beats source-by-IP:** Fargate task IPs are dynamic and ephemeral, and the ALB's IPs change too. Referencing the *security group* means the rule keeps working as tasks come and go — no IP bookkeeping.\n\n**The result:** even though tasks have public IPs (for egress), the inbound rules make them unreachable except via the ALB — the textbook 'load balancer in front, app locked down behind' topology.",
+    "example": "```text\nInternet --(:80 from 0.0.0.0/0)--> [ALB SG] --(:3000 from ALB SG only)--> [Service SG / tasks]\n```",
+    "resources": [
+      {
+        "label": "VPC — Security groups",
+        "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html"
+      },
+      {
+        "label": "ECS — Fargate task networking",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html"
+      }
+    ]
+  },
+  "cp-ecs-mcq-003": {
+    "explanation": "**Why `assign_public_ip = true` here:** the tasks run in the default VPC's **public subnets** and must reach the internet to pull the image from ECR and call the AppSync endpoint. A public IP gives them that outbound path without any extra infrastructure.\n\n**Why it's not ideal for production:** the tasks now have internet-routable addresses. Even though inbound is locked to the ALB by security group, the cleaner posture is no public IP at all.\n\n**The cleaner alternatives:** put tasks in **private subnets** and provide egress via a **NAT gateway**, or — better and cheaper for AWS-only egress — use **VPC interface/gateway endpoints** for ECR, Secrets Manager, CloudWatch Logs, and S3 so traffic to those services never leaves the AWS network and no NAT/public IP is needed.\n\n**Why the project skips it:** NAT gateways and endpoints cost money and add setup; for a learning stack, a public IP is the pragmatic shortcut. Knowing *why* it's a shortcut is the point.",
+    "resources": [
+      {
+        "label": "ECS — Fargate task networking (public IP)",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html"
+      },
+      {
+        "label": "VPC — What is a NAT gateway?",
+        "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
+      },
+      {
+        "label": "AWS PrivateLink — VPC endpoints",
+        "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/concepts.html"
+      }
+    ]
+  },
+  "cp-ecs-004": {
+    "explanation": "**How a deploy happens:** push a new image tag → register a new **task-definition revision** → update the service to use it. ECS then runs a **rolling update**.\n\n**The rolling mechanics:** ECS starts new tasks on the new revision, waits for them to pass the **ALB target-group health check**, registers them, then drains and stops the old tasks. The deployment is governed by `minimumHealthyPercent` and `maximumPercent`, which bound how many tasks can be down/extra during the swap.\n\n**Zero-downtime condition:** with `desired_count` ≥ 2 (and min-healthy 100%), there are always healthy tasks serving while the swap happens. With a **single** task, default settings allow a brief gap (the old one can stop before the new one is ready) unless you raise capacity or use blue/green.\n\n**Safer options to name:** ECS **deployment circuit breaker** (auto-rollback on failed deploys) and **CodeDeploy blue/green** (stand up a parallel set, shift traffic, instant rollback). Health checks are what make any of it safe — a new task gets traffic only after it's healthy.",
+    "resources": [
+      {
+        "label": "ECS — Rolling update deployments",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-ecs.html"
+      },
+      {
+        "label": "ECS — Deployment circuit breaker",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-circuit-breaker.html"
+      }
+    ]
+  },
+  "cp-tf-001": {
+    "explanation": "**The contrast:** clicking resources together in the AWS console ('click-ops') is fast once, but undocumented, unrepeatable, and impossible to review. Terraform makes the infrastructure **code**.\n\n**What you gain:** **reproducibility** (re-create the identical stack in another account/region), **reviewability** (changes show up as a diff in a PR — reviewed here by the Claude CI action), **previewability** (`terraform plan` shows exactly what will change before it happens), **safe teardown** (`terraform destroy` removes the whole stack — vital for a billable learning project), and **self-documentation** (the files *are* the architecture).\n\n**This project's stack as code:** `infra/` declares the AppSync API + schema + resolvers, the IAM roles, ECR, the ECS cluster/service/task definition, the ALB + target group + security groups, and the Secrets Manager secret — everything, in one place.\n\n**The mindset:** infrastructure should be versioned, reviewed, and reproducible like application code — not a pile of manual console steps no one remembers.",
+    "resources": [
+      {
+        "label": "Terraform — What is Terraform?",
+        "url": "https://developer.hashicorp.com/terraform/intro"
+      },
+      {
+        "label": "AWS — What is Infrastructure as Code?",
+        "url": "https://aws.amazon.com/what-is/iac/"
+      }
+    ]
+  },
+  "cp-tf-mcq-001": {
+    "explanation": "**`resource` = Terraform owns it.** A `resource` block is something this configuration **creates, updates, and destroys**. `terraform destroy` will delete it.\n\n**`data` = Terraform only reads it.** A `data` source looks up an existing object managed elsewhere and exposes its attributes (ARN, name, …) — but Terraform never modifies or deletes it.\n\n**Why it's critical here:** `items-dev` holds real product data and is managed outside this stack. Declaring it as `data \"aws_dynamodb_table\" \"items\"` means Terraform can reference its ARN (for the AppSync IAM policy and the data source) **without any risk of altering or destroying the table**. If it were a `resource`, a `terraform destroy` could wipe the data.\n\n**The mental test:** 'Did this config create it?' Yes → `resource`. 'Does it already exist and I just need to point at it?' → `data`.",
+    "example": "```hcl\n# Read-only reference to an existing table (never created/destroyed here)\ndata \"aws_dynamodb_table\" \"items\" {\n  name = \"items-dev\"\n}\n\n# Owned by this stack (created and destroyed by Terraform)\nresource \"aws_ecr_repository\" \"app\" {\n  name = \"products-web\"\n}\n```",
+    "resources": [
+      {
+        "label": "Terraform — Data sources",
+        "url": "https://developer.hashicorp.com/terraform/language/data-sources"
+      },
+      {
+        "label": "Terraform — Resources overview",
+        "url": "https://developer.hashicorp.com/terraform/language/resources"
+      }
+    ]
+  },
+  "cp-tf-002": {
+    "explanation": "**The point:** the AppSync API key is created, stored, and consumed entirely inside Terraform — no human ever copies a secret between the console and a config file.\n\n**The reference chain:** `aws_appsync_api_key.products.key` (the generated key) → written into `aws_secretsmanager_secret_version.secret_string` → the ECS task definition's `secrets` block points at the secret ARN via `valueFrom` → ECS injects it at launch as `APPSYNC_API_KEY`.\n\n**Why ordering 'just works':** Terraform builds a dependency graph from these references. Because the task definition references the secret, and the secret version references the API key, Terraform automatically creates them in the right order — no explicit `depends_on` needed. Referencing an attribute *is* declaring a dependency.\n\n**The security win:** the secret value lives in Secrets Manager, not in the task definition or the app image. The cost to remember: it also lands in Terraform **state**, so state must be protected (see the state question).",
+    "example": "```hcl\nresource \"aws_secretsmanager_secret_version\" \"appsync_api_key\" {\n  secret_id     = aws_secretsmanager_secret.appsync_api_key.id\n  secret_string = aws_appsync_api_key.products.key   # implicit dependency\n}\n# task definition -> secrets[].valueFrom = aws_secretsmanager_secret.appsync_api_key.arn\n```",
+    "resources": [
+      {
+        "label": "Terraform — Resource dependencies",
+        "url": "https://developer.hashicorp.com/terraform/language/resources/behavior#resource-dependencies"
+      },
+      {
+        "label": "Terraform — aws_secretsmanager_secret_version",
+        "url": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version"
+      }
+    ]
+  },
+  "cp-tf-mcq-002": {
+    "explanation": "**What `sensitive = true` does:** it tells Terraform to **redact** the value in CLI output — `terraform plan`/`apply` print `(sensitive value)` instead of the secret, and it's hidden in `terraform output` unless you ask for it explicitly.\n\n**How you read it when needed:** `terraform output -raw api_key` prints the actual value (so you can pipe it into an env var or a smoke test).\n\n**The crucial limitation:** `sensitive` is **display-only**. It does **not** encrypt the value in the **state file** — the API key still sits in `terraform.tfstate` in plaintext. That's why protecting state (remote, encrypted backend) is non-negotiable for real secrets.\n\n**In this project:** `api_key` is marked sensitive; the non-secret outputs (`graphql_url`, `alb_url`, `ecr_repository_url`) print normally. Good hygiene for logs/CI, but remember it's not a substitute for state encryption.",
+    "example": "```hcl\noutput \"api_key\" {\n  value     = aws_appsync_api_key.products.key\n  sensitive = true   # masked in CLI output, NOT encrypted in state\n}\n```\n```bash\nterraform output -raw api_key   # explicitly reveal when needed\n```",
+    "resources": [
+      {
+        "label": "Terraform — Sensitive output values",
+        "url": "https://developer.hashicorp.com/terraform/language/values/outputs#sensitive-suppressing-values-in-cli-output"
+      },
+      {
+        "label": "Terraform — Sensitive data in state",
+        "url": "https://developer.hashicorp.com/terraform/language/state/sensitive-data"
+      }
+    ]
+  },
+  "cp-tf-003": {
+    "explanation": "**What state is:** Terraform records everything it manages in a **state file** (`terraform.tfstate`) — the mapping between your config and the real resources, including resolved attribute values.\n\n**Why committing it to git is risky:** (1) **secrets in plaintext** — the AppSync key (via the secret version) and other sensitive attributes are written into state, so committing it leaks them into git history forever; (2) **no locking** — two people running `apply` against the same repo-stored state can corrupt it; (3) merge conflicts on a machine-generated JSON file are nasty.\n\n**The production-grade fix:** a **remote backend** — commonly an **S3 bucket** (with encryption + versioning) for the state plus **DynamoDB** (or S3 native locking) for a state **lock**, so applies are serialized and the state is encrypted at rest with access control. Terraform Cloud/Enterprise is the managed equivalent.\n\n**For this learning repo:** committed state is a known shortcut to flag — fine for a throwaway demo, unacceptable for anything shared or real.",
+    "example": "```hcl\nterraform {\n  backend \"s3\" {\n    bucket         = \"my-tf-state\"\n    key            = \"products/terraform.tfstate\"\n    region         = \"us-east-1\"\n    encrypt        = true\n    dynamodb_table = \"tf-locks\"   # state locking\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "Terraform — State",
+        "url": "https://developer.hashicorp.com/terraform/language/state"
+      },
+      {
+        "label": "Terraform — S3 backend (remote state + locking)",
+        "url": "https://developer.hashicorp.com/terraform/language/backend/s3"
+      }
+    ]
+  },
+  "cp-tf-mcq-003": {
+    "explanation": "**The problem it solves:** by default Terraform replaces a resource by **destroying the old one, then creating the new**. But a security group that's still **referenced** by another resource (the service SG references the ALB SG) can't be deleted while in use — the destroy fails with a dependency-violation error, leaving you stuck.\n\n**What `create_before_destroy` does:** flips the order — Terraform **creates the replacement first**, updates references to point at it, then destroys the old one. No moment where the referenced SG doesn't exist.\n\n**Why `name_prefix` goes with it:** during the brief window both SGs exist, they can't share a name. `name_prefix` lets AWS generate unique names so the old and new can coexist while Terraform swaps them.\n\n**The pattern:** any resource that (a) must be replaced on certain changes and (b) is referenced by others is a candidate for `create_before_destroy` — security groups are the classic example.",
+    "example": "```hcl\nresource \"aws_security_group\" \"alb\" {\n  name_prefix = \"products-web-alb-\"   # unique names so both can coexist\n  # ...\n  lifecycle {\n    create_before_destroy = true       # new one up before old one down\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "Terraform — Lifecycle: create_before_destroy",
+        "url": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#create_before_destroy"
+      },
+      {
+        "label": "Terraform — The lifecycle meta-argument",
+        "url": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle"
+      }
+    ]
+  },
+  "cp-ci-001": {
+    "explanation": "**What it is:** a GitHub Actions workflow (`.github/workflows/claude-review.yml`) that runs Claude Code in CI to review pull requests automatically.\n\n**When it runs:** on the `pull_request` event, types `opened` and `synchronize`. `opened` = a new PR; `synchronize` = new commits pushed to an existing PR. So every time you push to a PR branch, the review re-runs against the updated diff.\n\n**What it produces:** it checks out the repo, runs `anthropics/claude-code-action@v1` with a review prompt, and Claude posts **inline comments** on the changed lines plus a short summary — like a tireless reviewer on every PR.\n\n**Why CI (not just local):** it's a consistent gate that runs for everyone, every time, without anyone remembering to run a local review. Same family as the local `/code-review`, but automatic and enforced in the PR.\n\n**Mental model:** it's a bot reviewer wired into the same PR workflow your human reviewers use.",
+    "example": "```yaml\non:\n  pull_request:\n    types: [opened, synchronize]   # new PR, and every new push to it\n```",
+    "resources": [
+      {
+        "label": "GitHub Actions — Events that trigger workflows (pull_request)",
+        "url": "https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request"
+      },
+      {
+        "label": "Claude — Claude Code GitHub Actions",
+        "url": "https://docs.anthropic.com/en/docs/claude-code/github-actions"
+      }
+    ]
+  },
+  "cp-ci-mcq-001": {
+    "explanation": "**The default is shallow.** `actions/checkout` clones with `fetch-depth: 1` — just the latest commit, no history. That's fast and fine for many builds.\n\n**Why the reviewer needs more:** to review a PR, Claude has to compute the **diff** between the PR branch and its base branch. That requires the commits and the **merge base** to be present locally. With a shallow clone the base history is missing, so the diff can't be computed reliably.\n\n**What `fetch-depth: 0` means:** fetch the **full history** (and all branches), so the merge base and the complete diff are available.\n\n**The trade-off:** a full fetch is slower and heavier than a shallow one — acceptable here because an accurate diff is the whole point of the job. (For plain build/test jobs you'd usually leave it shallow.)",
+    "example": "```yaml\n- uses: actions/checkout@v4\n  with:\n    fetch-depth: 0   # full history so the PR diff base is available\n```",
+    "resources": [
+      {
+        "label": "actions/checkout — fetch-depth",
+        "url": "https://github.com/actions/checkout#usage"
+      },
+      {
+        "label": "Git — Shallow clones",
+        "url": "https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt"
+      }
+    ]
+  },
+  "cp-ci-002": {
+    "explanation": "**Where the key lives:** the workflow reads `secrets.ANTHROPIC_API_KEY` — a **GitHub Actions secret** configured in repo (or org) settings, never written into the YAML or the code.\n\n**Why that matters:** API keys are bearer credentials — anyone holding one can spend against your account. Committing it to the repo (even in history) or printing it would expose it to everyone who can read the repo or the build logs.\n\n**What GitHub gives you:** secrets are encrypted at rest, injected only into workflow runs that reference them, and **automatically masked** in logs (printed as `***`). Secrets are also not passed to workflows triggered by forked-PRs by default, limiting exfiltration.\n\n**The irony / the point:** leaking secrets in code or logs is exactly the kind of issue this very workflow is prompted to catch in PRs. The same discipline applies to the app's AppSync key (Secrets Manager) — keep credentials out of code, config, and logs everywhere.",
+    "example": "```yaml\n- uses: anthropics/claude-code-action@v1\n  with:\n    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}   # never hardcoded\n```",
+    "resources": [
+      {
+        "label": "GitHub Actions — Using secrets",
+        "url": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions"
+      },
+      {
+        "label": "GitHub Actions — Security hardening",
+        "url": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions"
+      }
+    ]
+  },
+  "cp-ci-mr-001": {
+    "explanation": "**The principle — least privilege for the workflow token.** GitHub gives each run a `GITHUB_TOKEN`; the `permissions:` block scopes what that token can do. Grant only what the job needs.\n\n**The two correct mappings:** `contents: read` lets the action **read the repo code** to review it; `pull-requests: write` lets Claude **post review comments** on the PR. Together that's exactly 'read the code, comment on the PR'.\n\n**Why the distractors are wrong:** `contents: write` would let it push commits to the repo — a reviewer shouldn't; `packages: write` (push images) and `deployments: write` (roll out ECS) are entirely outside a code review's job and would be dangerous to grant.\n\n**The rest of the real block:** it also has `issues: write` (PR review comments share the issues API surface) and `id-token: write` (OIDC, for short-lived federated cloud auth if needed). Everything granted maps to a concrete need; nothing extra.",
+    "example": "```yaml\npermissions:\n  contents: read         # read the code to review it\n  pull-requests: write   # post review comments\n  issues: write          # PR comments use the issues API\n  id-token: write        # OIDC for federated auth\n```",
+    "resources": [
+      {
+        "label": "GitHub Actions — Permissions for GITHUB_TOKEN",
+        "url": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#permissions-for-the-github_token"
+      },
+      {
+        "label": "GitHub Actions — Assigning permissions to jobs",
+        "url": "https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs"
+      }
+    ]
+  },
+  "cp-ci-003": {
+    "explanation": "**What MCP is:** the **Model Context Protocol** is an open standard for giving an AI model access to external **tools** and data through MCP 'servers'. It's how Claude Code reaches beyond the repo — e.g. a GitHub MCP server for richer PR context, or other tool servers.\n\n**Where it fits in CI:** you provide an MCP server configuration to the action; Claude can then call those tools while reviewing. It's the extensibility seam of the agent.\n\n**The governing principle — least privilege, again:** keep the **MCP allow-list narrow**. Give the reviewer only the tools the review actually needs. An over-broad tool set is both a security risk (more capability to misuse or be tricked into) and a noise risk (the agent wanders). This mirrors the empty ECS task role and the tight IAM policies elsewhere in the project — grant only what's used.\n\n**The throughline:** whether it's IAM actions, workflow token scopes, or MCP tools, the same rule holds — minimize granted capability.",
+    "resources": [
+      {
+        "label": "Model Context Protocol — Introduction",
+        "url": "https://modelcontextprotocol.io/introduction"
+      },
+      {
+        "label": "Claude Code — MCP",
+        "url": "https://docs.anthropic.com/en/docs/claude-code/mcp"
+      }
+    ]
+  },
+  "cp-ci-mcq-002": {
+    "explanation": "**The failure mode of an unscoped reviewer:** told to 'review this', an LLM will comment on everything — style preferences, nitpicks, restatements — burying the few findings that matter. Reviewers (human or AI) lose trust fast when signal-to-noise is low.\n\n**How the prompt scopes it:** it directs Claude to prioritize **real correctness bugs**, **security issues** (over-broad IAM, secret handling, public exposure, HTML injection), and clear **simplifications**, and to **skip style nitpicks**. It even describes the repo's shape (Terraform under `infra/`, Express under `app/`) so findings are well-targeted, and pins the model with `--model claude-sonnet-4-6` for consistent behavior.\n\n**Why this is the right call:** a focused review that surfaces 3 important issues is far more useful than 30 trivial ones. Scoping turns the bot into a high-signal gate rather than a comment firehose.\n\n**The transferable lesson:** prompt scope is to an AI reviewer what a good PR template/checklist is to a human one — it sets expectations and raises quality.",
+    "example": "```yaml\nprompt: |\n  Review for correctness bugs and clear simplifications.\n  Prioritise: real bugs, security (over-broad IAM, secrets, injection).\n  Skip style nitpicks. Post inline comments + a short summary.\n```",
+    "resources": [
+      {
+        "label": "Claude Code — GitHub Actions (configuring reviews)",
+        "url": "https://docs.anthropic.com/en/docs/claude-code/github-actions"
+      },
+      {
+        "label": "Anthropic — Prompt engineering overview",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview"
+      }
+    ]
+  },
+  "cp-sec-001": {
+    "explanation": "**Why inventory secrets:** you can't protect what you haven't named. This system has three, each stored where it's consumed.\n\n**AppSync API key:** lives in **Secrets Manager**, injected into the container as a task **secret** (so it's never plaintext in the task definition), and marked **`sensitive`** in Terraform outputs. The app reads it from the `APPSYNC_API_KEY` env var.\n\n**Anthropic API key:** a **GitHub Actions secret** (`secrets.ANTHROPIC_API_KEY`), used only inside the CI review workflow, masked in logs.\n\n**Local `.env`:** for running the app on your machine; it's **gitignored** and in **`.dockerignore`**, so it's neither committed nor baked into the image. The committed `.env.example` is just an empty template.\n\n**The pattern:** each secret is stored in the system that consumes it (AWS runtime → Secrets Manager; CI → Actions secrets; local dev → gitignored .env), and none live in source control or images. The one caveat to remember: the AppSync key also lands in Terraform **state**, so state must be protected too.",
+    "resources": [
+      {
+        "label": "AWS Secrets Manager — What is it?",
+        "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html"
+      },
+      {
+        "label": "GitHub Actions — Using secrets",
+        "url": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions"
+      }
+    ]
+  },
+  "cp-sec-mcq-001": {
+    "explanation": "**The mental split: per-hour vs per-request.**\n\n**Always-on (you pay while it exists, even idle):** the **ALB** bills per hour (plus a usage unit), and the **Fargate task** bills per vCPU- and GB-second for as long as it runs. These accrue 24/7 whether or not anyone visits — so they dominate the bill at this scale.\n\n**Per-request (you pay per use):** **AppSync** bills per query/resolver, and **DynamoDB on-demand** bills per read. With ~300 items and learning traffic, these are effectively rounding errors.\n\n**The practical implication:** the cheapest thing you can do is **tear down the ALB and ECS service when you're not using them** (`terraform destroy`), because that's where the idle cost is. Scaling down `desired_count` or stopping tasks cuts the Fargate portion.\n\n**Why the distractors are wrong:** it's not all per-request (the ALB/Fargate are hourly), DynamoDB on-demand is per-request not always-on, and AppSync has no fixed hourly fee like the ALB.",
+    "resources": [
+      {
+        "label": "AWS Fargate — Pricing",
+        "url": "https://aws.amazon.com/fargate/pricing/"
+      },
+      {
+        "label": "Elastic Load Balancing — Pricing",
+        "url": "https://aws.amazon.com/elasticloadbalancing/pricing/"
+      }
+    ]
+  },
+  "cp-sec-mr-001": {
+    "explanation": "**Frame it as: what would a security/ops reviewer block on?**\n\n**Add HTTPS:** the ALB listener is **HTTP :80 only** — traffic (including any future auth) is in cleartext. Add an **ACM certificate** + a **:443 HTTPS listener** and redirect 80→443. This is the most glaring gap.\n\n**Remote, encrypted Terraform state:** `terraform.tfstate` is committed and contains secrets in plaintext. Move it to an **S3 backend with encryption + a lock table**.\n\n**IAM auth to AppSync:** replace the long-lived **API key** with **IAM auth** so the task role signs requests — no shared secret to store or rotate.\n\n**Why the distractors are wrong:** removing `/healthz` would **break the ALB health check** (the opposite of safer), and giving the task role **full DynamoDB access** violates least privilege — the app talks only to AppSync and currently needs *no* AWS permissions.\n\n**Honorable mentions to name:** private subnets + NAT/VPC endpoints, stop echoing `err.message` to clients, pin the image by digest, tighten the AppSync IAM action list, add WAF + auto scaling.",
+    "resources": [
+      {
+        "label": "ALB — Create an HTTPS listener (TLS)",
+        "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
+      },
+      {
+        "label": "AWS — Well-Architected Security Pillar",
+        "url": "https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html"
+      }
+    ]
+  },
+  "cp-sec-002": {
+    "explanation": "**Start with logs:** the container uses the **`awslogs`** driver, shipping stdout/stderr to a CloudWatch **log group** (`/ecs/products-web`, 7-day retention). The app `console.error`s on its error path, so failures show up there. CloudWatch **Logs Insights** lets you query them.\n\n**Add tracing for cross-service issues:** a request here spans ALB → ECS → AppSync → DynamoDB. **AWS X-Ray** (which both AppSync and ECS integrate with) gives a distributed trace so you can see *which hop* is slow or failing, instead of guessing from logs in each service.\n\n**Add metrics + alarms for proactive detection:** CloudWatch metrics on **ALB 5xx**, **target health / unhealthy host count**, **target response time**, and ECS CPU/memory — wired to alarms — tell you something's wrong before users do.\n\n**The progression to articulate:** logs (what happened) → traces (where in the chain) → metrics/alarms (know before users do). This project has solid logging; X-Ray and alarms are the natural next steps.",
+    "example": "```hcl\nlogConfiguration = {\n  logDriver = \"awslogs\"\n  options = {\n    \"awslogs-group\"         = \"/ecs/products-web\"\n    \"awslogs-region\"        = \"us-east-1\"\n    \"awslogs-stream-prefix\" = \"app\"\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "ECS — Using the awslogs log driver",
+        "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html"
+      },
+      {
+        "label": "AWS X-Ray — What is X-Ray?",
+        "url": "https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html"
+      },
+      {
+        "label": "CloudWatch — Alarms",
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+      }
+    ]
+  },
+  "cp-sec-mcq-002": {
+    "explanation": "**The finding:** the AppSync→DynamoDB role grants `GetItem`, `Scan`, `Query`, and `BatchGetItem`, but the resolvers only use `GetItem` and `Scan`. So `Query` and `BatchGetItem` are unused.\n\n**How to characterize it honestly:** **slightly broader than strictly needed** — true least privilege would grant only the two actions in use. But it's **low risk**: the policy is **read-only** (no `PutItem`/`DeleteItem`/`UpdateItem`), and it's **scoped to the table ARN** (plus its indexes), not `Resource: \"*\"`. So the worst case is reading data the app already reads.\n\n**Why it's defensible:** the extra actions are plausible headroom for the planned GSI/Query work. Worth a comment in review, not an alarm.\n\n**Why the distractors are wrong:** it grants **no write access** (not a critical vuln), it's **not** perfectly minimal (Query/BatchGet are unused), and AppSync absolutely **does** enforce this role when accessing the data source.\n\n**Reviewer instinct:** rate severity by blast radius — read-only + ARN-scoped = minor; `*` resource or write actions = serious.",
+    "example": "```json\n{\n  \"Effect\": \"Allow\",\n  \"Action\": [\"dynamodb:GetItem\", \"dynamodb:Scan\"],\n  \"Resource\": [\"arn:aws:dynamodb:us-east-1:ACCOUNT:table/items-dev\"]\n}\n```",
+    "resources": [
+      {
+        "label": "IAM — Grant least privilege",
+        "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+      },
+      {
+        "label": "IAM — Policies and permissions",
+        "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html"
+      }
     ]
   }
 }
