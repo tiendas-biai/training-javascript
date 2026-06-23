@@ -142,7 +142,7 @@ graphql: {
 
 Data files are dynamic-imported per subject, so Vite code-splits each bank into its own chunk. Progress is stored per subject under `srs:<id>` (or in the cloud for signed-in users — see Part 3); "Reset progress" clears only the active subject. `loadData` is wrapped so that when `VITE_CARDS_FROM_API=true` it fetches the bank from the cards API and falls back to the bundled import; default (flag off) is the bundled JSON, unchanged.
 
-Current subjects: `javascript`, `react`, `node`, `typescript`, `aws`, `graphql`, `springboot`, `java`, `python`, `docker`.
+Current subjects: `javascript`, `react`, `node`, `typescript`, `aws`, `graphql`, `springboot`, `java`, `python`, `docker`, `cloud-project`.
 
 ### Routes
 
@@ -212,6 +212,7 @@ As of June 2026:
 | Java | 45 | Foundational topics for non-senior devs, authored from the Oracle Java Tutorials + dev.java: Language Basics (JVM/JDK/JRE, primitives, `var`, arithmetic), OOP (classes, encapsulation, inheritance, polymorphism, abstract/interface, static, final, equals/hashCode), Strings (immutability, ==/equals, StringBuilder), Collections (List/Set/Map, ArrayList vs LinkedList), Exceptions (checked/unchecked, try-with-resources, throw/throws), Generics (wildcards/PECS), Modern Java (lambdas, functional interfaces, streams, Optional, method references) |
 | Python | 48 | Foundational topics authored from the official Python tutorial + interview staples: Language Basics (interpreter/bytecode, indentation, dynamic typing, truthiness, None), Data Types (numbers, division operators, mutability, conversion), Strings (immutability, f-strings, slicing), Collections (list/tuple/dict/set, comprehensions, aliasing, unpacking), Control Flow (range, enumerate/zip, for-else, ternary), Functions (defaults gotcha, *args/**kwargs, lambda, LEGB scope), OOP (init/self, class vs instance attrs, super/MRO, str/repr, property, static/classmethod), Modules & Imports (import forms, main guard, pip/venv), Exceptions (try/except/else/finally, raise, EAFP, context managers), Modern Python (generators, decorators, sorting key, type hints, is vs ==, dataclasses) |
 | Docker | 56 | Integration-focused (containers → Kubernetes → AWS), authored from docs.docker.com + kubernetes.io + docs.aws.amazon.com. Docker fundamentals (Images & Dockerfile, Containers & Runtime, Storage & Networking, Compose & Registries); Kubernetes (Pods & Workloads, Services & Networking, Config & Secrets, Kubernetes Storage, Health & Scaling); AWS container services (ECR, ECS & Fargate, EKS, AWS Observability & Secrets — push/auth, task defs, EC2 vs Fargate, task vs execution role, IRSA, ALB/NLB controller, EBS/EFS CSI, CloudWatch logging, Secrets Manager injection, CI/CD). Uses MCQ + multiple-response scenario cards |
+| Cloud Project | 55 | Interview prep grounded in the **`training-docker`** companion repo (a real AppSync→ECS→DynamoDB stack). Topics map 1:1 to that project's code: Architecture (request flow), AppSync (heterogeneous schema, APPSYNC_JS resolvers, GetItem vs Scan, API-key→IAM auth, pagination), DynamoDB (key schema, Query vs Scan, on-demand, GSI access patterns), Express Client (GraphQL client over `fetch`, error layers, XSS/`esc()`, health checks), Docker (multi-stage, `npm ci`, layer caching, non-root, arch mismatch), ECS & ALB (Fargate vs EC2, task vs execution role, secret injection, SG chain, rolling deploys), Terraform (`data` vs `resource`, secret wiring, sensitive outputs, state, `create_before_destroy`), Claude CI (PR trigger, `fetch-depth: 0`, secrets, workflow permissions, MCP allow-list, review scoping), Security & Cost (secrets inventory, cost model, production-readiness, least privilege). Reveal + MCQ + multiple-response. Companion study doc: `training-docker/INTERVIEW.md` |
 
 ### Adding questions
 
@@ -322,7 +323,7 @@ Deploys **only Lambdas + DynamoDB tables**; routes live on the **shared `entorno
 - **Scripts** (`backend/scripts/`, idempotent, jq-based — never a client-side `--query` under CLI auto-pagination): `wire-api.sh` (authorizer + integrations + routes), `set-stage-vars.sh <env>`, `add-cors-origin.sh`, `unwire-api.sh`.
 - **Lambda tests** — `node --test` per function with a mocked `@aws-sdk/client-dynamodb` (`backend/{progress,cards}/test/`). `nodejs22.x`, arm64, `PAY_PER_REQUEST`.
 
-> Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live). `drill-cards-dev` holds all ten banks (1051 cards incl. docker's 56, deep dives merged on each item); re-run `seed-cards.mjs` after editing `app/data/*.json`.
+> Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live). `drill-cards-dev` holds all eleven banks (1106 cards incl. cloud-project's 55, deep dives merged on each item); re-run `seed-cards.mjs` after editing `app/data/*.json`.
 
 ---
 
