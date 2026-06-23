@@ -1,0 +1,767 @@
+{
+  "k8s-fund-001": {
+    "explanation": "**In one line:** Kubernetes is an open-source system for running and coordinating containerized applications across a cluster of machines.\n\n**The core idea — desired state:** you tell Kubernetes *what* you want (e.g. 'run 3 replicas of this image, expose it on port 80'), and its controllers continuously make the cluster match that. If a container dies, it's replaced; if a node fails, its pods are rescheduled elsewhere.\n\n**What it gives you:** self-healing, scaling, scheduling across nodes, service discovery, load balancing, rolling updates/rollbacks, and config/secret management — all as one logical platform.\n\n**Docker vs Kubernetes:** Docker builds and runs a container on a host; Kubernetes orchestrates many containers across many hosts. They're complementary layers, not competitors. On AWS the managed flavor is **EKS**.\n\n**Common beginner mistake:** thinking Kubernetes runs your code directly. It runs *containers* (OCI images) via a container runtime like containerd — you still build images first.",
+    "resources": [
+      {
+        "label": "Kubernetes — Overview",
+        "url": "https://kubernetes.io/docs/concepts/overview/"
+      },
+      {
+        "label": "Kubernetes — What is Kubernetes?",
+        "url": "https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/"
+      },
+      {
+        "label": "Amazon EKS — What is EKS?",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html"
+      }
+    ]
+  },
+  "k8s-fund-002": {
+    "explanation": "**The gap orchestration fills:** `docker run` gives you one container on one machine. In production you need many containers across many machines, staying up despite failures — that operational layer is what Kubernetes provides.\n\n**Self-healing:** controllers restart crashed containers and reschedule pods off dead nodes to keep the desired count running.\n\n**Scaling:** add/remove replicas (manually or via the Horizontal Pod Autoscaler) and add nodes (Cluster Autoscaler/Karpenter) as load changes.\n\n**Scheduling:** the scheduler places pods on suitable nodes based on resources, affinity, and constraints.\n\n**Service discovery & load balancing:** stable Service IPs/DNS route traffic across healthy pods even as they come and go.\n\n**Safe rollouts:** rolling updates and one-command rollbacks.\n\n**Config & secrets:** ConfigMaps/Secrets inject configuration without rebuilding images.\n\n**The throughline:** Kubernetes turns 'a container' into 'a reliable, scalable service'.",
+    "resources": [
+      {
+        "label": "Kubernetes — Why you need Kubernetes",
+        "url": "https://kubernetes.io/docs/concepts/overview/#why-you-need-kubernetes"
+      },
+      {
+        "label": "Kubernetes — Cluster Architecture",
+        "url": "https://kubernetes.io/docs/concepts/architecture/"
+      }
+    ]
+  },
+  "k8s-fund-mcq-001": {
+    "explanation": "**Declarative vs imperative:** imperative = 'do these steps' (start a container, then another…). Declarative = 'here is the end state I want' — and the system figures out the steps and keeps enforcing it.\n\n**The reconcile loop:** Kubernetes controllers run a continuous loop: read desired state (from your manifests, stored in etcd) → observe actual state → act to close the gap. Declare 3 replicas and one pod crashes? The ReplicaSet controller notices actual=2, desired=3, and creates one.\n\n**Why it matters:** the system is self-correcting and converges to your declared state even after failures or drift — you don't script the recovery, you declare the goal.\n\n**Practical consequence:** you edit a manifest and re-`kubectl apply` it; Kubernetes computes and applies the diff. You rarely issue imperative 'create one pod' commands in real workflows.",
+    "resources": [
+      {
+        "label": "Kubernetes — Objects & desired state",
+        "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/"
+      },
+      {
+        "label": "Kubernetes — Controllers",
+        "url": "https://kubernetes.io/docs/concepts/architecture/controller/"
+      }
+    ]
+  },
+  "k8s-fund-003": {
+    "explanation": "**What a manifest is:** a declarative description of one Kubernetes object. Every manifest has four top-level pieces: `apiVersion` (which API group/version), `kind` (Pod, Deployment, Service…), `metadata` (name, labels, namespace), and `spec` (the desired configuration).\n\n**How you apply it:** `kubectl apply -f file.yaml` (or a whole directory). It's **idempotent** — run it once to create, edit the file and run again to update; Kubernetes computes the diff and applies only what changed.\n\n**Why YAML files matter:** they're the source of truth, version-controlled like code, reviewable in PRs, and the basis of GitOps. Avoid imperative one-off `kubectl` mutations in production for the same reason you avoid console click-ops in AWS.\n\n**Tip:** `kubectl apply --dry-run=server -f file.yaml` validates a manifest without changing anything — a quick sanity check before applying.",
+    "example": "```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web\n  labels:\n    app: web\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n        - name: web\n          image: nginx:1.27\n          ports:\n            - containerPort: 80\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Managing resources with kubectl apply",
+        "url": "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/"
+      },
+      {
+        "label": "Kubernetes — Understanding objects (manifests)",
+        "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/"
+      }
+    ]
+  },
+  "k8s-fund-mcq-002": {
+    "explanation": "**Different layers, not rivals:** Docker (and the OCI image spec) is about *building and running a container* on a host. Kubernetes is about *orchestrating many containers across many hosts*.\n\n**How they fit together:** you use Docker (or any OCI builder) to build an image and push it to a registry (e.g. ECR). Kubernetes then pulls that image and runs it as containers in pods, via a container runtime such as **containerd** (Kubernetes removed the direct 'Dockershim' runtime in v1.24, but Docker-built images still run fine — they're standard OCI images).\n\n**The misconception to kill:** 'Kubernetes replaced Docker.' It replaced Docker *as the node runtime*, not Docker as an image-building tool, and the two are routinely used together.\n\n**One-liner for interviews:** 'Docker builds and runs a container; Kubernetes runs and coordinates many of them across a cluster.'",
+    "resources": [
+      {
+        "label": "Kubernetes — Container runtimes",
+        "url": "https://kubernetes.io/docs/setup/production-environment/container-runtimes/"
+      },
+      {
+        "label": "Kubernetes blog — Don't panic: Dockershim removal",
+        "url": "https://kubernetes.io/blog/2022/02/17/dockershim-faq/"
+      }
+    ]
+  },
+  "k8s-arch-001": {
+    "explanation": "**Two halves:** the **control plane** (the brain) and the **worker nodes** (the muscle). You talk to the control plane; it decides what should run and where; the nodes run it.\n\n**Control plane:** makes global decisions and stores the cluster's desired/actual state. It hosts the API server, etcd, scheduler, and controller manager. It does *not* run your application pods (typically).\n\n**Worker nodes:** the machines (EC2 instances on EKS, or Fargate) that actually run your pods. Each node runs a kubelet, kube-proxy, and a container runtime.\n\n**The interaction:** you `kubectl apply` a Deployment → the API server stores it → the scheduler picks nodes → kubelets on those nodes start the containers → controllers keep everything matching the desired state.\n\n**On EKS:** AWS fully manages the control plane (multi-AZ, patched, highly available); you manage (or hand to Fargate) the worker nodes. That split is EKS's main value.",
+    "example": "```text\nControl plane (AWS-managed on EKS)        Worker nodes (you/Fargate)\n┌───────────────────────────────┐        ┌──────────────────────────┐\n│ api-server  etcd              │  <───>  │ kubelet  kube-proxy      │\n│ scheduler   controller-manager│        │ container runtime + Pods │\n└───────────────────────────────┘        └──────────────────────────┘\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Cluster Architecture",
+        "url": "https://kubernetes.io/docs/concepts/architecture/"
+      },
+      {
+        "label": "Kubernetes — Components",
+        "url": "https://kubernetes.io/docs/concepts/overview/components/"
+      }
+    ]
+  },
+  "k8s-arch-002": {
+    "explanation": "**kube-apiserver — the front door:** the REST API for the whole cluster. Every read/write of cluster state (from kubectl, controllers, the scheduler, kubelets) goes through it. It authenticates, authorizes (RBAC), validates, and is the *only* component that writes to etcd.\n\n**etcd — the database:** a distributed, consistent key-value store holding all cluster state (every object). It's the single source of truth; protect and back it up.\n\n**kube-scheduler — placement:** watches for pods with no node assigned and picks the best node based on resource requests, affinity/anti-affinity, taints/tolerations, and constraints.\n\n**kube-controller-manager — the reconcile loops:** runs the built-in controllers (Deployment, ReplicaSet, Node, Job, etc.), each continuously driving actual state toward desired state.\n\n**Plus on cloud:** a cloud-controller-manager integrates with provider APIs (load balancers, routes, volumes). On EKS all of this is AWS-managed and HA.",
+    "resources": [
+      {
+        "label": "Kubernetes — Control plane components",
+        "url": "https://kubernetes.io/docs/concepts/overview/components/#control-plane-components"
+      },
+      {
+        "label": "Kubernetes — kube-scheduler",
+        "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/"
+      }
+    ]
+  },
+  "k8s-arch-mcq-001": {
+    "explanation": "**What etcd is:** a strongly-consistent, distributed key-value store. Kubernetes uses it as the **single source of truth** — every object you create (pods, deployments, configmaps, secrets, RBAC) is persisted there.\n\n**Who talks to it:** only the **API server**. Other components never touch etcd directly; they go through the API server, which centralizes validation and access control.\n\n**Why it's critical:** lose etcd (or its data) and you lose the cluster's state. That's why production clusters run etcd as an odd-numbered quorum (3/5 nodes) and back it up. On **EKS, AWS manages and backs up etcd** for you — one of the big reasons to use a managed control plane.\n\n**Why the distractors are wrong:** containers run on nodes (kubelet/runtime), Service load-balancing is kube-proxy, and the CLI is kubectl — none of those is etcd.",
+    "resources": [
+      {
+        "label": "Kubernetes — etcd",
+        "url": "https://kubernetes.io/docs/concepts/overview/components/#etcd"
+      },
+      {
+        "label": "Kubernetes — Operating etcd for clusters",
+        "url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
+      }
+    ]
+  },
+  "k8s-arch-003": {
+    "explanation": "**kubelet — the node agent:** the primary 'node babysitter'. It registers the node with the API server, watches for pods assigned to its node, and tells the container runtime to start/stop containers so the node's actual pods match what's assigned. It also runs the liveness/readiness probes and reports status back.\n\n**kube-proxy — node networking:** programs the node's network rules (iptables/IPVS, or replaced by the VPC CNI on EKS) so that traffic to a Service's virtual IP is forwarded to one of the backing pods. It's what makes the Service abstraction work at the packet level.\n\n**Container runtime — runs containers:** the software that actually pulls images and runs containers, e.g. **containerd** (the EKS default). Kubernetes talks to it via the Container Runtime Interface (CRI).\n\n**Mental model:** kubelet = 'make my assigned pods real and healthy'; kube-proxy = 'route Service traffic'; runtime = 'actually run the container'.",
+    "resources": [
+      {
+        "label": "Kubernetes — Node components",
+        "url": "https://kubernetes.io/docs/concepts/overview/components/#node-components"
+      },
+      {
+        "label": "Kubernetes — kubelet",
+        "url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/"
+      }
+    ]
+  },
+  "k8s-arch-mcq-002": {
+    "explanation": "**Why 'front door':** the kube-apiserver is the single entry point for the cluster's *control* plane. kubectl, the scheduler, controllers, and every node's kubelet all read and write cluster state through it — and it's the only component that persists to etcd.\n\n**What it does on each request:** authentication (who are you — IAM on EKS, certs, tokens), authorization (RBAC — are you allowed), admission control (mutating/validating webhooks), schema validation, then persistence to etcd.\n\n**The key distinction:** the API server handles *control-plane* traffic (managing objects). Your *application* traffic does **not** flow through it — user requests reach pods via Services/Ingress and the data-plane network. Confusing the two is a common error.\n\n**Why the distractors are wrong:** it's not an app load balancer, it doesn't run on every node serving your app, and it isn't the cluster DNS (that's CoreDNS).",
+    "resources": [
+      {
+        "label": "Kubernetes — kube-apiserver",
+        "url": "https://kubernetes.io/docs/concepts/overview/components/#kube-apiserver"
+      },
+      {
+        "label": "Kubernetes — Controlling access to the API",
+        "url": "https://kubernetes.io/docs/concepts/security/controlling-access/"
+      }
+    ]
+  },
+  "k8s-work-001": {
+    "explanation": "**The smallest unit:** Kubernetes doesn't schedule containers directly — it schedules **pods**. A pod is one or more containers that are always co-located and co-scheduled on the same node.\n\n**What containers in a pod share:** the same network namespace (one pod IP; containers reach each other on `localhost`) and can share storage volumes. They're a single deployable, scalable unit.\n\n**Single vs multi-container:** most pods run one app container. Multi-container pods are for tightly-coupled helpers — **sidecars** like a log shipper, proxy, or the AWS Secrets Store CSI helper — that must share the main container's lifecycle/network.\n\n**Ephemeral by nature:** pods are cattle, not pets. When rescheduled, updated, or evicted they're replaced by *new* pods with new names and new IPs. That's why you never target a pod IP directly — you put a **Service** in front (stable IP/DNS).\n\n**Practical note:** you rarely create bare pods; you create a Deployment that manages them.",
+    "example": "```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: web\n  labels:\n    app: web\nspec:\n  containers:\n    - name: web\n      image: nginx:1.27\n      ports:\n        - containerPort: 80\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Pods",
+        "url": "https://kubernetes.io/docs/concepts/workloads/pods/"
+      },
+      {
+        "label": "Kubernetes — Pod lifecycle",
+        "url": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"
+      }
+    ]
+  },
+  "k8s-work-mcq-001": {
+    "explanation": "**Pods are ephemeral.** A pod is a disposable instance. When a node dies, a deploy happens, an HPA scales down, or a pod fails a probe, Kubernetes deletes it and (via a controller) creates a *replacement* — a brand-new pod with a new name and a new IP.\n\n**So pod IPs are unstable** — never hardcode one or store it as a long-lived address.\n\n**The fix — a Service:** a Service gives a stable virtual IP and DNS name that always resolves to the *current* set of healthy, ready pods (tracked via label selectors and endpoints). Clients talk to the Service; Kubernetes handles the churn underneath.\n\n**Same idea inside the cluster:** call `http://my-svc.my-namespace.svc.cluster.local`, not a pod IP.\n\n**Interview cue:** 'pods are cattle, not pets' — design as if any pod can vanish at any moment.",
+    "resources": [
+      {
+        "label": "Kubernetes — Pod lifecycle",
+        "url": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"
+      },
+      {
+        "label": "Kubernetes — Service",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+      }
+    ]
+  },
+  "k8s-work-002": {
+    "explanation": "**What a Deployment is:** the standard controller for **stateless** apps. It declares how many identical replicas you want and which pod template (image, env, ports, probes) to run, then keeps that many pods running and rolls out changes safely.\n\n**How it works underneath:** a Deployment manages **ReplicaSets**. Each time you change the pod template (e.g. a new image tag) the Deployment creates a *new* ReplicaSet and gradually shifts replicas from old to new — a rolling update. Old ReplicaSets are kept so you can roll back.\n\n**Why you use it instead of bare pods:** bare pods don't self-heal or update. A Deployment gives you self-healing (recreates failed pods), declarative scaling, zero-downtime rollouts, and one-command rollback.\n\n**Stateless vs stateful:** for apps needing stable identity/storage (databases), use a **StatefulSet** instead; for one-pod-per-node agents, a **DaemonSet**.",
+    "example": "```bash\n# Roll out a new image and watch it\nkubectl set image deployment/web web=nginx:1.27\nkubectl rollout status deployment/web\n\n# Scale and (if needed) roll back\nkubectl scale deployment/web --replicas=5\nkubectl rollout undo deployment/web\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Deployments",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+      },
+      {
+        "label": "Kubernetes — Workload management",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/"
+      }
+    ]
+  },
+  "k8s-work-003": {
+    "explanation": "**What a ReplicaSet does:** guarantees a specified number of identical pod replicas are running. It watches its pods (matched by label selector) and creates or deletes pods to keep the count at the desired number — pure reconciliation.\n\n**Relationship to a Deployment:** you almost never create a ReplicaSet directly. A **Deployment owns and manages ReplicaSets**. Each rollout = a new ReplicaSet scaled up while the previous one scales down.\n\n**Why you see multiple ReplicaSets:** for one Deployment, `kubectl get rs` often shows several — the active one plus older (scaled-to-0) ones retained as rollout history. That history is exactly what makes `rollout undo` possible.\n\n**The division of labor:** ReplicaSet = 'keep N identical pods alive'; Deployment = 'manage ReplicaSets to do safe rolling updates and rollbacks on top of that'.",
+    "resources": [
+      {
+        "label": "Kubernetes — ReplicaSet",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/"
+      },
+      {
+        "label": "Kubernetes — Deployments (rollouts)",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment"
+      }
+    ]
+  },
+  "k8s-work-mcq-002": {
+    "explanation": "**The chain:** `Deployment → ReplicaSet → Pods → containers`.\n\n**Walk it through:** you `kubectl apply` a **Deployment**. The Deployment controller creates a **ReplicaSet** sized to your `replicas`. The ReplicaSet controller creates that many **Pods** from the pod template. Each **Pod** runs one or more **containers** via the node's runtime.\n\n**Why it's layered this way:** each layer has one job — Deployment handles versioned rollouts/rollbacks, ReplicaSet handles 'keep N alive', Pod handles 'co-located containers sharing network/storage'. Separation of concerns.\n\n**Where Services fit (not in the chain):** a Service is *not* an owner in this hierarchy — it's networking that *selects* pods by label and load-balances to them, orthogonal to ownership.\n\n**Handy:** `kubectl get deploy,rs,pods -l app=web` shows all three layers for one app at once.",
+    "resources": [
+      {
+        "label": "Kubernetes — Deployments",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+      },
+      {
+        "label": "Kubernetes — Owners and dependents",
+        "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/"
+      }
+    ]
+  },
+  "k8s-work-004": {
+    "explanation": "**Liveness — 'is it still alive?'** If the liveness probe fails, the kubelet **restarts the container**. Use it to recover from deadlocks/hung states a process can't recover from itself.\n\n**Readiness — 'can it serve traffic right now?'** If the readiness probe fails, the pod is **removed from Service endpoints** (no traffic) but **not restarted**. Use it for startup warm-up and to shed traffic during temporary dependency hiccups, then automatically rejoin when healthy.\n\n**Startup probe — for slow starters:** gives a grace period before liveness/readiness kick in, so a slow-booting app isn't killed prematurely.\n\n**The classic mistake:** pointing liveness at a check that depends on a downstream service. A downstream blip then fails liveness → the container restarts → restart loop (CrashLoopBackOff) that fixes nothing. Liveness should test the process itself; readiness is where dependency checks belong.",
+    "example": "```yaml\nlivenessProbe:\n  httpGet:\n    path: /healthz\n    port: 8080\n  initialDelaySeconds: 5\n  periodSeconds: 10\nreadinessProbe:\n  httpGet:\n    path: /ready\n    port: 8080\n  periodSeconds: 5\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Liveness, readiness, startup probes",
+        "url": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/"
+      },
+      {
+        "label": "Kubernetes — Configure probes",
+        "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
+      }
+    ]
+  },
+  "k8s-work-005": {
+    "explanation": "**Requests = what's reserved.** The scheduler uses a container's CPU/memory **requests** to decide which node has room; that amount is effectively guaranteed to the container. Set requests too low and nodes get overcommitted; omit them and scheduling/QoS suffer.\n\n**Limits = the hard cap.** A container may not exceed its **limit**. Exceeding the **memory** limit → the container is **OOM-killed** and restarted. Exceeding the **CPU** limit → it's **throttled** (CPU is compressible; memory isn't).\n\n**Quality of Service classes:** requests/limits determine a pod's QoS — *Guaranteed* (requests==limits), *Burstable* (requests<limits), or *BestEffort* (none). Under node memory pressure, BestEffort pods are evicted first.\n\n**Practical guidance:** always set memory requests≈limits to avoid surprise OOM kills; set CPU requests for fair scheduling and be cautious with tight CPU limits (throttling can hurt latency). On EKS this directly affects node bin-packing and cost.",
+    "example": "```yaml\nresources:\n  requests:\n    cpu: \"250m\"\n    memory: \"256Mi\"\n  limits:\n    cpu: \"500m\"\n    memory: \"256Mi\"\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Resource management for pods",
+        "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+      },
+      {
+        "label": "Kubernetes — Pod Quality of Service",
+        "url": "https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/"
+      }
+    ]
+  },
+  "k8s-work-mcq-003": {
+    "explanation": "**HPA = horizontal scaling of pods.** The Horizontal Pod Autoscaler watches metrics (CPU/memory utilization, or custom/external metrics) and adjusts a Deployment's **replica count** up or down to keep the metric near a target.\n\n**The three autoscalers — don't mix them up:**\n\n**HPA:** more/fewer *pods* (horizontal).\n\n**VPA (Vertical Pod Autoscaler):** bigger/smaller *resource requests* for a pod (vertical) — typically requires a pod restart to apply.\n\n**Cluster Autoscaler / Karpenter:** more/fewer *nodes*, so there's somewhere to place pods.\n\n**How they combine on EKS:** under load, HPA adds pods; if nodes lack capacity, Cluster Autoscaler/Karpenter adds nodes to fit them. HPA needs the **metrics-server** (or a custom metrics adapter) installed to read utilization.\n\n**Why the distractors are wrong:** adding CPU/mem to a running pod is VPA, adding nodes is the cluster autoscaler, and scheduled restarts aren't autoscaling at all.",
+    "resources": [
+      {
+        "label": "Kubernetes — Horizontal Pod Autoscaling",
+        "url": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
+      },
+      {
+        "label": "EKS — Karpenter / Cluster Autoscaler",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/autoscaling.html"
+      }
+    ]
+  },
+  "k8s-work-006": {
+    "explanation": "**What triggers a rollout:** changing a Deployment's pod template (new image, env, resources). The Deployment creates a **new ReplicaSet** and shifts replicas from the old RS to the new one gradually.\n\n**How it stays available:** two knobs control the pace — **maxUnavailable** (how many pods may be down during the update) and **maxSurge** (how many extra pods may be created above desired). Defaults (25%/25%) mean some old pods keep serving while new ones come up.\n\n**Health gating:** readiness probes decide when a new pod is 'ready' to receive traffic; a new pod that never becomes ready stalls the rollout (and with the deployment progress deadline, marks it failed) rather than taking the app down.\n\n**Observe and revert:** `kubectl rollout status deployment/<name>` watches progress; `kubectl rollout undo deployment/<name>` rolls back by scaling a previous ReplicaSet back up (that retained history is what makes rollback instant). `kubectl rollout history` lists revisions.",
+    "example": "```bash\nkubectl set image deployment/web web=myrepo/web:v2\nkubectl rollout status  deployment/web   # watch it\nkubectl rollout history deployment/web   # list revisions\nkubectl rollout undo    deployment/web   # revert to previous\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Updating a Deployment",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment"
+      },
+      {
+        "label": "Kubernetes — Rolling back a Deployment",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-back-a-deployment"
+      }
+    ]
+  },
+  "k8s-work-mr-001": {
+    "explanation": "**Workload controllers run pods; other objects don't.** The three correct answers are all controllers that create and manage pods:\n\n**Deployment:** stateless, interchangeable replicas with rolling updates (web apps, APIs).\n\n**StatefulSet:** pods with stable, unique identities and stable per-pod storage, started/stopped in order — for stateful apps like databases or queues.\n\n**DaemonSet:** ensures one pod per (matching) node — for node-level agents like log collectors, monitoring, or the CNI.\n\n**Why the distractors aren't controllers:** a **Service** is a networking abstraction (stable endpoint + load balancing), and a **ConfigMap** is configuration data. Neither schedules or runs pods.\n\n**Worth naming too:** **Job** (run-to-completion) and **CronJob** (scheduled Jobs) are also workload controllers — handy for batch tasks.",
+    "resources": [
+      {
+        "label": "Kubernetes — Workloads & controllers",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/"
+      },
+      {
+        "label": "Kubernetes — StatefulSets",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/"
+      },
+      {
+        "label": "Kubernetes — DaemonSet",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/"
+      }
+    ]
+  },
+  "k8s-net-001": {
+    "explanation": "**The problem it solves:** pods are ephemeral and their IPs change constantly. You can't point clients at a moving target.\n\n**What a Service is:** a stable abstraction in front of a set of pods — a fixed virtual IP (ClusterIP) plus a DNS name — that load-balances requests across the currently healthy, ready pods.\n\n**How it tracks pods:** the Service has a label **selector**; Kubernetes maintains an Endpoints/EndpointSlice list of pods matching it and that pass readiness. Pods come and go; the Service endpoint set updates automatically.\n\n**In-cluster DNS:** reach a Service by name — `my-svc` in the same namespace, or fully-qualified `my-svc.my-namespace.svc.cluster.local` — resolved by CoreDNS. Apps use the name, never a pod IP.\n\n**The four types (next card):** ClusterIP (internal), NodePort, LoadBalancer (external cloud LB), ExternalName.",
+    "example": "```yaml\napiVersion: v1\nkind: Service\nmetadata:\n  name: web\nspec:\n  selector:\n    app: web        # routes to pods labelled app=web\n  ports:\n    - port: 80\n      targetPort: 8080\n  type: ClusterIP\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Service",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+      },
+      {
+        "label": "Kubernetes — DNS for Services and Pods",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/"
+      }
+    ]
+  },
+  "k8s-net-mcq-001": {
+    "explanation": "**The Service types, by reach:**\n\n**ClusterIP (default):** an internal-only virtual IP — reachable from inside the cluster. Use for service-to-service traffic.\n\n**NodePort:** opens a static port on *every* node; external traffic hitting `nodeIP:nodePort` is forwarded to the Service. Rarely used directly in production.\n\n**LoadBalancer:** provisions an **external cloud load balancer** pointing at the Service. On **EKS** this creates an ELB/**NLB**. This is the answer — it's how you expose a Service to the internet.\n\n**ExternalName:** no proxying; just maps the Service name to an external DNS name (a CNAME).\n\n**The HTTP nuance:** for many web apps you don't want one LoadBalancer per Service. Instead use an **Ingress** (one ALB on EKS) to route many hosts/paths to multiple ClusterIP Services — cheaper and richer than N load balancers.",
+    "resources": [
+      {
+        "label": "Kubernetes — Publishing Services (ServiceTypes)",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types"
+      },
+      {
+        "label": "EKS — Network load balancing",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/network-load-balancing.html"
+      }
+    ]
+  },
+  "k8s-net-002": {
+    "explanation": "**Label selectors are the glue.** A Service declares a `selector` (e.g. `app: web`). Kubernetes finds every pod whose labels match and that is **ready**, and records them in an **EndpointSlice**. Traffic to the Service is balanced across exactly those endpoints.\n\n**Why this is powerful:** it's loose coupling. The Service never names individual pods; it just describes the labels it wants. Scale the Deployment up and new pods (carrying the same labels) automatically join the Service. A pod that fails its readiness probe is dropped from the endpoints — no traffic — until it recovers.\n\n**The connection to Deployments:** the Deployment's pod template stamps those labels onto pods, and the Service's selector matches them. Get the labels/selector wrong and the Service has zero endpoints (a classic 'why is my app unreachable?' bug — check `kubectl get endpoints <svc>`).",
+    "example": "```bash\n# A Service with no endpoints usually means selector/labels mismatch\nkubectl get endpoints web\nkubectl get pods -l app=web --show-labels\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Labels and selectors",
+        "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
+      },
+      {
+        "label": "Kubernetes — EndpointSlices",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/"
+      }
+    ]
+  },
+  "k8s-net-003": {
+    "explanation": "**What an Ingress is:** an API object holding **HTTP/HTTPS routing rules** — match by host and/or path and forward to backend Services. It typically also terminates TLS. One entry point can fan out to many Services.\n\n**It needs a controller:** an Ingress object is just rules; an **Ingress controller** does the work. On **EKS**, the **AWS Load Balancer Controller** turns Ingress objects into an **Application Load Balancer (ALB)**, with target groups pointing at pod IPs.\n\n**Why use it over LoadBalancer Services:** instead of one cloud load balancer per Service (expensive, no L7 routing), a single ALB routes `shop.example.com/api` and `shop.example.com/web` to different Services, handles TLS, and supports path/host rules.\n\n**Note on the newer API:** the Gateway API is the evolving successor to Ingress for more advanced routing, but Ingress is still the common baseline.",
+    "example": "```yaml\napiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: shop\n  annotations:\n    kubernetes.io/ingress.class: alb\nspec:\n  rules:\n    - host: shop.example.com\n      http:\n        paths:\n          - path: /api\n            pathType: Prefix\n            backend:\n              service:\n                name: api\n                port:\n                  number: 80\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Ingress",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/ingress/"
+      },
+      {
+        "label": "AWS Load Balancer Controller",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html"
+      }
+    ]
+  },
+  "k8s-net-mcq-002": {
+    "explanation": "**The model — IP-per-pod, flat network:** every pod gets its own unique IP, and any pod can reach any other pod's IP directly, **without NAT**, across nodes. Containers within a pod share that one IP and talk over `localhost`.\n\n**How it's implemented:** a CNI (Container Network Interface) plugin wires this up. On **EKS** the **VPC CNI** gives each pod a real **VPC IP** (an ENI secondary address), so pods are first-class citizens on your VPC network.\n\n**What sits on top:** Services + CoreDNS provide stable addressing and load balancing over the churn of pod IPs; you don't usually use raw pod IPs even though you *can* reach them.\n\n**Locking it down:** the model is open by default (any pod ↔ any pod). Use **NetworkPolicies** to restrict which pods may talk to which — essential for segmentation in real clusters.\n\n**Why the distractors are wrong:** pods don't share one IP, don't route through the API server, and don't need a Service just to have connectivity.",
+    "resources": [
+      {
+        "label": "Kubernetes — Cluster networking model",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/"
+      },
+      {
+        "label": "Amazon VPC CNI plugin",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html"
+      }
+    ]
+  },
+  "k8s-cfg-001": {
+    "explanation": "**What it is:** a ConfigMap stores **non-sensitive** configuration as key-value pairs, separate from your container image.\n\n**Why it exists:** the twelve-factor principle 'store config in the environment'. The same image should run unchanged in dev/staging/prod, with behavior driven by injected config — not baked in at build time.\n\n**How pods consume it:** two main ways — as **environment variables** (`envFrom`/`valueFrom.configMapKeyRef`) or as **mounted files** in a volume (great for config files like `nginx.conf`). Mounted ConfigMaps can update in the pod without a restart; env vars are set at start and need a restart to change.\n\n**Limits & caveats:** ConfigMaps cap around 1 MiB and are **not** for secrets (no encryption, visible in plain `kubectl get`). Use a **Secret** for anything sensitive.",
+    "example": "```yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: app-config\ndata:\n  LOG_LEVEL: \"info\"\n  FEATURE_FLAG: \"true\"\n---\n# inject into a container:\n# envFrom:\n#   - configMapRef:\n#       name: app-config\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — ConfigMaps",
+        "url": "https://kubernetes.io/docs/concepts/configuration/configmap/"
+      },
+      {
+        "label": "Kubernetes — Configure a pod to use a ConfigMap",
+        "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/"
+      }
+    ]
+  },
+  "k8s-cfg-002": {
+    "explanation": "**What a Secret is:** like a ConfigMap, but for **sensitive** data — passwords, API keys, TLS certs, tokens — injected into pods as env vars or mounted files.\n\n**The crucial caveat:** by default Secret values are stored **base64-encoded, not encrypted**. Base64 is reversible (`base64 -d`), so it's *encoding*, not security. Anyone who can read the Secret object (or etcd) can read the value.\n\n**How to actually protect them:**\n\n**Encryption at rest:** enable etcd encryption. On **EKS**, turn on **KMS envelope encryption** so Secret data is encrypted with a customer KMS key.\n\n**Tight RBAC:** restrict who/what can `get` Secrets.\n\n**External store:** better yet, keep secrets in **AWS Secrets Manager / SSM Parameter Store** and mount them via the **Secrets Store CSI driver** (with IRSA), so credentials never live in etcd at all.\n\n**Mistake to avoid:** treating base64 as a security boundary.",
+    "example": "```bash\n# base64 is trivially reversible — encoding, not encryption\necho -n 'hunter2' | base64        # aHVudGVyMg==\necho 'aHVudGVyMg==' | base64 -d   # hunter2\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Secrets",
+        "url": "https://kubernetes.io/docs/concepts/configuration/secret/"
+      },
+      {
+        "label": "EKS — Encrypt Kubernetes secrets with KMS",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html"
+      }
+    ]
+  },
+  "k8s-cfg-mcq-001": {
+    "explanation": "**The deciding factor is sensitivity/intent, not size or type.** Use a **Secret** for anything confidential — passwords, API keys, tokens, TLS private keys. Use a **ConfigMap** for ordinary, non-sensitive configuration.\n\n**Why the type matters even though they're injected the same way:** Secrets get special handling — they can be **encrypted at rest** (KMS on EKS), are **RBAC-restricted** more tightly, are kept out of plain `kubectl get` output, and tooling treats them as sensitive (e.g. not logged). ConfigMaps have none of that protection.\n\n**Why the distractors are wrong:** size (>1KB) isn't the criterion (both cap ~1MiB); both can be mounted as files *or* env vars; and value type (number vs string) is irrelevant — all values are strings under the hood.\n\n**Rule of thumb:** if leaking it would be a security incident, it's a Secret (ideally backed by AWS Secrets Manager).",
+    "resources": [
+      {
+        "label": "Kubernetes — Secrets vs ConfigMaps",
+        "url": "https://kubernetes.io/docs/concepts/configuration/secret/#use-cases"
+      },
+      {
+        "label": "Kubernetes — ConfigMaps",
+        "url": "https://kubernetes.io/docs/concepts/configuration/configmap/"
+      }
+    ]
+  },
+  "k8s-cfg-003": {
+    "explanation": "**What a Namespace is:** a virtual partition of a single cluster — a way to scope and isolate groups of objects (pods, services, configmaps, etc.) by team, environment, or application.\n\n**What it gives you:** object **names are unique per namespace** (two `web` deployments can coexist in `team-a` and `team-b`); you can apply **RBAC**, **ResourceQuotas**, and **LimitRanges** per namespace; and you can scope network policies to them.\n\n**Built-in namespaces:** `default` (where your stuff lands if you don't specify), `kube-system` (cluster components — CoreDNS, kube-proxy, the VPC CNI), and `kube-public`/`kube-node-lease`.\n\n**kubectl interaction:** most commands act on the *current* namespace. Use `-n <name>` for a specific one, `-A`/`--all-namespaces` for all. Set a default with `kubectl config set-context --current --namespace=<name>`.\n\n**What it is NOT:** a hard security/network boundary by itself — combine with RBAC + NetworkPolicies for real isolation.",
+    "resources": [
+      {
+        "label": "Kubernetes — Namespaces",
+        "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/"
+      },
+      {
+        "label": "Kubernetes — Resource Quotas",
+        "url": "https://kubernetes.io/docs/concepts/policy/resource-quotas/"
+      }
+    ]
+  },
+  "k8s-cfg-004": {
+    "explanation": "**What labels are:** key-value tags attached to objects (`app: web`, `env: prod`, `tier: backend`). They carry meaning for *you* and for selectors — they're not random metadata.\n\n**What selectors do:** query objects by their labels. This is the connective tissue of Kubernetes: a **Service** selects the pods it routes to; a **Deployment/ReplicaSet** uses a selector to know which pods it owns; **NetworkPolicies** select which pods a rule applies to; you filter with `kubectl get pods -l app=web,env=prod`.\n\n**Why it's loose coupling:** object A rarely names object B directly — it describes the *labels* it wants. Add a new pod with matching labels and it automatically joins the Service/Deployment scope. This is what makes scaling and dynamic membership work.\n\n**Annotations vs labels:** labels are for **selection** (queryable, indexed); **annotations** are for non-identifying metadata (e.g. the ALB Ingress config) and can't be selected on.",
+    "example": "```bash\nkubectl get pods -l app=web,env=prod      # AND of two labels\nkubectl get pods -l 'tier in (frontend,backend)'\nkubectl label pod web-abc123 canary=true  # add a label\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Labels and selectors",
+        "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
+      },
+      {
+        "label": "Kubernetes — Annotations",
+        "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
+      }
+    ]
+  },
+  "k8s-cfg-mcq-002": {
+    "explanation": "**The correction:** base64 is **encoding, not encryption**. It just makes binary-safe text; `echo <value> | base64 -d` reverses it in a second. A Secret's values being base64 says nothing about confidentiality.\n\n**What actually protects a Secret:**\n\n**Encryption at rest:** without it, Secret values sit in etcd effectively in the clear. Enable etcd encryption — on **EKS**, KMS envelope encryption with a customer-managed key.\n\n**RBAC:** restrict which users/ServiceAccounts can `get`/`list` Secrets; broad read access defeats everything else.\n\n**External secret stores:** keep the real value in **AWS Secrets Manager**/SSM and mount it via the **Secrets Store CSI driver** (with IRSA) so it's never persisted in etcd.\n\n**Also:** avoid committing Secret manifests to git; use sealed-secrets/external-secrets if you must store references.\n\n**Why the distractors are wrong:** base64 isn't encryption, Secrets *do* store values, and base64 is trivially reversible (not 'unreadable forever').",
+    "resources": [
+      {
+        "label": "Kubernetes — Encrypting Secret data at rest",
+        "url": "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/"
+      },
+      {
+        "label": "AWS Secrets Manager with Kubernetes (CSI driver)",
+        "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html"
+      }
+    ]
+  },
+  "k8s-cmd-001": {
+    "explanation": "**The workhorse:** `kubectl get <resource>` lists objects. For pods it's `kubectl get pods` (alias `po`), showing NAME, READY, STATUS, RESTARTS, AGE for the **current namespace**.\n\n**The flags that matter:**\n\n`-n <namespace>` — a specific namespace; `-A` / `--all-namespaces` — every namespace (great for finding where something runs or spotting failing system pods).\n\n`-o wide` — adds the **node** and **pod IP** columns (where did it land?).\n\n`-w` / `--watch` — stream changes live (watch a rollout happen).\n\n`-l app=web` — filter by label; `--show-labels` to print them.\n\n`-o yaml`/`-o json` — the full object for deep inspection.\n\n**Reading STATUS:** `Running`, `Pending` (can't schedule — check `describe`), `CrashLoopBackOff` (container keeps dying — check `logs --previous`), `ImagePullBackOff` (bad image/registry creds).",
+    "example": "```bash\nkubectl get pods                 # current namespace\nkubectl get pods -A              # all namespaces\nkubectl get pods -o wide         # + node and pod IP\nkubectl get pods -l app=web -w   # filter by label, stream changes\n```",
+    "resources": [
+      {
+        "label": "kubectl — get",
+        "url": "https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#get"
+      },
+      {
+        "label": "kubectl — Cheat Sheet",
+        "url": "https://kubernetes.io/docs/reference/kubectl/cheatsheet/"
+      }
+    ]
+  },
+  "k8s-cmd-002": {
+    "explanation": "**Check Deployments:** `kubectl get deployments` (alias `deploy`) shows READY, UP-TO-DATE, AVAILABLE — a fast health snapshot. `READY 3/3` means all replicas are up; `2/3` means a rollout or failure is in progress.\n\n**Watch a rollout:** `kubectl rollout status deployment/<name>` **blocks** until the rollout completes or fails — ideal in CI/CD to gate the next step. `kubectl rollout history deployment/<name>` lists revisions for rollback.\n\n**See the layers:** `kubectl get rs` shows the underlying ReplicaSets (you'll see the new one scaling up and old ones at 0). `kubectl get deploy,rs,pods -l app=web` shows the whole stack for one app.\n\n**When it's stuck:** if `rollout status` hangs, `kubectl describe deployment/<name>` and `kubectl get pods` reveal why (e.g. new pods failing readiness, image pull errors).",
+    "example": "```bash\nkubectl get deployments\nkubectl rollout status  deployment/web   # blocks until done/failed\nkubectl rollout history deployment/web\nkubectl get rs -l app=web                # underlying ReplicaSets\n```",
+    "resources": [
+      {
+        "label": "kubectl — rollout",
+        "url": "https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#rollout"
+      },
+      {
+        "label": "Kubernetes — Deployment status",
+        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#deployment-status"
+      }
+    ]
+  },
+  "k8s-cmd-003": {
+    "explanation": "**Basic logs:** `kubectl logs <pod>` prints a container's stdout/stderr.\n\n**Follow live:** `kubectl logs -f <pod>` streams new lines (like `tail -f`).\n\n**The debugging trick:** `kubectl logs --previous <pod>` (or `-p`) shows logs from the **previous, crashed** container instance — essential for **CrashLoopBackOff**, where the current container may already have restarted but the crash output is what you need.\n\n**Multi-container pods:** add `-c <container>` to pick the container (otherwise it errors or picks the default).\n\n**Handy extras:** `--tail=100` (last N lines), `--since=10m` (recent window), `-l app=web --all-containers` (logs across all pods of a label — or use a tool like `stern`/`kubectl logs -f -l` for multi-pod tailing).",
+    "example": "```bash\nkubectl logs web-abc123\nkubectl logs -f web-abc123                 # stream\nkubectl logs --previous web-abc123         # last crash's logs\nkubectl logs web-abc123 -c sidecar --tail=100\n```",
+    "resources": [
+      {
+        "label": "kubectl — logs",
+        "url": "https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#logs"
+      },
+      {
+        "label": "Kubernetes — Debug running pods",
+        "url": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/"
+      }
+    ]
+  },
+  "k8s-cmd-004": {
+    "explanation": "**`kubectl describe pod <name>` — start here.** It prints the pod's full status: container states and restart counts, image, resource requests/limits, probe configuration and results, the assigned node, and — most importantly — the **Events** list at the bottom. Those events usually name the exact problem: `FailedScheduling` (insufficient resources/taints), `Failed to pull image`, `Unhealthy` (probe failing), `OOMKilled`.\n\n**`kubectl exec -it <pod> -- sh` — go inside.** Opens an interactive shell in the running container so you can inspect it from within: check env vars (`env`), test connectivity (`wget`/`curl` to a Service), look at files/config. Add `-c <container>` for multi-container pods.\n\n**The workflow:** `describe` to find *why* a pod is unhealthy → `logs` (incl. `--previous`) for app errors → `exec` to poke the live container. For pods that won't start a shell, `kubectl debug` can attach an ephemeral container.",
+    "example": "```bash\nkubectl describe pod web-abc123      # events explain pending/crashing\nkubectl exec -it web-abc123 -- sh    # shell inside the container\n#   $ env | grep APP\n#   $ wget -qO- http://api:80/health\n```",
+    "resources": [
+      {
+        "label": "kubectl — describe",
+        "url": "https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#describe"
+      },
+      {
+        "label": "Kubernetes — Get a shell into a container",
+        "url": "https://kubernetes.io/docs/tasks/debug/debug-application/get-shell-running-container/"
+      }
+    ]
+  },
+  "k8s-cmd-mcq-001": {
+    "explanation": "**The answer:** `kubectl get pods -A`. `-A` is the shorthand for `--all-namespaces`, listing pods in every namespace.\n\n**Why you need it:** by default `kubectl get pods` shows only the **current** namespace, so it's easy to think 'nothing's running' when your workload is elsewhere. `-A` is also how you spot trouble in system namespaces — e.g. a crashing CoreDNS or VPC CNI pod in `kube-system`.\n\n**Related namespace controls:** `-n <namespace>` targets one namespace; set a persistent default with `kubectl config set-context --current --namespace=<name>`.\n\n**Why the distractors are wrong:** `--here`, `--global`, and `all-pods` aren't real kubectl syntax — the only valid forms are `-A` / `--all-namespaces`.",
+    "example": "```bash\nkubectl get pods -A                          # every namespace\nkubectl get pods --all-namespaces            # same thing\nkubectl get pods -n kube-system              # one namespace\n```",
+    "resources": [
+      {
+        "label": "kubectl — Cheat Sheet (namespaces)",
+        "url": "https://kubernetes.io/docs/reference/kubectl/cheatsheet/"
+      },
+      {
+        "label": "Kubernetes — Namespaces",
+        "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/"
+      }
+    ]
+  },
+  "k8s-cmd-005": {
+    "explanation": "**Apply (declarative, idempotent):** `kubectl apply -f <file-or-dir>` creates objects or updates them to match the manifest, computing the diff. Re-run after edits; point it at a directory to apply many files. This is the production-preferred, version-controlled style.\n\n**Scale:** `kubectl scale deployment/<name> --replicas=5` changes the replica count immediately. Quick for an incident; for GitOps you'd edit the manifest and re-apply instead so the change is tracked.\n\n**Undo a bad rollout:** `kubectl rollout undo deployment/<name>` reverts to the previous ReplicaSet (fast rollback). Add `--to-revision=N` to target a specific revision from `rollout history`.\n\n**Delete:** `kubectl delete -f <file>` (by manifest) or `kubectl delete pod <name>`. Deleting a pod owned by a Deployment just gets it recreated — to actually remove an app, delete the Deployment.\n\n**Tip:** `kubectl apply --dry-run=server -f f.yaml` previews/validates without changing anything.",
+    "example": "```bash\nkubectl apply -f ./k8s/                 # apply a whole directory\nkubectl scale deployment/web --replicas=5\nkubectl rollout undo deployment/web     # revert a bad deploy\nkubectl delete -f ./k8s/app.yaml\n```",
+    "resources": [
+      {
+        "label": "kubectl — apply",
+        "url": "https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply"
+      },
+      {
+        "label": "Kubernetes — Declarative management",
+        "url": "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/"
+      }
+    ]
+  },
+  "k8s-cmd-006": {
+    "explanation": "**Nodes:** `kubectl get nodes` lists worker nodes with STATUS (`Ready`/`NotReady`), roles, age, and version. `kubectl get nodes -o wide` adds instance/OS/kernel info; `kubectl describe node <name>` shows capacity, allocated resources, and conditions (disk/memory pressure).\n\n**Services:** `kubectl get services` (alias `svc`) lists Services with TYPE, CLUSTER-IP, EXTERNAL-IP (for LoadBalancer), and PORT(S). `kubectl get endpoints <svc>` shows the pod IPs actually backing it — the first thing to check when a Service seems unreachable.\n\n**Contexts (which cluster!):** one kubeconfig can hold many clusters. `kubectl config get-contexts` lists them (the `*` marks the current); `kubectl config use-context <name>` switches; `kubectl config current-context` prints the active one.\n\n**Safety habit:** always confirm `current-context` before running anything destructive — running a prod command thinking you're in dev is a classic, costly mistake. On EKS you add a context with `aws eks update-kubeconfig`.",
+    "example": "```bash\nkubectl get nodes -o wide\nkubectl get svc\nkubectl config get-contexts          # * marks the active cluster\nkubectl config use-context dev-eks    # switch clusters\n```",
+    "resources": [
+      {
+        "label": "kubectl — Cheat Sheet (contexts)",
+        "url": "https://kubernetes.io/docs/reference/kubectl/cheatsheet/#kubectl-context-and-configuration"
+      },
+      {
+        "label": "Kubernetes — Configure access to multiple clusters",
+        "url": "https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/"
+      }
+    ]
+  },
+  "k8s-cmd-mcq-002": {
+    "explanation": "**Why `apply` wins:** it's **declarative and idempotent**. `kubectl apply -f` creates the object if it's missing or updates it to match the file if it exists — so you can safely re-run it after every edit, and it computes/applies just the diff.\n\n**Why not `create`:** `kubectl create -f` is imperative — it **errors if the object already exists**. It's fine for one-shot creation, but it doesn't reconcile changes, so it doesn't fit a repeatable, version-controlled workflow.\n\n**The bigger picture:** `apply` embodies the Kubernetes declarative model and is the basis of GitOps (your manifests in git are the desired state; a tool applies them). It also tracks the last-applied configuration to compute three-way diffs.\n\n**Why the distractors are wrong:** `create` isn't deprecated/broken, `apply` doesn't skip validation, and `create` reads YAML fine — the real difference is create-only vs create-or-update.",
+    "example": "```bash\nkubectl create -f app.yaml   # errors if it already exists\nkubectl apply  -f app.yaml   # creates OR updates to match; re-runnable\n```",
+    "resources": [
+      {
+        "label": "Kubernetes — Object management (apply vs create)",
+        "url": "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/object-management/"
+      },
+      {
+        "label": "kubectl — apply",
+        "url": "https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply"
+      }
+    ]
+  },
+  "k8s-eks-001": {
+    "explanation": "**In one line:** Amazon EKS is AWS's managed Kubernetes — upstream-conformant Kubernetes where AWS runs the control plane for you.\n\n**What 'managed' means:** AWS operates the control plane (API server, etcd, scheduler, controller manager) across multiple Availability Zones, patches it, and keeps it highly available. You don't SSH into or maintain control-plane machines.\n\n**What you still do:** provide the worker capacity (EC2 managed node groups, self-managed nodes, or Fargate), deploy workloads with normal Kubernetes tooling (`kubectl`, Helm, manifests), and configure networking, autoscaling, and add-ons.\n\n**Why teams choose it:** you get standard Kubernetes (portable skills/manifests) without the hardest operational burden — running a reliable control plane — plus deep AWS integration (IAM via IRSA, VPC CNI networking, ELB/ALB, CloudWatch).\n\n**Mental model:** 'Kubernetes, but AWS babysits the brain.'",
+    "resources": [
+      {
+        "label": "Amazon EKS — What is Amazon EKS?",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html"
+      },
+      {
+        "label": "Amazon EKS — Product page",
+        "url": "https://aws.amazon.com/eks/"
+      }
+    ]
+  },
+  "k8s-eks-002": {
+    "explanation": "**AWS's responsibility — the control plane:** API server, etcd, scheduler, controller manager. AWS runs them multi-AZ, scales them, patches them, and backs up etcd. You never manage these machines.\n\n**Your responsibility — basically everything above that:**\n\n**Data plane / nodes:** choose and run worker capacity — EC2 **managed node groups**, self-managed nodes, or **Fargate** (no nodes). With Fargate AWS runs the pod compute, but you still define the workloads.\n\n**Workloads:** your Deployments, Services, manifests, images.\n\n**Configuration:** networking choices, RBAC/IAM mapping (access entries), autoscaling (HPA + Karpenter/Cluster Autoscaler), and add-ons (VPC CNI, CoreDNS, kube-proxy, AWS Load Balancer Controller).\n\n**Security in the cluster:** IRSA roles, NetworkPolicies, secret encryption.\n\n**The payoff of the split:** the operationally hardest part (a reliable control plane) is AWS's problem, while you keep full control over how and where your pods run.",
+    "resources": [
+      {
+        "label": "EKS — Shared responsibility model",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/shared-responsibility.html"
+      },
+      {
+        "label": "EKS — Clusters",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/clusters.html"
+      }
+    ]
+  },
+  "k8s-eks-mcq-001": {
+    "explanation": "**The EKS data-plane options:**\n\n**Managed node groups:** EKS provisions and manages **EC2** instances for you — it handles the AMI, bootstrapping (kubelet already configured), and rolling updates/draining. You pick instance types and counts; you don't hand-install the kubelet.\n\n**Fargate profiles:** **serverless** pods — no nodes to choose, patch, or scale. You define a profile (namespace/label selectors) and matching pods run on AWS-managed per-pod compute. Some workloads (DaemonSets, privileged pods) aren't supported on Fargate.\n\n**Self-managed nodes:** you own the EC2 lifecycle (more control, more work).\n\n**Karpenter:** a popular autoscaler that provisions right-sized nodes on demand, often replacing the Cluster Autoscaler + node groups.\n\n**Why the distractors are wrong:** EKS supports both EC2 and Fargate (not Fargate-only); managed node groups auto-configure the kubelet (no manual install); and with Fargate you do NOT pick the instance type — that's the whole point.",
+    "resources": [
+      {
+        "label": "EKS — Managed node groups",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html"
+      },
+      {
+        "label": "EKS — Fargate",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html"
+      }
+    ]
+  },
+  "k8s-eks-003": {
+    "explanation": "**The one command:** `aws eks update-kubeconfig --name <cluster> --region <region>`. It adds a context to your `~/.kube/config` pointing at that EKS cluster.\n\n**How auth works (no static secret):** the kubeconfig entry it writes invokes `aws eks get-token` under the hood. So when you run `kubectl`, the AWS CLI exchanges your **IAM credentials** for a **short-lived** Kubernetes token. Your IAM identity is what authenticates you to the cluster.\n\n**Then authorization:** EKS maps that IAM identity to Kubernetes RBAC (via **access entries** or the legacy `aws-auth` ConfigMap), which decides what you're allowed to do.\n\n**After running it:** `kubectl get nodes` should list your nodes. If you get 'Unauthorized', your IAM principal isn't mapped to any RBAC; if 'you must be logged in', your AWS credentials/region are wrong.\n\n**Multiple clusters:** run it per cluster; each adds a context you switch between with `kubectl config use-context`.",
+    "example": "```bash\naws eks update-kubeconfig --name dev-cluster --region us-east-1\nkubectl config current-context\nkubectl get nodes\n```",
+    "resources": [
+      {
+        "label": "EKS — Create or update kubeconfig",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html"
+      },
+      {
+        "label": "EKS — Cluster authentication",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/cluster-auth.html"
+      }
+    ]
+  },
+  "k8s-eks-004": {
+    "explanation": "**Two distinct layers:**\n\n**Authentication (who you are):** EKS identifies the caller by their **IAM principal** (user/role). The kubeconfig token is derived from IAM credentials.\n\n**Authorization (what you can do):** standard **Kubernetes RBAC** — Roles/ClusterRoles bound to users/groups — decides permissions inside the cluster.\n\n**The mapping between them:** EKS needs to translate an IAM identity into a Kubernetes user/group that RBAC understands.\n\n**Old way — the `aws-auth` ConfigMap:** a ConfigMap in `kube-system` listing IAM ARN → K8s user/groups. Powerful but error-prone: a typo could lock everyone out, and it's awkward to manage as code.\n\n**New way — EKS Access Entries:** configure the IAM→Kubernetes mapping through the **EKS API** (and Terraform), with predefined **access policies**. Recommended over hand-editing `aws-auth`.\n\n**Takeaway:** IAM proves identity; RBAC grants permissions; access entries (or `aws-auth`) connect the two.",
+    "resources": [
+      {
+        "label": "EKS — Grant IAM access (access entries)",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html"
+      },
+      {
+        "label": "Kubernetes — RBAC authorization",
+        "url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/"
+      }
+    ]
+  },
+  "k8s-eks-mcq-002": {
+    "explanation": "**The answer — the AWS Load Balancer Controller.** It's an EKS add-on (a controller you install, commonly via Helm with an IRSA role) that watches Kubernetes **Ingress** and **Service** objects and provisions AWS load balancers to match.\n\n**What it creates:** an **Ingress** → an **Application Load Balancer (ALB)** with listener rules and target groups pointing at pod IPs; a `Service type: LoadBalancer` → a **Network Load Balancer (NLB)**. It keeps target groups in sync as pods come and go.\n\n**Why it exists:** Kubernetes Ingress is just rules; something has to turn those rules into real AWS infrastructure. The controller is that bridge.\n\n**Why the distractors are wrong:** kube-proxy programs in-cluster Service routing (not cloud LBs), the kubelet runs pods on a node, and etcd just stores state — none provision ALBs.\n\n**Setup note:** the controller needs IAM permissions to manage ELBs — granted via **IRSA** on its ServiceAccount.",
+    "resources": [
+      {
+        "label": "EKS — AWS Load Balancer Controller",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html"
+      },
+      {
+        "label": "AWS Load Balancer Controller docs",
+        "url": "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/"
+      }
+    ]
+  },
+  "k8s-aws-001": {
+    "explanation": "**The problem IRSA solves:** how does a pod get AWS credentials to call DynamoDB/S3/Lambda — without baking in static access keys, and without giving the *whole node* broad permissions that every pod on it would inherit?\n\n**What IRSA does:** **IAM Roles for Service Accounts** binds an **IAM role to a Kubernetes ServiceAccount**. Pods that use that ServiceAccount automatically receive **short-lived** credentials for exactly that role — scoped per workload.\n\n**How it works under the hood:** the cluster has an **OIDC identity provider**; the pod gets a projected, signed **ServiceAccount token**; the AWS SDK calls **STS AssumeRoleWithWebIdentity**, presenting that token, and gets temporary role credentials. The role's **trust policy** federates the cluster's OIDC issuer and is scoped to the specific ServiceAccount.\n\n**Why it's the standard:** per-pod least privilege, no long-lived secrets, automatic rotation, and full CloudTrail attribution.\n\n**Newer evolution:** **EKS Pod Identity** is a simpler alternative achieving the same goal without managing OIDC providers per cluster.",
+    "example": "```yaml\napiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: orders\n  namespace: shop\n  annotations:\n    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/orders-irsa\n```",
+    "resources": [
+      {
+        "label": "EKS — IAM roles for service accounts (IRSA)",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
+      },
+      {
+        "label": "EKS — Pod Identities",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html"
+      }
+    ]
+  },
+  "k8s-aws-002": {
+    "explanation": "**Use IRSA — never static keys.** The secure pattern has three steps:\n\n**1. Least-privilege IAM policy:** allow only the actions the app needs (`GetItem`, `PutItem`, `Query`…) on the **specific table ARN** — not `dynamodb:*` on `*`.\n\n**2. Role + trust:** create an IAM role with that policy, whose trust policy federates the cluster's OIDC provider and is scoped to the target ServiceAccount.\n\n**3. Wire the pod:** annotate the **ServiceAccount** with `eks.amazonaws.com/role-arn`, and set the pod's `serviceAccountName`. Done.\n\n**At runtime:** the app's AWS SDK transparently picks up the projected token, calls STS, and uses the role's temporary credentials to hit DynamoDB. No keys in the image, env, or a Secret.\n\n**Mistakes to avoid:** putting access keys in a Kubernetes Secret, or granting the table permissions on the **node role** (every pod on the node would then get them).",
+    "example": "```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Effect\": \"Allow\",\n    \"Action\": [\"dynamodb:GetItem\", \"dynamodb:PutItem\", \"dynamodb:Query\"],\n    \"Resource\": \"arn:aws:dynamodb:us-east-1:123456789012:table/orders\"\n  }]\n}\n```",
+    "resources": [
+      {
+        "label": "EKS — IRSA setup",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
+      },
+      {
+        "label": "DynamoDB — IAM policy examples",
+        "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/iam-policy-specific-table-indexes.html"
+      }
+    ]
+  },
+  "k8s-aws-mcq-001": {
+    "explanation": "**The core issue — blast radius.** Permissions on the **node instance role** are inherited by **every pod scheduled on that node** (any pod can reach the instance metadata and use the node's role). So granting DynamoDB access to the node role means an unrelated, possibly compromised pod on the same node also gets it.\n\n**Why IRSA is better:** it scopes AWS permissions to a **specific ServiceAccount** (and thus specific pods). Only the pods that actually need DynamoDB get it — true **least privilege** — and the access is **auditable** in CloudTrail under that role, with **short-lived** credentials.\n\n**Why the distractors are wrong:** the node role *can* technically access DynamoDB (that's exactly the problem); IRSA isn't about caching creds on disk; and IRSA still uses an IAM role — it just binds it to a ServiceAccount rather than the node.\n\n**One-liner:** 'node role = every pod gets it; IRSA = only the pods that should.'",
+    "resources": [
+      {
+        "label": "EKS — Best practices: IAM (IRSA vs node role)",
+        "url": "https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html"
+      },
+      {
+        "label": "EKS — IRSA",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
+      }
+    ]
+  },
+  "k8s-aws-003": {
+    "explanation": "**Same IRSA pattern, different action.** To let a pod invoke a Lambda function:\n\n**1. Policy:** allow `lambda:InvokeFunction` on the **specific function ARN**.\n\n**2. Role + ServiceAccount:** attach that policy to an IRSA role and annotate the pod's ServiceAccount with the role ARN.\n\n**3. Call it:** from the app, use the AWS SDK's `InvokeCommand` (or `Invoke`). The SDK signs the request with the pod's temporary credentials.\n\n**Sync vs async:** `RequestResponse` (default) waits for the function's result; `Event` fires-and-forgets (async) for background work; `DryRun` just checks permissions.\n\n**Why offload to Lambda from EKS:** keep the long-running service on the cluster, but push **bursty, spiky, or event-driven** tasks to Lambda, which scales independently and to zero. Common for things like image processing, notifications, or occasional heavy jobs.\n\n**Auth reminder:** no keys in the pod — IRSA provides least-privilege, rotating credentials scoped to that one function.",
+    "example": "```js\nimport { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';\nconst lambda = new LambdaClient({}); // creds via IRSA, no keys\nawait lambda.send(new InvokeCommand({\n  FunctionName: 'process-order',\n  InvocationType: 'Event',           // async fire-and-forget\n  Payload: Buffer.from(JSON.stringify({ orderId })),\n}));\n```",
+    "resources": [
+      {
+        "label": "AWS Lambda — Invoke API",
+        "url": "https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html"
+      },
+      {
+        "label": "EKS — IRSA",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
+      }
+    ]
+  },
+  "k8s-aws-004": {
+    "explanation": "**Pick by workload shape, not fashion.**\n\n**Lambda fits when:** work is short, event-driven, bursty, or infrequent; you want **zero server management** and **scale-to-zero**; latency tolerance allows occasional cold starts. Constraints: max execution duration (15 min), memory/package limits, and a stateless model.\n\n**EKS (pods) fits when:** you have **long-running** services, need fine control over runtime/networking/sidecars, have steady or high load, run things that don't fit Lambda's limits (big processes, persistent connections, GPUs), or want **Kubernetes portability** across clouds. Cost: you operate a cluster.\n\n**They combine well:** run the always-on API on EKS and offload spiky/async tasks to Lambda (invoked from pods via IRSA, or triggered by events). Use the right tool per task.\n\n**Interview framing:** 'Lambda for event-driven/bursty/short with no ops; EKS for long-running/controlled/steady; mix them.' Mentioning the trade-offs (cold starts & limits vs cluster ops) shows judgment.",
+    "resources": [
+      {
+        "label": "AWS Lambda — When to use",
+        "url": "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html"
+      },
+      {
+        "label": "AWS — Containers vs serverless decision guidance",
+        "url": "https://docs.aws.amazon.com/decision-guides/latest/containers-on-aws-how-to-choose/choosing-aws-container-service.html"
+      }
+    ]
+  },
+  "k8s-aws-mcq-002": {
+    "explanation": "**What ACK is:** **AWS Controllers for Kubernetes** — a set of Kubernetes controllers that map AWS service APIs to **Custom Resource Definitions (CRDs)**. Install the controller for a service and you can manage AWS resources *as Kubernetes objects*.\n\n**What that lets you do:** `kubectl apply` a manifest describing a **DynamoDB table**, an **S3 bucket**, a **Lambda function**, etc., and the ACK controller reconciles it into the real AWS resource — and keeps it in sync.\n\n**Why teams use it:** a single, Kubernetes-native control plane for both workloads and the AWS infra they depend on, managed with the same GitOps tooling. It's an alternative to (or complement to) **Terraform** for provisioning AWS resources.\n\n**Why the distractors are wrong:** ACK doesn't run Lambda as pods, doesn't replace IAM with RBAC, and doesn't convert EKS to ECS — it just lets you declare AWS resources via Kubernetes CRDs.\n\n**Trade-off to mention:** it couples your AWS resource lifecycle to the cluster; Terraform keeps infra independent of any cluster.",
+    "example": "```yaml\napiVersion: dynamodb.services.k8s.aws/v1alpha1\nkind: Table\nmetadata:\n  name: orders\nspec:\n  tableName: orders\n  billingMode: PAY_PER_REQUEST\n  attributeDefinitions:\n    - attributeName: id\n      attributeType: S\n  keySchema:\n    - attributeName: id\n      keyType: HASH\n```",
+    "resources": [
+      {
+        "label": "AWS Controllers for Kubernetes (ACK)",
+        "url": "https://aws-controllers-k8s.github.io/community/docs/community/overview/"
+      },
+      {
+        "label": "ACK — DynamoDB controller",
+        "url": "https://aws-controllers-k8s.github.io/community/reference/"
+      }
+    ]
+  },
+  "k8s-aws-mr-001": {
+    "explanation": "**IRSA needs three pieces wired together:**\n\n**1. An IAM OIDC identity provider for the cluster** — registers the cluster's OIDC issuer in IAM so AWS will trust tokens it signs. (One-time per cluster; the EKS Terraform module can create it.)\n\n**2. An IAM role whose trust policy federates that OIDC provider** — and scopes the `sub` condition to the specific namespace/ServiceAccount, so only that workload can assume it. Attach the least-privilege permissions policy here.\n\n**3. A ServiceAccount annotated with the role ARN** — `eks.amazonaws.com/role-arn: <role>` — and the pod set to use that ServiceAccount. The SDK then does AssumeRoleWithWebIdentity automatically.\n\n**The two anti-patterns (the wrong answers):** storing **static AWS access keys in a Secret** (long-lived credentials in etcd — exactly what IRSA avoids) and granting the **node instance role** broad DynamoDB access (every pod on the node inherits it — no least privilege).\n\n**Net:** OIDC provider + scoped role + annotated ServiceAccount = per-pod, keyless, least-privilege AWS access.",
+    "resources": [
+      {
+        "label": "EKS — Configure IRSA (OIDC, role, service account)",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
+      },
+      {
+        "label": "EKS — Create an IAM OIDC provider",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html"
+      }
+    ]
+  },
+  "k8s-tf-001": {
+    "explanation": "**The low-level resources:** an EKS cluster from scratch needs `aws_eks_cluster` (the control plane) + an IAM **cluster role**, worker compute via `aws_eks_node_group` (or Fargate profiles) + a **node role**, the VPC/subnets, security groups, and usually an **OIDC provider** for IRSA and core add-ons (VPC CNI, CoreDNS, kube-proxy).\n\n**Why that's a lot:** the pieces are interdependent and easy to misconfigure (role trust, subnet tagging for load balancers, add-on versions).\n\n**The common shortcut — the community EKS module:** `terraform-aws-modules/eks` wires all of this up with sensible defaults and best practices. You set a handful of inputs (cluster name, version, subnets, node group/Fargate config) and it produces the cluster, IAM, OIDC provider, and add-ons.\n\n**Why IaC here:** an EKS environment is exactly the kind of complex, multi-resource stack that benefits from reproducibility, reviewable diffs, and `terraform destroy` — clicking it together in the console is error-prone and unrepeatable.",
+    "example": "```hcl\nmodule \"eks\" {\n  source          = \"terraform-aws-modules/eks/aws\"\n  cluster_name    = \"dev\"\n  cluster_version = \"1.30\"\n  subnet_ids      = module.vpc.private_subnets\n  vpc_id          = module.vpc.vpc_id\n\n  eks_managed_node_groups = {\n    default = { instance_types = [\"t3.medium\"], min_size = 2, max_size = 4, desired_size = 2 }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "terraform-aws-modules/eks",
+        "url": "https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest"
+      },
+      {
+        "label": "Terraform — aws_eks_cluster resource",
+        "url": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster"
+      }
+    ]
+  },
+  "k8s-tf-mcq-001": {
+    "explanation": "**The answer:** use Terraform's **`kubernetes`** and **`helm`** providers. After the cluster exists, these providers let Terraform talk to the Kubernetes API itself.\n\n**`kubernetes` provider:** manage K8s objects as Terraform resources — Namespaces, ServiceAccounts (e.g. the IRSA-annotated one), ConfigMaps, even Deployments.\n\n**`helm` provider:** install Helm charts — perfect for add-ons like the **AWS Load Balancer Controller**, metrics-server, or Karpenter.\n\n**How they authenticate:** you configure the providers from the EKS cluster outputs (endpoint, CA cert) plus a token from `aws eks get-token` / the cluster auth data source — so Terraform can reach the API server.\n\n**Important practical nuance:** many teams use Terraform for the **cluster + platform add-ons** but deploy **application manifests** via `kubectl`/GitOps (Argo CD/Flux), to avoid Terraform state churn on fast-moving app deploys and provider chicken-and-egg ordering issues.\n\n**Why the distractors are wrong:** Terraform absolutely can manage K8s objects; you don't SSH to a node; and the `aws` provider doesn't deploy pods.",
+    "example": "```hcl\nprovider \"helm\" {\n  kubernetes {\n    host                   = module.eks.cluster_endpoint\n    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)\n  }\n}\n\nresource \"helm_release\" \"alb_controller\" {\n  name       = \"aws-load-balancer-controller\"\n  repository = \"https://aws.github.io/eks-charts\"\n  chart      = \"aws-load-balancer-controller\"\n  namespace  = \"kube-system\"\n}\n```",
+    "resources": [
+      {
+        "label": "Terraform — Kubernetes provider",
+        "url": "https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs"
+      },
+      {
+        "label": "Terraform — Helm provider",
+        "url": "https://registry.terraform.io/providers/hashicorp/helm/latest/docs"
+      }
+    ]
+  },
+  "k8s-tf-002": {
+    "explanation": "**The pieces Terraform creates for IRSA:**\n\n**1. OIDC provider:** `aws_iam_openid_connect_provider` registering the cluster's OIDC issuer URL in IAM (the EKS module can output the issuer / create this).\n\n**2. IAM role + trust policy:** an `aws_iam_role` whose assume-role policy federates that OIDC provider and **conditions on the `sub`** to a specific `system:serviceaccount:<namespace>:<name>` — so only that ServiceAccount can assume it. Attach the least-privilege permissions policy.\n\n**3. The annotated ServiceAccount:** create it with the `kubernetes` provider, annotating `eks.amazonaws.com/role-arn` with the role ARN.\n\n**Why do it in Terraform:** the OIDC provider, role, trust policy, and ServiceAccount annotation all live in one reviewable, reproducible place, and the role's permissions are explicitly tied to a namespace/ServiceAccount.\n\n**The easy button:** the EKS module's `iam-role-for-service-accounts-eks` submodule builds the role + trust policy for you from the cluster's OIDC provider — you just supply the policy and the ServiceAccount name.",
+    "example": "```hcl\nmodule \"orders_irsa\" {\n  source  = \"terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks\"\n  role_name = \"orders-irsa\"\n  oidc_providers = {\n    main = {\n      provider_arn               = module.eks.oidc_provider_arn\n      namespace_service_accounts = [\"shop:orders\"]\n    }\n  }\n}\n```",
+    "resources": [
+      {
+        "label": "Terraform — aws_iam_openid_connect_provider",
+        "url": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_openid_connect_provider"
+      },
+      {
+        "label": "EKS module — IRSA submodule",
+        "url": "https://registry.terraform.io/modules/terraform-aws-modules/iam/aws/latest/submodules/iam-role-for-service-accounts-eks"
+      }
+    ]
+  },
+  "k8s-tf-mcq-002": {
+    "explanation": "**Why IaC for EKS:** an EKS environment is a large, interdependent stack — control plane, node groups/Fargate, cluster + node IAM roles, the OIDC provider, security groups, subnet tagging, and add-ons (VPC CNI, CoreDNS, ALB controller). Building that by clicking in the console is slow, error-prone, undocumented, and unrepeatable.\n\n**What Terraform buys you:** **reproducibility** (recreate dev/staging/prod identically), **reviewable diffs** (changes land as PRs), **previews** (`terraform plan` before anything happens), and **one-command create/destroy** of the whole environment. The config also *documents* the architecture.\n\n**Bonus for IRSA:** the OIDC provider + IAM roles + ServiceAccount wiring stay versioned and consistent rather than hand-assembled.\n\n**Why the distractors are wrong:** Terraform doesn't speed up the *control plane* (AWS runs that), the console *can* create EKS clusters, and IaC doesn't remove the need for IAM roles — it just manages them as code.\n\n**Same rationale** as managing any cloud stack with Terraform: code, not click-ops.",
+    "resources": [
+      {
+        "label": "Terraform — Provision an EKS cluster (tutorial)",
+        "url": "https://developer.hashicorp.com/terraform/tutorials/kubernetes/eks"
+      },
+      {
+        "label": "AWS — What is Infrastructure as Code?",
+        "url": "https://aws.amazon.com/what-is/iac/"
+      }
+    ]
+  }
+}
