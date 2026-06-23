@@ -1,0 +1,126 @@
+{
+  "cp-graphql-basic-001": {
+    "explanation": "**In one line:** GraphQL is a query language for your API plus a server-side runtime that answers those queries against your data.\n\n**The core idea:** Instead of the server deciding the response shape, the *client* sends a query that names exactly the fields it wants, and gets back JSON in that same shape. One endpoint can serve every screen, each asking for just what it needs.\n\n**The three building blocks:** a **schema** (a typed contract of what data exists and which operations are allowed), **operations** (queries to read, mutations to write, subscriptions for real-time), and **resolvers** (functions that fetch the data behind each field).\n\n**How it fits this project:** `infra/schema.graphql` declares a `Product` type and two queries, `getProduct(id)` and `listProducts`. AppSync is the runtime; the resolvers in `infra/resolvers/` fetch from DynamoDB. The Express app is a *client* that sends queries (`app/appsync.js`).\n\n**Common beginner mistake:** thinking GraphQL is a database or an AWS product. It's an open specification — AppSync, Apollo, and many others are implementations of it.",
+    "example": "```graphql\n# A query asks for exactly the fields it needs:\nquery GetProduct($id: ID!) {\n  getProduct(id: $id) {\n    id\n    name\n    price\n  }\n}\n\n# The response mirrors the query's shape:\n# { \"data\": { \"getProduct\": { \"id\": \"cel-1\", \"name\": \"iPhone 12\", \"price\": 1500000 } } }\n```",
+    "resources": [
+      { "label": "GraphQL — Introduction (graphql.org/learn)", "url": "https://graphql.org/learn/" },
+      { "label": "GraphQL — Queries and Mutations", "url": "https://graphql.org/learn/queries/" },
+      { "label": "AWS AppSync — What is AppSync?", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/what-is-appsync.html" }
+    ]
+  },
+  "cp-graphql-basic-002": {
+    "explanation": "**The problem REST has:** with REST you hit fixed endpoints (`/products`, `/products/:id`) that return a server-defined shape. If a screen needs less, you still download everything (**over-fetching**); if it needs more, you make several calls (**under-fetching** / N+1 round-trips).\n\n**What GraphQL changes:** one endpoint, and the client's query declares the exact fields and nesting it wants — so you get precisely the data in a single round-trip. The schema is strongly typed, so tools can validate queries and autocomplete fields.\n\n**Other practical differences:** REST leans on HTTP verbs (GET/POST/PUT/DELETE) and status codes; GraphQL usually POSTs every operation to one URL and returns HTTP **200** even on errors (failures live in an `errors` array). REST responses are easy to cache with standard HTTP caching; GraphQL caching is more work.\n\n**Honest take for an interview:** neither is universally better. REST is simpler and HTTP-cacheable; GraphQL wins when many different clients need flexible, precise data from possibly many sources. This project deliberately uses GraphQL (via AppSync) for the product read API.",
+    "example": "```text\n# REST: two calls, fixed shapes, possibly over-fetching\nGET /products        -> [{ id, name, price, description, specs, ... }]\nGET /products/cel-1  -> { id, name, price, description, specs, ... }\n\n# GraphQL: one endpoint, client picks the fields\nPOST /graphql\n{ \"query\": \"{ listProducts(limit: 24) { items { id name price } } }\" }\n```",
+    "resources": [
+      { "label": "AWS — GraphQL vs REST", "url": "https://aws.amazon.com/compare/the-difference-between-graphql-and-rest/" },
+      { "label": "GraphQL — Best Practices: Thinking in Graphs", "url": "https://graphql.org/learn/thinking-in-graphs/" },
+      { "label": "GraphQL — Serving over HTTP", "url": "https://graphql.org/learn/serving-over-http/" }
+    ]
+  },
+  "cp-graphql-basic-mcq-001": {
+    "explanation": "**Definitions:** **Over-fetching** is downloading more data than the UI needs (REST returns 30 fields, the card shows 2). **Under-fetching** is when one endpoint doesn't return enough, so the client makes additional calls — often the **N+1 problem** (one list call, then one call per item).\n\n**Why GraphQL helps:** the client query lists only the fields it wants, so the server returns just those — no over-fetching — and nested selections can pull related data in a single request, avoiding under-fetching.\n\n**Watch out:** GraphQL solves over-fetching *on the wire*, but a naive resolver can still over-fetch from the database. That's a separate concern you fix with batching (e.g. DataLoader) — not relevant to this project's simple Scan/GetItem resolvers, but a great follow-up to know.",
+    "resources": [
+      { "label": "GraphQL — Queries (selecting fields)", "url": "https://graphql.org/learn/queries/" },
+      { "label": "Apollo — Operation best practices", "url": "https://www.apollographql.com/docs/react/data/operation-best-practices" }
+    ]
+  },
+  "cp-graphql-basic-003": {
+    "explanation": "**Schema:** the typed contract. It declares the object types (`Product`), the fields and their types (`price: Float`), and the entry points (`type Query { getProduct(id: ID!): Product }`). Clients and servers both agree on it.\n\n**Query:** a client request that walks the schema and selects fields. It can pass arguments (`getProduct(id: \"cel-1\")`) and choose nesting. The response shape always mirrors the query.\n\n**Resolver:** a server function attached to a field/operation that knows how to produce its value — read a database, call another API, compute something. AppSync runs your resolver and assembles the typed response.\n\n**How it fits this project:** schema = `infra/schema.graphql`; the query strings are in `app/appsync.js`; the resolvers are `infra/resolvers/getProduct.js` (DynamoDB GetItem) and `listProducts.js` (DynamoDB Scan). Each resolver also maps the table's snake_case columns to the schema's camelCase fields.",
+    "example": "```graphql\n# schema.graphql — the contract\ntype Query {\n  getProduct(id: ID!): Product\n}\n\n# A query against it\nquery {\n  getProduct(id: \"cel-apple-iphone-12-128gb\") { id name price }\n}\n\n# The resolver (APPSYNC_JS) decides how to fetch it:\n#   request()  -> DynamoDB GetItem on the id\n#   response() -> map the item to the Product fields\n```",
+    "resources": [
+      { "label": "GraphQL — Schemas and Types", "url": "https://graphql.org/learn/schema/" },
+      { "label": "GraphQL — Execution (resolvers)", "url": "https://graphql.org/learn/execution/" },
+      { "label": "AppSync — JavaScript resolvers overview", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/resolver-reference-overview-js.html" }
+    ]
+  },
+  "cp-appsync-basic-001": {
+    "explanation": "**In one line:** AWS AppSync is a fully managed service for building GraphQL and real-time (Pub/Sub) APIs without running your own GraphQL server.\n\n**What AWS handles for you:** hosting the GraphQL endpoint, executing your schema and resolvers, connecting to **data sources** (DynamoDB, Lambda, HTTP, Aurora/RDS, OpenSearch), authorization, scaling, optional caching, and WebSocket-based real-time subscriptions.\n\n**The mental model:** you provide three things — a **schema** (the API contract), one or more **data sources** (where the data lives), and **resolvers** (the glue that turns a GraphQL field into a data-source operation). AppSync runs the rest.\n\n**How it fits this project:** AppSync exposes the existing `items-dev` DynamoDB table as a GraphQL API. The data source is the table, the resolvers are APPSYNC_JS functions, and auth is an API key for now (with a planned move to IAM). The ECS app just sends queries to the AppSync URL.",
+    "resources": [
+      { "label": "AppSync — What is AWS AppSync?", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/what-is-appsync.html" },
+      { "label": "AppSync — Product page", "url": "https://aws.amazon.com/appsync/" },
+      { "label": "AppSync — Resolver mapping overview", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-overview.html" }
+    ]
+  },
+  "cp-appsync-basic-002": {
+    "explanation": "**Why use AppSync instead of hand-rolling a GraphQL server:**\n\n**No servers:** there's nothing to provision, patch, or scale — AppSync is fully managed and scales with traffic.\n\n**Built-in data connectors:** resolvers map GraphQL fields directly onto DynamoDB, Lambda, HTTP, or RDS, so for simple cases you write little or no backend code.\n\n**Auth modes out of the box:** API key, IAM (SigV4), Amazon Cognito user pools, and OIDC/JWT — and you can combine them per API.\n\n**Real-time & caching:** GraphQL subscriptions over WebSockets for live updates, plus an optional server-side cache.\n\n**Cost model:** pay per request/resolver rather than for an always-on server.\n\n**Concretely in this project:** because AppSync fronts the data, the ECS task needs **no DynamoDB permissions** and there's **no GraphQL server code** to maintain — a real reduction in moving parts. The trade-off is an extra managed service and network hop.",
+    "resources": [
+      { "label": "AppSync — Features (product page)", "url": "https://aws.amazon.com/appsync/" },
+      { "label": "AppSync — Authorization and authentication", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/security-authz.html" },
+      { "label": "AppSync — Real-time data (subscriptions)", "url": "https://docs.aws.amazon.com/appsync/latest/devguide/aws-appsync-real-time-data.html" }
+    ]
+  },
+  "cp-docker-basic-001": {
+    "explanation": "**The problem it solves:** software behaves differently across machines because of mismatched OS libraries, language versions, and config — the classic 'works on my machine'.\n\n**What Docker does:** it packages your app *and* its dependencies into a single, isolated, portable unit called a **container**. The container carries its own filesystem and runtime, so it runs identically on your laptop, a CI runner, or AWS.\n\n**How it differs from a VM:** containers share the host OS kernel and isolate at the process level, so they're far lighter and faster to start than full virtual machines (which each boot a whole OS).\n\n**The basic workflow:** write a **Dockerfile** -> `docker build` produces an **image** -> `docker run` starts a **container** from that image -> push the image to a **registry** (like AWS ECR) so other machines can run it.\n\n**How it fits this project:** the Express app is built into an image and run as containers on ECS Fargate, with the image stored in ECR.",
+    "example": "```bash\n# Build an image from the Dockerfile in the current directory\ndocker build -t products-web .\n\n# Run a container from that image, mapping host:container ports\ndocker run -p 3000:3000 products-web\n\n# See running containers\ndocker ps\n```",
+    "resources": [
+      { "label": "Docker — What is Docker? (overview)", "url": "https://docs.docker.com/get-started/docker-overview/" },
+      { "label": "Docker concepts — What is a container?", "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" },
+      { "label": "Docker — Get started", "url": "https://docs.docker.com/get-started/" }
+    ]
+  },
+  "cp-docker-basic-002": {
+    "explanation": "**Image:** an immutable, read-only template — a snapshot of a filesystem plus metadata (the command to run, env, exposed ports). You build it once from a Dockerfile and store it in a registry such as ECR. Images are made of stacked, cacheable **layers**.\n\n**Container:** a running (or stopped) instance of an image, with a thin writable layer on top. You can start many containers from the same image; each is isolated.\n\n**The analogy:** image is to container what a **class** is to an **object**, or what a recipe is to a cooked meal. One image -> many containers.\n\n**Why the distinction matters here:** ECS pulls one image (by tag) from ECR and runs `desired_count` identical containers from it behind the ALB. Scaling = more containers from the same image; a new deploy = a new image tag.",
+    "example": "```bash\n# One image...\ndocker build -t products-web:latest .\n\n# ...many containers from it\ndocker run -d --name web1 products-web:latest\ndocker run -d --name web2 products-web:latest\n\ndocker images       # list images (templates)\ndocker ps           # list containers (running instances)\n```",
+    "resources": [
+      { "label": "Docker concepts — What is an image?", "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/" },
+      { "label": "Docker concepts — What is a container?", "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/" }
+    ]
+  },
+  "cp-docker-basic-003": {
+    "explanation": "**What it is:** a Dockerfile is a plain text script of instructions that `docker build` executes top-to-bottom to assemble an image. Each instruction produces a **layer**, and Docker caches layers so unchanged steps are reused on rebuild.\n\n**The common instructions:** `FROM` (base image), `WORKDIR` (set the working directory), `COPY` (copy files in), `RUN` (run a build command like installing deps), `ENV` (set env vars), `EXPOSE` (document a port), `USER` (drop privileges), and `CMD` (the default command when a container starts).\n\n**Two practical rules this project follows:** order instructions least- to most-frequently-changed so the dependency-install layer stays cached, and use a **multi-stage build** so build-only files never reach the final image.\n\n**How it fits this project:** the Dockerfile copies `package*.json`, runs `npm ci --omit=dev` in a `deps` stage, then a slim `runtime` stage copies the result, sets `USER node`, and runs `node app/index.js`.",
+    "example": "```dockerfile\n# A minimal Dockerfile (the project's is multi-stage)\nFROM node:22-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --omit=dev\nCOPY app ./app\nUSER node\nEXPOSE 3000\nCMD [\"node\", \"app/index.js\"]\n```",
+    "resources": [
+      { "label": "Docker — Dockerfile reference", "url": "https://docs.docker.com/reference/dockerfile/" },
+      { "label": "Docker concepts — Writing a Dockerfile", "url": "https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/" },
+      { "label": "Docker — Building best practices", "url": "https://docs.docker.com/build/building/best-practices/" }
+    ]
+  },
+  "cp-ecs-basic-001": {
+    "explanation": "**In one line:** Amazon ECS (Elastic Container Service) is AWS's container orchestrator — it runs and manages your containers for you.\n\n**What you give it:** a **task definition** — a blueprint naming the container image, CPU/memory, ports, environment variables, secrets, logging, and the IAM roles. A **service** then keeps a desired number of copies (**tasks**) of that definition running.\n\n**What it does for you:** schedules tasks onto compute, restarts unhealthy ones to maintain `desired_count`, performs rolling deployments, and registers tasks with a load balancer's target group.\n\n**Two launch types:** **Fargate** (serverless — AWS runs the compute, you just pick CPU/memory) and **EC2** (you manage a cluster of instances). This project uses Fargate, so there are no servers to patch.\n\n**Two IAM roles to remember:** the **execution role** (used by ECS to pull the image, write logs, and read secrets at launch) vs the **task role** (assumed by your app code at runtime — empty here, since the app only calls AppSync over HTTPS).",
+    "resources": [
+      { "label": "Amazon ECS — What is Amazon ECS?", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html" },
+      { "label": "ECS — What is AWS Fargate?", "url": "https://docs.aws.amazon.com/AmazonECS/latest/userguide/what-is-fargate.html" },
+      { "label": "ECS — Task definitions", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html" }
+    ]
+  },
+  "cp-ecs-basic-002": {
+    "explanation": "**In one line:** an Application Load Balancer (ALB) is a managed Layer-7 (HTTP/HTTPS) load balancer that spreads incoming requests across your healthy app instances.\n\n**The pieces:** a **listener** accepts traffic on a port/protocol (here, HTTP :80) and forwards it, based on rules, to a **target group**. The target group holds the **targets** (here, Fargate task IPs) and continuously **health-checks** them, sending traffic only to healthy ones.\n\n**Why 'Layer 7':** it understands HTTP, so it can route by path/host/header, terminate TLS, and do host/path-based routing — unlike a Network Load Balancer (Layer 4), which just forwards TCP/UDP.\n\n**How it fits this project:** the ALB is the single public entry point. Its security group allows :80 from anywhere, but the tasks' security group only accepts traffic *from the ALB* — so the containers are never directly exposed. The target group health-checks `/healthz`.",
+    "resources": [
+      { "label": "ELB — What is an Application Load Balancer?", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html" },
+      { "label": "ALB — Target groups", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html" },
+      { "label": "ELB — What is Elastic Load Balancing?", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html" }
+    ]
+  },
+  "cp-ecs-basic-mcq-001": {
+    "explanation": "**What `docker run` on a box gives you:** a single container, running until it (or the box) dies. No automatic restart on a different host, no scaling, no load balancing, no rolling updates, and a single point of failure.\n\n**What an orchestrator like ECS adds:**\n\n**Desired state:** you declare 'run N copies' and ECS keeps exactly N running, replacing any that crash or fail health checks.\n\n**Scaling:** change the desired count (or attach auto scaling) and ECS adds/removes tasks.\n\n**Load balancing:** ECS registers/deregisters tasks with an ALB target group automatically.\n\n**Safe deploys:** rolling updates start new tasks, wait for health, then drain old ones.\n\n**Why it matters here:** the project runs the Express container as an ECS Fargate **service** behind an ALB, so it self-heals and can scale — things a lone `docker run` can't do.",
+    "resources": [
+      { "label": "Amazon ECS — What is Amazon ECS?", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html" },
+      { "label": "ECS — Services", "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html" }
+    ]
+  },
+  "cp-tf-basic-001": {
+    "explanation": "**Infrastructure as Code (IaC):** the practice of defining your infrastructure (networks, databases, servers, IAM, APIs) in version-controlled configuration files instead of clicking through a console. The files become the source of truth and can be reviewed, diffed, and re-applied.\n\n**Terraform specifically:** an open-source IaC tool by HashiCorp. You write declarative config in **HCL** describing the *desired* end state; Terraform compares it to the current real state and figures out what to create, change, or destroy.\n\n**The core workflow:** `terraform init` (download providers) -> `terraform plan` (preview the changes) -> `terraform apply` (make them) -> `terraform destroy` (tear it all down). Terraform records what it manages in a **state file**.\n\n**Declarative, not scripted:** you describe *what* you want, not the step-by-step *how* — Terraform derives the order from resource dependencies.\n\n**How it fits this project:** everything under `infra/` (AppSync, IAM, ECR, ECS, ALB, Secrets Manager) is Terraform, so the whole stack can be created or destroyed with one command.",
+    "example": "```hcl\n# An HCL resource block: declare what you want to exist\nresource \"aws_ecr_repository\" \"app\" {\n  name = \"products-web\"\n}\n\n# The workflow (run in the terminal):\n#   terraform init     download the AWS provider\n#   terraform plan     preview what will change\n#   terraform apply    create/update real resources\n#   terraform destroy  remove everything this config manages\n```",
+    "resources": [
+      { "label": "Terraform — What is Terraform? (intro)", "url": "https://developer.hashicorp.com/terraform/intro" },
+      { "label": "Terraform — Core workflow", "url": "https://developer.hashicorp.com/terraform/intro/core-workflow" },
+      { "label": "AWS — What is Infrastructure as Code?", "url": "https://aws.amazon.com/what-is/iac/" }
+    ]
+  },
+  "cp-tf-basic-002": {
+    "explanation": "**Reproducibility:** the same config produces the same infrastructure every time — you can recreate the whole stack in a new account or region instead of remembering which buttons you clicked.\n\n**Reviewability:** infra changes arrive as a code diff in a pull request, so they can be reviewed (and in this repo, reviewed by the Claude CI action) before they touch AWS.\n\n**Safe previews:** `terraform plan` shows exactly what will change before anything happens — no surprise deletions.\n\n**Easy teardown:** `terraform destroy` removes the whole stack — invaluable for a learning project that runs always-on, billable resources (ALB, Fargate).\n\n**Self-documenting & ordered:** the files *are* the documentation of the architecture, and Terraform automatically orders dependent resources from their references (e.g. the secret is created before the task definition that consumes it).\n\n**No click-ops:** avoids manual, undocumented, error-prone console changes that drift over time.",
+    "resources": [
+      { "label": "Terraform — Use cases / why Terraform", "url": "https://developer.hashicorp.com/terraform/intro/use-cases" },
+      { "label": "Terraform — What is Terraform?", "url": "https://developer.hashicorp.com/terraform/intro" },
+      { "label": "AWS — Benefits of Infrastructure as Code", "url": "https://aws.amazon.com/what-is/iac/" }
+    ]
+  },
+  "cp-ddb-basic-001": {
+    "explanation": "**In one line:** Amazon DynamoDB is a fully managed, serverless NoSQL database that delivers fast, predictable performance at any scale.\n\n**The data model:** you store **items** (JSON-like records) in **tables**. Every item is found by its **primary key** — either just a **partition key**, or a partition key + **sort key**. Beyond the key, the schema is flexible: different items in the same table can have different attributes.\n\n**Key vs query:** you read a single item fast with **GetItem** by primary key. To fetch many matching items efficiently you use **Query** (on a key or a secondary index). With no suitable key/index, the only way to read 'everything' is a **Scan**, which reads the whole table.\n\n**Managed & serverless:** no servers, automatic scaling, single-digit-millisecond latency, and on-demand or provisioned capacity modes.\n\n**How it fits this project:** the `items-dev` table has only a partition key (`id`) and no secondary indexes — which is exactly why `getProduct` can use GetItem but `listProducts` must use a Scan.",
+    "resources": [
+      { "label": "DynamoDB — What is Amazon DynamoDB?", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html" },
+      { "label": "DynamoDB — Core components (tables, items, keys)", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html" },
+      { "label": "DynamoDB — Working with Queries", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html" }
+    ]
+  }
+}

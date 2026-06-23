@@ -740,5 +740,169 @@
     "answer": "Slightly broader than strictly needed — least privilege would grant only GetItem + Scan — but still read-only and scoped to the table ARN, so low risk",
     "explanation": "It's defensible as headroom for the planned GSI/Query work, and crucially it grants no Put/Delete and is scoped to the table ARN (+ its indexes), not `*`. Worth flagging, not alarming.",
     "tags": ["security", "iam", "least-privilege"]
+  },
+  {
+    "id": "cp-graphql-basic-001",
+    "topic": "GraphQL",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What is GraphQL?",
+    "answer": "A query language for APIs (and a runtime that executes those queries). The client sends one request describing exactly the data and shape it wants, and the server returns exactly that — usually through a single endpoint. The API is defined by a strongly-typed schema.",
+    "explanation": "In this project the schema (`schema.graphql`) defines a `Product` type plus `getProduct`/`listProducts` queries; AppSync is the runtime that executes them against DynamoDB. GraphQL itself is an open spec — AppSync is just one implementation of it.",
+    "tags": ["graphql", "basics", "fundamentals"]
+  },
+  {
+    "id": "cp-graphql-basic-002",
+    "topic": "GraphQL",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What are the main differences between REST and GraphQL?",
+    "answer": "REST exposes many endpoints (one per resource) that return fixed, server-defined shapes, using HTTP verbs and status codes. GraphQL exposes one endpoint where the client specifies exactly which fields it wants, so it avoids over-fetching (too much data) and under-fetching (too many round-trips). GraphQL is strongly typed via a schema and typically POSTs queries, returning HTTP 200 with an `errors` array on failure.",
+    "explanation": "Neither is 'better' — REST is simple, cacheable over HTTP, and ubiquitous; GraphQL shines when clients need flexible, precise data from many sources. This project's Node app is a GraphQL client of AppSync.",
+    "tags": ["graphql", "rest", "basics", "comparison"]
+  },
+  {
+    "id": "cp-graphql-basic-mcq-001",
+    "type": "multiple-choice",
+    "topic": "GraphQL",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "A REST endpoint returns 30 fields per product but the page only needs the name and price. What GraphQL term describes the problem GraphQL avoids here?",
+    "options": [
+      "Over-fetching",
+      "Under-fetching",
+      "The N+1 problem",
+      "Pagination"
+    ],
+    "answer": "Over-fetching",
+    "explanation": "Over-fetching = receiving more data than you need. GraphQL lets the client request only `{ name price }`. Under-fetching is the opposite — one endpoint doesn't return enough, forcing extra calls.",
+    "tags": ["graphql", "over-fetching", "basics"]
+  },
+  {
+    "id": "cp-graphql-basic-003",
+    "topic": "GraphQL",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "In GraphQL, what is a schema, a query, and a resolver?",
+    "answer": "Schema = the typed contract listing the available types and operations. Query = a client request that selects the fields it wants. Resolver = a server-side function that knows how to fetch the data for a field/operation.",
+    "explanation": "Mapped to this project: the schema is `schema.graphql`, a query is what `app/appsync.js` sends, and the resolvers are `getProduct.js`/`listProducts.js`, which read DynamoDB and shape the response.",
+    "tags": ["graphql", "schema", "resolver", "basics"]
+  },
+  {
+    "id": "cp-appsync-basic-001",
+    "topic": "AppSync",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What is AWS AppSync?",
+    "answer": "A fully managed service for building GraphQL (and Pub/Sub real-time) APIs. AWS hosts the GraphQL endpoint, runs your schema and resolvers, connects to data sources (DynamoDB, Lambda, HTTP, RDS), and handles authorization, scaling, caching, and subscriptions for you.",
+    "explanation": "In this project AppSync exposes the `items-dev` DynamoDB table as a GraphQL API using APPSYNC_JS resolvers — so you get a GraphQL server without running or scaling any server yourself.",
+    "tags": ["appsync", "basics", "fundamentals"]
+  },
+  {
+    "id": "cp-appsync-basic-002",
+    "topic": "AppSync",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What are the main benefits of using AppSync instead of building and hosting your own GraphQL server?",
+    "answer": "No servers to run or scale; built-in resolvers/connectors to data sources like DynamoDB; multiple auth modes (API key, IAM, Cognito, OIDC); automatic scaling; real-time subscriptions; optional caching; and pay-per-request pricing.",
+    "explanation": "Concretely here: the ECS app needs no DynamoDB permissions and no GraphQL server code — AppSync owns the schema, resolvers, and the connection to DynamoDB.",
+    "tags": ["appsync", "benefits", "basics"]
+  },
+  {
+    "id": "cp-docker-basic-001",
+    "topic": "Docker",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What is Docker?",
+    "answer": "A platform for packaging an application together with all its dependencies into a portable, isolated unit called a container, so it runs the same way on any machine that has a container runtime — 'it works on my machine' becomes 'it works everywhere'.",
+    "explanation": "In this project Docker packages the Node/Express app into an image that is pushed to ECR and run as containers on ECS Fargate.",
+    "tags": ["docker", "basics", "fundamentals"]
+  },
+  {
+    "id": "cp-docker-basic-002",
+    "topic": "Docker",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What's the difference between a Docker image and a container?",
+    "answer": "An image is an immutable, read-only template built from a Dockerfile and stored in a registry (e.g. ECR). A container is a running (or stopped) instance of an image. Analogy: the image is the class, the container is the object — you build an image once and run many containers from it.",
+    "explanation": "This project builds one image, pushes it to ECR by tag, and ECS runs `desired_count` containers from that same image.",
+    "tags": ["docker", "image", "container", "basics"]
+  },
+  {
+    "id": "cp-docker-basic-003",
+    "topic": "Docker",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What is a Dockerfile?",
+    "answer": "A text file of instructions (`FROM`, `WORKDIR`, `COPY`, `RUN`, `EXPOSE`, `CMD`, …) that tells `docker build` how to assemble an image step by step. Each instruction creates a cacheable layer.",
+    "explanation": "This project's Dockerfile is multi-stage: a `deps` stage installs production dependencies, and a smaller `runtime` stage copies them in and runs the app as a non-root user.",
+    "tags": ["docker", "dockerfile", "basics"]
+  },
+  {
+    "id": "cp-ecs-basic-001",
+    "topic": "ECS & ALB",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What is Amazon ECS?",
+    "answer": "Elastic Container Service — AWS's container orchestrator. You give it a task definition (which image, how much CPU/memory, which ports and env vars) and it schedules and runs your containers, keeps the desired number running, replaces unhealthy ones, and integrates with load balancers. With the Fargate launch type there are no servers to manage.",
+    "explanation": "This project runs the Express container on ECS Fargate behind an ALB, with `desired_count` controlling how many tasks run.",
+    "tags": ["ecs", "basics", "fundamentals", "orchestration"]
+  },
+  {
+    "id": "cp-ecs-basic-002",
+    "topic": "ECS & ALB",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What is an Application Load Balancer (ALB)?",
+    "answer": "A managed Layer-7 (HTTP/HTTPS) load balancer. It accepts client requests on a listener and distributes them across healthy targets (here, Fargate tasks) registered in a target group, running health checks and routing rules. It's the single public entry point in front of the service.",
+    "explanation": "In this project the ALB listens on :80 and forwards to a target group that health-checks `/healthz`; only the ALB can reach the tasks, thanks to the security-group chain.",
+    "tags": ["alb", "load-balancer", "basics"]
+  },
+  {
+    "id": "cp-ecs-basic-mcq-001",
+    "type": "multiple-choice",
+    "topic": "ECS & ALB",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "Why use an orchestrator like ECS instead of just running `docker run` on a single server?",
+    "options": [
+      "ECS keeps the desired number of tasks running, replaces failed ones, scales, and integrates with load balancers — production-grade scheduling you'd otherwise build yourself",
+      "ECS makes Docker images smaller",
+      "`docker run` cannot run Node.js apps",
+      "ECS is required to build Docker images"
+    ],
+    "answer": "ECS keeps the desired number of tasks running, replaces failed ones, scales, and integrates with load balancers — production-grade scheduling you'd otherwise build yourself",
+    "explanation": "`docker run` on one box has no self-healing, no rolling deploys, no load balancing, and a single point of failure. An orchestrator handles all of that declaratively.",
+    "tags": ["ecs", "orchestration", "basics"]
+  },
+  {
+    "id": "cp-tf-basic-001",
+    "topic": "Terraform",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What is Terraform, and what is Infrastructure as Code (IaC)?",
+    "answer": "Terraform is an IaC tool: you declare your desired cloud infrastructure in configuration files (HCL), and Terraform creates, updates, or deletes real resources to match that declaration. Infrastructure as Code means your infrastructure is defined in version-controlled files instead of being clicked together by hand in a console.",
+    "explanation": "In this project the entire AppSync + IAM + ECR + ECS + ALB + Secrets Manager stack lives in the `infra/` Terraform files.",
+    "tags": ["terraform", "iac", "basics", "fundamentals"]
+  },
+  {
+    "id": "cp-tf-basic-002",
+    "topic": "Terraform",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "Why do we use Terraform in this project?",
+    "answer": "Reproducibility (re-create the stack identically), reviewability (infra changes show up as a diff in a PR), one-command create and tear-down, no error-prone click-ops, self-documenting infrastructure, and automatic ordering of dependent resources from their references.",
+    "explanation": "For a learning project that touches a real AWS account, being able to `terraform destroy` the whole stack when you're done — and `apply` it back later — is a big practical win.",
+    "tags": ["terraform", "benefits", "basics", "why"]
+  },
+  {
+    "id": "cp-ddb-basic-001",
+    "topic": "DynamoDB",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What is Amazon DynamoDB?",
+    "answer": "A fully managed, serverless NoSQL key-value and document database. You store items (JSON-like records) in tables identified by a primary key; it scales automatically and delivers single-digit-millisecond reads and writes. There are no servers to manage, and it's schemaless beyond the primary key.",
+    "explanation": "This project reads an existing DynamoDB table, `items-dev`, whose primary key is `id` — the single-key design is why listing all products requires a Scan.",
+    "tags": ["dynamodb", "basics", "nosql", "fundamentals"]
   }
 ]
