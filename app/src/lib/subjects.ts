@@ -124,6 +124,14 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:kubernetes',
     loadData: loader('kubernetes', () => load(import('../../data/kubernetes.json'))),
   },
+  regex: {
+    id: 'regex',
+    label: 'Regex (JS)',
+    icon: '.*',
+    color: '#d6336c',
+    storageKey: 'srs:regex',
+    loadData: loader('regex', () => load(import('../../data/regex.json'))),
+  },
 };
 
 export function getSubject(id: string | undefined): Subject | null {

@@ -1,0 +1,346 @@
+{
+  "rx-basics-001": {
+    "explanation": "**What it is:** A regular expression is a small pattern language for describing text. Instead of writing loops to inspect characters one by one, you declare a pattern (\"a digit, then two letters\") and let the regex engine do the matching.\n\n**In JavaScript:** A regex is a real object of type `RegExp`. You hand it to string methods (`match`, `replace`, `split`, `search`) or call its own methods (`test`, `exec`). The four jobs you'll use it for: **test** (does it match?), **find/extract** (pull out matches), **replace** (rewrite text), and **split** (break a string apart).\n\n**Why learn it:** validation (emails, ZIP codes), parsing (logs, dates), and search-and-replace are everywhere. A one-line regex often replaces a dozen lines of manual string code.",
+    "example": "```js\nconst text = 'Order #42 shipped, order #7 pending';\n\n// 1) test — does the text contain a number?\nconsole.log(/\\d+/.test(text)); // true\n\n// 2) find all numbers\nconsole.log(text.match(/\\d+/g)); // ['42', '7']\n\n// 3) replace every '#<n>' with 'ID <n>'\nconsole.log(text.replace(/#(\\d+)/g, 'ID $1'));\n// 'Order ID 42 shipped, order ID 7 pending'\n```",
+    "resources": [
+      { "label": "MDN — Regular expressions guide", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions" },
+      { "label": "MDN — RegExp", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp" }
+    ]
+  },
+  "rx-basics-002": {
+    "explanation": "**The two ways:** A **literal** sits between slashes: `/abc/`. The **constructor** takes a string: `new RegExp('abc')`. Both produce an identical `RegExp` object.\n\n**When to use the literal:** the pattern is fixed and known when you write the code. It's compiled once when the script is parsed, and it reads cleanly because you don't double-escape backslashes.\n\n**When to use the constructor:** the pattern is dynamic — built from a variable, user input, or assembled at runtime. The catch: because the argument is a normal string, backslashes must be doubled (`'\\\\d'` to mean `\\d`), since the string parser eats one layer first.\n\n**Flags:** the literal takes them after the closing slash (`/abc/gi`); the constructor takes them as a second string argument (`new RegExp('abc', 'gi')`).",
+    "example": "```js\n// Literal — fixed pattern\nconst re1 = /\\d{3}/;\nconsole.log(re1.test('abc123')); // true\n\n// Constructor — built from a variable\nconst word = 'cat';\nconst re2 = new RegExp(word, 'i');\nconsole.log(re2.test('A CAT')); // true\n\n// Note the doubled backslash in a constructor string:\nconst re3 = new RegExp('\\\\d{3}'); // same as /\\d{3}/\nconsole.log(re3.test('x999')); // true\n```",
+    "resources": [
+      { "label": "MDN — RegExp() constructor", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/RegExp" },
+      { "label": "MDN — Creating a regular expression", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#creating_a_regular_expression" }
+    ]
+  },
+  "rx-basics-mcq-001": {
+    "explanation": "**Why the constructor:** When the pattern lives in a variable, only `new RegExp(variable)` reads the variable's *value*. A literal like `/word/i` is taken character-for-character — it matches the four letters w-o-r-d, never the contents of a variable named `word`.\n\n**Where flags go:** the second argument. `new RegExp(word, 'i')` builds a case-insensitive matcher from whatever string `word` holds.\n\n**A real gotcha — escaping user input:** if the variable comes from a user and might contain regex metacharacters (like `.` or `(`), build it carefully or escape it first, or the pattern will misbehave. The constructor does not escape for you.",
+    "example": "```js\nconst word = 'cat';\n\n// Correct: build a case-insensitive regex from the variable\nconst good = new RegExp(word, 'i');\nconsole.log(good.test('My CAT')); // true\n\n// Wrong: the literal matches the text 'word', not the variable\nconst bad = /word/i;\nconsole.log(bad.test('My CAT')); // false\nconsole.log(bad.test('a WORD')); // true (matched the literal letters)\n```",
+    "resources": [
+      { "label": "MDN — RegExp() constructor", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/RegExp" },
+      { "label": "MDN — RegExp.escape()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/escape" }
+    ]
+  },
+  "rx-basics-003": {
+    "explanation": "**What `g` does:** the global flag tells the engine to keep going after the first match and find them all.\n\n**Effect per method:** with `match`, you get an array of every match instead of just the first; with `replace`/`replaceAll`, every occurrence is rewritten instead of only the first; `matchAll` actually *requires* `g`.\n\n**The hidden side effect:** a global regex is **stateful** — it tracks a `lastIndex` property and advances it on each `exec`/`test` call. That's powerful for looping but causes surprising bugs if you reuse one global regex across separate `test` calls (see the `lastIndex` gotcha card).",
+    "example": "```js\nconst s = 'a-b-c';\n\n// Without g: first match only\nconsole.log(s.match(/-/));     // ['-', index: 1, ...]\nconsole.log(s.replace(/-/, '+')); // 'a+b-c'\n\n// With g: all matches\nconsole.log(s.match(/-/g));     // ['-', '-']\nconsole.log(s.replace(/-/g, '+')); // 'a+b+c'\n```",
+    "resources": [
+      { "label": "MDN — RegExp.prototype.global", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/global" },
+      { "label": "MDN — Advanced searching with flags", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags" }
+    ]
+  },
+  "rx-basics-004": {
+    "explanation": "**What `i` does:** case-insensitive matching. With it, `/cat/i` matches `cat`, `Cat`, `CAT`, `cAt`, and so on.\n\n**Why it matters:** without `i`, regex is case-sensitive by default, so user-facing search and validation often need it. It's cheap and very common.\n\n**Combine flags freely:** flags stack in any order — `/cat/gi` is global *and* case-insensitive. For non-ASCII letters (é, Ω), pair `i` with the `u` (unicode) flag for correct case folding.",
+    "example": "```js\nconsole.log(/cat/.test('A CAT'));  // false (case-sensitive)\nconsole.log(/cat/i.test('A CAT')); // true\n\n// Stacking flags: case-insensitive + global\nconst found = 'Cat cat CAT'.match(/cat/gi);\nconsole.log(found); // ['Cat', 'cat', 'CAT']\n```",
+    "resources": [
+      { "label": "MDN — RegExp.prototype.ignoreCase", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/ignoreCase" },
+      { "label": "MDN — Advanced searching with flags", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags" }
+    ]
+  },
+  "rx-basics-mcq-002": {
+    "explanation": "**What `m` changes:** it only affects the anchors `^` and `$`. Normally `^` means start-of-string and `$` means end-of-string. With `m`, they mean start-of-line and end-of-line, so they also match right after / before each `\\n`.\n\n**The classic confusion:** `m` does NOT make `.` match newlines — that's the separate `s` (dotAll) flag. Many people mix these up.\n\n**Where it's useful:** processing multi-line text (a textarea, a file's contents) line by line with a single regex, e.g. matching every line that starts with `#`.",
+    "example": "```js\nconst text = 'first\\nsecond\\nthird';\n\n// Without m: ^ only matches the very start of the string\nconsole.log(text.match(/^\\w+/g)); // ['first']\n\n// With m: ^ matches the start of each line\nconsole.log(text.match(/^\\w+/gm)); // ['first', 'second', 'third']\n```",
+    "resources": [
+      { "label": "MDN — RegExp.prototype.multiline", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/multiline" },
+      { "label": "MDN — Assertions (anchors)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Assertions" }
+    ]
+  },
+  "rx-basics-mr-001": {
+    "explanation": "**The full set:** JavaScript has exactly seven regex flags — `g` (global), `i` (ignoreCase), `m` (multiline), `s` (dotAll: `.` matches newlines), `u` (unicode), `y` (sticky: match only at `lastIndex`), and `d` (hasIndices: record start/end positions of each capture).\n\n**Not JavaScript flags:** `x` (the extended/verbose mode that ignores whitespace and allows comments) exists in PCRE/Python/Java but NOT in JS. `z` isn't a flag in any common engine. Knowing what *doesn't* exist saves you from copying patterns from other languages that silently break.\n\n**Reading them back:** `regex.flags` returns the active flags as a string, and there are boolean accessors like `regex.global`.",
+    "example": "```js\nconst re = /abc/gim;\nconsole.log(re.flags);     // 'gim'\nconsole.log(re.global);    // true\nconsole.log(re.multiline); // true\n\n// Invalid flag -> SyntaxError at creation time\ntry {\n  new RegExp('abc', 'x'); // not a JS flag\n} catch (e) {\n  console.log(e.name); // 'SyntaxError'\n}\n```",
+    "resources": [
+      { "label": "MDN — Advanced searching with flags", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags" },
+      { "label": "MDN — RegExp.prototype.flags", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/flags" }
+    ]
+  },
+  "rx-char-001": {
+    "explanation": "**What `\\d` matches:** any single digit. It's shorthand for the character class `[0-9]`.\n\n**The opposite:** `\\D` matches any single character that is NOT a digit (a letter, space, punctuation).\n\n**One token = one character:** `\\d` matches *one* digit. To match several, add a quantifier: `\\d+` (one or more), `\\d{4}` (exactly four). A four-digit year is `\\d{4}`.\n\n**Unicode note:** by default `\\d` is only `0-9`. It does not match other numeral systems unless you opt into special unicode property escapes.",
+    "example": "```js\nconsole.log(/\\d/.test('abc7')); // true (there is a digit)\nconsole.log(/\\d/.test('abc'));  // false\n\n// One digit vs many\nconsole.log('id 2026'.match(/\\d/g));   // ['2','0','2','6'] one at a time\nconsole.log('id 2026'.match(/\\d+/g));  // ['2026'] a whole run\n\n// \\D — non-digits\nconsole.log('a1b2'.match(/\\D/g)); // ['a', 'b']\n```",
+    "resources": [
+      { "label": "MDN — Character classes", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Character_classes" },
+      { "label": "MDN — Regex cheatsheet", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" }
+    ]
+  },
+  "rx-char-002": {
+    "explanation": "**What `\\w` matches:** a single 'word' character — a letter, a digit, or an underscore. It's exactly `[A-Za-z0-9_]`.\n\n**What it does NOT match:** spaces, punctuation, hyphens, or (by default) accented/non-ASCII letters like `é` or `ñ`. The name 'word character' is a bit misleading because of the underscore-yes / accent-no rules.\n\n**The opposite:** `\\W` matches any non-word character.\n\n**Common use:** `\\w+` grabs identifiers or simple words. If you need real Unicode letters, use the `u` flag with a Unicode property escape like `\\p{L}` instead.",
+    "example": "```js\nconsole.log('hello_world 99!'.match(/\\w+/g));\n// ['hello_world', '99'] — note underscore kept, space & ! split\n\n// \\W: the non-word characters\nconsole.log('a-b c'.match(/\\W/g)); // ['-', ' ']\n\n// Accents are NOT \\w by default\nconsole.log('café'.match(/\\w+/g)); // ['caf'] — é dropped\n```",
+    "resources": [
+      { "label": "MDN — Character classes", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Character_classes" },
+      { "label": "MDN — Unicode property escapes", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape" }
+    ]
+  },
+  "rx-char-003": {
+    "explanation": "**What `\\s` matches:** any single whitespace character — a regular space, tab (`\\t`), newline (`\\n`), carriage return (`\\r`), form feed, and a few Unicode spaces.\n\n**The opposite:** `\\S` matches any non-whitespace character.\n\n**Where it shines:** normalising or splitting text. `\\s+` matches a run of whitespace, so `str.split(/\\s+/)` breaks a string into words regardless of how many spaces/tabs separate them, and `str.replace(/\\s+/g, ' ')` collapses messy whitespace to single spaces.",
+    "example": "```js\nconst messy = 'one   two\\tthree\\nfour';\n\n// Split on any run of whitespace\nconsole.log(messy.split(/\\s+/)); // ['one','two','three','four']\n\n// Collapse all whitespace to single spaces\nconsole.log(messy.replace(/\\s+/g, ' ')); // 'one two three four'\n\n// \\S — keep only non-whitespace\nconsole.log('a b c'.match(/\\S/g)); // ['a','b','c']\n```",
+    "resources": [
+      { "label": "MDN — Character classes", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Character_classes" },
+      { "label": "MDN — String.prototype.split()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split" }
+    ]
+  },
+  "rx-char-004": {
+    "explanation": "**What the dot matches:** any single character — except a line terminator (`\\n`, `\\r`, …) by default.\n\n**Match a literal dot:** escape it as `\\.`. This is the single most common regex mistake — an unescaped dot in something like `3.14` or `file.txt` matches *any* character, not the period.\n\n**The `s` (dotAll) flag:** add it and `.` will also match newlines, which is what you want when scanning across multiple lines.\n\n**Be specific when you can:** `.*` is a blunt instrument; a tighter class like `[^,]*` (anything but a comma) is often safer and faster than a wildcard.",
+    "example": "```js\n// Dot = any char (so this 'works' but is too loose)\nconsole.log(/3.14/.test('3x14')); // true (!) the dot matched 'x'\n\n// Escaped dot = literal period\nconsole.log(/3\\.14/.test('3x14')); // false\nconsole.log(/3\\.14/.test('3.14')); // true\n\n// dotAll: let . cross newlines\nconsole.log(/a.b/.test('a\\nb'));  // false\nconsole.log(/a.b/s.test('a\\nb')); // true\n```",
+    "resources": [
+      { "label": "MDN — Character classes (the dot)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Character_classes" },
+      { "label": "MDN — RegExp.prototype.dotAll", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/dotAll" }
+    ]
+  },
+  "rx-char-mcq-001": {
+    "explanation": "**Negated class:** inside square brackets, a `^` as the *first* character flips the meaning — `[^aeiou]` matches any one character that is NOT a, e, i, o, or u.\n\n**Context for `^`:** the same symbol means two different things depending on where it sits. At the start of a class (`[^...]`) it negates; outside a class it's the start-of-string anchor. Position decides.\n\n**Still one character:** a negated class still matches exactly one character. `[^aeiou]+` would match a run of non-vowels.\n\n**A literal `^`:** to match an actual caret inside a class, put it anywhere but first, e.g. `[a^]`.",
+    "example": "```js\n// Any single non-vowel\nconsole.log('hello'.match(/[^aeiou]/g)); // ['h','l','l']\n\n// Negated class with a quantifier: runs of non-digits\nconsole.log('a12b3'.match(/[^0-9]+/g)); // ['a','b']\n\n// Compare: ^ OUTSIDE brackets is the start anchor\nconsole.log(/^a/.test('apple')); // true (starts with a)\n```",
+    "resources": [
+      { "label": "MDN — Character classes (negation)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Character_classes" },
+      { "label": "MDN — Regex cheatsheet", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" }
+    ]
+  },
+  "rx-char-mcq-002": {
+    "explanation": "**Ranges:** a hyphen between two characters inside a class defines a range based on character codes. `[a-z]` is every lowercase letter, `[A-Z]` uppercase, `[0-9]` digits.\n\n**Combine ranges:** put several in one class — `[A-Za-z0-9]` matches any alphanumeric. Order doesn't matter; `[0-9A-F]` is hex digits.\n\n**Literal hyphen:** to match an actual `-`, put it first or last in the class (`[-a-z]` or `[a-z-]`) or escape it (`[a\\-z]`). A hyphen in the middle is interpreted as a range.\n\n**Why not just `.`:** a class is precise. `[a-z]` rejects digits and symbols; the dot accepts almost anything.",
+    "example": "```js\n// Lowercase letters only\nconsole.log('aB3z'.match(/[a-z]/g)); // ['a','z']\n\n// Combined ranges = alphanumeric\nconsole.log('aB3 _!'.match(/[A-Za-z0-9]/g)); // ['a','B','3']\n\n// Literal hyphen (placed last)\nconsole.log('a-b'.match(/[a-z-]/g)); // ['a','-','b']\n```",
+    "resources": [
+      { "label": "MDN — Character classes (ranges)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Character_classes" },
+      { "label": "MDN — Regular expressions guide", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions" }
+    ]
+  },
+  "rx-anchor-001": {
+    "explanation": "**Anchors match positions, not characters:** `^` asserts 'we are at the start of the string' and `$` asserts 'we are at the end'. They consume no characters.\n\n**Why they're essential for validation:** without anchors, a pattern can match a fragment buried inside a larger string. `/\\d{5}/` matches the `12345` inside `abc12345xyz`; `/^\\d{5}$/` only matches when the *entire* string is five digits.\n\n**With the `m` flag:** `^` and `$` switch to start/end of each line instead of the whole string.\n\n**Mental model:** wrap a validation pattern in `^...$` to mean 'the whole input must look exactly like this'.",
+    "example": "```js\n// Anchored: the WHOLE string must be 'cat'\nconsole.log(/^cat$/.test('cat'));     // true\nconsole.log(/^cat$/.test('cats'));    // false\nconsole.log(/^cat$/.test('a cat'));   // false\n\n// Unanchored: matches 'cat' anywhere inside\nconsole.log(/cat/.test('a cat sat')); // true\n```",
+    "resources": [
+      { "label": "MDN — Assertions (anchors)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Assertions" },
+      { "label": "MDN — Regex cheatsheet", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" }
+    ]
+  },
+  "rx-anchor-mcq-001": {
+    "explanation": "**Reading `^\\d+$`:** start of string, then one-or-more digits, then end of string. In plain English: 'the entire string is nothing but digits (at least one)'.\n\n**Why the others fail:** `'12a45'` contains a letter, so the run of digits can't reach `$`. `'  123'` has leading spaces before the first digit, so it can't start at `^`. `'12.5'` has a dot, which `\\d` doesn't match.\n\n**Takeaway:** anchoring turns a 'contains' check into an 'is exactly' check — the difference between `test`ing a substring and validating a whole field.",
+    "example": "```js\nconst isAllDigits = (s) => /^\\d+$/.test(s);\n\nconsole.log(isAllDigits('12345')); // true\nconsole.log(isAllDigits('12a45')); // false (letter)\nconsole.log(isAllDigits('  123')); // false (spaces)\nconsole.log(isAllDigits('12.5'));  // false (dot)\nconsole.log(isAllDigits(''));      // false (+ needs >= 1)\n```",
+    "resources": [
+      { "label": "MDN — Assertions (anchors)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Assertions" },
+      { "label": "MDN — RegExp.prototype.test()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/test" }
+    ]
+  },
+  "rx-anchor-002": {
+    "explanation": "**What `\\b` is:** a word-boundary assertion. It matches the empty position between a word character (`\\w`) and a non-word character (or the string edge). Like `^`/`$`, it matches a *position*, not a character.\n\n**Why it's useful:** it lets you match whole words. `/\\bcat\\b/` matches `cat` in `'a cat sat'` but not the `cat` inside `'category'` or `'scatter'`, because those neighbours are word characters.\n\n**The inverse:** `\\B` matches a non-boundary — a position *between* two word characters or two non-word characters. `/\\Bcat\\B/` would match `cat` inside `'scatter'`.\n\n**Gotcha:** `\\b` is based on `\\w`, so it treats `_` as part of a word and treats accented letters as boundaries by default.",
+    "example": "```js\nconsole.log(/\\bcat\\b/.test('a cat sat')); // true (standalone word)\nconsole.log(/\\bcat\\b/.test('category')); // false (inside a word)\n\n// Whole-word replace\nconsole.log('cat category cats'.replace(/\\bcat\\b/g, 'DOG'));\n// 'DOG category cats'\n\n// \\B — the non-boundary inverse\nconsole.log(/\\Bcat\\B/.test('scatter')); // true\n```",
+    "resources": [
+      { "label": "MDN — Assertions: word boundary", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Assertions#word_boundary_assertion" },
+      { "label": "MDN — Regex cheatsheet", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" }
+    ]
+  },
+  "rx-quant-001": {
+    "explanation": "**The three basic quantifiers:** they say how many times the *preceding token* may repeat. `*` = zero or more, `+` = one or more, `?` = zero or one (i.e. optional).\n\n**Applies to one token:** `a+` repeats the single `a`. To repeat a group, wrap it: `(ab)+` matches `ab`, `abab`, …\n\n**`*` vs `+`:** the difference is whether 'none' counts. `a*` happily matches an empty string; `a+` needs at least one `a`. That makes `+` the right choice when something must be present.\n\n**Greedy by default:** all three grab as much as they can before backtracking — see the greedy-vs-lazy card.",
+    "example": "```js\nconsole.log(/a+/.test(''));   // false (needs >= 1)\nconsole.log(/a*/.test(''));   // true  (0 is allowed)\n\n// ? makes a token optional — match 'color' or 'colour'\nconsole.log(/colou?r/.test('color'));  // true\nconsole.log(/colou?r/.test('colour')); // true\n\n// Quantifier on a group\nconsole.log('ababab'.match(/(ab)+/)[0]); // 'ababab'\n```",
+    "resources": [
+      { "label": "MDN — Quantifiers", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Quantifiers" },
+      { "label": "MDN — Regex cheatsheet", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" }
+    ]
+  },
+  "rx-quant-mcq-001": {
+    "explanation": "**Exact count `{n}`:** `\\d{3}` matches exactly three digits in a row — no more required, no fewer accepted at that spot.\n\n**The family:** `{n}` exactly n, `{n,}` n or more, `{n,m}` between n and m inclusive. So `\\d{2,4}` matches 2, 3, or 4 digits.\n\n**No spaces inside braces:** `{2, 4}` (with a space) is not a valid quantifier in older engines and may be treated as literal text — write `{2,4}`.\n\n**Pair with anchors for validation:** `^\\d{3}$` insists the whole string is precisely three digits — useful for fixed-length codes.",
+    "example": "```js\nconst re = /^\\d{3}$/; // exactly three digits, whole string\nconsole.log(re.test('123'));  // true\nconsole.log(re.test('12'));   // false (too few)\nconsole.log(re.test('1234')); // false (too many)\n\n// Range form {n,m}\nconsole.log('1 22 333 4444'.match(/\\d{2,3}/g)); // ['22','333','444']\n```",
+    "resources": [
+      { "label": "MDN — Quantifiers", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Quantifiers" },
+      { "label": "MDN — Regular expressions guide", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions" }
+    ]
+  },
+  "rx-quant-mcq-002": {
+    "explanation": "**Greedy means maximal:** by default `.*` matches as many characters as possible, then backtracks only as much as needed to let the rest of the pattern succeed. Against `<a><b>`, `<.*>` grabs everything up to the *last* `>`.\n\n**The fix — lazy:** append `?` to make it lazy. `<.*?>` matches as little as possible, so it stops at the *first* `>` and returns `<a>`.\n\n**The even-better fix — be specific:** `<[^>]*>` ('angle bracket, then anything that isn't a `>`, then `>`') avoids the greedy/lazy question entirely and is faster. Reaching for a precise character class beats wildcards in most parsing tasks.",
+    "example": "```js\nconst s = '<a><b>';\n\nconsole.log(s.match(/<.*>/)[0]);   // '<a><b>'  greedy (to last >)\nconsole.log(s.match(/<.*?>/)[0]);  // '<a>'     lazy  (to first >)\nconsole.log(s.match(/<[^>]*>/)[0]); // '<a>'    specific, best\n\n// All tags, lazily\nconsole.log(s.match(/<.*?>/g)); // ['<a>', '<b>']\n```",
+    "resources": [
+      { "label": "MDN — Quantifiers (greedy vs lazy)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Quantifiers#types" },
+      { "label": "MDN — Regex cheatsheet", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" }
+    ]
+  },
+  "rx-quant-002": {
+    "explanation": "**Making a quantifier lazy:** add `?` right after it. `*?`, `+?`, `??`, and `{2,5}?` are the lazy versions of `*`, `+`, `?`, and `{2,5}`. Lazy means 'match as few characters as possible while still allowing the overall pattern to succeed'.\n\n**Why you'd want it:** when a greedy quantifier overshoots and swallows text you meant to stop at — the classic case is matching the *shortest* span between two delimiters.\n\n**`.+?` idiom:** the go-to 'smallest possible chunk' pattern. But remember a precise character class (`[^x]+`) is usually clearer and faster than a lazy wildcard.\n\n**Don't confuse the two `?`s:** the first `?` after a token is the optional quantifier; a `?` after *another* quantifier makes it lazy.",
+    "example": "```js\nconst log = 'start[INFO]middle[WARN]end';\n\n// Greedy: spans from first [ to last ]\nconsole.log(log.match(/\\[.+\\]/)[0]); // '[INFO]middle[WARN]'\n\n// Lazy: each shortest [...] chunk\nconsole.log(log.match(/\\[.+?\\]/g)); // ['[INFO]', '[WARN]']\n```",
+    "resources": [
+      { "label": "MDN — Quantifiers (non-greedy)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Quantifiers#types" },
+      { "label": "MDN — Regular expressions guide", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions" }
+    ]
+  },
+  "rx-group-001": {
+    "explanation": "**Two jobs of parentheses:** (1) **grouping** — make a quantifier or alternation apply to several tokens at once, e.g. `(ab)+` or `(cat|dog)s`; (2) **capturing** — remember the text each group matched so you can read it back.\n\n**Where captures show up:** in a `match`/`exec` result array at index `[1]`, `[2]`, … (index `[0]` is always the whole match); in `replace` as `$1`, `$2`; and as backreferences `\\1` inside the pattern itself.\n\n**Numbering:** groups are numbered by the order of their opening `(`, left to right.\n\n**Don't need the capture?** use a non-capturing group `(?:...)` to group without filling the results array.",
+    "example": "```js\n// Capture date parts\nconst m = '2026-06-25'.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\nconsole.log(m[0]); // '2026-06-25' (whole match)\nconsole.log(m[1]); // '2026' (group 1)\nconsole.log(m[2]); // '06'   (group 2)\n\n// Grouping for a quantifier\nconsole.log(/^(ab)+$/.test('ababab')); // true\n```",
+    "resources": [
+      { "label": "MDN — Groups and backreferences", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Groups_and_backreferences" },
+      { "label": "MDN — String.prototype.match()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match" }
+    ]
+  },
+  "rx-group-mcq-001": {
+    "explanation": "**The pipe `|` is OR:** `cat|dog` matches either `cat` or `dog`. It's called alternation.\n\n**`|` has very low precedence:** it splits the *whole* pattern unless you scope it with a group. `^cat|dog$` actually means '(`^cat`) or (`dog$`)' — start-with-cat OR end-with-dog — almost never what you want.\n\n**Scope it with parentheses:** `^(cat|dog)$` means the entire string is exactly `cat` or exactly `dog`. The group both bounds the alternation and (here) captures which one matched.\n\n**Multiple options:** chain them — `(red|green|blue)`.",
+    "example": "```js\n// Unscoped | spans the whole pattern (surprising!)\nconsole.log(/^cat|dog$/.test('cathouse'));  // true  (starts 'cat')\nconsole.log(/^cat|dog$/.test('hotdog'));     // true  (ends 'dog')\n\n// Scoped: exactly 'cat' or exactly 'dog'\nconst re = /^(cat|dog)$/;\nconsole.log(re.test('cat'));      // true\nconsole.log(re.test('cathouse')); // false\n```",
+    "resources": [
+      { "label": "MDN — Disjunction (|)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Disjunction" },
+      { "label": "MDN — Groups and backreferences", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Groups_and_backreferences" }
+    ]
+  },
+  "rx-group-002": {
+    "explanation": "**Non-capturing group:** write `(?:...)`. It groups tokens — so a quantifier or `|` can apply to the whole thing — without saving the matched text as a numbered capture.\n\n**Why bother:** (1) it keeps your capture numbers meaningful — only the groups you actually care about get `[1]`, `[2]`; (2) it's marginally more efficient because the engine doesn't record the substring; (3) it signals intent: 'I'm grouping for structure, not to extract'.\n\n**Typical use:** wrapping an optional or repeated chunk you don't need to read back, e.g. an optional `https?://` prefix or repeated `(?:, \\w+)*` list tails.",
+    "example": "```js\n// Non-capturing prefix, capturing the part we want\nconst m = 'https://example.com'.match(/(?:https?:\\/\\/)?(\\w+\\.\\w+)/);\nconsole.log(m[1]); // 'example.com' — group 1 is the domain, not the scheme\n\n// Compare capture numbering:\nconsole.log('abab'.match(/(?:ab)(ab)/)[1]); // 'ab' (only one capture)\n```",
+    "resources": [
+      { "label": "MDN — Non-capturing group", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Non-capturing_group" },
+      { "label": "MDN — Groups and backreferences", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Groups_and_backreferences" }
+    ]
+  },
+  "rx-group-003": {
+    "explanation": "**Named capturing group:** write `(?<name>...)`. The matched text is then available on the result's `.groups` object as `match.groups.name`, in addition to its usual numeric index.\n\n**Why use names:** captures become self-documenting. `match.groups.year` is far clearer than `match[1]`, and reordering the pattern won't silently shift your indices.\n\n**In replacements:** reference a named group with `$<name>`, e.g. swap date parts with `$<day>/$<month>/$<year>`.\n\n**Backreference by name:** inside the pattern, `\\k<name>` matches the same text the named group captured.",
+    "example": "```js\nconst m = '2026-06'.match(/(?<year>\\d{4})-(?<month>\\d{2})/);\nconsole.log(m.groups.year);  // '2026'\nconsole.log(m.groups.month); // '06'\n\n// Use named groups in a replacement\nconst out = '2026-06-25'.replace(\n  /(?<y>\\d{4})-(?<m>\\d{2})-(?<d>\\d{2})/,\n  '$<d>/$<m>/$<y>'\n);\nconsole.log(out); // '25/06/2026'\n```",
+    "resources": [
+      { "label": "MDN — Named capturing group", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group" },
+      { "label": "MDN — Groups and backreferences", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Groups_and_backreferences" }
+    ]
+  },
+  "rx-escape-001": {
+    "explanation": "**Escaping:** many characters have special meaning in regex — `. * + ? ( ) [ ] { } ^ $ | \\` and `/`. To match one literally, put a backslash in front: `\\.` for a dot, `\\(` for a parenthesis, `\\\\` for a backslash.\n\n**The dot is the usual culprit:** an unescaped `.` matches any character, so `3.14` and `file.txt` patterns will match more than you intend until you escape the period.\n\n**Inside a class, fewer escapes are needed:** most metacharacters are literal inside `[...]`, so `[.+]` matches a literal dot or plus.\n\n**Escaping dynamic input:** when building a regex from a variable, escape regex-special characters first (manually, or with `RegExp.escape` where available) so user text like `a.b` isn't treated as a pattern.",
+    "example": "```js\n// IP-like pattern: real dots must be escaped\nconst re = /^\\d+\\.\\d+\\.\\d+\\.\\d+$/;\nconsole.log(re.test('192.168.0.1')); // true\nconsole.log(re.test('192x168x0x1')); // false (no literal dots)\n\n// Escape user input before using it as a pattern\nconst userText = 'a.b';\nconst escaped = userText.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\nconsole.log(new RegExp(escaped).test('a.b')); // true\nconsole.log(new RegExp(escaped).test('axb')); // false\n```",
+    "resources": [
+      { "label": "MDN — Escaping in regular expressions", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping" },
+      { "label": "MDN — RegExp.escape()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/escape" }
+    ]
+  },
+  "rx-method-test-001": {
+    "explanation": "**What `test` returns:** a boolean — `true` if the pattern matches anywhere in the string, `false` otherwise. It's a method *of the regex*, called as `regex.test(str)`.\n\n**When to use it:** any yes/no question — 'is this a valid email shape?', 'does this contain a digit?'. It's the fastest option because the engine can stop at the first match and doesn't build a results array.\n\n**Watch the global flag:** if the regex has `g` (or `y`), `test` becomes stateful and advances `lastIndex` between calls, which can make repeated calls alternate true/false. For a simple one-off check, don't use `g`.",
+    "example": "```js\nconsole.log(/\\d/.test('abc4')); // true (contains a digit)\nconsole.log(/\\d/.test('abc'));  // false\n\n// Validation read clearly\nconst isHex = (s) => /^[0-9a-f]+$/i.test(s);\nconsole.log(isHex('1aF')); // true\nconsole.log(isHex('1xF')); // false\n```",
+    "resources": [
+      { "label": "MDN — RegExp.prototype.test()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/test" },
+      { "label": "MDN — RegExp.prototype.lastIndex", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/lastIndex" }
+    ]
+  },
+  "rx-method-match-001": {
+    "explanation": "**Without `g`, `match` returns rich detail about the FIRST match:** an array-like object where `[0]` is the matched text, `[1]`, `[2]`… are capture groups, plus properties `index` (where the match started), `input` (the original string), and `groups` (named captures, or `undefined`).\n\n**Why this shape:** it mirrors `RegExp.prototype.exec` for a single match. The extra metadata is handy when you need to know *where* the match was, not just what it was.\n\n**Contrast with `g`:** add the global flag and `match` throws away all that metadata, returning a plain array of matched strings (see the next card). Choose based on whether you need positions/captures.",
+    "example": "```js\nconst m = 'a1b2'.match(/\\d/);\nconsole.log(m[0]);     // '1' (first match)\nconsole.log(m.index);  // 1   (position)\nconsole.log(m.input);  // 'a1b2'\n\n// Capture groups appear at [1], [2], ...\nconst d = '2026-06'.match(/(\\d{4})-(\\d{2})/);\nconsole.log(d[1], d[2]); // '2026' '06'\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.match()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match" },
+      { "label": "MDN — RegExp.prototype.exec()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/exec" }
+    ]
+  },
+  "rx-method-match-mcq-001": {
+    "explanation": "**With `g`, `match` returns a flat array of all matched substrings:** `'a1b2c3'.match(/\\d/g)` gives `['1','2','3']`. No `index`, no `input`, and crucially **no capture groups**.\n\n**The trade-off:** global `match` is the quickest way to collect every match's *text*, but if your pattern has capture groups and you need them per match, this drops them — reach for `matchAll` instead.\n\n**No-match result:** still `null`, not `[]` — guard before using the result.\n\n**Mental rule:** `match` without `g` = one rich object; `match` with `g` = many plain strings.",
+    "example": "```js\nconsole.log('a1b2c3'.match(/\\d/g)); // ['1', '2', '3']\n\n// With g, capture groups are LOST — you only get full matches\nconsole.log('a1b2'.match(/([a-z])(\\d)/g)); // ['a1', 'b2'] (no [1]/[2])\n\n// No match -> null (not [])\nconsole.log('abc'.match(/\\d/g)); // null\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.match()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match" },
+      { "label": "MDN — String.prototype.matchAll()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/matchAll" }
+    ]
+  },
+  "rx-method-match-002": {
+    "explanation": "**The null gotcha:** when nothing matches, `String.prototype.match` returns `null` — not an empty array. This trips people up because the success case looks array-like.\n\n**Why it bites:** code like `str.match(re).length` or `str.match(re)[0]` throws `TypeError: Cannot read properties of null` the moment there's no match. It's a common source of production crashes.\n\n**How to guard:** check the result first (`const m = str.match(re); if (m) {...}`), or use optional chaining and a fallback (`str.match(re)?.[0] ?? ''`), or use `matchAll`/spread which yields an empty array on no match (`[...str.matchAll(re)]`).",
+    "example": "```js\nconst m = 'abc'.match(/\\d/);\nconsole.log(m); // null\n\n// Unsafe — would throw:\n// console.log(m.length);\n\n// Safe patterns:\nconsole.log(m?.[0] ?? 'no match'); // 'no match'\nif (m) console.log(m[0]); else console.log('none'); // 'none'\n\n// matchAll + spread is always an array (never null)\nconsole.log([...'abc'.matchAll(/\\d/g)].length); // 0\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.match() return value", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match#return_value" },
+      { "label": "MDN — Optional chaining (?.)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining" }
+    ]
+  },
+  "rx-method-matchall-001": {
+    "explanation": "**What `matchAll` returns:** an *iterator* of full match objects — each one shaped like a non-global `match`/`exec` result, with `[0]`, capture groups at `[1]`/`[2]`, `index`, `input`, and `groups`. So you keep per-match detail for *every* match.\n\n**The `g` requirement:** the regex must include the global flag, or `matchAll` throws a `TypeError`. This is by design, to make the 'all matches' intent explicit.\n\n**Consuming it:** it's an iterator, so spread it (`[...str.matchAll(re)]`) or `for...of` over it. You can't index it directly.\n\n**Why prefer it over `match`/g:** `match` with `g` discards capture groups; `matchAll` is the modern, clean way to get groups for all matches without an `exec` loop.",
+    "example": "```js\nconst s = 'a1 b2 c3';\nconst matches = [...s.matchAll(/([a-z])(\\d)/g)];\n\nfor (const m of matches) {\n  console.log(m[0], 'letter=' + m[1], 'digit=' + m[2], '@' + m.index);\n}\n// a1 letter=a digit=1 @0\n// b2 letter=b digit=2 @3\n// c3 letter=c digit=3 @6\n\n// Missing g throws:\ntry { 'a1'.matchAll(/\\d/); } catch (e) { console.log(e.name); } // 'TypeError'\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.matchAll()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/matchAll" },
+      { "label": "MDN — Iterators and generators", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_generators" }
+    ]
+  },
+  "rx-method-matchall-mcq-001": {
+    "explanation": "**The key difference:** `match` with `g` returns only the matched *strings* and throws away each match's capture groups and index. `matchAll` returns a full match object per match, so you can read `m[1]`, `m.groups`, `m.index` for every one.\n\n**When `match`/g is fine:** you only need the list of matched substrings (e.g. all numbers in a string).\n\n**When you need `matchAll`:** your pattern captures sub-parts you want for each occurrence — key/value pairs, date components, every `<tag attr>` — and looping with positions matters.\n\n**Bonus:** `matchAll` avoids the stateful `exec`-loop bug, because it manages `lastIndex` internally.",
+    "example": "```js\nconst pairs = 'x=1;y=2;z=3';\n\n// match + g: groups are lost\nconsole.log(pairs.match(/(\\w)=(\\d)/g)); // ['x=1','y=2','z=3'] only\n\n// matchAll: keep the key and value of each pair\nconst obj = {};\nfor (const m of pairs.matchAll(/(\\w)=(\\d)/g)) {\n  obj[m[1]] = Number(m[2]);\n}\nconsole.log(obj); // { x: 1, y: 2, z: 3 }\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.matchAll()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/matchAll" },
+      { "label": "MDN — String.prototype.match()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match" }
+    ]
+  },
+  "rx-method-replace-001": {
+    "explanation": "**Default is first-only:** `String.prototype.replace` with a regex (no `g`) rewrites only the *first* match. `'a-b-c'.replace(/-/, '+')` → `'a+b-c'`.\n\n**Replace everything:** add the `g` flag — `'a-b-c'.replace(/-/g, '+')` → `'a+b+c'`. This is the most common cause of 'why did only one get replaced?'.\n\n**String vs regex argument:** if the first argument is a plain string (not a regex), `replace` also only replaces the first occurrence — that's what `replaceAll` exists to fix. With a regex, you control it with `g`.\n\n**Returns a new string:** strings are immutable, so `replace` never mutates — assign or use the return value.",
+    "example": "```js\nconsole.log('a-b-c'.replace(/-/, '+'));  // 'a+b-c' (first only)\nconsole.log('a-b-c'.replace(/-/g, '+')); // 'a+b+c' (all)\n\n// String first arg also replaces only the first:\nconsole.log('a-b-c'.replace('-', '+')); // 'a+b-c'\n\n// Original is unchanged (immutable)\nconst s = 'a-b';\ns.replace(/-/, '+');\nconsole.log(s); // 'a-b'\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.replace()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace" },
+      { "label": "MDN — String.prototype.replaceAll()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll" }
+    ]
+  },
+  "rx-method-replace-mcq-001": {
+    "explanation": "**`$1` is a backreference in the replacement:** it inserts the text captured by the first capturing group. `$2` is the second group, and so on.\n\n**The full set of replacement patterns:** `$&` = the whole match, `` $` `` = text before the match, `$'` = text after, `$<name>` = a named group, and `$$` = a literal dollar sign.\n\n**Classic use — reorder captures:** swap 'First Last' to 'Last First' by capturing both words and emitting `$2 $1`.\n\n**Only in the replacement string:** these `$n` forms are special only in `replace`'s second argument; inside the *pattern* the equivalent is `\\1`.",
+    "example": "```js\n// Swap two words using captured groups\nconsole.log('John Smith'.replace(/(\\w+) (\\w+)/, '$2 $1'));\n// 'Smith John'\n\n// $& = whole match; wrap every number in brackets\nconsole.log('a1 b22'.replace(/\\d+/g, '[$&]')); // 'a[1] b[22]'\n\n// $$ for a literal dollar sign\nconsole.log('5'.replace(/\\d+/, '$$$&')); // '$5'\n```",
+    "resources": [
+      { "label": "MDN — replace() (using a string)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement" },
+      { "label": "MDN — Groups and backreferences", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Groups_and_backreferences" }
+    ]
+  },
+  "rx-method-replace-002": {
+    "explanation": "**Replacer function:** pass a function as the second argument and it's called once per match. Its return value becomes the replacement for that match.\n\n**What it receives, in order:** the whole match, then each capture group (`g1`, `g2`, …), then the match's `offset` (index), then the full input string. If there are named groups, an object of them is passed as the final argument.\n\n**Why use it:** when the replacement must be *computed* — uppercase a word, double a number, look a value up in a map — not just a static string.\n\n**Returns are coerced to strings:** returning a number is fine; it gets stringified.",
+    "example": "```js\n// Double every number\nconsole.log('a1 b2 c3'.replace(/\\d+/g, (m) => Number(m) * 2));\n// 'a2 b4 c6'\n\n// Use capture groups in the callback: Title Case\nconsole.log('hello world'.replace(/(\\w)(\\w*)/g,\n  (whole, first, rest) => first.toUpperCase() + rest));\n// 'Hello World'\n```",
+    "resources": [
+      { "label": "MDN — replace() (using a function)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_function_as_the_replacement" },
+      { "label": "MDN — String.prototype.replace()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace" }
+    ]
+  },
+  "rx-method-replaceall-001": {
+    "explanation": "**The rule:** if you pass a *regex* to `replaceAll`, it must carry the `g` flag — otherwise it throws a `TypeError`. This guards against the contradictory request 'replace all, but only the first match'.\n\n**Why `replaceAll` exists:** `replace` with a plain *string* argument only swaps the first occurrence. `replaceAll` with a string swaps every occurrence — no regex needed, no escaping worries.\n\n**Regex vs string argument:** use a string when you're matching literal text (`replaceAll(',', ';')`); use a global regex when you need a pattern (`replaceAll(/\\s+/g, ' ')`).\n\n**Same replacement features:** `$1`, `$&`, and replacer functions all work just like in `replace`.",
+    "example": "```js\n// Plain string: replaces every occurrence, no regex\nconsole.log('a,b,c'.replaceAll(',', ';')); // 'a;b;c'\n\n// Regex MUST be global\nconsole.log('a-b-c'.replaceAll(/-/g, '+')); // 'a+b+c'\n\n// Non-global regex -> TypeError\ntry { 'a-b'.replaceAll(/-/, '+'); } catch (e) { console.log(e.name); }\n// 'TypeError'\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.replaceAll()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll" },
+      { "label": "MDN — String.prototype.replace()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace" }
+    ]
+  },
+  "rx-method-search-001": {
+    "explanation": "**What `search` returns:** the index of the first match, or `-1` if there's no match. Think of it as `indexOf` but with a pattern instead of a literal substring.\n\n**Boolean-ish use:** `str.search(re) !== -1` answers 'does it match?' — though `test` is the more direct tool for that.\n\n**`g` is ignored:** `search` only ever reports the first match's position; the global flag has no effect.\n\n**Position only:** it gives you *where*, not *what*. If you need the matched text or groups, use `match`/`exec` instead.",
+    "example": "```js\nconsole.log('abc4'.search(/\\d/)); // 3 (first digit at index 3)\nconsole.log('abc'.search(/\\d/));  // -1 (no match)\n\n// As a contains-check\nconst hasDigit = (s) => s.search(/\\d/) !== -1;\nconsole.log(hasDigit('hi5')); // true\n\n// g flag is ignored — still the first position\nconsole.log('a1b2'.search(/\\d/g)); // 1\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.search()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/search" },
+      { "label": "MDN — String.prototype.indexOf()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/indexOf" }
+    ]
+  },
+  "rx-method-split-001": {
+    "explanation": "**Regex as a separator:** `String.prototype.split` accepts a regex, so the delimiter can be a *pattern* rather than a fixed string. `'a1b22c'.split(/\\d+/)` splits at each run of digits → `['a','b','c']`.\n\n**The killer use case — flexible whitespace:** `str.split(/\\s+/)` splits into words no matter whether items are separated by one space, several, tabs, or newlines.\n\n**Capturing groups are included:** if the separator regex has a capturing group, the captured delimiters are interleaved into the result array — sometimes handy, sometimes surprising.\n\n**Edge cases:** a leading match produces an empty string at the start; `limit` (second arg) caps how many pieces you get.",
+    "example": "```js\nconsole.log('a1b22c'.split(/\\d+/)); // ['a', 'b', 'c']\n\n// Flexible whitespace splitting\nconsole.log('one   two\\tthree'.split(/\\s+/)); // ['one','two','three']\n\n// Capturing group keeps the delimiters\nconsole.log('a1b2'.split(/(\\d)/)); // ['a','1','b','2','']\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.split()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split" },
+      { "label": "MDN — Character classes (\\s)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Character_classes" }
+    ]
+  },
+  "rx-method-exec-001": {
+    "explanation": "**Stateful iteration:** a *global* regex remembers a `lastIndex` property. Each `regex.exec(str)` call starts searching from `lastIndex`, returns the next match (a full object with groups and `index`), updates `lastIndex` past it, and finally returns `null` when there are no more — which also resets `lastIndex` to 0.\n\n**The loop idiom:** `while ((m = re.exec(str)) !== null) { ... }` walks through every match, giving you groups and positions each time.\n\n**Pitfalls:** you MUST use the `g` (or `y`) flag, or `lastIndex` never advances and the loop runs forever. And don't share that regex across unrelated calls, since `lastIndex` carries over.\n\n**Modern alternative:** `matchAll` does the same thing without the manual state — prefer it unless you specifically need `exec`.",
+    "example": "```js\nconst re = /(\\w)(\\d)/g;\nconst s = 'a1 b2 c3';\nlet m;\nwhile ((m = re.exec(s)) !== null) {\n  console.log(`match ${m[0]} at ${m.index}, lastIndex now ${re.lastIndex}`);\n}\n// match a1 at 0, lastIndex now 2\n// match b2 at 3, lastIndex now 5\n// match c3 at 6, lastIndex now 8\n```",
+    "resources": [
+      { "label": "MDN — RegExp.prototype.exec()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/exec" },
+      { "label": "MDN — RegExp.prototype.lastIndex", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/lastIndex" }
+    ]
+  },
+  "rx-method-mr-001": {
+    "explanation": "**Reliable contains-checks:** `/\\d/.test(str)` returns a clean boolean, and `str.search(/\\d/) !== -1` returns a position you compare to -1. Both are safe and idiomatic.\n\n**Why the others fail:** `str.match(/\\d/).length > 0` throws when there's *no* match, because `match` returns `null` (you'd be reading `.length` of `null`). `str.includes(...)` only accepts a *string*, not a regex — passing a regex throws (or stringifies oddly). `str.replace(...)` returns a new string, not a yes/no answer.\n\n**Rule of thumb:** for 'does it match?', reach for `test` first; `search !== -1` is the fallback when you also want the position.",
+    "example": "```js\nconst s = 'abc';\n\nconsole.log(/\\d/.test(s));            // false — safe\nconsole.log(s.search(/\\d/) !== -1);   // false — safe\n\n// Unsafe: match() is null here, so .length throws\ntry { s.match(/\\d/).length > 0; } catch (e) { console.log(e.name); }\n// 'TypeError'\n\n// includes needs a string, not a regex\nconsole.log('a1'.includes('1')); // true (string arg)\n```",
+    "resources": [
+      { "label": "MDN — RegExp.prototype.test()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/test" },
+      { "label": "MDN — String.prototype.search()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/search" }
+    ]
+  },
+  "rx-method-lastindex-001": {
+    "explanation": "**The bug:** a regex with the `g` flag is stateful. `test` (and `exec`) start searching at the regex's `lastIndex` and advance it on each successful match, resetting to 0 only on a *failed* match. Reuse the same global regex across separate `test` calls and the results appear to flip-flop.\n\n**Why true→false→true on `'aa'`:** first call matches at 0, sets `lastIndex` to 1, returns true; second call matches the second `a` at 1, sets `lastIndex` to 2, returns true... actually it depends on the string length — once `lastIndex` passes the end, the next call fails (false) and resets to 0, so it matches again (true). The point: results depend on hidden state.\n\n**The fixes:** (1) don't use `g` for a one-shot boolean test; (2) create a fresh regex each time; (3) reset `re.lastIndex = 0` before each call. A literal regex written inline (`/a/g`) re-evaluates to a *new* object each time, so it's also safe.",
+    "example": "```js\nconst re = /a/g; // shared, stateful\nconsole.log(re.test('aa'), re.lastIndex); // true 1\nconsole.log(re.test('aa'), re.lastIndex); // true 2\nconsole.log(re.test('aa'), re.lastIndex); // false 0 (reset)\nconsole.log(re.test('aa'), re.lastIndex); // true 1 (again!)\n\n// Fix: no g flag for a simple yes/no check\nconst safe = /a/;\nconsole.log(safe.test('aa'), safe.test('aa')); // true true\n```",
+    "resources": [
+      { "label": "MDN — RegExp.prototype.lastIndex", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/lastIndex" },
+      { "label": "MDN — RegExp.prototype.test()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/test" }
+    ]
+  },
+  "rx-apply-mcq-001": {
+    "explanation": "**Anchors make validation work:** `^\\d{5}$` means start, exactly five digits, end — so the *entire* string must be a 5-digit code.\n\n**Why the others are wrong:** `/\\d{5}/` (no anchors) matches five digits *anywhere*, so it accepts `'abc12345xyz'`. `/^\\d+$/` accepts any length of digits, not exactly five. `/[0-9]*/` matches zero-or-more digits and isn't anchored, so it matches practically anything (including an empty string).\n\n**General validation recipe:** decide the exact shape, wrap it in `^...$`, and use precise quantifiers like `{5}` rather than open-ended `+`/`*`.",
+    "example": "```js\nconst isZip = (s) => /^\\d{5}$/.test(s);\n\nconsole.log(isZip('12345'));        // true\nconsole.log(isZip('1234'));         // false (too short)\nconsole.log(isZip('123456'));       // false (too long)\nconsole.log(isZip('abc12345xyz'));  // false (extra chars)\n\n// Without anchors it would wrongly pass:\nconsole.log(/\\d{5}/.test('abc12345xyz')); // true (!)\n```",
+    "resources": [
+      { "label": "MDN — Assertions (anchors)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Assertions" },
+      { "label": "MDN — Quantifiers", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Quantifiers" }
+    ]
+  },
+  "rx-apply-001": {
+    "explanation": "**Extract all words:** `\\w+` matches a run of word characters, and the `g` flag makes `match` return every run as an array element. `'hello world foo'.match(/\\w+/g)` → `['hello','world','foo']`.\n\n**Why `\\w+` over splitting:** `match(/\\w+/g)` grabs the words directly and naturally ignores the gaps, so multiple/odd separators and trailing spaces don't produce empty strings. `str.split(/\\s+/)` is the alternative when you specifically want to *divide* on whitespace.\n\n**Guard the result:** `match`/g returns `null` if there are no words — use `?? []` if an empty string is possible.\n\n**Tighter words:** `\\w` excludes apostrophes/accents; for natural language you might use `[A-Za-z']+` or Unicode property escapes.",
+    "example": "```js\nconsole.log('hello world foo'.match(/\\w+/g)); // ['hello','world','foo']\n\n// Messy spacing is handled cleanly\nconsole.log('  a   b\\tc '.match(/\\w+/g)); // ['a','b','c']\n\n// Guard against no matches\nconst words = '!!!'.match(/\\w+/g) ?? [];\nconsole.log(words); // []\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.match()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match" },
+      { "label": "MDN — Character classes (\\w)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Character_classes" }
+    ]
+  },
+  "rx-apply-mr-001": {
+    "explanation": "**Goal:** the matched text AND its capture groups, for *every* occurrence. Two tools do this: `matchAll` (spread into an array) and a `while` loop over a global regex's `exec`.\n\n**Why they qualify:** both yield a full match object per occurrence, so `m[0]` plus `m[1]`/`m[2]` and `m.index` are all available for each match.\n\n**Why the others don't:** `match` with `g` returns only the full matched strings and drops the groups. `search` returns a single index. And there is no `String.prototype.test` — `test` is a method of *RegExp*, not String, so `str.test(...)` isn't even valid.\n\n**Recommendation:** prefer `matchAll` — it's declarative and avoids the `lastIndex` state you must manage with the `exec` loop.",
+    "example": "```js\nconst s = 'a1 b2';\nconst re = /([a-z])(\\d)/g;\n\n// 1) matchAll (preferred)\nfor (const m of s.matchAll(re)) console.log(m[0], m[1], m[2]);\n// a1 a 1 / b2 b 2\n\n// 2) exec loop (equivalent, manages lastIndex itself)\nconst re2 = /([a-z])(\\d)/g;\nlet m;\nwhile ((m = re2.exec(s)) !== null) console.log(m[1] + '=' + m[2]);\n// a=1 / b=2\n```",
+    "resources": [
+      { "label": "MDN — String.prototype.matchAll()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/matchAll" },
+      { "label": "MDN — RegExp.prototype.exec()", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/exec" }
+    ]
+  }
+}

@@ -1,0 +1,514 @@
+[
+  {
+    "id": "rx-basics-001",
+    "topic": "Regex Basics",
+    "subtopic": "What & Why",
+    "difficulty": "easy",
+    "question": "What is a regular expression (regex)?",
+    "answer": "A pattern used to match character combinations in strings.",
+    "explanation": "A regex describes a search pattern. In JavaScript regexes are objects (of type RegExp) that you use to test, find, extract, or replace text inside strings.",
+    "tags": ["fundamentals", "regexp"]
+  },
+  {
+    "id": "rx-basics-002",
+    "topic": "Regex Basics",
+    "subtopic": "Creating a Regex",
+    "difficulty": "easy",
+    "question": "What are the two ways to create a regex in JavaScript?",
+    "answer": "A literal between slashes (/abc/) and the RegExp constructor (new RegExp(\"abc\")).",
+    "explanation": "Use a literal when the pattern is fixed: `/abc/`. Use the constructor when the pattern is built from a variable at runtime: `new RegExp(userInput)`. The literal is compiled when the script loads; the constructor compiles at runtime.",
+    "tags": ["literal", "constructor"]
+  },
+  {
+    "id": "rx-basics-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Regex Basics",
+    "subtopic": "Creating a Regex",
+    "difficulty": "medium",
+    "question": "You have the pattern in a variable: `const word = \"cat\"`. Which is the correct case-insensitive regex built from it?",
+    "options": [
+      "new RegExp(word, \"i\")",
+      "/word/i",
+      "new RegExp(/word/, \"i\")",
+      "RegExp.from(word, \"i\")"
+    ],
+    "answer": "new RegExp(word, \"i\")",
+    "explanation": "Flags are the second argument to the RegExp constructor. `/word/i` would literally match the text 'word', not the variable's value. The constructor is the right tool when the pattern comes from a variable.",
+    "tags": ["constructor", "flags", "mcq"]
+  },
+  {
+    "id": "rx-basics-003",
+    "topic": "Regex Basics",
+    "subtopic": "Flags",
+    "difficulty": "easy",
+    "question": "What does the `g` flag do, e.g. in /a/g?",
+    "answer": "Global: find all matches rather than stopping at the first one.",
+    "explanation": "Without `g`, methods like .match() return only the first match. With `g`, .match() returns every match, and .replace() replaces every occurrence.",
+    "tags": ["flags", "global"]
+  },
+  {
+    "id": "rx-basics-004",
+    "topic": "Regex Basics",
+    "subtopic": "Flags",
+    "difficulty": "easy",
+    "question": "What does the `i` flag do?",
+    "answer": "Case-insensitive matching.",
+    "explanation": "With `i`, /cat/i matches 'cat', 'Cat', 'CAT', etc. Without it, regex matching is case-sensitive by default.",
+    "tags": ["flags", "case-insensitive"]
+  },
+  {
+    "id": "rx-basics-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Regex Basics",
+    "subtopic": "Flags",
+    "difficulty": "medium",
+    "question": "What does the `m` (multiline) flag change?",
+    "options": [
+      "It makes ^ and $ match the start/end of each line instead of the whole string",
+      "It lets . match newline characters",
+      "It allows the pattern to span multiple lines of source code",
+      "It enables matching across multiple strings at once"
+    ],
+    "answer": "It makes ^ and $ match the start/end of each line instead of the whole string",
+    "explanation": "`m` only affects the anchors ^ and $. The flag that lets `.` match newlines is `s` (dotAll). They are commonly confused.",
+    "tags": ["flags", "multiline", "mcq"]
+  },
+  {
+    "id": "rx-basics-mr-001",
+    "type": "multiple-response",
+    "topic": "Regex Basics",
+    "subtopic": "Flags",
+    "difficulty": "medium",
+    "question": "Which of the following are valid JavaScript regex flags? (Select THREE)",
+    "options": ["g", "i", "m", "x", "z"],
+    "answers": ["g", "i", "m"],
+    "explanation": "JavaScript flags are g (global), i (case-insensitive), m (multiline), s (dotAll), u (unicode), y (sticky), and d (indices). `x` (extended/verbose) and `z` are not JavaScript flags — `x` exists in some other languages like Python/PCRE.",
+    "tags": ["flags", "mr"]
+  },
+  {
+    "id": "rx-char-001",
+    "topic": "Character Classes",
+    "subtopic": "Common Metacharacters",
+    "difficulty": "easy",
+    "question": "What does `\\d` match?",
+    "answer": "Any single digit (0–9).",
+    "explanation": "`\\d` is shorthand for the character class [0-9]. Its opposite, `\\D`, matches any character that is NOT a digit.",
+    "tags": ["metacharacters", "digit"]
+  },
+  {
+    "id": "rx-char-002",
+    "topic": "Character Classes",
+    "subtopic": "Common Metacharacters",
+    "difficulty": "easy",
+    "question": "What does `\\w` match?",
+    "answer": "A 'word' character: letters, digits, or underscore — [A-Za-z0-9_].",
+    "explanation": "`\\w` matches word characters and `\\W` matches the opposite (non-word characters). Note that `\\w` does NOT include spaces or punctuation, and by default does not include accented letters.",
+    "tags": ["metacharacters", "word"]
+  },
+  {
+    "id": "rx-char-003",
+    "topic": "Character Classes",
+    "subtopic": "Common Metacharacters",
+    "difficulty": "easy",
+    "question": "What does `\\s` match?",
+    "answer": "Any whitespace character (space, tab, newline, etc.).",
+    "explanation": "`\\s` matches whitespace; `\\S` matches any non-whitespace character. Useful for trimming or splitting on spaces.",
+    "tags": ["metacharacters", "whitespace"]
+  },
+  {
+    "id": "rx-char-004",
+    "topic": "Character Classes",
+    "subtopic": "The Dot",
+    "difficulty": "easy",
+    "question": "What does the `.` (dot) match in a regex?",
+    "answer": "Any single character except (by default) a newline.",
+    "explanation": "The dot is a wildcard for one character. To match a literal dot, escape it: `\\.`. To make `.` also match newlines, add the `s` (dotAll) flag.",
+    "tags": ["metacharacters", "dot", "wildcard"]
+  },
+  {
+    "id": "rx-char-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Character Classes",
+    "subtopic": "Custom Classes",
+    "difficulty": "medium",
+    "question": "What does the pattern `[^aeiou]` match?",
+    "options": [
+      "Any single character that is NOT a vowel",
+      "The literal string '^aeiou'",
+      "Any vowel",
+      "The start of a line followed by vowels"
+    ],
+    "answer": "Any single character that is NOT a vowel",
+    "explanation": "Inside square brackets, a leading `^` negates the class. So `[^aeiou]` means 'any one character except a, e, i, o, u'. Outside brackets, `^` is the start-of-string anchor — context matters.",
+    "tags": ["character-class", "negation", "mcq"]
+  },
+  {
+    "id": "rx-char-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Character Classes",
+    "subtopic": "Ranges",
+    "difficulty": "easy",
+    "question": "What does `[a-z]` match?",
+    "options": [
+      "Any single lowercase letter from a to z",
+      "The literal three characters 'a', '-', 'z'",
+      "The words a, to, z",
+      "Any letter, uppercase or lowercase"
+    ],
+    "answer": "Any single lowercase letter from a to z",
+    "explanation": "A hyphen inside a character class defines a range. `[a-z]` is all lowercase letters, `[A-Z]` uppercase, `[0-9]` digits. To match a literal hyphen, put it first/last or escape it.",
+    "tags": ["character-class", "range", "mcq"]
+  },
+  {
+    "id": "rx-anchor-001",
+    "topic": "Anchors",
+    "subtopic": "Start & End",
+    "difficulty": "easy",
+    "question": "What do `^` and `$` mean as anchors?",
+    "answer": "`^` matches the start of the string, `$` matches the end.",
+    "explanation": "Anchors match positions, not characters. `/^cat$/` matches only the exact string 'cat' — start, then 'cat', then end. With the `m` flag they match the start/end of each line instead.",
+    "tags": ["anchors", "start", "end"]
+  },
+  {
+    "id": "rx-anchor-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Anchors",
+    "subtopic": "Start & End",
+    "difficulty": "medium",
+    "question": "Which string does the regex `/^\\d+$/` match completely?",
+    "options": ["\"12345\"", "\"12a45\"", "\"  123\"", "\"12.5\""],
+    "answer": "\"12345\"",
+    "explanation": "`^\\d+$` means: start, one-or-more digits, end — i.e. the entire string is digits. '12a45' has a letter, '  123' has leading spaces, '12.5' has a dot, so none match fully.",
+    "tags": ["anchors", "validation", "mcq"]
+  },
+  {
+    "id": "rx-anchor-002",
+    "topic": "Anchors",
+    "subtopic": "Word Boundary",
+    "difficulty": "medium",
+    "question": "What does `\\b` match?",
+    "answer": "A word boundary — the position between a word character (\\w) and a non-word character.",
+    "explanation": "`\\b` matches no actual character; it asserts a position. `/\\bcat\\b/` matches 'cat' in 'a cat sat' but not in 'category'. Its inverse `\\B` matches a non-boundary.",
+    "tags": ["anchors", "word-boundary"]
+  },
+  {
+    "id": "rx-quant-001",
+    "topic": "Quantifiers",
+    "subtopic": "Basics",
+    "difficulty": "easy",
+    "question": "What do `*`, `+`, and `?` mean as quantifiers?",
+    "answer": "`*` = 0 or more, `+` = 1 or more, `?` = 0 or 1 (optional).",
+    "explanation": "Quantifiers apply to the preceding token. `a*` matches '', 'a', 'aa'…; `a+` requires at least one 'a'; `a?` makes 'a' optional. They are greedy by default (match as much as possible).",
+    "tags": ["quantifiers", "fundamentals"]
+  },
+  {
+    "id": "rx-quant-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Quantifiers",
+    "subtopic": "Exact Counts",
+    "difficulty": "medium",
+    "question": "What does `\\d{3}` match?",
+    "options": [
+      "Exactly three digits in a row",
+      "At least three digits",
+      "Three of any character",
+      "The literal text '\\d{3}'"
+    ],
+    "answer": "Exactly three digits in a row",
+    "explanation": "`{n}` matches exactly n repetitions. Related forms: `{n,}` = n or more, `{n,m}` = between n and m. So `\\d{2,4}` matches 2 to 4 digits.",
+    "tags": ["quantifiers", "count", "mcq"]
+  },
+  {
+    "id": "rx-quant-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Quantifiers",
+    "subtopic": "Greedy vs Lazy",
+    "difficulty": "medium",
+    "question": "Given the string `<a><b>`, what does the greedy pattern `/<.*>/` match?",
+    "options": ["The whole string \"<a><b>\"", "Just \"<a>\"", "Just \"<b>\"", "Nothing"],
+    "answer": "The whole string \"<a><b>\"",
+    "explanation": "`.*` is greedy: it grabs as much as possible, so it stretches to the last `>`. To match just '<a>' you'd make it lazy with `<.*?>`, which matches as little as possible.",
+    "tags": ["quantifiers", "greedy", "lazy", "mcq"]
+  },
+  {
+    "id": "rx-quant-002",
+    "topic": "Quantifiers",
+    "subtopic": "Greedy vs Lazy",
+    "difficulty": "medium",
+    "question": "How do you make a quantifier 'lazy' (match as few characters as possible)?",
+    "answer": "Add a `?` after it, e.g. `*?`, `+?`, `{2,5}?`.",
+    "explanation": "By default quantifiers are greedy. Appending `?` makes them lazy/non-greedy, so they expand only as much as needed for the overall pattern to match. `.+?` is the classic 'shortest match' idiom.",
+    "tags": ["quantifiers", "lazy"]
+  },
+  {
+    "id": "rx-group-001",
+    "topic": "Groups & Alternation",
+    "subtopic": "Grouping",
+    "difficulty": "easy",
+    "question": "What do parentheses `( )` do in a regex?",
+    "answer": "They group tokens together and create a capturing group.",
+    "explanation": "Grouping lets a quantifier apply to several characters: `(ab)+` matches 'ab', 'abab'… It also 'captures' the matched text so you can reference it later (in .match results, .replace, or backreferences).",
+    "tags": ["groups", "capturing"]
+  },
+  {
+    "id": "rx-group-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Groups & Alternation",
+    "subtopic": "Alternation",
+    "difficulty": "easy",
+    "question": "What does the pattern `cat|dog` match?",
+    "options": ["Either 'cat' or 'dog'", "The literal text 'cat|dog'", "'cat' followed by 'dog'", "Any 3-letter word"],
+    "answer": "Either 'cat' or 'dog'",
+    "explanation": "The pipe `|` means OR (alternation). To scope it, wrap it in a group: `/^(cat|dog)$/` matches a string that is exactly 'cat' or exactly 'dog'.",
+    "tags": ["alternation", "or", "mcq"]
+  },
+  {
+    "id": "rx-group-002",
+    "topic": "Groups & Alternation",
+    "subtopic": "Non-capturing",
+    "difficulty": "medium",
+    "question": "What is a non-capturing group and how do you write one?",
+    "answer": "`(?:...)` — it groups tokens without storing the match as a capture.",
+    "explanation": "Use `(?:...)` when you need grouping (e.g. for a quantifier or alternation) but don't want the matched text added to the results array. It keeps capture-group numbering clean and is slightly more efficient.",
+    "tags": ["groups", "non-capturing"]
+  },
+  {
+    "id": "rx-group-003",
+    "topic": "Groups & Alternation",
+    "subtopic": "Named Groups",
+    "difficulty": "medium",
+    "question": "How do you create a named capturing group, and where does the value appear?",
+    "answer": "`(?<name>...)`; the value appears in match.groups.name.",
+    "explanation": "Example: `\"2026-06\".match(/(?<year>\\d{4})-(?<month>\\d{2})/).groups` gives `{ year: '2026', month: '06' }`. Named groups make captures self-documenting and let you reference them by name in replacements via `$<name>`.",
+    "tags": ["groups", "named-groups"]
+  },
+  {
+    "id": "rx-escape-001",
+    "topic": "Regex Basics",
+    "subtopic": "Escaping",
+    "difficulty": "easy",
+    "question": "How do you match a literal dot `.` rather than 'any character'?",
+    "answer": "Escape it with a backslash: `\\.`",
+    "explanation": "Many characters are special in regex (. * + ? ( ) [ ] { } ^ $ | \\ /). To match them literally, prefix with a backslash. So an IP-like pattern is `\\d+\\.\\d+\\.\\d+\\.\\d+`.",
+    "tags": ["escaping", "metacharacters"]
+  },
+  {
+    "id": "rx-method-test-001",
+    "topic": "String & RegExp Methods",
+    "subtopic": "RegExp.test",
+    "difficulty": "easy",
+    "question": "What does `regex.test(str)` return?",
+    "answer": "A boolean — true if the pattern matches anywhere in the string, otherwise false.",
+    "explanation": "`/\\d/.test(\"abc4\")` → true. `.test()` is the fastest way to ask 'does this match?' when you don't need the matched text itself.",
+    "tags": ["test", "boolean"]
+  },
+  {
+    "id": "rx-method-match-001",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.match",
+    "difficulty": "medium",
+    "question": "Without the `g` flag, what does `\"a1b2\".match(/\\d/)` return?",
+    "answer": "An array-like match: [\"1\", index: 1, input: \"a1b2\", groups: undefined].",
+    "explanation": "Without `g`, .match() returns details about the FIRST match: the matched text at [0], plus index, input, and groups properties. Any capturing groups appear at [1], [2], etc.",
+    "tags": ["match", "first-match"]
+  },
+  {
+    "id": "rx-method-match-mcq-001",
+    "type": "multiple-choice",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.match",
+    "difficulty": "medium",
+    "question": "What does `\"a1b2c3\".match(/\\d/g)` return?",
+    "options": [
+      "[\"1\", \"2\", \"3\"]",
+      "[\"1\"]",
+      "[\"1\", index: 1, input: \"a1b2c3\"]",
+      "\"123\""
+    ],
+    "answer": "[\"1\", \"2\", \"3\"]",
+    "explanation": "WITH the `g` flag, .match() returns a plain array of all matched substrings and DROPS the index/groups metadata. Without `g`, it returns just the first match with that metadata.",
+    "tags": ["match", "global", "mcq"]
+  },
+  {
+    "id": "rx-method-match-002",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.match",
+    "difficulty": "medium",
+    "question": "What does `\"abc\".match(/\\d/)` return when there is no match?",
+    "answer": "null",
+    "explanation": "A common gotcha: .match() returns null (not an empty array) on no match. So you must guard before indexing: `const m = str.match(re); if (m) { ... }` to avoid 'Cannot read properties of null'.",
+    "tags": ["match", "null", "gotcha"]
+  },
+  {
+    "id": "rx-method-matchall-001",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.matchAll",
+    "difficulty": "medium",
+    "question": "What does `String.prototype.matchAll(regex)` return, and what is required of the regex?",
+    "answer": "An iterator of full match objects (each with capture groups, index, etc.); the regex MUST have the `g` flag.",
+    "explanation": "Unlike .match() with `g`, matchAll keeps the per-match metadata (groups, index) for every match. You typically spread or loop it: `[...str.matchAll(/(\\d)/g)]`. Passing a non-global regex throws a TypeError.",
+    "tags": ["matchAll", "iterator", "groups"]
+  },
+  {
+    "id": "rx-method-matchall-mcq-001",
+    "type": "multiple-choice",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.matchAll",
+    "difficulty": "medium",
+    "question": "Why use `matchAll` instead of `match` with the `g` flag?",
+    "options": [
+      "matchAll keeps capture groups and index for every match; match with /g discards them",
+      "matchAll is the only one that needs the g flag",
+      "matchAll returns a boolean",
+      "There is no difference"
+    ],
+    "answer": "matchAll keeps capture groups and index for every match; match with /g discards them",
+    "explanation": "`str.match(/(\\d)(\\w)/g)` gives you only the full matched strings — you lose each match's capture groups. matchAll gives a full match object per match, so you can read groups[1], .index, etc. for all of them.",
+    "tags": ["matchAll", "match", "mcq"]
+  },
+  {
+    "id": "rx-method-replace-001",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.replace",
+    "difficulty": "medium",
+    "question": "What does `\"a-b-c\".replace(/-/, \"+\")` return, and how do you replace ALL dashes?",
+    "answer": "\"a+b-c\"; use the `g` flag (`/-/g`) or replaceAll to replace all.",
+    "explanation": "Without `g`, .replace() only changes the FIRST match. `\"a-b-c\".replace(/-/g, \"+\")` → 'a+b+c'. (`String.replaceAll` with a string argument is another option.)",
+    "tags": ["replace", "global"]
+  },
+  {
+    "id": "rx-method-replace-mcq-001",
+    "type": "multiple-choice",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.replace",
+    "difficulty": "medium",
+    "question": "In a replacement string, what does `$1` refer to?",
+    "options": [
+      "The text captured by the first capturing group",
+      "The first character of the match",
+      "A literal dollar-one",
+      "The entire matched string"
+    ],
+    "answer": "The text captured by the first capturing group",
+    "explanation": "In the replacement, `$1`, `$2`… insert capture groups, `$&` inserts the whole match, and `$<name>` inserts a named group. Example: `\"John Smith\".replace(/(\\w+) (\\w+)/, \"$2 $1\")` → 'Smith John'.",
+    "tags": ["replace", "backreference", "mcq"]
+  },
+  {
+    "id": "rx-method-replace-002",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.replace",
+    "difficulty": "medium",
+    "question": "How can you pass a function to `.replace()` and what does it receive?",
+    "answer": "`str.replace(re, (match, g1, g2, ...) => ...)` — it receives the match, then each capture group, then offset and full string.",
+    "explanation": "A replacer function lets you compute the replacement per match. Example: `\"a1b2\".replace(/\\d/g, d => d * 2)` → 'a2b4'. The function's return value becomes the replacement for each match.",
+    "tags": ["replace", "function"]
+  },
+  {
+    "id": "rx-method-replaceall-001",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.replaceAll",
+    "difficulty": "medium",
+    "question": "What's the rule when passing a regex to `String.prototype.replaceAll`?",
+    "answer": "The regex must include the `g` flag, or replaceAll throws a TypeError.",
+    "explanation": "replaceAll is happy with a plain string ('-') and replaces every occurrence. But if you give it a regex, it insists on the global flag to keep intent unambiguous: `\"a-b\".replaceAll(/-/g, \"+\")`.",
+    "tags": ["replaceAll", "global", "gotcha"]
+  },
+  {
+    "id": "rx-method-search-001",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.search",
+    "difficulty": "easy",
+    "question": "What does `String.prototype.search(regex)` return?",
+    "answer": "The index of the first match, or -1 if there is no match.",
+    "explanation": "`\"abc4\".search(/\\d/)` → 3. It's like indexOf but with a pattern. The `g` flag is ignored by .search() — it only ever reports the first match's position.",
+    "tags": ["search", "index"]
+  },
+  {
+    "id": "rx-method-split-001",
+    "topic": "String & RegExp Methods",
+    "subtopic": "String.split",
+    "difficulty": "medium",
+    "question": "What does `\"a1b22c\".split(/\\d+/)` return?",
+    "answer": "[\"a\", \"b\", \"c\"]",
+    "explanation": "split can take a regex as the separator. `\\d+` matches '1' and '22', splitting the string at those runs of digits. This is handy for splitting on variable whitespace too: `str.split(/\\s+/)`.",
+    "tags": ["split", "separator"]
+  },
+  {
+    "id": "rx-method-exec-001",
+    "topic": "String & RegExp Methods",
+    "subtopic": "RegExp.exec",
+    "difficulty": "medium",
+    "question": "With a global regex, how does repeatedly calling `regex.exec(str)` behave?",
+    "answer": "Each call returns the next match (with groups/index), advancing regex.lastIndex, then returns null when done.",
+    "explanation": "A global regex is stateful: it remembers lastIndex between exec() calls, so a `while ((m = re.exec(str)) !== null)` loop walks through all matches. matchAll is the modern, less error-prone alternative.",
+    "tags": ["exec", "lastIndex", "stateful"]
+  },
+  {
+    "id": "rx-method-mr-001",
+    "type": "multiple-response",
+    "topic": "String & RegExp Methods",
+    "subtopic": "Boolean checks",
+    "difficulty": "medium",
+    "question": "Which of these are reliable ways to check whether a string contains at least one digit? (Select TWO)",
+    "options": [
+      "/\\d/.test(str)",
+      "str.search(/\\d/) !== -1",
+      "str.match(/\\d/).length > 0",
+      "str.includes(/\\d/)",
+      "str.replace(/\\d/, \"\")"
+    ],
+    "answers": ["/\\d/.test(str)", "str.search(/\\d/) !== -1"],
+    "explanation": ".test() returns a boolean and .search() returns -1 when not found — both safe. `match(...).length` throws if there's no match (match returns null). `includes` only takes a string, not a regex. `replace` returns a string, not a yes/no.",
+    "tags": ["test", "search", "mr"]
+  },
+  {
+    "id": "rx-method-lastindex-001",
+    "topic": "String & RegExp Methods",
+    "subtopic": "Stateful gotcha",
+    "difficulty": "medium",
+    "question": "Why might `/a/g.test(\"aa\")` return true, then false, then true on repeated calls?",
+    "answer": "A global regex keeps state in lastIndex; .test() advances it each call, so results alternate.",
+    "explanation": "This is a classic bug: reusing one global regex object across .test() calls makes results depend on lastIndex. Fixes: don't use `g` for a one-off test, create a fresh regex each time, or reset re.lastIndex = 0.",
+    "tags": ["test", "lastIndex", "gotcha"]
+  },
+  {
+    "id": "rx-apply-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Putting It Together",
+    "subtopic": "Validation",
+    "difficulty": "medium",
+    "question": "Which pattern best validates that a whole string is a US ZIP code of exactly 5 digits?",
+    "options": ["/^\\d{5}$/", "/\\d{5}/", "/^\\d+$/", "/[0-9]*/"],
+    "answer": "/^\\d{5}$/",
+    "explanation": "Anchors are essential for validation. `/\\d{5}/` would match '12345' inside 'abc12345xyz' too. `^...$` forces the entire string to be exactly five digits.",
+    "tags": ["validation", "anchors", "mcq"]
+  },
+  {
+    "id": "rx-apply-001",
+    "topic": "Putting It Together",
+    "subtopic": "Extraction",
+    "difficulty": "medium",
+    "question": "Write a regex + method call to extract all words from `\"hello world foo\"` into an array.",
+    "answer": "\"hello world foo\".match(/\\w+/g) → [\"hello\", \"world\", \"foo\"]",
+    "explanation": "`\\w+` matches runs of word characters, and the `g` flag with .match() returns every match as an array. Equivalent: `str.split(/\\s+/)` when separators are whitespace.",
+    "tags": ["extraction", "match", "global"]
+  },
+  {
+    "id": "rx-apply-mr-001",
+    "type": "multiple-response",
+    "topic": "Putting It Together",
+    "subtopic": "Method choice",
+    "difficulty": "medium",
+    "question": "You need each match's text AND its capture groups for every occurrence in a string. Which approaches work? (Select TWO)",
+    "options": [
+      "[...str.matchAll(/(\\w)(\\d)/g)]",
+      "A while loop with a global regex and exec()",
+      "str.match(/(\\w)(\\d)/g)",
+      "str.search(/(\\w)(\\d)/g)",
+      "str.test(/(\\w)(\\d)/g)"
+    ],
+    "answers": ["[...str.matchAll(/(\\w)(\\d)/g)]", "A while loop with a global regex and exec()"],
+    "explanation": "matchAll and exec-in-a-loop both preserve capture groups per match. match() with /g discards groups. search() returns only an index, and there is no String.prototype.test (test is a RegExp method).",
+    "tags": ["matchAll", "exec", "mr"]
+  }
+]
