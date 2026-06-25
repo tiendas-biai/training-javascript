@@ -108,14 +108,6 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:docker',
     loadData: loader('docker', () => load(import('../../data/docker.json'))),
   },
-  'cloud-project': {
-    id: 'cloud-project',
-    label: 'Cloud Project',
-    icon: '🛠',
-    color: '#7b42bc',
-    storageKey: 'srs:cloud-project',
-    loadData: loader('cloud-project', () => load(import('../../data/cloud-project.json'))),
-  },
   kubernetes: {
     id: 'kubernetes',
     label: 'Kubernetes',
