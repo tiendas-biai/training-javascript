@@ -116,6 +116,14 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:kubernetes',
     loadData: loader('kubernetes', () => load(import('../../data/kubernetes.json'))),
   },
+  karat: {
+    id: 'karat',
+    label: 'Karat Prep',
+    icon: '◆',
+    color: '#d4af37',
+    storageKey: 'srs:karat',
+    loadData: loader('karat', () => load(import('../../data/karat.json'))),
+  },
   regex: {
     id: 'regex',
     label: 'Regex (JS)',

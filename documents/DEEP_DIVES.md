@@ -201,8 +201,17 @@ SAA-C03 reasoning). 48 of 184 carry an `example` where a concrete artifact helps
 Verified with **`verify-aws-examples.mjs aws`** — `json` via `JSON.parse`, `yaml` via the `yaml` package,
 `bash` via `bash -n`; all 48 parse clean. Authored with colon-ending bold labels.
 
-**No remaining subjects** — all ten banks (javascript, react, node, typescript, graphql, springboot, java,
-python, docker, aws) are 100% covered.
+**Karat — DONE: all 62 cards / 5 topics** — Code Review (18: the Block 1 exhibits — SQL injection,
+secrets, eval, races, mutable map keys, refactoring drills), Coding Patterns (22: 2 per reported
+exercise in `features/karat/exercises/01…11`), More Problems (8: intervals, sliding window,
+canonical-key grouping, check-then-commit), Interview Format (6) and Domain Knowledge (8). 55 of 62
+carry a runnable ` ```js ` example (the 7 format/strategy cards are prose-only); verified with
+**`verify-node-examples.mjs karat`** — all parse clean. Authored with colon-ending bold labels.
+Companion practice material lives in `features/karat/` (code-review snippets, exercises 12–14,
+PLANNING.md + STUDY_GUIDE.md).
+
+**No remaining subjects** — all thirteen banks (javascript, react, node, typescript, graphql, springboot,
+java, python, docker, aws, kubernetes, regex, karat) are 100% covered.
 
 **Docker verifier** — `verify-docker-examples.mjs <subject>`: routes each `example` by fence language —
 ` ```yaml `/` ```yml ` parsed with the `yaml` package (added as a devDependency, like `graphql`), ` ```bash `/

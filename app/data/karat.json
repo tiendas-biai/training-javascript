@@ -1,0 +1,730 @@
+[
+  {
+    "id": "karat-cr-001",
+    "topic": "Code Review",
+    "subtopic": "Security",
+    "difficulty": "medium",
+    "question": "The interviewer pastes this Node.js snippet:\n\n```js\nfunction getSentence(db, req) {\n  const id = req.params.id;\n  return db.query(\"SELECT text FROM sentences WHERE id = \" + id);\n}\n```\n\nWhat is the main security risk, and how would you fix it?",
+    "answer": "SQL injection: user input (`req.params.id`) is concatenated directly into the SQL string. An attacker can send `1 OR 1=1` or `1; DROP TABLE sentences`. Fix it with a parameterized query — `db.query('SELECT text FROM sentences WHERE id = ?', [id])` — plus input validation (e.g. reject non-numeric ids).",
+    "explanation": "Say the word \"SQL injection\" explicitly — it is the finding the interviewer is listening for. Then give the fix: parameterized/prepared statements let the driver send the value separately from the SQL text so it can never be interpreted as SQL. Validation (checking `id` is a number) is defense in depth, not a substitute.",
+    "tags": ["sql-injection", "security", "block1"]
+  },
+  {
+    "id": "karat-cr-002",
+    "topic": "Code Review",
+    "subtopic": "The 4-Question Drill",
+    "difficulty": "hard",
+    "question": "Full Block 1 drill — answer all four standard questions (1. explain in plain English then technically, 2. errors/bad practices, 3. how would you refactor, 4. security/maintainability risks) for:\n\n```js\nvar mysql = require('mysql');\nvar con = mysql.createConnection({\n  host: 'localhost', user: 'root',\n  password: 'root123', database: 'app'\n});\n\nfunction reverse(id) {\n  con.query(\"SELECT text FROM sentences WHERE id = \" + id, function (err, rows) {\n    var s = rows[0].text;\n    var w = s.split(' ');\n    for (var i = 0; i < w.length / 2; i++) {\n      var tmp = w[i];\n      w[i] = w[w.length - 1 - i];\n      w[w.length - 1 - i] = tmp;\n    }\n    console.log(w.join(' '));\n  });\n}\n```",
+    "answer": "1) Plain English: it loads a sentence from the database by id and prints its words in reverse order. Technically: it splits the text on spaces and reverses the array in place with a two-pointer swap loop, inside a callback-style query. 2) Errors/bad practices: `err` is ignored; `rows[0]` may be undefined (crash on missing id); `var` everywhere; result is `console.log`-ed instead of returned; root DB user; callback style instead of promises. 3) Refactor: parameterized query, async/await, return the string, handle err/empty rows, use `w.reverse()` (or keep the swap but explain it), config from env. 4) Security/maintainability: SQL injection via concatenated `id`; hardcoded credentials (root/root123) that also live in git history; DB access and string logic mixed in one function — hard to test.",
+    "explanation": "This mirrors the exact scenario reported from real sessions (\"code that reverses a sentence fetched from SQL\"). Practice delivering the four answers in order, out loud. The swap loop is a red herring to see whether you can read index arithmetic — walk one iteration to prove it works, then note `Array.prototype.reverse()` does the same thing more clearly.",
+    "tags": ["block1", "drill", "sql-injection", "refactoring"]
+  },
+  {
+    "id": "karat-cr-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Code Review",
+    "subtopic": "Security",
+    "difficulty": "medium",
+    "question": "Which change actually prevents SQL injection in `db.query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")`?",
+    "options": [
+      "Use a parameterized query: db.query('SELECT * FROM users WHERE name = ?', [name])",
+      "Manually escape single quotes in `name` before concatenating",
+      "Wrap the query call in try/catch",
+      "Check that `name` is not an empty string first"
+    ],
+    "answer": "Use a parameterized query: db.query('SELECT * FROM users WHERE name = ?', [name])",
+    "explanation": "Parameterized (prepared) statements send values separately from the SQL text, so input can never change the query's structure. Manual escaping is fragile and bypassable (encodings, edge cases); try/catch and emptiness checks do nothing against injection.",
+    "tags": ["sql-injection", "security", "mcq"]
+  },
+  {
+    "id": "karat-cr-004",
+    "topic": "Code Review",
+    "subtopic": "Security",
+    "difficulty": "easy",
+    "question": "You spot this at the top of a reviewed file:\n\n```js\nconst config = {\n  dbPassword: 'root123',\n  apiKey: 'sk-live-9f2e77aa'\n};\n```\n\nWhat do you flag, and what is the right way to handle these values?",
+    "answer": "Hardcoded secrets. Credentials and API keys must never live in source code: they leak through version control (and stay in git history even after deletion), code reviews, logs, and error reports. Load them from environment variables (`process.env.DB_PASSWORD`) or a secrets manager (AWS Secrets Manager, Vault), keep a `.env` file out of git, and rotate any secret that was ever committed.",
+    "explanation": "Mentioning that a committed secret is compromised even after you delete the line (git history) is the detail that separates a good answer from a checkbox answer. Also worth saying: different values per environment (dev/prod) is a side benefit of env-based config.",
+    "tags": ["secrets", "security", "block1"]
+  },
+  {
+    "id": "karat-cr-mr-005",
+    "type": "multiple-response",
+    "topic": "Code Review",
+    "subtopic": "Security",
+    "difficulty": "hard",
+    "question": "The interviewer shows this Express handler and asks for the security flaws. Which THREE are real flaws here? (Select THREE)\n\n```js\napp.post('/run', (req, res) => {\n  const result = eval(req.body.expr);\n  const key = 'sk-live-9f2e77aa';\n  fs.appendFileSync('./log.txt', req.body.expr);\n  res.send({ result, key });\n});\n```",
+    "options": [
+      "eval() executes arbitrary user-supplied code on the server",
+      "A hardcoded API secret is exposed and even returned to the client",
+      "Unvalidated user input is written to disk with no size limit (log injection / disk fill)",
+      "appendFileSync is asynchronous, so the response may be sent before the write finishes",
+      "res.send cannot serialize objects, so the endpoint always crashes"
+    ],
+    "answers": [
+      "eval() executes arbitrary user-supplied code on the server",
+      "A hardcoded API secret is exposed and even returned to the client",
+      "Unvalidated user input is written to disk with no size limit (log injection / disk fill)"
+    ],
+    "explanation": "`eval` on request data is remote code execution — the worst finding possible. The secret is both hardcoded and leaked in the response body. The unbounded, unvalidated write is a log-injection/DoS vector. The other two options are false: `appendFileSync` is synchronous (that's a performance problem, not the flaw described), and `res.send` serializes objects fine.",
+    "tags": ["eval", "secrets", "validation", "security", "mr"]
+  },
+  {
+    "id": "karat-cr-006",
+    "topic": "Code Review",
+    "subtopic": "Security",
+    "difficulty": "medium",
+    "question": "Why is `eval(userInput)` dangerous in Node.js, and what alternatives do you offer when reviewing code that uses it?",
+    "answer": "`eval` executes arbitrary JavaScript with the full permissions of the process — file system, network, environment variables — so evaluating user input is remote code execution. Alternatives depend on intent: `JSON.parse` for data, a whitelist/lookup table for selecting behavior (`const ops = { add: (a,b) => a+b }`), a proper expression-parser library for math, or a redesign so the client sends structured data instead of code.",
+    "explanation": "The reviewing skill is naming what the code was *trying* to do and offering the safe tool for that intent. Also flag eval's cousins: `new Function(str)`, `setTimeout('string')`, and `child_process.exec` with concatenated shell commands (command injection).",
+    "tags": ["eval", "security", "block1"]
+  },
+  {
+    "id": "karat-cr-007",
+    "topic": "Code Review",
+    "subtopic": "Performance",
+    "difficulty": "medium",
+    "question": "In a code review you see this inside an Express route handler:\n\n```js\napp.get('/report', (req, res) => {\n  const data = fs.readFileSync('./big-report.json', 'utf8');\n  res.send(process(data));\n});\n```\n\nWhat's the problem and how do you explain it?",
+    "answer": "`readFileSync` blocks Node's single-threaded event loop: while the file is read, the process cannot handle any other request. Under load, every user waits behind every file read. Fix: use the async version — `await fs.promises.readFile(...)` — so the event loop stays free while I/O happens; consider caching or streaming if the file is large.",
+    "explanation": "This doubles as a domain-knowledge answer: Node handles many concurrent connections with one thread precisely because I/O is non-blocking; any `*Sync` call (or heavy CPU loop) in a request path defeats that model. Sync calls are fine in startup code, never in handlers.",
+    "tags": ["event-loop", "performance", "node", "block1"]
+  },
+  {
+    "id": "karat-cr-008",
+    "topic": "Code Review",
+    "subtopic": "Bugs & Correctness",
+    "difficulty": "medium",
+    "question": "Find the bug:\n\n```js\nasync function getUserName(id) {\n  try {\n    const user = db.findUser(id); // returns a Promise\n    return user.name;\n  } catch (e) {\n    console.error('lookup failed');\n    return null;\n  }\n}\n```",
+    "answer": "The `await` is missing. `user` is a Promise, so `user.name` is `undefined` (a Promise has no `name` property) — the function 'works' but always returns undefined. Worse, if the lookup fails, the rejection is not caught by this try/catch (nothing awaited it), producing an unhandled promise rejection. Fix: `const user = await db.findUser(id);`.",
+    "explanation": "Two findings in one: the silent wrong value, and the catch that can never fire for the async error. When reviewing async code, check every call that returns a Promise for a matching `await` (or an explicit `.then/.catch`), and say out loud that try/catch only catches rejections of awaited promises.",
+    "tags": ["async", "await", "promises", "bugs", "block1"]
+  },
+  {
+    "id": "karat-cr-009",
+    "topic": "Code Review",
+    "subtopic": "Bugs & Correctness",
+    "difficulty": "hard",
+    "question": "This runs in a server handling concurrent requests. What is the classic bug?\n\n```js\nasync function withdraw(accountId, amount) {\n  const balance = await getBalance(accountId);\n  if (balance >= amount) {\n    await setBalance(accountId, balance - amount);\n    return true;\n  }\n  return false;\n}\n```",
+    "answer": "A race condition (check-then-act on shared state). Two concurrent withdrawals both read the same balance (say 100), both pass the `>= amount` check, and both write back — the account is debited once instead of twice, or ends up negative. Fixes: make the operation atomic at the data layer — `UPDATE accounts SET balance = balance - ? WHERE id = ? AND balance >= ?` and check affected rows — or use a transaction with row locking, a conditional write (DynamoDB ConditionExpression), or serialize per-account operations through a queue.",
+    "explanation": "This is the JavaScript version of the reported 'BankAccount in a multi-threaded environment' Karat task. The interviewer wants the phrase \"read-modify-write race\" and a data-layer fix — an in-process mutex doesn't help once you run more than one server instance. Bonus point: floating-point money (see the money-math card).",
+    "tags": ["race-condition", "concurrency", "bugs", "block1"]
+  },
+  {
+    "id": "karat-cr-010",
+    "topic": "Code Review",
+    "subtopic": "Bugs & Correctness",
+    "difficulty": "medium",
+    "question": "During a review you see money handled like this:\n\n```js\nlet total = 0.1 + 0.2;      // 0.30000000000000004\nconst price = 19.99 * 3;    // 59.97000000000001\n```\n\nWhat do you flag and what do you recommend?",
+    "answer": "Binary floating point cannot represent most decimal fractions exactly, so arithmetic on currency accumulates rounding errors (`0.1 + 0.2 !== 0.3`). Recommend storing and computing money in the smallest unit as integers (cents: `1999 * 3 = 5997`), formatting only for display; or use a decimal library (decimal.js / big.js) or the DB's DECIMAL type. Never compare computed floats with `===`.",
+    "explanation": "Rounding at the very end (display time) is the rule; rounding mid-calculation compounds the error. If you mention banker's rounding or that `Number` is IEEE-754 double precision, even better — it shows you know *why*, not just the folklore.",
+    "tags": ["floating-point", "money", "bugs", "block1"]
+  },
+  {
+    "id": "karat-cr-011",
+    "topic": "Code Review",
+    "subtopic": "Bugs & Correctness",
+    "difficulty": "medium",
+    "question": "Why does the lookup fail, and what is the underlying rule?\n\n```js\nconst times = new Map();\ntimes.set({ id: 'a1', name: 'Anton' }, 18);\ntimes.get({ id: 'a1', name: 'Anton' }); // => undefined\n```",
+    "answer": "JavaScript `Map` compares object keys by reference, not by content. The second literal is a different object, so it is a different key. The rule: key maps by a stable primitive identifier — `times.set(reservation.id, 18)` — never by object identity you can't reproduce, and never by anything derived from mutable fields.",
+    "explanation": "This is the JS twin of the reported Karat Java task where a `Reservation` stored in a `HashMap` becomes unfindable after its mutable fields change (its `hashCode` changes). Same principle, different mechanism: Java re-computes the hash from data, JS uses reference identity — both break when the key isn't stable.",
+    "tags": ["map", "identity", "bugs", "block1"]
+  },
+  {
+    "id": "karat-cr-mcq-012",
+    "type": "multiple-choice",
+    "topic": "Code Review",
+    "subtopic": "Bugs & Correctness",
+    "difficulty": "medium",
+    "question": "A `Reservation` object is stored in a Java `HashMap`, then its mutable `name` field is changed. `map.get(reservation)` with the SAME object reference now returns null. Why?",
+    "options": [
+      "hashCode() is computed from mutable fields, so the bucket looked up after mutation differs from where it was stored",
+      "Java HashMaps copy keys, and the copy is now out of sync",
+      "equals() always compares references, so lookups never work",
+      "The map re-hashes on every get() and drops stale entries"
+    ],
+    "answer": "hashCode() is computed from mutable fields, so the bucket looked up after mutation differs from where it was stored",
+    "explanation": "The hashCode/equals contract requires the hash to stay constant while the object is used as a key. If hashCode derives from `name` and `name` changes, get() searches the wrong bucket — the entry still exists but is unreachable. Fix: hash only immutable fields (an id), or use an immutable key. This exact scenario was reported in a real Karat session.",
+    "tags": ["hashmap", "hashcode", "mutability", "mcq"]
+  },
+  {
+    "id": "karat-cr-013",
+    "topic": "Code Review",
+    "subtopic": "Best Practices",
+    "difficulty": "easy",
+    "question": "What do you say when you see this pattern in reviewed code?\n\n```js\ntry {\n  await chargeCustomer(order);\n} catch (e) {}\n```",
+    "answer": "The empty catch swallows every failure silently — the charge can fail and the program continues as if it succeeded, which is the hardest kind of bug to diagnose. At minimum log the error with context (`console.error('charge failed', { orderId }, e)`); usually rethrow or return a failure the caller must handle; catch only the errors you can actually do something about.",
+    "explanation": "Related smells to name in the same breath: `catch (e) { console.log(e) }` then continuing anyway (logged but still swallowed), catching broadly when only one error type is expected, and losing the original error by throwing a new one without a `cause`.",
+    "tags": ["error-handling", "best-practices", "block1"]
+  },
+  {
+    "id": "karat-cr-014",
+    "topic": "Code Review",
+    "subtopic": "Refactoring",
+    "difficulty": "medium",
+    "question": "List the problems, then refactor:\n\n```js\nvar d = [];\nfunction proc(x) {\n  for (var i = 0; i < x.length; i++) {\n    if (x[i].s == 1) {\n      d.push(x[i]);\n    }\n  }\n  return d;\n}\n```",
+    "answer": "Problems: `d` is a global mutable accumulator that is never reset, so a second call returns results from both calls; `var` instead of `const`/`let`; loose `==`; magic number `1`; meaningless names (`d`, `proc`, `x`, `s`). Refactor:\n\n```js\nconst STATUS_ACTIVE = 1;\nfunction activeItems(items) {\n  return items.filter(item => item.status === STATUS_ACTIVE);\n}\n```",
+    "explanation": "The stateful-global bug is the finding that matters most — call `proc` twice and the output is wrong, which you can demonstrate. The rest are the standard readability list: block-scoped declarations, strict equality, named constants, intention-revealing names, and preferring a declarative `filter` over an index loop.",
+    "tags": ["refactoring", "global-state", "naming", "block1"]
+  },
+  {
+    "id": "karat-cr-015",
+    "topic": "Code Review",
+    "subtopic": "Refactoring",
+    "difficulty": "medium",
+    "question": "The interviewer shows a 120-line function that parses a request, validates it, queries the DB, computes totals, and formats the HTTP response. How do you structure your refactoring answer?",
+    "answer": "Name the smell (a 'god function' violating single responsibility), then propose splitting along its natural seams: `parseRequest`, `validateOrder`, `fetchOrderData`, `computeTotals`, `formatResponse` — small functions with explicit inputs/outputs, the pure logic (validation, totals) separated from I/O so it can be unit-tested without a DB. Add early returns for error cases to flatten nesting, and keep the handler as a short orchestration layer.",
+    "explanation": "Structure beats completeness here: seams → pure vs I/O → testability is a narrative the interviewer can follow. Mentioning that pure functions become trivially testable is the maintainability point the rubric asks for; naming 'single responsibility principle' shows you know the vocabulary without reciting all of SOLID.",
+    "tags": ["refactoring", "srp", "testability", "block1"]
+  },
+  {
+    "id": "karat-cr-016",
+    "topic": "Code Review",
+    "subtopic": "Security",
+    "difficulty": "medium",
+    "question": "A reviewed endpoint takes `req.body` and inserts it into the database untouched. Walk through your input-validation checklist.",
+    "answer": "1) Validate shape and types against a schema (zod/Joi/ajv) — reject unknown fields, don't pass raw bodies to the DB layer (mass-assignment). 2) Enforce lengths, ranges and formats (email, enum values); prefer allow-lists over deny-lists. 3) Use parameterized queries so values can't become SQL. 4) Sanitize/encode for the output context (HTML-escape for pages → XSS). 5) Limit payload size and fail closed with a 400 and a safe error message that leaks no internals.",
+    "explanation": "The mass-assignment point is the differentiator: inserting `req.body` wholesale lets a client set fields you never intended (`isAdmin: true`). Validation happens at the boundary once, so inner code can trust its inputs — that's also a maintainability argument.",
+    "tags": ["validation", "security", "owasp", "block1"]
+  },
+  {
+    "id": "karat-cr-mr-017",
+    "type": "multiple-response",
+    "topic": "Code Review",
+    "subtopic": "Best Practices",
+    "difficulty": "medium",
+    "question": "A module keeps its config in a mutable global object that handlers edit at runtime, repeats the same date-parsing snippet in four places, and has no tests around its pricing rules. Which THREE maintainability risks do you report? (Select THREE)",
+    "options": [
+      "Mutable global state that request handlers modify — behavior depends on request ordering",
+      "Duplicated parsing logic — a fix must be applied in four places and will be missed in one",
+      "Untested business rules — pricing can silently break on refactor",
+      "Using const for values that never change",
+      "Using async/await instead of callbacks"
+    ],
+    "answers": [
+      "Mutable global state that request handlers modify — behavior depends on request ordering",
+      "Duplicated parsing logic — a fix must be applied in four places and will be missed in one",
+      "Untested business rules — pricing can silently break on refactor"
+    ],
+    "explanation": "Global mutable state shared across requests is both a correctness and maintainability hazard (and a concurrency bug in waiting). Duplication multiplies the cost of every change. Missing tests on the rules that matter means refactoring is gambling. `const` and async/await are good practice, not risks.",
+    "tags": ["maintainability", "global-state", "duplication", "mr"]
+  },
+  {
+    "id": "karat-cr-018",
+    "topic": "Code Review",
+    "subtopic": "The 4-Question Drill",
+    "difficulty": "easy",
+    "question": "What is the 4-step method for answering any Karat Block 1 code-review question?",
+    "answer": "1) Plain-English summary first — one or two sentences about what the code accomplishes for a non-programmer. 2) Technical walk-through — data flow, structures and algorithms used. 3) Issues, grouped and in severity order: correctness bugs → bad practices/readability → security → maintainability. 4) Refactor plan — the 2–3 changes you'd make first and why. Narrate the whole time; never read silently for more than ~20 seconds.",
+    "explanation": "This matches the four questions reported verbatim from real sessions ('explain in plain English then technically; what errors or bad practices; what would you do differently; what maintainability or security risks'). Having a fixed order prevents blanking under time pressure and guarantees you touch every rubric dimension.",
+    "tags": ["method", "block1", "strategy"]
+  },
+  {
+    "id": "karat-ex-words-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Array of Words",
+    "difficulty": "medium",
+    "question": "Karat problem: given an array of `words` and a string `note`, return the first word that can be spelled using only the letters in `note` (each letter usable at most as many times as it appears there), or `'-'` if none. Describe your approach and data structures before coding.",
+    "answer": "Build a frequency map of `note` once (`Map<letter, count>`). For each word in order, walk its letters keeping a running count per letter; the moment a letter is missing from the note map or its running count exceeds the note's budget, reject the word and move on. Return the first word that survives; return `'-'` after the loop. Two early exits: per-letter inside a word, and per-word on first success.",
+    "explanation": "The trap is checking presence instead of counts — `'coco'` needs two c's and two o's, so a Set-based check wrongly accepts words that reuse scarce letters. Hoisting the note count out of the word loop is what keeps it O(W·S) instead of quadratic; say that trade-off out loud.",
+    "tags": ["frequency-map", "block2", "array-of-words"]
+  },
+  {
+    "id": "karat-ex-words-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Coding Patterns",
+    "subtopic": "Array of Words",
+    "difficulty": "medium",
+    "question": "For the array-of-words problem (W = number of words, S = max length of any word or the note), what are the time and space complexities of the frequency-map solution?",
+    "options": [
+      "O(W·S) time, O(S) space",
+      "O(W + S) time, O(1) space",
+      "O(W·S²) time, O(S) space",
+      "O(W log W) time, O(W) space"
+    ],
+    "answer": "O(W·S) time, O(S) space",
+    "explanation": "Building the note map is O(S); each of the W words is checked in O(S) with early exit, so O(S + W·S) = O(W·S). Space is the two frequency maps, each bounded by S distinct letters (or by alphabet size, whichever framing you prefer — say both). The interviewers asked exactly this complexity question in a real session.",
+    "tags": ["complexity", "mcq", "array-of-words"]
+  },
+  {
+    "id": "karat-ex-wrap-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Word Wrap",
+    "difficulty": "medium",
+    "question": "Karat problem: `wrapLines(words, maxLen)` — pack words into lines joined by `'-'`, each line as many words as fit without exceeding `maxLen`. Describe the greedy approach.",
+    "answer": "Keep a `current` line string and a `lines` array. For each word: if `current` is empty, the word starts the line; otherwise compute the candidate length `current.length + 1 + word.length` (the +1 is the separator). If it fits, append with `'-'`; if not, push `current` to `lines` and start a new line with the word. After the loop, push the final non-empty `current`. Greedy works because each line takes the maximum prefix of remaining words.",
+    "explanation": "Two classic bugs: forgetting the +1 separator in the fit check, and dropping the last line by forgetting the final push after the loop. State them while coding — interviewers score narration of exactly these details. This problem appeared in multiple reported sessions.",
+    "tags": ["greedy", "block2", "word-wrap"]
+  },
+  {
+    "id": "karat-ex-wrap-002",
+    "topic": "Coding Patterns",
+    "subtopic": "Word Wrap",
+    "difficulty": "medium",
+    "question": "What edge cases do you volunteer (and test) for word-wrap before saying you're done?",
+    "answer": "A single word (returns one line regardless of width); a word exactly equal to maxLen (fits alone); a word longer than maxLen (goes on its own line — the greedy check only limits joining); maxLen of 1 with single-character words (every word its own line); two words where the pair is exactly maxLen (fits) vs one over (splits); and the last line always flushed. The provided test list (`wrapLines(words6, 1)` etc.) covers exactly these.",
+    "explanation": "Karat gives you visible test cases — run through them out loud before running the code. Enumerating edges unprompted is scored as 'proactively tests edge cases', one of the rubric lines for the coding portion.",
+    "tags": ["edge-cases", "block2", "word-wrap"]
+  },
+  {
+    "id": "karat-ex-robots-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Robots",
+    "difficulty": "easy",
+    "question": "Karat problem: parts come as `'Optimus_leg'` strings and required parts as `'leg,wheel,screw'`. Return all robots that can be built. Approach?",
+    "answer": "Split each part string on `'_'` into robot name and part; build `Map<robot, Set<part>>` (a Set so duplicate parts don't matter). Split the required string on `','` into an array. Then for each robot (Maps preserve insertion order, giving first-appearance order), check `required.every(p => partsSet.has(p))` and collect names that pass.",
+    "explanation": "Grouping-then-filtering with a Map of Sets is the single most reusable Karat pattern. Note the two parsing steps are where typos happen — split on the right delimiters and destructure clearly (`const [robot, part] = s.split('_')`).",
+    "tags": ["map-of-sets", "parsing", "block2", "robots"]
+  },
+  {
+    "id": "karat-ex-robots-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Coding Patterns",
+    "subtopic": "Robots",
+    "difficulty": "easy",
+    "question": "In the robots problem, why store each robot's parts in a Set rather than an array?",
+    "options": [
+      "Duplicate parts collapse automatically and membership checks are O(1)",
+      "Sets keep parts sorted alphabetically for the output",
+      "Arrays cannot store strings with underscores",
+      "Sets use less memory than arrays in all cases"
+    ],
+    "answer": "Duplicate parts collapse automatically and membership checks are O(1)",
+    "explanation": "Having two `Optimus_leg` entries doesn't mean two distinct parts — the Set dedupes for free. And the availability check per required part is `set.has(part)`, O(1), versus `array.includes` which is O(n). Sets don't sort, and the memory claim is irrelevant.",
+    "tags": ["set", "mcq", "robots"]
+  },
+  {
+    "id": "karat-ex-songs-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Radio Songs",
+    "difficulty": "medium",
+    "question": "Karat problem: given songs with `'M:SS'` durations, return two different songs summing to exactly 7:00. Approach?",
+    "answer": "Classic two-sum with a hash map. Parse each duration to seconds (`const [m, s] = d.split(':'); const secs = m*60 + +s`), target 420. Single pass: for each song compute `complement = 420 - secs`; if the map already has a song with that duration, return the pair; otherwise store `seen.set(secs, title)` and continue. Return `[]` after the loop.",
+    "explanation": "Check-before-insert is what makes 'two different songs' work naturally: a song can't match itself because it isn't in the map yet when checked, but two distinct 3:30 songs do pair (the first is in the map when the second arrives). This exact problem — Led Zeppelin catalog included — was reported by two colleagues.",
+    "tags": ["two-sum", "hash-map", "parsing", "block2", "radio-songs"]
+  },
+  {
+    "id": "karat-ex-songs-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Coding Patterns",
+    "subtopic": "Radio Songs",
+    "difficulty": "hard",
+    "question": "In the radio-songs two-sum, the catalog has 'Celebration Day' (3:30), 'Going to California' (3:30), 'Take it easy' (3:30). Why does check-before-insert return a valid pair while insert-before-check risks a wrong answer?",
+    "options": [
+      "Checking first means a song can never match itself, but a later true duplicate duration still finds the earlier song",
+      "Inserting first overwrites the map so no pair is ever found",
+      "Checking first sorts the songs by duration",
+      "There is no difference; both orders always work"
+    ],
+    "answer": "Checking first means a song can never match itself, but a later true duplicate duration still finds the earlier song",
+    "explanation": "If you insert the current song before checking, a 3:30 song finds *itself* as the complement of 420−210=210 and returns the same title twice. Checking first, song #1 finds nothing and is stored; song #2 finds song #1 — two distinct songs. This is the subtle correctness point interviewers probe with the all-3:30 test case.",
+    "tags": ["two-sum", "duplicates", "mcq", "radio-songs"]
+  },
+  {
+    "id": "karat-ex-tel-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Teleporters",
+    "difficulty": "medium",
+    "question": "Karat problem: board 0..N, die with `dieSides` sides, teleporters as `'from,to'` strings, max one teleport per turn. Return all distinct squares reachable in one roll. Approach?",
+    "answer": "Parse teleporters into `Map<from, to>` (numbers). For each roll 1..dieSides: `let pos = Math.min(start + roll, N)` (overshoot clamps to N); then apply at most one teleport: `if (teleMap.has(pos)) pos = teleMap.get(pos)`. Collect positions in a Set for uniqueness and return as an array.",
+    "explanation": "Pure simulation — no graph search needed because it's a single turn. The two spec details that trip people: the clamp at N (not 'can't move'), and exactly one teleport hop even if the destination square also has a teleporter.",
+    "tags": ["simulation", "set", "block2", "teleporters"]
+  },
+  {
+    "id": "karat-ex-tel-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Coding Patterns",
+    "subtopic": "Teleporters",
+    "difficulty": "medium",
+    "question": "Teleporters are `['3,8', '8,9', '9,3']`. A roll lands the player on square 3. Where does the turn end?",
+    "options": [
+      "Square 8 — only one teleporter is followed per turn",
+      "Square 9 — teleports chain until a square with no teleporter",
+      "Square 3 — teleporters only trigger on the next turn",
+      "The turn is invalid because the teleporters form a cycle"
+    ],
+    "answer": "Square 8 — only one teleporter is followed per turn",
+    "explanation": "The spec says one teleportation per die roll, so 3→8 fires and the 8→9 teleporter does NOT. If you chained teleports, this input would loop forever (3→8→9→3…) — noticing that the one-hop rule is also what makes cycles safe is a great thing to say out loud.",
+    "tags": ["spec-reading", "mcq", "teleporters"]
+  },
+  {
+    "id": "karat-ex-shop-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Shopping List",
+    "difficulty": "medium",
+    "question": "Karat problem: given a `[product, department]` catalog and an ordered shopping list, return naiveVisits − optimalVisits (naive = department changes walking in order; optimal = distinct departments). Approach?",
+    "answer": "Build the lookup directly: `const deptByProduct = new Map(products)` — Map's constructor accepts an array of pairs. One pass over the list tracking `lastDepartment`: increment `naiveVisits` whenever the department differs from the previous one (consecutive same-department products are one visit), and add every department to a `Set`. Answer: `naiveVisits - set.size`.",
+    "explanation": "Two counters in one loop. Naive is a run-length/transition count, optimal is `Set.size` — order-independent by definition. Initialize `lastDepartment` to a value no real department can equal (`''`) so the first product always counts.",
+    "tags": ["map", "set", "single-pass", "block2", "shopping-list"]
+  },
+  {
+    "id": "karat-ex-shop-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Coding Patterns",
+    "subtopic": "Shopping List",
+    "difficulty": "easy",
+    "question": "In the shopping-list problem, the list visits departments in order: Pantry, Pantry, Pantry, Dairy. How many naive visits is that?",
+    "options": [
+      "2 — consecutive products in the same department are a single visit",
+      "4 — every product is a visit",
+      "3 — the first product doesn't count",
+      "1 — only distinct departments count for the naive walk"
+    ],
+    "answer": "2 — consecutive products in the same department are a single visit",
+    "explanation": "Naive counts transitions (runs), not items: the three Pantry products are one visit, then Dairy is a second. 'Only distinct departments' describes the optimal walk, not the naive one — mixing the two definitions is the main comprehension error here.",
+    "tags": ["spec-reading", "mcq", "shopping-list"]
+  },
+  {
+    "id": "karat-ex-sec-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Security System",
+    "difficulty": "medium",
+    "question": "Karat problem: badge log of `[name, 'enter'|'exit']`. Return (1) people who entered without a matching exit, (2) people who exited without a matching enter, no duplicates. Approach?",
+    "answer": "One pass with an `inside` Set as the state machine plus two offender Sets. On 'enter': if already inside → previous enter never closed, add to enterWithoutExit; else add to inside. On 'exit': if inside → delete (clean pair); else add to exitWithoutEnter. At the end, everyone still in `inside` also entered without exiting — union them into the first collection.",
+    "explanation": "The classic miss is the end-of-log stragglers: people who entered and simply never badged out only show up when you merge the final `inside` set into the answer. Sets give the 'no duplicates' requirement for free. Reported verbatim from a real session (records1–4 with expected outputs).",
+    "tags": ["set", "state-machine", "block2", "security-system"]
+  },
+  {
+    "id": "karat-ex-sec-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Coding Patterns",
+    "subtopic": "Security System",
+    "difficulty": "hard",
+    "question": "Security-system trace: records = [[\"Paul\",\"enter\"], [\"Paul\",\"enter\"], [\"Paul\",\"exit\"], [\"Paul\",\"exit\"]]. What's the expected output?",
+    "options": [
+      "[[\"Paul\"], [\"Paul\"]] — the double enter flags him once, the second exit flags him once",
+      "[[], []] — the enters and exits balance out",
+      "[[\"Paul\"], []] — only the double enter is an offense",
+      "[[\"Paul\", \"Paul\"], [\"Paul\"]] — each unmatched event is listed"
+    ],
+    "answer": "[[\"Paul\"], [\"Paul\"]] — the double enter flags him once, the second exit flags him once",
+    "explanation": "Walk it: enter (inside), enter while inside → enter-without-exit offense; exit (leaves), exit while outside → exit-without-enter offense. Balancing counts is NOT the rule — pairing is positional, and re-entry is an offense, not a no-op. Duplicates collapse because the collections are sets. This is test case records3 from the real assessment.",
+    "tags": ["trace", "mcq", "security-system"]
+  },
+  {
+    "id": "karat-ex-net-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Social Network",
+    "difficulty": "medium",
+    "question": "Karat problem (Aquaintly): CONNECT/DISCONNECT event log, connections are symmetric. Return users with fewer than N connections and users with N or more. Approach?",
+    "answer": "Replay the log into an adjacency map `Map<user, Set<user>>`, lazily creating each user's Set on first mention. Every event updates BOTH endpoints: CONNECT adds each user to the other's set, DISCONNECT deletes both directions. After the replay, partition: `set.size >= N` goes to the popular group, else the other. Users who disconnected everything still exist in the map with 0 connections and must be classified.",
+    "explanation": "The Sets make duplicate CONNECTs idempotent (degree = distinct neighbors, not event count). Forgetting to mirror an update desynchronizes the graph — mention symmetry explicitly. Order of output follows first appearance since Maps preserve insertion order.",
+    "tags": ["graph", "adjacency", "set", "block2", "social-network"]
+  },
+  {
+    "id": "karat-ex-net-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Coding Patterns",
+    "subtopic": "Social Network",
+    "difficulty": "medium",
+    "question": "In the Aquaintly problem, Alice connects to Bob, then disconnects, and appears in no other event. With N = 1, where does Alice belong?",
+    "options": [
+      "In the 'fewer than N' group with 0 connections — she still exists as a user",
+      "Nowhere — users with no connections are dropped from the output",
+      "In the 'N or more' group — she connected at least once historically",
+      "The input is invalid because a disconnect erases the user"
+    ],
+    "answer": "In the 'fewer than N' group with 0 connections — she still exists as a user",
+    "explanation": "Popularity is measured on the FINAL state of the graph, but the user set is everyone who ever appeared in an event. Lazily creating the Set on first mention (and never deleting users, only edges) gets this right; deriving users from surviving edges silently drops Alice — a real failing test case.",
+    "tags": ["edge-cases", "mcq", "social-network"]
+  },
+  {
+    "id": "karat-ex-hwy-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Highway",
+    "difficulty": "medium",
+    "question": "Karat problem: toll-booth log lines with plate + booth type (ENTRY / MAINROAD / EXIT). Count complete journeys (ENTRY → any MAINROADs → EXIT). Approach?",
+    "answer": "One pass with `Map<plate, boolean>` for 'has an open entry'. On ENTRY set the flag true (a repeat ENTRY is a no-op — the flag was already true). On EXIT, only if the flag is truthy: increment the journey counter and reset the flag to false so a duplicate EXIT can't close the same journey twice. MAINROAD lines are ignored for counting. Answer is the counter.",
+    "explanation": "Per-plate state is the key insight — cars are independent, so key the flag by license plate. The guard `if (active.get(plate))` covers both never-seen plates (undefined) and already-closed journeys (false) in one check.",
+    "tags": ["state-machine", "map", "block2", "highway"]
+  },
+  {
+    "id": "karat-ex-hwy-002",
+    "topic": "Coding Patterns",
+    "subtopic": "Highway",
+    "difficulty": "medium",
+    "question": "The highway task's part 1 is 'tests fail due to a bug in LogEntry — fix it'. The line format is `34400.409 SXY288 210E ENTRY` parsed with `split(' ')`. How do you hunt the bug fast?",
+    "answer": "Read the failing assertion first — it tells you exactly which field is wrong. Then check each parsed token against the format: `tokens[0]` → Number timestamp, `tokens[1]` → plate, `tokens[2]` → location + direction letter (`slice(0, -1)` number and `slice(-1)` letter), `tokens[3]` → booth type. Typical planted bugs: swapped indices (booth type read from tokens[2]), slicing the wrong end for the direction letter, or `parseInt` on the token that still contains the letter suffix. Fix, re-run the provided tests, and only then move to part 2.",
+    "explanation": "Karat's multi-part questions often start with 'make the existing tests pass' — it's a debugging-speed check, not an algorithm check. The discipline is: failing assert → offending field → parsing line, out loud. Don't re-read the whole file; let the test point you.",
+    "tags": ["debugging", "parsing", "block2", "highway"]
+  },
+  {
+    "id": "karat-ex-rest-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Restaurant",
+    "difficulty": "medium",
+    "question": "Karat problem: store reservation → hour so that `getReservationTime(reservation)` still works after the reservation's mutable fields (name, personCount) change. What's the correct design?",
+    "answer": "Key the Map by the reservation's immutable `id`: `this.reservations.set(reservation.id, hour)` and `get(reservation.id)`. The key computed at lookup time then always equals the key used at storage time, no matter what else mutated. `Map.get` already returns `undefined` for never-stored reservations, satisfying that requirement for free.",
+    "explanation": "The broken designs are keying by a hash derived from mutable fields (breaks on mutation — the Java hashCode/equals trap) or by the object reference (breaks if the caller reconstructs an equivalent object). 'Key on a stable identity, not on data that can change' is the sentence to say.",
+    "tags": ["map", "immutability", "block2", "restaurant"]
+  },
+  {
+    "id": "karat-ex-rest-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Coding Patterns",
+    "subtopic": "Restaurant",
+    "difficulty": "medium",
+    "question": "A reservation is stored with `map.set(hashOf(reservation), hour)` where hashOf uses id + name. Later `reservation.name` changes and `map.get(hashOf(reservation))` returns undefined. The stored entry is…",
+    "options": [
+      "Still in the map, but unreachable — the lookup key no longer matches the storage key",
+      "Deleted automatically when the object mutated",
+      "Reachable, because Maps track object mutations",
+      "Corrupted — the hour value changed along with the key"
+    ],
+    "answer": "Still in the map, but unreachable — the lookup key no longer matches the storage key",
+    "explanation": "Nothing was deleted or corrupted; the entry sits under the OLD hash forever (also a memory leak if this happens a lot). The map is a dumb key-value store — it can't know your key derivation changed. That 'orphaned entry' framing is exactly the explanation the reported Java version of this task wanted.",
+    "tags": ["hashmap", "mutability", "mcq", "restaurant"]
+  },
+  {
+    "id": "karat-ex-camp-001",
+    "topic": "Coding Patterns",
+    "subtopic": "Campground",
+    "difficulty": "hard",
+    "question": "Karat problem: linear roads `[origin, dest, minutes]`, several cars starting simultaneously at `starts`, people waiting at locations; the first car to reach a person picks them up. Return who rides in each car. Approach?",
+    "answer": "1) Roads are linear, so build `Map<origin, {dest, duration}>` (parse duration with Number — it arrives as a string). 2) For each car, walk its chain accumulating time and record `Map<location, arrivalTime>`, with the start at time 0. 3) For each person, compare arrival times across cars that pass their location (guard with `.has`) and assign to the earliest; strict `<` makes ties go to the earlier-indexed car, which is deterministic and allowed ('either car may take them').",
+    "explanation": "The shape is simulation + earliest-wins assignment, not graph search — the 'each location leads to exactly one next location' sentence is what licenses the simple walk. Two reported gotchas: string durations concatenating instead of adding, and people at locations no car passes (they're simply left out).",
+    "tags": ["simulation", "map", "block2", "campground"]
+  },
+  {
+    "id": "karat-ex-camp-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Coding Patterns",
+    "subtopic": "Campground",
+    "difficulty": "medium",
+    "question": "In the campground problem, durations come as strings ('30'). If you skip the Number() conversion and use `time += duration`, what happens?",
+    "options": [
+      "String concatenation: 0 + '30' becomes '030', and all later comparisons are silently wrong",
+      "A TypeError is thrown at the += operation",
+      "JavaScript coerces correctly and the result is unaffected",
+      "The += works but comparisons with < throw"
+    ],
+    "answer": "String concatenation: 0 + '30' becomes '030', and all later comparisons are silently wrong",
+    "explanation": "`number + string` coerces to string concatenation — no error, just wrong data flowing downstream ('030' < '5' is true lexicographically…). Karat data often arrives as strings precisely to test whether you parse at the boundary. Convert once, early, and say why.",
+    "tags": ["coercion", "parsing", "mcq", "campground"]
+  },
+  {
+    "id": "karat-more-001",
+    "topic": "More Problems",
+    "subtopic": "Intervals",
+    "difficulty": "medium",
+    "question": "Karat-style: given meetings as `[start, end]` pairs, merge all overlapping intervals. Approach?",
+    "answer": "Sort by start. Walk the sorted list keeping a `current` interval: if the next meeting's start ≤ current end, they overlap — extend `current.end = Math.max(current.end, next.end)`; otherwise push `current` and start a new one. Push the final interval after the loop. O(n log n) for the sort, O(n) merge.",
+    "explanation": "Sorting is what turns 'compare everything with everything' (O(n²)) into a single pass — after sorting, an interval can only overlap its neighbors. The `Math.max` matters for fully-contained intervals like [1,10] followed by [2,3]. Watch the boundary convention: touching intervals ([1,3],[3,5]) usually count as overlapping unless stated otherwise — ask.",
+    "tags": ["intervals", "sorting", "block2-style"]
+  },
+  {
+    "id": "karat-more-002",
+    "topic": "More Problems",
+    "subtopic": "Intervals",
+    "difficulty": "medium",
+    "question": "Karat-style: given meetings as `[start, end]`, what is the minimum number of rooms needed so no two meetings share a room? Approach?",
+    "answer": "Sweep line over events: turn each meeting into two events — (start, +1) and (end, −1). Sort events by time, with ends before starts at the same timestamp (a room freed at 10:00 can host a 10:00 meeting). Walk the events keeping a running counter; the answer is the maximum the counter ever reaches — the peak number of simultaneous meetings.",
+    "explanation": "This is the 12-meeting-rooms exercise in features/karat/exercises. The tie-break rule (end before start at equal times) is the detail that changes answers — state your assumption out loud. Alternative framing: sort starts and ends in two arrays and two-pointer through them; same idea.",
+    "tags": ["sweep-line", "intervals", "block2-style"]
+  },
+  {
+    "id": "karat-more-003",
+    "topic": "More Problems",
+    "subtopic": "Strings & Frequency",
+    "difficulty": "easy",
+    "question": "Karat-style: return the first non-repeating character in a string (or null). Approach and complexity?",
+    "answer": "Two passes with a frequency map. Pass 1: count every character into `Map<char, count>`. Pass 2: walk the string in order and return the first character whose count is 1. O(n) time, O(k) space for k distinct characters. Returning null after pass 2 covers the all-repeated case.",
+    "explanation": "The order requirement ('first') is why pass 2 walks the string, not the map — although JS Maps do preserve insertion order, re-walking the string makes the intent explicit and survives follow-ups like 'first non-repeating in a stream'. A one-pass nested `indexOf === lastIndexOf` solution is O(n²); mention you're avoiding it.",
+    "tags": ["frequency-map", "strings", "block2-style"]
+  },
+  {
+    "id": "karat-more-004",
+    "topic": "More Problems",
+    "subtopic": "Strings & Frequency",
+    "difficulty": "medium",
+    "question": "Karat-style: group an array of words into sets of anagrams (e.g. ['eat','tea','tan','ate'] → [['eat','tea','ate'],['tan']]). Approach?",
+    "answer": "Canonical-key hash map: for each word compute a key that is identical for all its anagrams — simplest is the word's letters sorted (`[...word].sort().join('')`) — and push the word into `Map<key, string[]>`. Return the map's values. O(W · S log S) with sorting keys; a letter-count key ('a1e1t1') makes it O(W · S).",
+    "explanation": "The reusable idea is 'design a canonical key so equivalent things collide in a map' — the same trick indexes robots by name and toll events by plate. Offering the count-based key as the optimization follow-up covers the complexity question before it's asked.",
+    "tags": ["hash-map", "canonical-key", "block2-style"]
+  },
+  {
+    "id": "karat-more-005",
+    "topic": "More Problems",
+    "subtopic": "Strings & Frequency",
+    "difficulty": "medium",
+    "question": "Karat-style: given a list of words and K, return the K most frequent words (ties broken alphabetically). Approach?",
+    "answer": "Count into `Map<word, count>`, then sort the map entries by count descending with an alphabetical tie-break — `entries.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))` — and take the first K words. O(n) counting + O(u log u) sort over u unique words.",
+    "explanation": "The compound comparator (`||` chaining numeric then lexicographic) is the part worth practicing until automatic — tie-breaks are where these questions hide their difficulty. A heap gets O(u log K) but is rarely worth hand-rolling in JS during an interview; say the trade-off instead.",
+    "tags": ["sorting", "comparator", "frequency-map", "block2-style"]
+  },
+  {
+    "id": "karat-more-006",
+    "topic": "More Problems",
+    "subtopic": "Sliding Window",
+    "difficulty": "hard",
+    "question": "Karat-style: length of the longest substring without repeating characters. Approach?",
+    "answer": "Sliding window with a last-seen-index map. Expand `right` over the string; when the character was already seen at an index ≥ `left`, jump `left` to just past that previous occurrence. Track `right - left + 1` maximum. One pass, O(n) time, O(k) space.",
+    "explanation": "The window invariant ('the substring between left and right has no repeats') is what you narrate — interviewers grade whether you can state WHY moving left is safe (everything before the duplicate's old position can't be part of a longer valid window). The naive check-every-substring is O(n³); name it and skip it.",
+    "tags": ["sliding-window", "strings", "block2-style"]
+  },
+  {
+    "id": "karat-more-007",
+    "topic": "More Problems",
+    "subtopic": "Log Analysis",
+    "difficulty": "medium",
+    "question": "Karat-style: given badge events `[name, timestampMinutes]`, find everyone who badged 3+ times within any 60-minute window. Approach?",
+    "answer": "Group timestamps per person into a map, sort each person's list, then slide a window over it: for indices i…j, while `times[j] - times[i] > 60` advance i; if the window size `j - i + 1` reaches 3, flag the person (record the window's times if asked). Grouping is O(n); per-person sort dominates at O(m log m).",
+    "explanation": "This is a real Karat-family question (badge access + time window) and the 13-badge-anomalies-window exercise. The two-layer structure — hash-map grouping THEN per-group sliding window — is the pattern to recognize; each layer is simple, the composition is what's being tested.",
+    "tags": ["sliding-window", "grouping", "log-analysis", "block2-style"]
+  },
+  {
+    "id": "karat-more-008",
+    "topic": "More Problems",
+    "subtopic": "Counting",
+    "difficulty": "medium",
+    "question": "Karat-style: warehouse inventory as `['sku:qty', ...]` and orders as `[[sku, qty], ...]` — return which orders are fully fulfillable, consuming stock in order. Approach?",
+    "answer": "Parse inventory into `Map<sku, qty>`. For each order (in order): first check EVERY line has enough stock — without mutating; only if all lines pass, do a second loop decrementing the quantities and mark the order fulfillable. The check/commit split prevents a half-applied order from corrupting stock for the next one.",
+    "explanation": "The check-then-commit discipline is the same idea as a transaction — partial application is the planted trap. This is the 14-inventory-orders exercise; it combines the robots pattern (parse + map) with mutation ordering, which is exactly the kind of composition Karat's 'part 2 of 3' questions add.",
+    "tags": ["hash-map", "parsing", "state", "block2-style"]
+  },
+  {
+    "id": "karat-fmt-001",
+    "topic": "Interview Format",
+    "subtopic": "Structure",
+    "difficulty": "easy",
+    "question": "How is the hour of a Karat technical interview structured?",
+    "answer": "≈60 minutes in three phases: a brief intro (~5 min, no small talk needed), a knowledge/discussion section (~10–15 min of short conceptual and scenario questions), and the coding section (~40–45 min in a browser IDE) with up to 3 parts of increasing difficulty. The interviewer is a trained 'Interview Engineer' — not someone from the hiring company — following a standardized script, and the session is recorded for review.",
+    "explanation": "Knowing the clock changes your behavior: budget knowledge answers to ~1 minute each to protect coding time, and expect the interviewer to move briskly — they're paid to keep you on schedule, and you can ask them to move on.",
+    "tags": ["format", "strategy"]
+  },
+  {
+    "id": "karat-fmt-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Interview Format",
+    "subtopic": "Passing Bar",
+    "difficulty": "easy",
+    "question": "The Karat coding section has up to 3 parts. What does passing typically require?",
+    "options": [
+      "Fully solving at least 2 of the 3 parts, with test cases passing",
+      "Solving all 3 parts optimally",
+      "Solving 1 part with optimal complexity",
+      "Writing pseudocode for all parts without running anything"
+    ],
+    "answer": "Fully solving at least 2 of the 3 parts, with test cases passing",
+    "explanation": "The widely-reported bar is ~2 of 3 parts complete and passing the given tests. Corollary: don't gold-plate part 1 — finish it correctly, narrate, and bank time for part 2. Partial credit exists for a well-explained approach (pseudocode + reasoning) if time runs out, but working code counts most.",
+    "tags": ["format", "strategy", "mcq"]
+  },
+  {
+    "id": "karat-fmt-003",
+    "topic": "Interview Format",
+    "subtopic": "Communication",
+    "difficulty": "easy",
+    "question": "Why is silence the highest-risk behavior in a Karat interview, and what do you do instead?",
+    "answer": "The interviewer can only score what they observe, and the rubric includes communication and reasoning — a silent correct solution scores worse than a narrated one with a small bug. Narrate from the first line: restate the problem, announce your data structures and why, think out loud at decision points, and when stuck, say what you're considering ('I could sort first, or use a map — the map keeps it one pass'). If you need focused quiet, say 'give me 30 seconds to write this loop' — announced silence is fine.",
+    "explanation": "Narration also earns hints: interviewers often respond to a spoken wrong turn, but they won't interrupt silence. Practice by solving the exercises in this repo while literally talking to the wall — it feels absurd and it works.",
+    "tags": ["communication", "strategy"]
+  },
+  {
+    "id": "karat-fmt-004",
+    "topic": "Interview Format",
+    "subtopic": "Priorities",
+    "difficulty": "easy",
+    "question": "In the Karat coding section, working code vs optimal code — which wins, and how does complexity come up?",
+    "answer": "Working code wins. The graded outcome is passing the provided test cases; optimal complexity is secondary and usually arrives as a follow-up question ('what's the time and space complexity? could you do better?'). So: implement the straightforward correct solution first (a hash map beats clever tricks), make the tests pass, THEN discuss or improve complexity if asked and time remains.",
+    "explanation": "Multiple first-hand reports phrase it the same way: 'optimality is not as important; what matters is completing the algorithm and passing all the test cases.' Prepare the complexity answer for every solution anyway — saying 'O(n) time, O(k) space for the map' fluently is cheap points.",
+    "tags": ["strategy", "complexity"]
+  },
+  {
+    "id": "karat-fmt-005",
+    "topic": "Interview Format",
+    "subtopic": "Knowledge Section",
+    "difficulty": "easy",
+    "question": "What's the right strategy for the 10–15 minute knowledge/discussion section?",
+    "answer": "Short, accurate, structured answers — 30–60 seconds each: definition → key trade-off → one concrete example, then stop. If you don't know something, say so immediately and pivot to the nearest thing you do know ('I haven't used X in production, but it solves the same problem as Y by…'). Rambling costs coding time and invites follow-ups into your weakest area; admitting a gap quickly costs one question.",
+    "explanation": "These questions are scenario-flavored ('an endpoint got slow after a deploy — what do you check?') more often than trivia. A checklist answer (measure first → recent change → query plans/N+1 → caching) shows engineering judgment, which is what this section scores.",
+    "tags": ["strategy", "knowledge-section"]
+  },
+  {
+    "id": "karat-fmt-006",
+    "topic": "Interview Format",
+    "subtopic": "Scoring & Redo",
+    "difficulty": "easy",
+    "question": "What do Karat interviewers actually score, and what is the redo policy?",
+    "answer": "Scoring dimensions: correctness (requirements + edge cases + passing tests), problem-solving approach, communication/reasoning clarity, and code quality (naming, structure — not perfection). For code-reading exhibits: whether you identify the planted bugs, bad practices, and security issues. Redo policy: Karat famously offers a free retake — if your first attempt goes badly you can usually redo the interview within a few days and the better result counts. Confirm it applies to your engagement, but treat attempt 1 as a scored rehearsal.",
+    "explanation": "The redo changes the psychology: there is little reason to freeze. Also note the interviewer writes up evidence, not a hire/no-hire — the client company applies its own bar to Karat's structured report.",
+    "tags": ["scoring", "redo", "strategy"]
+  },
+  {
+    "id": "karat-dk-001",
+    "topic": "Domain Knowledge",
+    "subtopic": "Web Storage",
+    "difficulty": "easy",
+    "question": "Cookies vs localStorage — differences and when to use which?",
+    "answer": "Cookies: ~4KB, sent automatically with every HTTP request to their domain, can be `HttpOnly` (invisible to JS), `Secure`, and scoped/expiring — the right place for session/auth tokens the SERVER needs. localStorage: ~5–10MB, never sent over the network, synchronous JS API, persists until cleared — right for client-only state (preferences, drafts, caches). Rule of thumb: if the server must see it on every request, cookie; if only the browser needs it, localStorage.",
+    "explanation": "The security contrast is the expected follow-up: HttpOnly cookies resist XSS token theft but need CSRF protection (SameSite); localStorage is immune to CSRF but any XSS can read it — so 'auth token in localStorage' is the anti-pattern to flag. Mention sessionStorage (per-tab) for completeness.",
+    "tags": ["cookies", "localstorage", "web", "knowledge-section"]
+  },
+  {
+    "id": "karat-dk-002",
+    "topic": "Domain Knowledge",
+    "subtopic": "APIs",
+    "difficulty": "medium",
+    "question": "REST vs GraphQL — trade-offs in one minute?",
+    "answer": "REST: resources at URLs, HTTP verbs and status codes, easy HTTP caching, simple to reason about; but fixed response shapes cause over-fetching and multiple round trips (N screens → N endpoints). GraphQL: one endpoint, client declares exactly the fields it needs, one round trip for nested data, strongly-typed schema; but HTTP caching is harder (POSTs), servers need query-cost controls, and resolvers reintroduce N+1 unless batched (DataLoader). Use REST for simple/cacheable/public APIs, GraphQL when many clients need different slices of a rich data graph.",
+    "explanation": "Structure the answer as strengths → costs → 'it depends on' and stop. If pushed for one sentence: GraphQL moves the query flexibility from server to client, and with it the performance responsibility.",
+    "tags": ["rest", "graphql", "api-design", "knowledge-section"]
+  },
+  {
+    "id": "karat-dk-003",
+    "topic": "Domain Knowledge",
+    "subtopic": "Node.js",
+    "difficulty": "medium",
+    "question": "How does Node.js handle thousands of concurrent connections with a single thread?",
+    "answer": "The event loop + non-blocking I/O. JavaScript runs on one thread, but I/O (network, disk, DNS) is delegated to the OS (epoll/kqueue) and libuv's thread pool; the thread never waits — it registers a callback and moves to the next event. When I/O completes, the callback is queued and run. So concurrency is fine as long as each callback is short; a synchronous file read or a heavy CPU loop blocks EVERYONE (use worker_threads or split the work for CPU-bound tasks).",
+    "explanation": "The one-sentence version: 'Node is single-threaded for your code, not for I/O.' Tie it to review findings: this is exactly why `readFileSync` in a request handler is a flag. Microtasks (promises) vs macrotasks ordering is the deep-dive follow-up.",
+    "tags": ["event-loop", "node", "knowledge-section"]
+  },
+  {
+    "id": "karat-dk-004",
+    "topic": "Domain Knowledge",
+    "subtopic": "HTTP",
+    "difficulty": "medium",
+    "question": "How does HTTP caching work — Cache-Control, ETag, and the 304 flow?",
+    "answer": "`Cache-Control` tells clients/CDNs how long a response is fresh (`max-age=3600`, `public/private`, `no-store`). While fresh, the browser doesn't contact the server at all. After expiry, it revalidates: it sends the response's `ETag` (a content fingerprint) in `If-None-Match`; if the content is unchanged the server answers `304 Not Modified` with no body — cheap — otherwise a full `200` with the new content and ETag. Pattern: long `max-age` + hashed filenames for static assets; `no-cache` + ETag for HTML/APIs.",
+    "explanation": "Getting the two mechanisms straight — freshness (no request) vs validation (conditional request) — is what distinguishes a real answer. `Last-Modified/If-Modified-Since` is the timestamp-based sibling of ETag.",
+    "tags": ["http", "caching", "knowledge-section"]
+  },
+  {
+    "id": "karat-dk-005",
+    "topic": "Domain Knowledge",
+    "subtopic": "Databases",
+    "difficulty": "medium",
+    "question": "SQL vs NoSQL — how do you choose?",
+    "answer": "SQL (Postgres/MySQL): relational model, joins, ACID transactions, a schema that enforces integrity, ad-hoc queries — default for structured data with relationships (orders, users, payments). NoSQL: document stores (MongoDB) for flexible/nested per-entity data; key-value (Redis/DynamoDB) for known-access-pattern lookups at scale with low latency; horizontal scaling and schema flexibility, but you give up joins and often cross-item transactions, and you must design around access patterns up front. Honest default: start relational; adopt NoSQL for a specific access pattern or scale requirement, not by fashion.",
+    "explanation": "Interviewers listen for trade-off literacy, not a winner. Bonus vocabulary: normalization vs denormalization, eventual consistency, and 'DynamoDB single-table design means knowing your queries first'.",
+    "tags": ["sql", "nosql", "databases", "knowledge-section"]
+  },
+  {
+    "id": "karat-dk-006",
+    "topic": "Domain Knowledge",
+    "subtopic": "APIs",
+    "difficulty": "medium",
+    "question": "What does it mean for an API endpoint to be idempotent, and why does it matter?",
+    "answer": "Idempotent = performing the request N times has the same effect as once. GET/PUT/DELETE are idempotent by contract; POST typically isn't (each call creates another resource). It matters because networks fail: clients and proxies retry, and retrying a non-idempotent 'charge the card' request double-charges. Fix: idempotency keys — the client sends a unique key per logical operation, the server stores the result under that key and returns the stored result on retries (how Stripe's payment API works).",
+    "explanation": "The retry framing is what makes this a scenario answer rather than a definition. Connect it to code review: the withdraw race-condition card is the same family — operations must be safe under concurrency AND under repetition.",
+    "tags": ["idempotency", "api-design", "knowledge-section"]
+  },
+  {
+    "id": "karat-dk-007",
+    "topic": "Domain Knowledge",
+    "subtopic": "Performance",
+    "difficulty": "medium",
+    "question": "What is the N+1 query problem and how do you fix it?",
+    "answer": "Fetching a list with one query, then executing one additional query per item for its related data — 1 + N round trips (100 posts → 101 queries). It hides easily behind ORMs and GraphQL resolvers. Fixes: JOIN or eager-load the association (`include` in ORMs), batch with `WHERE id IN (...)` from the collected ids, or in GraphQL use DataLoader to coalesce per-item loads into one batched query per tick. Detect it by logging query counts per request — the smell is query count scaling with result count.",
+    "explanation": "Say the shape ('one query becomes N+1 round trips'), the cause (lazy loading per item), and the fix family (join / batch / DataLoader). This is a top reported knowledge question for backend-flavored Karat sessions.",
+    "tags": ["n+1", "performance", "databases", "knowledge-section"]
+  },
+  {
+    "id": "karat-dk-008",
+    "topic": "Domain Knowledge",
+    "subtopic": "APIs",
+    "difficulty": "medium",
+    "question": "Offset vs cursor pagination — how do they work and when does offset break down?",
+    "answer": "Offset (`LIMIT 20 OFFSET 4000`): simple, supports 'jump to page 12', but the DB must scan and discard all skipped rows (slow at depth), and inserts/deletes between requests shift the window — items duplicate or vanish. Cursor (keyset): return an opaque cursor encoding the last item's sort key (`WHERE created_at < $cursor ORDER BY created_at DESC LIMIT 20`) — stable under writes and O(page) with an index, but no random page access and it needs a unique, sequential sort key (tie-break with id). Use offset for small admin tables; cursor for feeds and infinite scroll.",
+    "explanation": "The two failure modes of offset — performance at depth and window drift under concurrent writes — are the substance; name both. Mentioning the composite sort key (timestamp + id tie-break) shows you've actually built one.",
+    "tags": ["pagination", "api-design", "knowledge-section"]
+  }
+]
