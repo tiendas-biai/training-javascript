@@ -39,6 +39,7 @@ web research (links at the bottom):
 | **Block 2 exercises (reported)** | `exercises/01…11` | re-solving the actual reported problems |
 | **Block 2 exercises (new, same style)** | `exercises/12…14` (CommonJS, Jest-runnable) | fresh problems you haven't memorized: sweep line, grouping+window, check-then-commit |
 | **Reference guide** | `STUDY_GUIDE.md` | the four-question rubric, checklists, pattern map, tips |
+| **Algorithm theory** | `ALGORITHMS.md` | the 12 techniques behind the exercises (hash maps, sliding window, sweep line, …), each with theory, idioms, and which exercises use it |
 | **Raw reports** | `karat_assesment.xlsx` | the original source |
 
 ## Suggested study order
