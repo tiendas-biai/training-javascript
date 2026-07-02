@@ -15,7 +15,30 @@
 // Run: npx jest features/karat/exercises/12-meeting-rooms/minRooms.test.js
 
 function minRooms(meetings) {
-  return 0
+  meetings.sort((a,b)=>{
+    if (a[0]<b[0])return -1;
+    if (a[0]>b[0])return+1;
+    if (a[0]===b[0])return 0;
+  })
+  console.log(meetings);
+  let count = 0;
+  let current = []
+  for (const meeting of meetings){
+    if (current.length===0 && meeting){
+      current = meeting;
+      count++
+      continue
+    }
+    const [start,end] = meeting;
+    const [currentStart, currentEnd] = current;
+    if (start>=currentStart && start<currentEnd){
+      count++
+      if(end<currentEnd){
+        current = meeting;
+      }
+    }
+  }
+  return count;
 }
 
 module.exports = { minRooms }

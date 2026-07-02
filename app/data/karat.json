@@ -222,7 +222,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Array of Words",
     "difficulty": "medium",
-    "question": "Karat problem: given an array of `words` and a string `note`, return the first word that can be spelled using only the letters in `note` (each letter usable at most as many times as it appears there), or `'-'` if none. Describe your approach and data structures before coding.",
+    "question": "Karat problem (reported): given an array of `words` and a string `note`, return the FIRST word (in array order) that can be spelled using only the letters available in the note — each letter usable at most as many times as it appears there. Return `'-'` if no word fits.\n\n```js\nfirstWord(['baby', 'cat'], 'act')    // => 'cat'\nfirstWord(['baby', 'cat'], 'tab')    // => '-'\nfirstWord(['coco', 'cocoa'], 'coco') // => 'coco'  (needs two c's and two o's)\n```\n\nDescribe your approach and data structures before coding.",
     "answer": "Build a frequency map of `note` once (`Map<letter, count>`). For each word in order, walk its letters keeping a running count per letter; the moment a letter is missing from the note map or its running count exceeds the note's budget, reject the word and move on. Return the first word that survives; return `'-'` after the loop. Two early exits: per-letter inside a word, and per-word on first success.",
     "explanation": "The trap is checking presence instead of counts — `'coco'` needs two c's and two o's, so a Set-based check wrongly accepts words that reuse scarce letters. Hoisting the note count out of the word loop is what keeps it O(W·S) instead of quadratic; say that trade-off out loud.",
     "tags": ["frequency-map", "block2", "array-of-words"]
@@ -233,7 +233,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Array of Words",
     "difficulty": "medium",
-    "question": "For the array-of-words problem (W = number of words, S = max length of any word or the note), what are the time and space complexities of the frequency-map solution?",
+    "question": "Array-of-words problem: return the first word spellable from a note's letters, where each of the note's letters is a limited budget. The solution builds a frequency map of the note once, then checks each word with running per-letter counts. With W = number of words and S = max length of any word or the note, what are the time and space complexities?",
     "options": [
       "O(W·S) time, O(S) space",
       "O(W + S) time, O(1) space",
@@ -249,7 +249,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Word Wrap",
     "difficulty": "medium",
-    "question": "Karat problem: `wrapLines(words, maxLen)` — pack words into lines joined by `'-'`, each line as many words as fit without exceeding `maxLen`. Describe the greedy approach.",
+    "question": "Karat problem (reported): implement `wrapLines(words, maxLen)` for a word processor — pack the words, in order, into lines joined with `'-'` (standing in for a space); each line holds as many words as possible without its total length exceeding `maxLen`.\n\n```js\nwrapLines(['The', 'day', 'began', 'as', 'still'], 13)\n// => ['The-day-began', 'as-still']\nwrapLines(['a', 'b', 'c', 'd'], 4) // => ['a-b', 'c-d']\nwrapLines(['a', 'b', 'c', 'd'], 1) // => ['a', 'b', 'c', 'd']\n```\n\nDescribe the greedy approach.",
     "answer": "Keep a `current` line string and a `lines` array. For each word: if `current` is empty, the word starts the line; otherwise compute the candidate length `current.length + 1 + word.length` (the +1 is the separator). If it fits, append with `'-'`; if not, push `current` to `lines` and start a new line with the word. After the loop, push the final non-empty `current`. Greedy works because each line takes the maximum prefix of remaining words.",
     "explanation": "Two classic bugs: forgetting the +1 separator in the fit check, and dropping the last line by forgetting the final push after the loop. State them while coding — interviewers score narration of exactly these details. This problem appeared in multiple reported sessions.",
     "tags": ["greedy", "block2", "word-wrap"]
@@ -259,7 +259,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Word Wrap",
     "difficulty": "medium",
-    "question": "What edge cases do you volunteer (and test) for word-wrap before saying you're done?",
+    "question": "Word-wrap problem: `wrapLines(words, maxLen)` packs words, in order, into `'-'`-joined lines of at most `maxLen` characters (e.g. `wrapLines(['a','b','c','d'], 4)` → `['a-b', 'c-d']`). What edge cases do you volunteer (and test) before saying you're done?",
     "answer": "A single word (returns one line regardless of width); a word exactly equal to maxLen (fits alone); a word longer than maxLen (goes on its own line — the greedy check only limits joining); maxLen of 1 with single-character words (every word its own line); two words where the pair is exactly maxLen (fits) vs one over (splits); and the last line always flushed. The provided test list (`wrapLines(words6, 1)` etc.) covers exactly these.",
     "explanation": "Karat gives you visible test cases — run through them out loud before running the code. Enumerating edges unprompted is scored as 'proactively tests edge cases', one of the rubric lines for the coding portion.",
     "tags": ["edge-cases", "block2", "word-wrap"]
@@ -269,7 +269,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Robots",
     "difficulty": "easy",
-    "question": "Karat problem: parts come as `'Optimus_leg'` strings and required parts as `'leg,wheel,screw'`. Return all robots that can be built. Approach?",
+    "question": "Karat problem (reported): you have a collection of available robot parts as `'RobotName_part'` strings, and a comma-separated string of the parts a robot needs. Return the names of all robots for which EVERY required part is available, in order of first appearance.\n\n```js\nbuildableRobots(\n  ['Optimus_leg', 'Rosie_arm', 'Optimus_wheel', 'Optimus_screw', 'Rosie_claw'],\n  'leg,wheel,screw'\n) // => ['Optimus']\nbuildableRobots(['A_x', 'B_x', 'B_y'], 'x') // => ['A', 'B']\nbuildableRobots(['A_x'], 'x,y')             // => []\n```\n\nApproach?",
     "answer": "Split each part string on `'_'` into robot name and part; build `Map<robot, Set<part>>` (a Set so duplicate parts don't matter). Split the required string on `','` into an array. Then for each robot (Maps preserve insertion order, giving first-appearance order), check `required.every(p => partsSet.has(p))` and collect names that pass.",
     "explanation": "Grouping-then-filtering with a Map of Sets is the single most reusable Karat pattern. Note the two parsing steps are where typos happen — split on the right delimiters and destructure clearly (`const [robot, part] = s.split('_')`).",
     "tags": ["map-of-sets", "parsing", "block2", "robots"]
@@ -280,7 +280,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Robots",
     "difficulty": "easy",
-    "question": "In the robots problem, why store each robot's parts in a Set rather than an array?",
+    "question": "Robots problem: parts arrive as `'Optimus_leg'` strings (possibly with duplicates); you group them per robot and then check whether a robot has every part from a required list like `'leg,wheel,screw'`. Why store each robot's parts in a Set rather than an array?",
     "options": [
       "Duplicate parts collapse automatically and membership checks are O(1)",
       "Sets keep parts sorted alphabetically for the output",
@@ -296,7 +296,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Radio Songs",
     "difficulty": "medium",
-    "question": "Karat problem: given songs with `'M:SS'` durations, return two different songs summing to exactly 7:00. Approach?",
+    "question": "Karat problem (reported): a radio station must play two songs in a row that add up to exactly seven minutes. Given a list of songs with `'M:SS'` duration strings, return the titles of two DIFFERENT songs whose durations sum to exactly 7:00 — or `[]` if no such pair exists.\n\n```js\nfindPair([\n  { title: 'Stairway to Heaven', duration: '8:05' },\n  { title: 'Immigrant Song', duration: '2:27' },\n  { title: 'Rock and Roll', duration: '3:41' },\n  { title: 'Hot Dog', duration: '3:19' },\n]) // => ['Rock and Roll', 'Hot Dog']  (3:41 + 3:19 = 7:00)\n```\n\nApproach?",
     "answer": "Classic two-sum with a hash map. Parse each duration to seconds (`const [m, s] = d.split(':'); const secs = m*60 + +s`), target 420. Single pass: for each song compute `complement = 420 - secs`; if the map already has a song with that duration, return the pair; otherwise store `seen.set(secs, title)` and continue. Return `[]` after the loop.",
     "explanation": "Check-before-insert is what makes 'two different songs' work naturally: a song can't match itself because it isn't in the map yet when checked, but two distinct 3:30 songs do pair (the first is in the map when the second arrives). This exact problem — Led Zeppelin catalog included — was reported by two colleagues.",
     "tags": ["two-sum", "hash-map", "parsing", "block2", "radio-songs"]
@@ -307,7 +307,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Radio Songs",
     "difficulty": "hard",
-    "question": "In the radio-songs two-sum, the catalog has 'Celebration Day' (3:30), 'Going to California' (3:30), 'Take it easy' (3:30). Why does check-before-insert return a valid pair while insert-before-check risks a wrong answer?",
+    "question": "Radio-songs problem: find two DIFFERENT songs whose durations sum to exactly 7:00, using one pass with a seen-map (secondsSeen → title) and complement lookups. The catalog is 'Celebration Day' (3:30), 'Going to California' (3:30), 'Take it easy' (3:30). Why does check-before-insert return a valid pair while insert-before-check risks a wrong answer?",
     "options": [
       "Checking first means a song can never match itself, but a later true duplicate duration still finds the earlier song",
       "Inserting first overwrites the map so no pair is ever found",
@@ -323,7 +323,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Teleporters",
     "difficulty": "medium",
-    "question": "Karat problem: board 0..N, die with `dieSides` sides, teleporters as `'from,to'` strings, max one teleport per turn. Return all distinct squares reachable in one roll. Approach?",
+    "question": "Karat problem (reported): a board game has squares 0..N. From `startPos` the player rolls a die once (any face 1..dieSides) and moves forward — never past N (overshooting stops on N). Teleporters are given as `'from,to'` strings: landing EXACTLY on `from` moves the player to `to`, and at most one teleporter fires per turn. Return all DISTINCT squares the player could end the turn on.\n\n```js\ndestinations(['3,1', '4,2', '5,10'], 6, 0, 20) // => [1, 2, 10, 6]\n// rolls land on 1..6; 3→1, 4→2, 5→10 teleport; 1,2,6 stay\n```\n\nApproach?",
     "answer": "Parse teleporters into `Map<from, to>` (numbers). For each roll 1..dieSides: `let pos = Math.min(start + roll, N)` (overshoot clamps to N); then apply at most one teleport: `if (teleMap.has(pos)) pos = teleMap.get(pos)`. Collect positions in a Set for uniqueness and return as an array.",
     "explanation": "Pure simulation — no graph search needed because it's a single turn. The two spec details that trip people: the clamp at N (not 'can't move'), and exactly one teleport hop even if the destination square also has a teleporter.",
     "tags": ["simulation", "set", "block2", "teleporters"]
@@ -334,7 +334,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Teleporters",
     "difficulty": "medium",
-    "question": "Teleporters are `['3,8', '8,9', '9,3']`. A roll lands the player on square 3. Where does the turn end?",
+    "question": "Teleporters board game: `'from,to'` teleporters move a player who lands exactly on `from` to square `to`. The board's teleporters are `['3,8', '8,9', '9,3']` and a die roll lands the player on square 3. Where does the turn end?",
     "options": [
       "Square 8 — only one teleporter is followed per turn",
       "Square 9 — teleports chain until a square with no teleporter",
@@ -350,7 +350,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Shopping List",
     "difficulty": "medium",
-    "question": "Karat problem: given a `[product, department]` catalog and an ordered shopping list, return naiveVisits − optimalVisits (naive = department changes walking in order; optimal = distinct departments). Approach?",
+    "question": "Karat problem (reported): a store catalog maps products to departments (`[['Milk', 'Dairy'], ['Flour', 'Pantry'], …]`) and a shopping list is an ordered list of product names. Naive strategy: pick items in list order — each time the department CHANGES from the previous item it counts as a new visit (consecutive same-department items are one visit). Optimal strategy: reorder freely so each needed department is visited exactly once. Return `naiveVisits - optimalVisits`.\n\n```js\n// list's departments in order: Produce, Pantry, Pantry, Dairy, Produce, Dairy\n// naive = 5 visits; optimal = 3 distinct departments\nshopping(products, list) // => 2\n```\n\nApproach?",
     "answer": "Build the lookup directly: `const deptByProduct = new Map(products)` — Map's constructor accepts an array of pairs. One pass over the list tracking `lastDepartment`: increment `naiveVisits` whenever the department differs from the previous one (consecutive same-department products are one visit), and add every department to a `Set`. Answer: `naiveVisits - set.size`.",
     "explanation": "Two counters in one loop. Naive is a run-length/transition count, optimal is `Set.size` — order-independent by definition. Initialize `lastDepartment` to a value no real department can equal (`''`) so the first product always counts.",
     "tags": ["map", "set", "single-pass", "block2", "shopping-list"]
@@ -361,7 +361,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Shopping List",
     "difficulty": "easy",
-    "question": "In the shopping-list problem, the list visits departments in order: Pantry, Pantry, Pantry, Dairy. How many naive visits is that?",
+    "question": "Shopping-list problem: the naive strategy walks the list in order and counts department visits (the spec: 'each time the department changes from the previous product it counts as a new visit'). The list's departments in order are: Pantry, Pantry, Pantry, Dairy. How many naive visits is that?",
     "options": [
       "2 — consecutive products in the same department are a single visit",
       "4 — every product is a visit",
@@ -377,7 +377,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Security System",
     "difficulty": "medium",
-    "question": "Karat problem: badge log of `[name, 'enter'|'exit']`. Return (1) people who entered without a matching exit, (2) people who exited without a matching enter, no duplicates. Approach?",
+    "question": "Karat problem (reported): a badged-access room produces an ordered log of `[name, 'enter'|'exit']` records. The room is empty when the log begins and everyone must leave before it ends. Return two collections, without duplicates: (1) everyone who entered without a matching exit, (2) everyone who exited without a matching enter.\n\n```js\nmismatches([\n  ['Paul', 'enter'], ['Pauline', 'exit'],\n  ['Paul', 'enter'], ['Paul', 'exit'],\n  ['Steve', 'enter'],\n]) // => [['Paul', 'Steve'], ['Pauline']]\n// Paul's 1st enter never closed; Steve never left; Pauline never entered\n```\n\nApproach?",
     "answer": "One pass with an `inside` Set as the state machine plus two offender Sets. On 'enter': if already inside → previous enter never closed, add to enterWithoutExit; else add to inside. On 'exit': if inside → delete (clean pair); else add to exitWithoutEnter. At the end, everyone still in `inside` also entered without exiting — union them into the first collection.",
     "explanation": "The classic miss is the end-of-log stragglers: people who entered and simply never badged out only show up when you merge the final `inside` set into the answer. Sets give the 'no duplicates' requirement for free. Reported verbatim from a real session (records1–4 with expected outputs).",
     "tags": ["set", "state-machine", "block2", "security-system"]
@@ -388,7 +388,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Security System",
     "difficulty": "hard",
-    "question": "Security-system trace: records = [[\"Paul\",\"enter\"], [\"Paul\",\"enter\"], [\"Paul\",\"exit\"], [\"Paul\",\"exit\"]]. What's the expected output?",
+    "question": "Security-system problem: from an ordered badge log, return ([people who entered without a matching exit], [people who exited without a matching enter]), no duplicates. Trace this log: records = [[\"Paul\",\"enter\"], [\"Paul\",\"enter\"], [\"Paul\",\"exit\"], [\"Paul\",\"exit\"]]. What's the expected output?",
     "options": [
       "[[\"Paul\"], [\"Paul\"]] — the double enter flags him once, the second exit flags him once",
       "[[], []] — the enters and exits balance out",
@@ -404,7 +404,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Social Network",
     "difficulty": "medium",
-    "question": "Karat problem (Aquaintly): CONNECT/DISCONNECT event log, connections are symmetric. Return users with fewer than N connections and users with N or more. Approach?",
+    "question": "Karat problem (reported — 'Aquaintly', a social network): you get a sequential event log where `['CONNECT', 'Alice', 'Bob']` connects two users and `['DISCONNECT', 'Bob', 'Alice']` disconnects them; connections are always symmetric. After replaying the whole log, return two collections: users with fewer than N connections, and users with N or more.\n\n```js\ngrouping([\n  ['CONNECT', 'Alice', 'Bob'],\n  ['DISCONNECT', 'Bob', 'Alice'],\n  ['CONNECT', 'Bob', 'Charlie'],\n], 1) // => [['Alice'], ['Bob', 'Charlie']]\n// Alice ends with 0 connections but is still a user\n```\n\nApproach?",
     "answer": "Replay the log into an adjacency map `Map<user, Set<user>>`, lazily creating each user's Set on first mention. Every event updates BOTH endpoints: CONNECT adds each user to the other's set, DISCONNECT deletes both directions. After the replay, partition: `set.size >= N` goes to the popular group, else the other. Users who disconnected everything still exist in the map with 0 connections and must be classified.",
     "explanation": "The Sets make duplicate CONNECTs idempotent (degree = distinct neighbors, not event count). Forgetting to mirror an update desynchronizes the graph — mention symmetry explicitly. Order of output follows first appearance since Maps preserve insertion order.",
     "tags": ["graph", "adjacency", "set", "block2", "social-network"]
@@ -415,7 +415,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Social Network",
     "difficulty": "medium",
-    "question": "In the Aquaintly problem, Alice connects to Bob, then disconnects, and appears in no other event. With N = 1, where does Alice belong?",
+    "question": "Aquaintly problem: replay a CONNECT/DISCONNECT event log (connections symmetric), then split users into [fewer than N connections] and [N or more]. Alice connects to Bob, then disconnects, and appears in no other event. With N = 1, where does Alice belong?",
     "options": [
       "In the 'fewer than N' group with 0 connections — she still exists as a user",
       "Nowhere — users with no connections are dropped from the output",
@@ -431,7 +431,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Highway",
     "difficulty": "medium",
-    "question": "Karat problem: toll-booth log lines with plate + booth type (ENTRY / MAINROAD / EXIT). Count complete journeys (ENTRY → any MAINROADs → EXIT). Approach?",
+    "question": "Karat problem (reported): a highway toll system logs lines like `90750.191 JOX304 250E ENTRY` — timestamp, license plate, location+direction, booth type (`ENTRY`, `MAINROAD`, or `EXIT`). A complete journey for a car is: an ENTRY, then any number of MAINROAD sightings (possibly 0), then an EXIT. Count the complete journeys in the log.\n\n```\n90750.191 JOX304 250E ENTRY\n91081.684 JOX304 260E MAINROAD\n91082.101 THX138 110E ENTRY\n91874.493 JOX304 280E EXIT\n91982.102 THX138 290E EXIT\n```\n→ 2 complete journeys (JOX304 and THX138). Approach?",
     "answer": "One pass with `Map<plate, boolean>` for 'has an open entry'. On ENTRY set the flag true (a repeat ENTRY is a no-op — the flag was already true). On EXIT, only if the flag is truthy: increment the journey counter and reset the flag to false so a duplicate EXIT can't close the same journey twice. MAINROAD lines are ignored for counting. Answer is the counter.",
     "explanation": "Per-plate state is the key insight — cars are independent, so key the flag by license plate. The guard `if (active.get(plate))` covers both never-seen plates (undefined) and already-closed journeys (false) in one check.",
     "tags": ["state-machine", "map", "block2", "highway"]
@@ -451,7 +451,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Restaurant",
     "difficulty": "medium",
-    "question": "Karat problem: store reservation → hour so that `getReservationTime(reservation)` still works after the reservation's mutable fields (name, personCount) change. What's the correct design?",
+    "question": "Karat problem (reported): a `Reservation` has an immutable `id` and mutable `name`/`personCount` fields that may change AFTER it's stored. Implement `Restaurant` so `makeReservation(reservation, hour)` stores the hour and `getReservationTime(reservation)` returns it even after mutations — and returns `undefined` for reservations never stored.\n\n```js\nconst res = new Reservation('a1', 'Anton', 2);\nrestaurant.makeReservation(res, 18);\nres.personCount = 4;                  // mutable field changes\nrestaurant.getReservationTime(res);   // must still be 18\n```\n\nWhat's the correct design?",
     "answer": "Key the Map by the reservation's immutable `id`: `this.reservations.set(reservation.id, hour)` and `get(reservation.id)`. The key computed at lookup time then always equals the key used at storage time, no matter what else mutated. `Map.get` already returns `undefined` for never-stored reservations, satisfying that requirement for free.",
     "explanation": "The broken designs are keying by a hash derived from mutable fields (breaks on mutation — the Java hashCode/equals trap) or by the object reference (breaks if the caller reconstructs an equivalent object). 'Key on a stable identity, not on data that can change' is the sentence to say.",
     "tags": ["map", "immutability", "block2", "restaurant"]
@@ -478,7 +478,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Campground",
     "difficulty": "hard",
-    "question": "Karat problem: linear roads `[origin, dest, minutes]`, several cars starting simultaneously at `starts`, people waiting at locations; the first car to reach a person picks them up. Return who rides in each car. Approach?",
+    "question": "Karat problem (reported): friends carpool to a campground. `roads` is a list of `[origin, destination, minutes]` entries (minutes as STRINGS) where each location leads to exactly one next location (linear routes, possibly merging). All cars leave their `starts` locations at the same time; `people` wait at locations and are picked up by the FIRST car to reach them (ties: either car). Return an array parallel to `starts`: who ends up in each car.\n\n```js\nconst roads = [['Liverpool', 'Milton', '10'], ['Milton', 'Campground', '30'],\n               ['Bridgewater', 'Milton', '25']];\ncarpool(roads, ['Liverpool', 'Bridgewater'], [['Jess', 'Milton']])\n// => [['Jess'], []]  — Liverpool's car arrives at Milton at 10, Bridgewater's at 25\n```\n\nApproach?",
     "answer": "1) Roads are linear, so build `Map<origin, {dest, duration}>` (parse duration with Number — it arrives as a string). 2) For each car, walk its chain accumulating time and record `Map<location, arrivalTime>`, with the start at time 0. 3) For each person, compare arrival times across cars that pass their location (guard with `.has`) and assign to the earliest; strict `<` makes ties go to the earlier-indexed car, which is deterministic and allowed ('either car may take them').",
     "explanation": "The shape is simulation + earliest-wins assignment, not graph search — the 'each location leads to exactly one next location' sentence is what licenses the simple walk. Two reported gotchas: string durations concatenating instead of adding, and people at locations no car passes (they're simply left out).",
     "tags": ["simulation", "map", "block2", "campground"]
@@ -489,7 +489,7 @@
     "topic": "Coding Patterns",
     "subtopic": "Campground",
     "difficulty": "medium",
-    "question": "In the campground problem, durations come as strings ('30'). If you skip the Number() conversion and use `time += duration`, what happens?",
+    "question": "Campground problem: you simulate cars along roads, accumulating each car's travel time — but the road durations arrive as strings (`'30'`). If you skip the Number() conversion and use `time += duration`, what happens?",
     "options": [
       "String concatenation: 0 + '30' becomes '030', and all later comparisons are silently wrong",
       "A TypeError is thrown at the += operation",
@@ -505,7 +505,7 @@
     "topic": "More Problems",
     "subtopic": "Intervals",
     "difficulty": "medium",
-    "question": "Karat-style: given meetings as `[start, end]` pairs, merge all overlapping intervals. Approach?",
+    "question": "Karat-style: given meetings as `[start, end]` pairs in any order, merge every group of overlapping intervals into one and return the merged list.\n\n```js\nmergeIntervals([[1, 4], [3, 6], [5, 8], [10, 12]]) // => [[1, 8], [10, 12]]\nmergeIntervals([[1, 10], [2, 3]])                  // => [[1, 10]]  (containment)\n```\n\nApproach?",
     "answer": "Sort by start. Walk the sorted list keeping a `current` interval: if the next meeting's start ≤ current end, they overlap — extend `current.end = Math.max(current.end, next.end)`; otherwise push `current` and start a new one. Push the final interval after the loop. O(n log n) for the sort, O(n) merge.",
     "explanation": "Sorting is what turns 'compare everything with everything' (O(n²)) into a single pass — after sorting, an interval can only overlap its neighbors. The `Math.max` matters for fully-contained intervals like [1,10] followed by [2,3]. Watch the boundary convention: touching intervals ([1,3],[3,5]) usually count as overlapping unless stated otherwise — ask.",
     "tags": ["intervals", "sorting", "block2-style"]
@@ -515,7 +515,7 @@
     "topic": "More Problems",
     "subtopic": "Intervals",
     "difficulty": "medium",
-    "question": "Karat-style: given meetings as `[start, end]`, what is the minimum number of rooms needed so no two meetings share a room? Approach?",
+    "question": "Karat-style: given meetings as `[start, end]` pairs (end exclusive — a meeting ending at 10 frees its room for one starting at 10), what is the minimum number of rooms needed so no two meetings share a room at the same time?\n\n```js\nminRooms([[0, 30], [5, 10], [15, 20]]) // => 2\nminRooms([[10, 20], [20, 30]])         // => 1  (back-to-back reuses the room)\n```\n\nApproach?",
     "answer": "Sweep line over events: turn each meeting into two events — (start, +1) and (end, −1). Sort events by time, with ends before starts at the same timestamp (a room freed at 10:00 can host a 10:00 meeting). Walk the events keeping a running counter; the answer is the maximum the counter ever reaches — the peak number of simultaneous meetings.",
     "explanation": "This is the 12-meeting-rooms exercise in features/karat/exercises. The tie-break rule (end before start at equal times) is the detail that changes answers — state your assumption out loud. Alternative framing: sort starts and ends in two arrays and two-pointer through them; same idea.",
     "tags": ["sweep-line", "intervals", "block2-style"]
@@ -525,7 +525,7 @@
     "topic": "More Problems",
     "subtopic": "Strings & Frequency",
     "difficulty": "easy",
-    "question": "Karat-style: return the first non-repeating character in a string (or null). Approach and complexity?",
+    "question": "Karat-style: return the first character of a string that appears exactly once, or null if every character repeats.\n\n```js\nfirstNonRepeating('aabcbd') // => 'c'\nfirstNonRepeating('aabb')   // => null\n```\n\nApproach and complexity?",
     "answer": "Two passes with a frequency map. Pass 1: count every character into `Map<char, count>`. Pass 2: walk the string in order and return the first character whose count is 1. O(n) time, O(k) space for k distinct characters. Returning null after pass 2 covers the all-repeated case.",
     "explanation": "The order requirement ('first') is why pass 2 walks the string, not the map — although JS Maps do preserve insertion order, re-walking the string makes the intent explicit and survives follow-ups like 'first non-repeating in a stream'. A one-pass nested `indexOf === lastIndexOf` solution is O(n²); mention you're avoiding it.",
     "tags": ["frequency-map", "strings", "block2-style"]
@@ -545,7 +545,7 @@
     "topic": "More Problems",
     "subtopic": "Strings & Frequency",
     "difficulty": "medium",
-    "question": "Karat-style: given a list of words and K, return the K most frequent words (ties broken alphabetically). Approach?",
+    "question": "Karat-style: given a list of words and a number K, return the K most frequent words, most frequent first; break frequency ties alphabetically.\n\n```js\ntopKFrequent(['b', 'a', 'b', 'a', 'c'], 2) // => ['a', 'b']\n// a and b both appear twice → alphabetical order decides\n```\n\nApproach?",
     "answer": "Count into `Map<word, count>`, then sort the map entries by count descending with an alphabetical tie-break — `entries.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))` — and take the first K words. O(n) counting + O(u log u) sort over u unique words.",
     "explanation": "The compound comparator (`||` chaining numeric then lexicographic) is the part worth practicing until automatic — tie-breaks are where these questions hide their difficulty. A heap gets O(u log K) but is rarely worth hand-rolling in JS during an interview; say the trade-off instead.",
     "tags": ["sorting", "comparator", "frequency-map", "block2-style"]
@@ -555,7 +555,7 @@
     "topic": "More Problems",
     "subtopic": "Sliding Window",
     "difficulty": "hard",
-    "question": "Karat-style: length of the longest substring without repeating characters. Approach?",
+    "question": "Karat-style: given a string, return the length of its longest substring with no repeated characters.\n\n```js\nlongestUnique('abcabcbb') // => 3  ('abc')\nlongestUnique('bbbbb')    // => 1\nlongestUnique('pwwkew')   // => 3  ('wke' — substring, not subsequence)\n```\n\nApproach?",
     "answer": "Sliding window with a last-seen-index map. Expand `right` over the string; when the character was already seen at an index ≥ `left`, jump `left` to just past that previous occurrence. Track `right - left + 1` maximum. One pass, O(n) time, O(k) space.",
     "explanation": "The window invariant ('the substring between left and right has no repeats') is what you narrate — interviewers grade whether you can state WHY moving left is safe (everything before the duplicate's old position can't be part of a longer valid window). The naive check-every-substring is O(n³); name it and skip it.",
     "tags": ["sliding-window", "strings", "block2-style"]
@@ -565,7 +565,7 @@
     "topic": "More Problems",
     "subtopic": "Log Analysis",
     "difficulty": "medium",
-    "question": "Karat-style: given badge events `[name, timestampMinutes]`, find everyone who badged 3+ times within any 60-minute window. Approach?",
+    "question": "Karat-style: given unsorted badge events as `[name, timestampMinutes]` pairs, find everyone who badged 3 or more times within any 60-minute window (inclusive), reporting the first qualifying window's timestamps.\n\n```js\nfrequentBadgers([\n  ['Curtis', 2], ['Curtis', 51], ['Curtis', 62], ['Curtis', 187],\n  ['Raj', 10], ['Raj', 100],\n]) // => Map { 'Curtis' => [2, 51, 62] }  (62 − 2 = 60, inside the hour)\n```\n\nApproach?",
     "answer": "Group timestamps per person into a map, sort each person's list, then slide a window over it: for indices i…j, while `times[j] - times[i] > 60` advance i; if the window size `j - i + 1` reaches 3, flag the person (record the window's times if asked). Grouping is O(n); per-person sort dominates at O(m log m).",
     "explanation": "This is a real Karat-family question (badge access + time window) and the 13-badge-anomalies-window exercise. The two-layer structure — hash-map grouping THEN per-group sliding window — is the pattern to recognize; each layer is simple, the composition is what's being tested.",
     "tags": ["sliding-window", "grouping", "log-analysis", "block2-style"]
@@ -575,7 +575,7 @@
     "topic": "More Problems",
     "subtopic": "Counting",
     "difficulty": "medium",
-    "question": "Karat-style: warehouse inventory as `['sku:qty', ...]` and orders as `[[sku, qty], ...]` — return which orders are fully fulfillable, consuming stock in order. Approach?",
+    "question": "Karat-style: warehouse stock comes as `['sku:qty', …]` strings (repeated SKUs add up). Orders are processed in order and are all-or-nothing: an order ships only if EVERY line fits current stock; shipping consumes the quantities, a rejected order consumes nothing. Return the ids of the orders that ship.\n\n```js\nfulfillableOrders(['apple:5', 'banana:2', 'apple:1'], [\n  { id: 'A', lines: [['apple', 4], ['banana', 1]] }, // ships → apple 2 left\n  { id: 'B', lines: [['apple', 3]] },                // rejected, consumes nothing\n  { id: 'C', lines: [['apple', 2], ['banana', 1]] }, // ships\n]) // => ['A', 'C']\n```\n\nApproach?",
     "answer": "Parse inventory into `Map<sku, qty>`. For each order (in order): first check EVERY line has enough stock — without mutating; only if all lines pass, do a second loop decrementing the quantities and mark the order fulfillable. The check/commit split prevents a half-applied order from corrupting stock for the next one.",
     "explanation": "The check-then-commit discipline is the same idea as a transaction — partial application is the planted trap. This is the 14-inventory-orders exercise; it combines the robots pattern (parse + map) with mutation ordering, which is exactly the kind of composition Karat's 'part 2 of 3' questions add.",
     "tags": ["hash-map", "parsing", "state", "block2-style"]
