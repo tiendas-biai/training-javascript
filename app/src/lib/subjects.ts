@@ -44,6 +44,14 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:react',
     loadData: loader('react', () => load(import('../../data/react.json'))),
   },
+  'react-concepts': {
+    id: 'react-concepts',
+    label: 'React Concepts',
+    icon: '◉',
+    color: '#087ea4',
+    storageKey: 'srs:react-concepts',
+    loadData: loader('react-concepts', () => load(import('../../data/react-concepts.json'))),
+  },
   node: {
     id: 'node',
     label: 'Node.js',

@@ -1,0 +1,222 @@
+[
+  {
+    "id": "rcon-component-001",
+    "topic": "Core Concepts",
+    "subtopic": "Components",
+    "difficulty": "easy",
+    "question": "What is a React component?",
+    "answer": "A reusable, self-contained piece of UI. In modern React it is a JavaScript function whose name starts with a capital letter, receives a single `props` object, and returns JSX describing what should appear on screen.",
+    "explanation": "```jsx\nfunction Greeting({ name }) {\n  return <h1>Hello, {name}!</h1>;\n}\n\n// used like an HTML tag:\n<Greeting name=\"Ada\" />\n```\nComponents let you split the UI into independent pieces and think about each in isolation. The capital letter is how JSX tells your component apart from built-in tags like `<h1>`.",
+    "tags": ["components", "fundamentals"]
+  },
+  {
+    "id": "rcon-jsx-001",
+    "topic": "Core Concepts",
+    "subtopic": "JSX",
+    "difficulty": "easy",
+    "question": "What is JSX?",
+    "answer": "A syntax extension for JavaScript that lets you write HTML-like markup inside JS code. It is not HTML and not a template language — each JSX tag compiles to a plain function call that produces a React element object.",
+    "explanation": "```jsx\nconst el = <h1 className=\"title\">Hello, {user.name}</h1>;\n// compiles to roughly:\nconst el2 = jsx('h1', { className: 'title', children: ['Hello, ', user.name] });\n```\nCurly braces `{}` embed any JavaScript expression. Because it's JS, attributes use camelCase (`className`, `onClick`) and every element must be closed (`<img />`).",
+    "tags": ["jsx", "fundamentals"]
+  },
+  {
+    "id": "rcon-state-001",
+    "topic": "Core Concepts",
+    "subtopic": "State",
+    "difficulty": "easy",
+    "question": "What is state in a React component?",
+    "answer": "A component's own memory: data that changes over time and, when updated through its setter, makes React re-render the component. Declared with the `useState` hook; unlike props, state is owned and updated by the component itself.",
+    "explanation": "```jsx\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}\n```\nCalling `setCount` does two things: stores the new value and schedules a re-render. Mutating a variable directly (`count++`) changes nothing on screen — only the setter triggers React.",
+    "tags": ["state", "useState", "fundamentals"]
+  },
+  {
+    "id": "rcon-lifecycle-001",
+    "topic": "Core Concepts",
+    "subtopic": "Lifecycle",
+    "difficulty": "medium",
+    "question": "What is the component lifecycle in React?",
+    "answer": "The phases a component goes through: mount (added to the DOM), update (re-rendered because props or state changed), and unmount (removed). Function components handle lifecycle work with `useEffect`: the effect body runs after mount/updates, and its returned cleanup runs before the next effect and at unmount.",
+    "explanation": "```jsx\nuseEffect(() => {\n  const id = setInterval(tick, 1000); // runs after mount\n  return () => clearInterval(id);     // cleanup: before re-run + at unmount\n}, []); // dependency array controls when it re-runs\n```\nClass components expressed the same phases as methods (`componentDidMount`, `componentDidUpdate`, `componentWillUnmount`); hooks replace all three with one API.",
+    "tags": ["lifecycle", "useEffect"]
+  },
+  {
+    "id": "rcon-hooks-001",
+    "topic": "Core Concepts",
+    "subtopic": "Hooks",
+    "difficulty": "easy",
+    "question": "What are Hooks in React?",
+    "answer": "Functions starting with `use` that let function components hook into React features — state (`useState`), lifecycle/side effects (`useEffect`), context (`useContext`), memoization (`useMemo`, `useCallback`), DOM refs (`useRef`). They obey two rules: call them only at the top level of a component (never in loops or conditions) and only from React functions.",
+    "explanation": "```jsx\nfunction Form() {\n  const [name, setName] = useState('');     // state\n  const inputRef = useRef(null);            // DOM handle\n  useEffect(() => inputRef.current.focus(), []); // side effect\n  return <input ref={inputRef} value={name} onChange={e => setName(e.target.value)} />;\n}\n```\nThe rules exist because React matches hook calls to their stored values by call order — a conditional call would shift every hook after it.",
+    "tags": ["hooks", "fundamentals"]
+  },
+  {
+    "id": "rcon-composition-001",
+    "topic": "Core Concepts",
+    "subtopic": "Composition",
+    "difficulty": "medium",
+    "question": "What is component composition in React?",
+    "answer": "Building complex UI by nesting simple components inside each other instead of using inheritance. Parents pass data down as props and can pass whole chunks of UI via the special `children` prop, letting generic components (cards, layouts, modals) wrap arbitrary content.",
+    "explanation": "```jsx\nfunction Card({ title, children }) {\n  return (\n    <section className=\"card\">\n      <h2>{title}</h2>\n      {children}\n    </section>\n  );\n}\n\n<Card title=\"Profile\">\n  <Avatar user={user} />\n  <Bio user={user} />\n</Card>\n```\nReact's docs are explicit: use composition, not inheritance — there is no case where a component class hierarchy is recommended.",
+    "tags": ["composition", "children", "props"]
+  },
+  {
+    "id": "rcon-reactdom-001",
+    "topic": "Core Concepts",
+    "subtopic": "React DOM",
+    "difficulty": "medium",
+    "question": "What is React DOM?",
+    "answer": "The renderer package (`react-dom`) that connects React to the browser DOM. `react` itself only describes UI as elements; `react-dom` mounts a component tree into a real DOM node (`createRoot(...).render(...)`) and applies updates to it. Separating them lets other renderers (React Native, react-three-fiber) reuse the same core.",
+    "explanation": "```jsx\nimport { createRoot } from 'react-dom/client';\n\nconst root = createRoot(document.getElementById('root'));\nroot.render(<App />);\n```\nreact-dom also provides `createPortal` (render children into a different DOM node, e.g. modals) and `react-dom/server` for server-side rendering.",
+    "tags": ["react-dom", "createRoot", "rendering"]
+  },
+  {
+    "id": "rcon-vdom-001",
+    "topic": "Core Concepts",
+    "subtopic": "Virtual DOM",
+    "difficulty": "medium",
+    "question": "What is the Virtual DOM?",
+    "answer": "A lightweight in-memory tree of plain JS objects (React elements) describing what the UI should look like. On every render React builds a new tree, diffs it against the previous one (reconciliation), and applies only the minimal set of changes to the slow real DOM.",
+    "explanation": "```jsx\n// each render produces a cheap description, not real DOM nodes:\n{ type: 'button', props: { className: 'primary', children: 'Save' } }\n```\nDiffing is heuristic: different element types rebuild the subtree, and list items are matched by `key` — which is why keys must be stable identifiers, not array indexes.",
+    "tags": ["virtual-dom", "reconciliation", "keys"]
+  },
+  {
+    "id": "rcon-forms-001",
+    "topic": "Core Concepts",
+    "subtopic": "Forms",
+    "difficulty": "easy",
+    "question": "What are controlled and uncontrolled form inputs in React?",
+    "answer": "A controlled input's value is driven by React state — `value={state}` plus an `onChange` that updates the state, making React the single source of truth. An uncontrolled input keeps its value in the DOM itself; you read it when needed via a ref or FormData.",
+    "explanation": "```jsx\n// controlled: state owns the value\n<input value={email} onChange={e => setEmail(e.target.value)} />\n\n// uncontrolled: DOM owns the value, read on submit\n<input defaultValue=\"hi\" ref={inputRef} />\n```\nControlled inputs enable instant validation, formatting, and disabling submit; setting `value` without `onChange` makes the field read-only (a classic gotcha).",
+    "tags": ["forms", "controlled-components"]
+  },
+  {
+    "id": "rcon-context-001",
+    "topic": "Core Concepts",
+    "subtopic": "Context",
+    "difficulty": "medium",
+    "question": "What is Context in React?",
+    "answer": "A mechanism to make a value available to an entire subtree without passing props through every level (avoiding \"prop drilling\"). Create it with `createContext`, provide a value with a Provider component, and read it anywhere below with `useContext`.",
+    "explanation": "```jsx\nconst ThemeContext = createContext('light');\n\n<ThemeContext.Provider value=\"dark\">\n  <Page />\n</ThemeContext.Provider>\n\n// any depth below:\nconst theme = useContext(ThemeContext);\n```\nEvery consumer re-renders when the provided value changes, so context suits low-frequency global data (theme, locale, current user) — not rapidly-changing state.",
+    "tags": ["context", "useContext", "prop-drilling"]
+  },
+  {
+    "id": "rcon-performance-001",
+    "topic": "Patterns & Quality",
+    "subtopic": "Performance",
+    "difficulty": "medium",
+    "question": "What are the main techniques for optimizing performance in a React app?",
+    "answer": "Skip unnecessary re-renders with `memo` (skip a child when its props are unchanged), `useMemo` (cache an expensive computed value), and `useCallback` (keep a stable function identity for memoized children). Beyond rendering: virtualize long lists, code-split with `lazy`/`Suspense`, and use stable keys.",
+    "explanation": "```jsx\nconst Row = memo(function Row({ item, onSelect }) { /* … */ });\n\nfunction List({ items }) {\n  const sorted = useMemo(() => [...items].sort(byName), [items]);\n  const onSelect = useCallback(id => setSelected(id), []);\n  return sorted.map(item => <Row key={item.id} item={item} onSelect={onSelect} />);\n}\n```\nMeasure first with React DevTools Profiler — memoizing everything adds complexity for no gain when renders are already cheap.",
+    "tags": ["performance", "memo", "useMemo", "useCallback"]
+  },
+  {
+    "id": "rcon-reuse-001",
+    "topic": "Patterns & Quality",
+    "subtopic": "Code Reuse",
+    "difficulty": "medium",
+    "question": "What are the main code reuse patterns in React?",
+    "answer": "Custom hooks are the modern default: extract stateful logic into a `useSomething` function that any component can call. Older patterns solved the same problem with components: higher-order components (a function that wraps a component and returns an enhanced one) and render props (a prop that is a function returning JSX).",
+    "explanation": "```jsx\n// custom hook: reusable logic, no wrapper components\nfunction useWindowWidth() {\n  const [width, setWidth] = useState(window.innerWidth);\n  useEffect(() => {\n    const onResize = () => setWidth(window.innerWidth);\n    window.addEventListener('resize', onResize);\n    return () => window.removeEventListener('resize', onResize);\n  }, []);\n  return width;\n}\n```\nHOCs (`withRouter(Comp)`) and render props (`<Mouse render={pos => …} />`) still appear in older codebases and interview questions, but hooks avoid their \"wrapper hell\".",
+    "tags": ["custom-hooks", "hoc", "render-props", "reuse"]
+  },
+  {
+    "id": "rcon-security-001",
+    "topic": "Patterns & Quality",
+    "subtopic": "Security",
+    "difficulty": "medium",
+    "question": "What are the main security concerns in a React application?",
+    "answer": "XSS is the headline risk. JSX auto-escapes embedded values, so `{userInput}` is safe by default — the escape hatches are what you guard: `dangerouslySetInnerHTML` (sanitize with a library like DOMPurify first), `javascript:` URLs in `href`/`src`, and spreading untrusted objects into props. Also: never put secrets in client code, and remember client-side checks are UX, not security — enforce authorization on the server.",
+    "explanation": "```jsx\n<p>{comment.text}</p>                    // safe: React escapes it\n<div dangerouslySetInnerHTML={{ __html: html }} />  // dangerous: sanitize first\n<a href={userUrl}>link</a>               // check for javascript: URLs\n```\nThe name `dangerouslySetInnerHTML` is deliberate friction — it marks the exact places to audit.",
+    "tags": ["security", "xss", "dangerouslySetInnerHTML"]
+  },
+  {
+    "id": "rcon-typecheck-001",
+    "topic": "Patterns & Quality",
+    "subtopic": "Typechecking",
+    "difficulty": "easy",
+    "question": "What options exist for typechecking React components?",
+    "answer": "TypeScript is the modern standard: type the props object and the compiler checks every usage at build time. The legacy option is the `prop-types` package, which validates props at runtime in development and logs console warnings.",
+    "explanation": "```tsx\n// TypeScript: checked at compile time\ntype Props = { name: string; age?: number };\nfunction Profile({ name, age = 0 }: Props) {\n  return <p>{name} ({age})</p>;\n}\n\n<Profile name=\"Ada\" />        // ok\n// <Profile name={42} />      // compile error\n```\nTypeScript catches mistakes before the code runs and covers everything (state, handlers, hooks), which is why PropTypes is rarely used in new projects.",
+    "tags": ["typescript", "prop-types", "typechecking"]
+  },
+  {
+    "id": "rcon-redux-001",
+    "topic": "Redux",
+    "subtopic": "Redux Core",
+    "difficulty": "medium",
+    "question": "What is Redux?",
+    "answer": "A predictable state container that keeps app state in a single store outside React. State changes only by dispatching plain action objects, which pure reducer functions turn into the next state: `(state, action) => newState`. One-way data flow: UI dispatches → reducers compute → store updates → UI re-reads.",
+    "explanation": "```js\nimport { createSlice, configureStore } from '@reduxjs/toolkit';\n\nconst counter = createSlice({\n  name: 'counter',\n  initialState: { value: 0 },\n  reducers: { increment: (state) => { state.value += 1; } },\n});\nconst store = configureStore({ reducer: { counter: counter.reducer } });\nstore.dispatch(counter.actions.increment());\n```\nRedux Toolkit (`createSlice`, `configureStore`) is the official way to write Redux today — it generates action creators and lets you write \"mutating\" logic safely via Immer.",
+    "tags": ["redux", "redux-toolkit", "store", "reducers"]
+  },
+  {
+    "id": "rcon-reactredux-001",
+    "topic": "Redux",
+    "subtopic": "React Redux",
+    "difficulty": "medium",
+    "question": "What is React Redux?",
+    "answer": "The official binding library between React and a Redux store. A `<Provider store={store}>` at the root makes the store available via context; components then read state with `useSelector` (re-rendering only when their selected slice changes) and dispatch actions with `useDispatch`.",
+    "explanation": "```jsx\n<Provider store={store}>\n  <App />\n</Provider>\n\nfunction Counter() {\n  const value = useSelector(state => state.counter.value);\n  const dispatch = useDispatch();\n  return <button onClick={() => dispatch(increment())}>{value}</button>;\n}\n```\n`useSelector` subscribes the component to the store and compares selector results by reference — select the smallest slice you need, not the whole state.",
+    "tags": ["react-redux", "useSelector", "useDispatch", "provider"]
+  },
+  {
+    "id": "rcon-reduxasync-001",
+    "topic": "Redux",
+    "subtopic": "Async Flow",
+    "difficulty": "medium",
+    "question": "What is the async flow in Redux (e.g. fetching data)?",
+    "answer": "Reducers must be pure and synchronous, so async work happens in middleware before actions reach them. The standard tool is a thunk: `createAsyncThunk` runs your async function and automatically dispatches `pending` → `fulfilled`/`rejected` lifecycle actions that reducers handle to track loading, data, and error state.",
+    "explanation": "```js\nconst fetchUser = createAsyncThunk('user/fetch', async (id) => {\n  const res = await fetch(`/api/users/${id}`);\n  return res.json();\n});\n\n// in the slice:\nextraReducers: (builder) => {\n  builder\n    .addCase(fetchUser.pending, (s) => { s.status = 'loading'; })\n    .addCase(fetchUser.fulfilled, (s, a) => { s.status = 'idle'; s.user = a.payload; })\n    .addCase(fetchUser.rejected, (s) => { s.status = 'error'; });\n}\n```\nAlternatives: RTK Query (built-in data fetching/caching layer) and redux-saga in older codebases.",
+    "tags": ["redux", "async", "thunk", "createAsyncThunk"]
+  },
+  {
+    "id": "rcon-routing-001",
+    "topic": "Ecosystem",
+    "subtopic": "Routing",
+    "difficulty": "easy",
+    "question": "What is routing in a React single-page application?",
+    "answer": "Mapping the URL to which components render — without full page reloads. A router library (de facto: React Router) listens to the History API, matches the path against route definitions, renders the matching component tree, and provides `<Link>` for navigation and hooks like `useParams` for URL segments.",
+    "explanation": "```jsx\n<BrowserRouter>\n  <Routes>\n    <Route path=\"/\" element={<Home />} />\n    <Route path=\"/users/:id\" element={<UserDetail />} />\n    <Route path=\"*\" element={<NotFound />} />\n  </Routes>\n</BrowserRouter>\n\n// inside UserDetail:\nconst { id } = useParams();\n```\nBecause the server never sees SPA navigations, deployments need a rewrite rule sending all paths to `index.html` (like this repo's `vercel.json`).",
+    "tags": ["routing", "react-router", "spa"]
+  },
+  {
+    "id": "rcon-testing-001",
+    "topic": "Ecosystem",
+    "subtopic": "Automated Testing",
+    "difficulty": "medium",
+    "question": "What does automated testing look like for React components?",
+    "answer": "The standard stack is a test runner (Jest or Vitest) plus React Testing Library, which renders components into a simulated DOM (jsdom) and queries them the way a user would — by role, label, or text — rather than by implementation details. `user-event` simulates realistic interactions; `jest-dom` adds matchers like `toBeInTheDocument`.",
+    "explanation": "```jsx\ntest('increments on click', async () => {\n  render(<Counter />);\n  await userEvent.click(screen.getByRole('button', { name: 'Count: 0' }));\n  expect(screen.getByRole('button', { name: 'Count: 1' })).toBeInTheDocument();\n});\n```\nThe guiding principle: test behavior visible to users, not component internals — tests then survive refactors.",
+    "tags": ["testing", "jest", "react-testing-library"]
+  },
+  {
+    "id": "rcon-building-001",
+    "topic": "Ecosystem",
+    "subtopic": "Building",
+    "difficulty": "medium",
+    "question": "What does \"building\" a React app involve?",
+    "answer": "Transforming source the browser can't run (JSX, TypeScript, modern syntax) into optimized static assets. A build tool (de facto: Vite) transpiles JSX/TS, bundles modules, tree-shakes dead code, minifies, code-splits dynamic imports into separate chunks, and adds hashed filenames for caching — plus a fast dev server with hot module replacement.",
+    "explanation": "```js\n// vite.config.ts — the whole config for a React app:\nimport { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react';\n\nexport default defineConfig({ plugins: [react()] });\n```\n`npm run dev` serves source over native ES modules (near-instant startup); `npm run build` produces the optimized `dist/` folder you deploy. Older equivalent: webpack + Babel (Create React App).",
+    "tags": ["build", "vite", "bundling", "jsx-transform"]
+  },
+  {
+    "id": "rcon-ssr-001",
+    "topic": "Ecosystem",
+    "subtopic": "Server Rendering",
+    "difficulty": "medium",
+    "question": "What is server-side rendering (SSR) in React?",
+    "answer": "Rendering components to an HTML string on the server per request, so the browser receives a complete page immediately, then loading the JS bundle and hydrating — attaching event listeners to the existing markup instead of rebuilding it. Benefits: faster first paint and SEO-friendly content; cost: server compute and the hydration step.",
+    "explanation": "```jsx\n// server (per request):\nconst html = renderToString(<App />);\n\n// client entry — hydrate instead of createRoot().render():\nhydrateRoot(document.getElementById('root'), <App />);\n```\nHydration requires server and client markup to match, which is why frameworks like Next.js manage SSR for you (data fetching, streaming, routing included).",
+    "tags": ["ssr", "hydration", "renderToString", "nextjs"]
+  },
+  {
+    "id": "rcon-ssg-001",
+    "topic": "Ecosystem",
+    "subtopic": "Static Rendering",
+    "difficulty": "medium",
+    "question": "What is static site generation (SSG) in React?",
+    "answer": "Rendering pages to HTML once at build time (not per request like SSR) and serving the resulting files from a CDN. Ideal for content that's the same for every visitor — docs, blogs, marketing pages: fastest possible delivery, no server needed. The pages still hydrate into a normal interactive React app.",
+    "explanation": "```jsx\n// at build time, for each page:\nconst html = renderToString(<PostPage post={post} />);\nwriteFileSync(`dist/posts/${post.slug}.html`, wrapInDocument(html));\n```\nIn Next.js this is the default for pages without dynamic data (with `generateStaticParams` for dynamic routes); ISR (incremental static regeneration) re-builds individual pages on a schedule to keep static content fresh.",
+    "tags": ["ssg", "static-rendering", "prerendering", "nextjs"]
+  }
+]

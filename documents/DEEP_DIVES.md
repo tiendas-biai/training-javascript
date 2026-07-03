@@ -102,6 +102,14 @@ for a project with Redux installed (self-reviewed). The Redux *core* cards (redu
 data flow, thunk mechanics) use plain-TS demos that **do** compile. Conceptual cards (RTK Query,
 sagas, when-to-use, Provider-missing, several Building/SSG/SSR cards) intentionally have no `example`.
 
+**React Concepts — DONE: all 22 cards / 4 topics** (Core Concepts 10, Patterns & Quality 4, Redux 3,
+Ecosystem 5). One reveal card per interview concept; every card has a deep dive with a complete
+example and 2 official-doc links. Verified with **`verify-deepdive-examples.mjs react-concepts`**:
+19 of 22 type-check clean locally; the 3 Redux cards (`rcon-redux-001`, `rcon-reactredux-001`,
+`rcon-reduxasync-001`) fail only with `Cannot find module` for `@reduxjs/toolkit`/`react-redux` —
+they were **verified type-clean against temporarily-installed real packages** during authoring, then
+the packages were removed per the no-Redux-dependency rule above.
+
 **Node.js — DONE: all 61 cards** across Event Loop, Modules, Events, Core API, Streams & Buffers,
 HTTP, Error Handling, Express. Examples are runnable CommonJS/ESM `js` snippets (not React). Verified
 with **`verify-node-examples.mjs node`** — a separate harness that runs **`node --check`** (syntax

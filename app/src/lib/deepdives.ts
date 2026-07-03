@@ -10,6 +10,7 @@ const cast = (p: Promise<unknown>) => p as Promise<{ default: DeepDiveMap }>;
 const loaders: Record<string, () => Promise<{ default: DeepDiveMap }>> = {
   javascript: () => cast(import('../../data/deepdives/javascript.json')),
   react: () => cast(import('../../data/deepdives/react.json')),
+  'react-concepts': () => cast(import('../../data/deepdives/react-concepts.json')),
   node: () => cast(import('../../data/deepdives/node.json')),
   typescript: () => cast(import('../../data/deepdives/typescript.json')),
   aws: () => cast(import('../../data/deepdives/aws.json')),
