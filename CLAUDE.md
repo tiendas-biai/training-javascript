@@ -326,7 +326,7 @@ Deploys **only Lambdas + DynamoDB tables**; routes live on the **shared `entorno
 - **Scripts** (`backend/scripts/`, idempotent, jq-based — never a client-side `--query` under CLI auto-pagination): `wire-api.sh` (authorizer + integrations + routes), `set-stage-vars.sh <env>`, `add-cors-origin.sh`, `unwire-api.sh`.
 - **Lambda tests** — `node --test` per function with a mocked `@aws-sdk/client-dynamodb` (`backend/{progress,cards}/test/`). `nodejs22.x`, arm64, `PAY_PER_REQUEST`.
 
-> Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live). `drill-cards-dev` holds twelve banks (1150 cards, deep dives merged on each item — the `karat` bank is newer and not seeded yet); re-run `seed-cards.mjs` after editing `app/data/*.json`.
+> Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live). `drill-cards-dev` holds all fourteen banks (1234 cards, deep dives merged on each item); re-run `seed-cards.mjs` after editing `app/data/*.json`.
 
 ---
 
