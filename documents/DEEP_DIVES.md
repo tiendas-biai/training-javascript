@@ -209,13 +209,16 @@ SAA-C03 reasoning). 48 of 184 carry an `example` where a concrete artifact helps
 Verified with **`verify-aws-examples.mjs aws`** — `json` via `JSON.parse`, `yaml` via the `yaml` package,
 `bash` via `bash -n`; all 48 parse clean. Authored with colon-ending bold labels.
 
-**Karat — DONE: all 62 cards / 5 topics** — Code Review (18: the Block 1 exhibits — SQL injection,
-secrets, eval, races, mutable map keys, refactoring drills), Coding Patterns (22: 2 per reported
-exercise in `features/karat/exercises/01…11`), More Problems (8: intervals, sliding window,
-canonical-key grouping, check-then-commit), Interview Format (6) and Domain Knowledge (8). 55 of 62
+**Karat — DONE: all 72 cards / 6 topics** — Code Review (18: the Block 1 exhibits — SQL injection,
+secrets, eval, races, mutable map keys, refactoring drills), Live Exhibits (10: full-block drill
+exhibits mirroring a real session — hand-rolled reverse, mysql2 query→loop→reverse, fake
+`echo "no tests"` test script + lockfile, substring-vs-slice, N+1, IN-clause building, CSV parser,
+PAN logging, capstone; ids `karat-le-*`), Coding Patterns (22: 2 per reported exercise in
+`features/karat/exercises/01…11`), More Problems (8: intervals, sliding window, canonical-key
+grouping, check-then-commit), Interview Format (6) and Domain Knowledge (8). 65 of 72
 carry a runnable ` ```js ` example (the 7 format/strategy cards are prose-only); verified with
 **`verify-node-examples.mjs karat`** — all parse clean. Authored with colon-ending bold labels.
-Companion practice material lives in `features/karat/` (code-review snippets, exercises 12–14,
+Companion practice material lives in `features/karat/` (code-review snippets 01–07, exercises 12–15,
 PLANNING.md + STUDY_GUIDE.md).
 
 **No remaining subjects** — all thirteen banks (javascript, react, node, typescript, graphql, springboot,

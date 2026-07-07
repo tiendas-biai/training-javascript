@@ -17,6 +17,9 @@ answer (`REVIEW.md`). The scenarios mirror the ones colleagues reported:
 | `02-mini-api/` | small Express API | eval, secrets, no validation, sync fs, swallowed errors |
 | `03-bank-account/` | account balance operations | check-then-act race, float money, silent catch |
 | `04-reservations/` | reservation store | map keyed by mutable data (the Java HashMap trap, JS edition) |
+| `05-query-loop-reverse/` | mysql2 query → for loop → hand-rolled reverse (as seen in a real session) | injection, ignored err, alias-not-copy mutation, console.log instead of return |
+| `06-fake-test-script/` | package.json + lockfile review (as seen in a real session) | fake `echo "no tests"` test script, `"mysql2": "*"`, committed credentials |
+| `07-substring-parser/` | var-heavy CSV parser | reimplemented `split(',')`, substring-vs-slice, quoted fields & CRLF broken |
 
 ## How to practice
 
