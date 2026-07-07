@@ -313,7 +313,7 @@ Env (`app/.env`, also Vercel) — see `app/.env.example`:
 VITE_AUTH0_DOMAIN=…        VITE_AUTH0_CLIENT_ID=…
 VITE_AUTH0_AUDIENCE=https://entorno-biai
 VITE_API_URL=https://m02lp78cnl.execute-api.us-east-1.amazonaws.com/dev
-VITE_CARDS_FROM_API=false  # optional: serve banks from the cards API
+VITE_CARDS_FROM_API=false  # serve banks from the cards API (set to true in Vercel prod)
 ```
 
 ### Backend (`backend/` — AWS SAM, us-east-1)
@@ -326,7 +326,7 @@ Deploys **only Lambdas + DynamoDB tables**; routes live on the **shared `entorno
 - **Scripts** (`backend/scripts/`, idempotent, jq-based — never a client-side `--query` under CLI auto-pagination): `wire-api.sh` (authorizer + integrations + routes), `set-stage-vars.sh <env>`, `add-cors-origin.sh`, `unwire-api.sh`.
 - **Lambda tests** — `node --test` per function with a mocked `@aws-sdk/client-dynamodb` (`backend/{progress,cards}/test/`). `nodejs22.x`, arm64, `PAY_PER_REQUEST`.
 
-> Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live). `drill-cards-dev` holds all fourteen banks (1234 cards, deep dives merged on each item); re-run `seed-cards.mjs` after editing `app/data/*.json`.
+> Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live), **including `VITE_CARDS_FROM_API=true`** — the deployed app (training-javascript-one.vercel.app) serves banks from the cards API, so new/edited cards only appear there after re-running `seed-cards.mjs`. `drill-cards-dev` holds all fourteen banks (1244 cards, deep dives merged on each item); re-run `seed-cards.mjs` after **every** edit to `app/data/*.json` (the bundled JSON is only the fallback in production, and the default for local dev without the flag).
 
 ---
 
