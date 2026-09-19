@@ -328,5 +328,184 @@
         "url": "https://www.icfes.gov.co/web/guest/saber-pro"
       }
     ]
+  },
+  "cnsc-ped-mcq-001": {
+    "explanation": "**El problema:** Hay que distinguir los tipos de evaluación por su **momento** y su **propósito**, no por el instrumento. Un mismo cuestionario puede ser formativo o sumativo según para qué se use. **Por qué es correcta:** La evaluación ocurre a mitad del proceso, no lleva nota y sus resultados se usan para reorientar la enseñanza. Esas son las tres señales de la evaluación formativa, también llamada evaluación *para* el aprendizaje. **Por qué fallan los distractores:** La sumativa se hace al final y certifica o califica lo aprendido. La de certificación acredita un nivel de forma oficial. La heteroevaluación externa la hace un agente externo (por ejemplo, las pruebas Saber) y no busca ajustar la clase del día siguiente. **Clave para el examen:** Si en el caso el docente **usa la información para ajustar** su práctica, la respuesta casi siempre es \"formativa\".",
+    "example": "Resumen por momento y propósito:\n\n• **Diagnóstica**: al inicio. Sirve para conocer saberes previos y planear.\n• **Formativa**: durante el proceso. Sirve para retroalimentar y ajustar.\n• **Sumativa**: al final. Sirve para valorar el logro y calificar.",
+    "resources": [
+      {
+        "label": "Decreto 1290 de 2009 — Evaluación del aprendizaje y promoción (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=35954"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-002": {
+    "explanation": "**El problema:** La evaluación diagnóstica suele malinterpretarse como \"la primera nota\" o como una forma de clasificar a los estudiantes. **Por qué es correcta:** Su función es conocer el punto de partida del grupo (saberes previos, fortalezas y dificultades) para que la planeación responda a esa realidad y no a un grupo ideal. Con un grupo nuevo de 8.º, el docente necesita saber, por ejemplo, cómo está la comprensión inferencial antes de proponer textos argumentativos complejos. **Por qué fallan los distractores:** Calificar no es su propósito. Encasillar a los estudiantes en grupos fijos todo el año va contra el enfoque formativo. La promoción se decide al final del año según el SIEE. **Clave para el examen:** Diagnóstica significa \"para planear\". Si la opción habla de nota o de promoción, descártela.",
+    "resources": [
+      {
+        "label": "Decreto 1290 de 2009 — Evaluación del aprendizaje y promoción (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=35954"
+      },
+      {
+        "label": "MEN — Lineamientos Curriculares (todas las áreas)",
+        "url": "https://www.mineducacion.gov.co/1621/article-89869.html"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-003": {
+    "explanation": "**El problema:** El Decreto 1290 de 2009 reglamenta la evaluación del aprendizaje y la promoción en básica y media. Es una de las normas más preguntadas en el componente pedagógico. **Por qué es correcta:** El decreto establece una **escala de valoración nacional** con cuatro niveles: Desempeño Superior, Desempeño Alto, Desempeño Básico y Desempeño Bajo. Cada institución puede usar su propia escala (numérica, por ejemplo de 1,0 a 5,0, o conceptual), pero debe indicar su equivalencia con la nacional para facilitar la movilidad de los estudiantes entre colegios. **Por qué fallan los distractores:** \"Excelente… Deficiente\" corresponde al régimen anterior del Decreto 230 de 2002, que el 1290 derogó. \"Aprobado/Reprobado\" no es la escala oficial. \"Avanzado, Satisfactorio, Mínimo, Insuficiente\" son los niveles de desempeño de las pruebas Saber del ICFES. **Clave para el examen:** Recuerde la secuencia **S-A-B-B**: Superior, Alto, Básico, Bajo. El nivel Básico significa que se superaron los desempeños necesarios.",
+    "resources": [
+      {
+        "label": "Decreto 1290 de 2009 — Evaluación del aprendizaje y promoción (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=35954"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-004": {
+    "explanation": "**El problema:** El Decreto 1290 descentralizó la evaluación: el Estado ya no fija, por ejemplo, un porcentaje máximo de reprobación, y cada institución define sus propios criterios. **Por qué es correcta:** El establecimiento educativo define, adopta y divulga su Sistema Institucional de Evaluación de los Estudiantes (SIEE). El consejo directivo lo aprueba, se incorpora al PEI y en su construcción participa la comunidad educativa (docentes, estudiantes y padres). El SIEE incluye los criterios de evaluación y promoción, la escala de valoración con su equivalencia nacional, las estrategias de apoyo, la periodicidad de los informes y las instancias de reclamación. **Por qué fallan los distractores:** El MEN no expide un SIEE único, porque eso contradice la autonomía institucional. La secretaría de educación orienta e inspecciona, pero no redacta el SIEE de cada colegio. El docente aplica el SIEE; no define criterios propios que lo contradigan. **Clave para el examen:** Autonomía institucional, consejo directivo y PEI son las tres palabras asociadas al SIEE.",
+    "resources": [
+      {
+        "label": "Decreto 1290 de 2009 — Evaluación del aprendizaje y promoción (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=35954"
+      },
+      {
+        "label": "Ley 115 de 1994 — Ley General de Educación (Secretaría del Senado)",
+        "url": "http://www.secretariasenado.gov.co/senado/basedoc/ley_0115_1994.html"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-005": {
+    "explanation": "**El problema:** Hay que clasificar la evaluación según **quién evalúa a quién**, una distinción que aparece con frecuencia en los casos de aula. **Por qué es correcta:** Cuando los estudiantes valoran el trabajo de sus compañeros (pares), hay coevaluación. Que la rúbrica se haya socializado antes es una buena práctica, porque hace transparentes los criterios y convierte la coevaluación en una oportunidad de aprendizaje. **Por qué fallan los distractores:** En la autoevaluación el estudiante valora su propio trabajo. En la heteroevaluación evalúa alguien de distinto rol, normalmente el docente al estudiante. La evaluación diagnóstica se define por el momento (al inicio) y no por el agente. **Clave para el examen:** *Auto* es uno mismo, *co* son los pares y *hetero* es otro de distinto rol.",
+    "resources": [
+      {
+        "label": "Decreto 1290 de 2009 — Evaluación del aprendizaje y promoción (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=35954"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-006": {
+    "explanation": "**El problema:** Hay que reconocer la teoría del aprendizaje que está detrás de una estrategia concreta de aula. **Por qué es correcta:** David Ausubel plantea que el aprendizaje es **significativo** cuando la nueva información se ancla en la estructura cognitiva previa del estudiante (sus \"conceptos inclusores\"). Activar los saberes previos (lo que se ha oído en casa o en las noticias) y conectarlos de forma explícita con los conceptos nuevos es la aplicación directa de esta idea. Lo opuesto es el aprendizaje memorístico, que se olvida pronto. **Por qué fallan los distractores:** Skinner explica la conducta mediante refuerzos y consecuencias, no mediante la conexión con saberes previos. La memorización repetitiva es justo lo que Ausubel critica. La instrucción programada es una aplicación conductista con pasos pequeños y refuerzo inmediato. **Clave para el examen:** \"Saberes previos\", \"anclaje\" y \"organizadores previos\" remiten a Ausubel.",
+    "resources": [
+      {
+        "label": "MEN — Lineamientos Curriculares (todas las áreas)",
+        "url": "https://www.mineducacion.gov.co/1621/article-89869.html"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-007": {
+    "explanation": "**El problema:** Hay que distinguir a Vygotsky de Piaget, que es una de las confusiones más frecuentes en los simulacros. **Por qué es correcta:** Para Lev Vygotsky, el aprendizaje es social y mediado. La **zona de desarrollo próximo (ZDP)** es la distancia entre el nivel real de desarrollo (lo que el estudiante hace solo) y el nivel potencial (lo que logra con la guía de un adulto o de un par más capaz). Si el estudiante resume con ayuda pero no solo, la tarea está en su ZDP. La guía con preguntas y el compañero son el **andamiaje** (término de Bruner, Wood y Ross), que se retira de forma gradual. **Por qué fallan los distractores:** Las \"operaciones formales\" son una etapa de Piaget y no explican el papel de la ayuda. Premiar cada resumen es conductismo. Retirar toda ayuda de inmediato ignora que el estudiante todavía la necesita. **Clave para el examen:** Si aparecen \"con ayuda de otro\", \"mediación\" o \"interacción social\", la respuesta es Vygotsky y la ZDP.",
+    "example": "Mapa rápido de autores:\n\n• **Piaget**: etapas del desarrollo cognitivo (sensoriomotora, preoperacional, operaciones concretas, operaciones formales).\n• **Vygotsky**: aprendizaje social y mediado; zona de desarrollo próximo.\n• **Ausubel**: aprendizaje significativo; saberes previos.\n• **Bruner**: aprendizaje por descubrimiento; andamiaje.\n• **Skinner**: conductismo; refuerzo.",
+    "resources": [
+      {
+        "label": "MEN — Lineamientos Curriculares (todas las áreas)",
+        "url": "https://www.mineducacion.gov.co/1621/article-89869.html"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-008": {
+    "explanation": "**El problema:** Hay que identificar el modelo pedagógico que muestra una práctica y proponer un cambio coherente con otro modelo. **Por qué es correcta:** El caso describe el modelo **tradicional o transmisionista**: el docente es la fuente del saber, el estudiante recibe de forma pasiva y la evaluación mide la memoria. En el **constructivismo**, el estudiante construye el conocimiento de forma activa y el docente actúa como mediador. Indagar en fuentes, relacionar la vida del autor con su obra (un proceso de pensamiento de orden superior) y socializar las conclusiones son actividades de construcción. **Por qué fallan los distractores:** Dictar más rápido, entregar fotocopias o preguntar más datos de memoria cambian la forma, pero mantienen la transmisión y la memorización. **Clave para el examen:** En las preguntas de cambio de modelo, busque la opción en la que el **estudiante hace** (indaga, construye, discute) y no solo recibe.",
+    "resources": [
+      {
+        "label": "MEN — Lineamientos Curriculares (todas las áreas)",
+        "url": "https://www.mineducacion.gov.co/1621/article-89869.html"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-009": {
+    "explanation": "**El problema:** Hay que clasificar un objetivo de aprendizaje por su nivel cognitivo usando el verbo principal. **Por qué es correcta:** La taxonomía de Bloom revisada (Anderson y Krathwohl, 2001) ordena seis procesos de menor a mayor complejidad: recordar, comprender, aplicar, analizar, evaluar y **crear**. \"Diseñar un pódcast que proponga una solución\" exige generar un producto nuevo y original, que es el nivel más alto. **Por qué fallan los distractores:** Recordar es reconocer o evocar datos. Comprender es explicar o parafrasear. Aplicar es usar un procedimiento en una situación. Ninguno implica producir algo original. **Clave para el examen:** Fíjese en el verbo. Diseñar, componer, proponer o producir corresponden a crear. Justificar o valorar corresponden a evaluar. Comparar o diferenciar corresponden a analizar.",
+    "example": "Taxonomía de Bloom revisada con verbos típicos:\n\n1. **Recordar**: nombrar, listar, identificar.\n2. **Comprender**: explicar, resumir, parafrasear.\n3. **Aplicar**: usar, resolver, ejecutar.\n4. **Analizar**: comparar, diferenciar, organizar.\n5. **Evaluar**: juzgar, justificar, valorar.\n6. **Crear**: diseñar, componer, proponer.",
+    "resources": [
+      {
+        "label": "MEN — Lineamientos Curriculares (todas las áreas)",
+        "url": "https://www.mineducacion.gov.co/1621/article-89869.html"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-010": {
+    "explanation": "**El problema:** Los casos de inclusión son centrales en el concurso. La respuesta correcta siempre garantiza el **acceso, la permanencia y la participación** del estudiante en el aula regular. **Por qué es correcta:** El Decreto 1421 de 2017 reglamenta la atención educativa de la población con discapacidad bajo el enfoque de educación inclusiva. Establece el **PIAR** (Plan Individual de Ajustes Razonables), que se construye a partir de una valoración pedagógica y define los apoyos y ajustes que necesita el estudiante: material ampliado o en audio, ubicación cerca del tablero, más tiempo, formatos de evaluación accesibles. El objetivo es que acceda a los mismos aprendizajes que el grupo con los apoyos necesarios. **Por qué fallan los distractores:** Eximirla de evaluar le niega el derecho a ser evaluada con ajustes. Recomendar el traslado es segregación y contradice el enfoque inclusivo. Un currículo desconectado del grupo no es un ajuste razonable, sino exclusión dentro del aula. **Clave para el examen:** Ante la discapacidad, busque la opción con **PIAR y ajustes razonables**. Descarte \"eximir\", \"trasladar\" y \"separar\".",
+    "resources": [
+      {
+        "label": "Decreto 1421 de 2017 — Educación inclusiva, población con discapacidad (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=87040"
+      },
+      {
+        "label": "MEN — Educación inclusiva",
+        "url": "https://www.mineducacion.gov.co/1780/w3-article-374740.html"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-011": {
+    "explanation": "**El problema:** Hay que reconocer el Diseño Universal para el Aprendizaje (DUA), la estrategia que el Decreto 1421 incorpora para planear pensando en todos los estudiantes desde el principio. **Por qué es correcta:** El DUA, desarrollado por CAST, propone ofrecer múltiples formas de **representación** (el *qué* del aprendizaje: texto, audio, organizador gráfico), de **acción y expresión** (el *cómo*: escrito, oral, historieta) y de **implicación** (el *porqué*, la motivación: elegir el cuento según los intereses). El caso muestra las tres. **Por qué fallan los distractores:** La enseñanza programada es conductista y secuencial. La evaluación normativa compara a los estudiantes entre sí. La pedagogía tradicional ofrece un único formato para todos. **Clave para el examen:** DUA significa planear desde el inicio para la diversidad, a diferencia del PIAR, que es el ajuste individual para un estudiante concreto. Ambos se complementan.",
+    "resources": [
+      {
+        "label": "CAST — Pautas del Diseño Universal para el Aprendizaje (DUA/UDL)",
+        "url": "https://udlguidelines.cast.org/"
+      },
+      {
+        "label": "Decreto 1421 de 2017 — Educación inclusiva, población con discapacidad (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=87040"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-012": {
+    "explanation": "**El problema:** Hay que distinguir el PEI de sus componentes, porque el examen suele ofrecer como distractores partes del PEI presentadas como si fueran el todo. **Por qué es correcta:** El artículo 73 de la Ley 115 de 1994 exige que cada establecimiento elabore y ponga en práctica un Proyecto Educativo Institucional con la participación de la comunidad educativa. El Decreto 1860 de 1994 (compilado hoy en el Decreto 1075 de 2015) detalla sus componentes: principios y fundamentos, objetivos, estrategia pedagógica, organización de los planes de estudio, reglamento o manual de convivencia, órganos del gobierno escolar, sistema de matrícula, relaciones con la comunidad y evaluación de recursos, entre otros. **Por qué fallan los distractores:** La asignación académica es un acto administrativo. El manual de convivencia y los planes de área son componentes del PEI, no el PEI completo. **Clave para el examen:** El PEI es la \"carta de navegación\": identidad, horizonte y estrategia de la institución, construida con la comunidad educativa.",
+    "resources": [
+      {
+        "label": "Ley 115 de 1994 — Ley General de Educación (Secretaría del Senado)",
+        "url": "http://www.secretariasenado.gov.co/senado/basedoc/ley_0115_1994.html"
+      },
+      {
+        "label": "Decreto 1860 de 1994 — Reglamenta la Ley 115: PEI, gobierno escolar (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=1289"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-013": {
+    "explanation": "**El problema:** Hay que entender los límites de la autonomía escolar: qué puede decidir la institución y qué es obligatorio. **Por qué es correcta:** El artículo 77 de la Ley 115 otorga autonomía a las instituciones para organizar las áreas fundamentales definidas para cada nivel, introducir asignaturas optativas dentro de las áreas establecidas, adaptar algunas áreas a las necesidades y características regionales, adoptar métodos de enseñanza y organizar actividades formativas, siempre dentro de los lineamientos del MEN. Una asignatura optativa con pertinencia regional es un ejemplo típico de esta autonomía. **Por qué fallan los distractores:** El MEN da lineamientos y estándares, pero no fija el plan de estudios completo. Las áreas obligatorias y fundamentales del artículo 23 no se pueden eliminar. Las optativas existen en la educación básica y media. **Clave para el examen:** La autonomía escolar existe, pero siempre \"dentro de los lineamientos del MEN\" y respetando las áreas obligatorias.",
+    "resources": [
+      {
+        "label": "Ley 115 de 1994 — Ley General de Educación (Secretaría del Senado)",
+        "url": "http://www.secretariasenado.gov.co/senado/basedoc/ley_0115_1994.html"
+      },
+      {
+        "label": "MEN — Lineamientos Curriculares (todas las áreas)",
+        "url": "https://www.mineducacion.gov.co/1621/article-89869.html"
+      }
+    ]
+  },
+  "cnsc-ped-mcq-014": {
+    "explanation": "**El problema:** Es un error de planeación muy común: la evaluación no mide lo que el objetivo promete. Se conoce como falta de **alineación constructiva** (Biggs). **Por qué es correcta:** El objetivo es de producción (escribir textos argumentativos, del nivel \"crear\" de Bloom), pero la evaluación es de reconocimiento de definiciones (nivel \"recordar\"). Un estudiante puede definir \"tesis\" sin saber sostener una. La evidencia coherente sería un texto escrito y valorado con una rúbrica de criterios (tesis clara, argumentos pertinentes, uso de conectores, conclusión). **Por qué fallan los distractores:** El problema no es la extensión del cuestionario. Escribir textos argumentativos es un propósito de los Estándares para 10.º y 11.º. El Decreto 1290 no prohíbe ningún formato de evaluación, porque cada institución define sus instrumentos. **Clave para el examen:** Revise siempre que objetivo, actividades y evaluación \"hablen de lo mismo\".",
+    "resources": [
+      {
+        "label": "Decreto 1290 de 2009 — Evaluación del aprendizaje y promoción (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=35954"
+      },
+      {
+        "label": "MEN — Lineamientos Curriculares (todas las áreas)",
+        "url": "https://www.mineducacion.gov.co/1621/article-89869.html"
+      }
+    ]
+  },
+  "cnsc-ped-mr-001": {
+    "explanation": "**El problema:** Hay que reconocer los rasgos de la evaluación formativa frente a la sumativa y la normativa. **Por qué son correctas:** La evaluación formativa es **continua**, porque acompaña todo el proceso. Es **retroalimentadora**, porque le dice al estudiante qué hace bien y cómo mejorar. Y es **reguladora de la enseñanza**, porque el docente la usa para ajustar estrategias. El Decreto 1290 recoge este enfoque cuando señala, entre los propósitos de la evaluación, identificar las características, ritmos y estilos de aprendizaje, y dar información para reorientar los procesos. **Por qué fallan los distractores:** \"Solo al final para la nota\" describe la evaluación sumativa. \"Ordenar del mejor al peor\" describe la evaluación normativa, que compara con el grupo en lugar de con criterios. La evaluación formativa usa instrumentos variados (observación, rúbricas, portafolios, preguntas orales), no solo exámenes estandarizados. **Clave para el examen:** Continua, retroalimentación y ajuste son las tres palabras de la evaluación formativa.",
+    "resources": [
+      {
+        "label": "Decreto 1290 de 2009 — Evaluación del aprendizaje y promoción (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=35954"
+      }
+    ]
+  },
+  "cnsc-ped-mr-002": {
+    "explanation": "**El problema:** Hay que conocer las dos herramientas centrales del Decreto 1421 de 2017, los **ajustes razonables** y el **PIAR**, y descartar los mitos más frecuentes. **Por qué son correctas:** El PIAR se elabora a partir de una valoración pedagógica del estudiante. Lo construyen de forma colaborativa los docentes de aula con el docente de apoyo, la familia y el propio estudiante, y hace parte de su historia escolar. Los ajustes razonables son las acciones, adaptaciones y apoyos (en materiales, metodologías, evaluación o infraestructura) que garantizan que el estudiante participe y aprenda en igualdad de condiciones. **Por qué fallan los distractores:** El decreto se basa en el derecho a la educación inclusiva en establecimientos regulares, no en la matrícula obligatoria en instituciones especiales. Los ajustes adaptan la evaluación, no eximen de ella. El PIAR no es responsabilidad exclusiva de la familia, y el docente de aula tiene un papel activo. **Clave para el examen:** El PIAR es colaborativo, parte de una valoración pedagógica y existe para garantizar la participación del estudiante, no para excluirlo.",
+    "resources": [
+      {
+        "label": "Decreto 1421 de 2017 — Educación inclusiva, población con discapacidad (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=87040"
+      },
+      {
+        "label": "MEN — Educación inclusiva",
+        "url": "https://www.mineducacion.gov.co/1780/w3-article-374740.html"
+      }
+    ]
   }
 }

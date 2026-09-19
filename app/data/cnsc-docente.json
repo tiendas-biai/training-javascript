@@ -570,5 +570,366 @@
       "rango",
       "mr"
     ]
+  },
+  {
+    "id": "cnsc-ped-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Evaluación",
+    "difficulty": "easy",
+    "question": "A mitad de una unidad, una docente aplica un cuestionario corto que no tiene nota. Revisa las respuestas y, al ver que la mayoría confunde sujeto y predicado, reorganiza la clase siguiente para trabajar ese tema. ¿Qué tipo de evaluación realizó?",
+    "options": [
+      "Evaluación sumativa",
+      "Evaluación formativa",
+      "Evaluación de certificación",
+      "Heteroevaluación externa"
+    ],
+    "answer": "Evaluación formativa",
+    "explanation": "La evaluación formativa ocurre durante el proceso y se usa para retroalimentar y ajustar la enseñanza, no para calificar. Aquí la docente usa la información para reorientar su clase.",
+    "tags": [
+      "evaluación",
+      "formativa",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Evaluación",
+    "difficulty": "medium",
+    "question": "Al iniciar el año escolar, un docente de Lengua Castellana que recibe un grupo nuevo de 8.º quiere aplicar una evaluación diagnóstica. ¿Cuál es el propósito principal de esta evaluación?",
+    "options": [
+      "Asignar la primera nota del periodo para motivar el estudio.",
+      "Identificar los saberes previos y las dificultades del grupo para planear la enseñanza.",
+      "Clasificar a los estudiantes en grupos fijos según su nivel durante todo el año.",
+      "Verificar si los estudiantes deben ser promovidos al grado siguiente."
+    ],
+    "answer": "Identificar los saberes previos y las dificultades del grupo para planear la enseñanza.",
+    "explanation": "La evaluación diagnóstica se hace al inicio para saber de dónde parte el grupo y ajustar la planeación a esa realidad. No busca calificar, etiquetar ni decidir la promoción.",
+    "tags": [
+      "evaluación",
+      "diagnóstica",
+      "planeación",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Decreto 1290",
+    "difficulty": "easy",
+    "question": "Según el Decreto 1290 de 2009, cada establecimiento puede definir su propia escala de valoración, pero debe hacerla equivaler a la escala nacional. ¿Cuál es la escala nacional?",
+    "options": [
+      "Excelente, Sobresaliente, Aceptable, Insuficiente y Deficiente.",
+      "Desempeño Superior, Desempeño Alto, Desempeño Básico y Desempeño Bajo.",
+      "Aprobado y Reprobado.",
+      "Nivel Avanzado, Satisfactorio, Mínimo e Insuficiente."
+    ],
+    "answer": "Desempeño Superior, Desempeño Alto, Desempeño Básico y Desempeño Bajo.",
+    "explanation": "El Decreto 1290 fija cuatro niveles: Superior, Alto, Básico y Bajo. \"Excelente… Deficiente\" era la escala del régimen anterior (Decreto 230 de 2002), y \"Avanzado… Insuficiente\" son los niveles de desempeño de las pruebas Saber.",
+    "tags": [
+      "decreto 1290",
+      "escala de valoración",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Decreto 1290",
+    "difficulty": "medium",
+    "question": "Una docente recién nombrada pregunta quién define los criterios de evaluación y promoción que debe aplicar en su institución. Según el Decreto 1290 de 2009, ¿a quién corresponde definir el Sistema Institucional de Evaluación de los Estudiantes (SIEE)?",
+    "options": [
+      "Al Ministerio de Educación Nacional, que lo expide igual para todos los colegios.",
+      "A la secretaría de educación de la entidad territorial certificada.",
+      "A cada docente, de manera autónoma para su propia asignatura.",
+      "Al establecimiento educativo, con aprobación del consejo directivo y participación de la comunidad educativa."
+    ],
+    "answer": "Al establecimiento educativo, con aprobación del consejo directivo y participación de la comunidad educativa.",
+    "explanation": "El Decreto 1290 da autonomía a cada institución para definir su SIEE, que aprueba el consejo directivo y se incorpora al PEI. Cada docente aplica ese sistema; no lo inventa por su cuenta.",
+    "tags": [
+      "decreto 1290",
+      "siee",
+      "autonomía escolar",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-005",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Evaluación",
+    "difficulty": "easy",
+    "question": "En una clase de escritura, cada estudiante lee el ensayo de un compañero y lo valora con una rúbrica que el docente socializó antes. ¿Qué forma de evaluación se está aplicando?",
+    "options": [
+      "Autoevaluación",
+      "Heteroevaluación",
+      "Coevaluación",
+      "Evaluación diagnóstica"
+    ],
+    "answer": "Coevaluación",
+    "explanation": "En la coevaluación los pares se evalúan entre sí. En la autoevaluación cada uno valora su propio trabajo, y en la heteroevaluación evalúa alguien de otro rol, normalmente el docente.",
+    "tags": [
+      "evaluación",
+      "coevaluación",
+      "rúbrica",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-006",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Teorías del aprendizaje",
+    "difficulty": "medium",
+    "question": "Antes de leer un texto sobre el conflicto armado, una docente pide a sus estudiantes contar lo que han escuchado en su familia y en las noticias. Luego conecta explícitamente esas ideas con los conceptos nuevos del texto. ¿Con qué planteamiento teórico se relaciona esta estrategia?",
+    "options": [
+      "El aprendizaje significativo de Ausubel.",
+      "El condicionamiento operante de Skinner.",
+      "La memorización por repetición del modelo tradicional.",
+      "La instrucción programada."
+    ],
+    "answer": "El aprendizaje significativo de Ausubel.",
+    "explanation": "Para Ausubel se aprende de manera significativa cuando la información nueva se relaciona con lo que el estudiante ya sabe. Activar los saberes previos y conectarlos con el contenido nuevo es exactamente eso.",
+    "tags": [
+      "ausubel",
+      "aprendizaje significativo",
+      "saberes previos",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-007",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Teorías del aprendizaje",
+    "difficulty": "hard",
+    "question": "Un estudiante de 6.º no logra resumir un texto expositivo por sí solo, pero lo consigue cuando el docente le da una guía con preguntas y trabaja junto a un compañero más avanzado. Desde la teoría de Vygotsky, ¿cómo se interpreta esta situación?",
+    "options": [
+      "El estudiante todavía no está en la etapa de operaciones formales, así que no debe hacer resúmenes.",
+      "La tarea está en su zona de desarrollo próximo; la guía y el compañero funcionan como andamiaje.",
+      "El estudiante depende de refuerzos externos, así que conviene premiarlo por cada resumen.",
+      "La tarea es demasiado fácil y conviene retirarle toda ayuda de inmediato."
+    ],
+    "answer": "La tarea está en su zona de desarrollo próximo; la guía y el compañero funcionan como andamiaje.",
+    "explanation": "La ZDP es la distancia entre lo que el estudiante hace solo y lo que logra con ayuda de otro más capaz. La mediación (guía, par experto) es el andamiaje, y se retira poco a poco a medida que gana autonomía.",
+    "tags": [
+      "vygotsky",
+      "zdp",
+      "andamiaje",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-008",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Modelos pedagógicos",
+    "difficulty": "medium",
+    "question": "En una clase, el docente dicta durante toda la hora la biografía de un autor, los estudiantes copian en silencio y la evaluación consiste en repetir los datos memorizados. Si el docente quisiera orientar su práctica hacia un enfoque **constructivista**, ¿cuál cambio sería más coherente?",
+    "options": [
+      "Dictar más rápido para cubrir más autores en el periodo.",
+      "Reemplazar el dictado por fotocopias con la misma información.",
+      "Aumentar el número de preguntas de memoria en el examen.",
+      "Proponer que los estudiantes indaguen en distintas fuentes, relacionen la vida del autor con su obra y socialicen sus conclusiones."
+    ],
+    "answer": "Proponer que los estudiantes indaguen en distintas fuentes, relacionen la vida del autor con su obra y socialicen sus conclusiones.",
+    "explanation": "En el constructivismo el estudiante construye el conocimiento de forma activa: indaga, relaciona y comunica, y el docente actúa como mediador. Las demás opciones mantienen el modelo transmisionista.",
+    "tags": [
+      "modelos pedagógicos",
+      "constructivismo",
+      "tradicional",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-009",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Planeación",
+    "difficulty": "medium",
+    "question": "Una docente redacta este objetivo: \"Al finalizar la unidad, los estudiantes **diseñarán** un pódcast en el que propongan una solución a un problema de convivencia del colegio\". Según la taxonomía de Bloom revisada, ¿a qué nivel cognitivo corresponde?",
+    "options": [
+      "Recordar",
+      "Comprender",
+      "Aplicar",
+      "Crear"
+    ],
+    "answer": "Crear",
+    "explanation": "En la taxonomía revisada (Anderson y Krathwohl), \"crear\" es el nivel más alto: producir algo nuevo y original (diseñar, componer, proponer). El pódcast con una solución propia es una producción original.",
+    "tags": [
+      "bloom",
+      "objetivos",
+      "planeación",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-010",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Inclusión",
+    "difficulty": "hard",
+    "question": "A un grado 7.º llega una estudiante con baja visión. Según el enfoque de educación inclusiva del Decreto 1421 de 2017, ¿cuál es la actuación más adecuada del docente de aula?",
+    "options": [
+      "Eximirla de las evaluaciones escritas para no afectar su promedio.",
+      "Participar en la elaboración de su PIAR y hacer ajustes razonables (material ampliado o en audio, ubicación en el aula) para que acceda a los mismos aprendizajes del grupo.",
+      "Recomendar a la familia trasladarla a una institución especializada para personas con discapacidad visual.",
+      "Diseñar para ella un plan de estudios más sencillo, sin relación con el del grupo."
+    ],
+    "answer": "Participar en la elaboración de su PIAR y hacer ajustes razonables (material ampliado o en audio, ubicación en el aula) para que acceda a los mismos aprendizajes del grupo.",
+    "explanation": "El Decreto 1421 garantiza el acceso de las personas con discapacidad al aula regular con los apoyos necesarios. El PIAR (Plan Individual de Ajustes Razonables) recoge esos apoyos. Eximirla, trasladarla o bajarle el currículo son formas de exclusión.",
+    "tags": [
+      "inclusión",
+      "decreto 1421",
+      "piar",
+      "ajustes razonables",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-011",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Inclusión",
+    "difficulty": "medium",
+    "question": "Al planear una unidad sobre el cuento, un docente presenta el contenido en texto, en audio y con un organizador gráfico, ofrece varias formas de demostrar lo aprendido (escrito, exposición oral o historieta) y permite elegir el cuento a partir de los intereses del grupo. ¿Qué enfoque está aplicando?",
+    "options": [
+      "Diseño Universal para el Aprendizaje (DUA).",
+      "Enseñanza programada.",
+      "Evaluación normativa.",
+      "Pedagogía tradicional."
+    ],
+    "answer": "Diseño Universal para el Aprendizaje (DUA).",
+    "explanation": "El DUA propone planear desde el inicio para la diversidad, con múltiples formas de representación, de acción y expresión, y de implicación (motivación). El Decreto 1421 lo adopta como estrategia de la educación inclusiva.",
+    "tags": [
+      "dua",
+      "inclusión",
+      "planeación",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-012",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "PEI y currículo",
+    "difficulty": "medium",
+    "question": "En una jornada pedagógica, un docente nuevo pregunta qué es el Proyecto Educativo Institucional (PEI). ¿Cuál es la descripción más precisa según la Ley 115 de 1994 y su reglamentación?",
+    "options": [
+      "Es el documento donde la secretaría de educación fija el horario y la asignación académica de cada docente.",
+      "Es el reglamento disciplinario que regula las sanciones a los estudiantes.",
+      "Es la carta de navegación de la institución: define sus principios, fines, estrategias pedagógicas, reglamento, sistema de gestión y se construye con la comunidad educativa.",
+      "Es el plan de área que cada docente entrega al inicio del año."
+    ],
+    "answer": "Es la carta de navegación de la institución: define sus principios, fines, estrategias pedagógicas, reglamento, sistema de gestión y se construye con la comunidad educativa.",
+    "explanation": "El artículo 73 de la Ley 115 obliga a cada establecimiento a tener un PEI, y el Decreto 1860 de 1994 detalla sus componentes. El manual de convivencia y los planes de área son **partes** del PEI, no el PEI completo.",
+    "tags": [
+      "pei",
+      "ley 115",
+      "gestión escolar",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-013",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "PEI y currículo",
+    "difficulty": "medium",
+    "question": "Una institución rural quiere incluir en su plan de estudios una asignatura optativa de \"Proyectos agroambientales\" relacionada con la economía de la región. Según la Ley 115 de 1994, ¿esto es posible?",
+    "options": [
+      "No, porque el plan de estudios lo define íntegramente el Ministerio de Educación.",
+      "Sí, en virtud de la autonomía escolar, siempre que se respeten las áreas obligatorias y fundamentales y los lineamientos del MEN.",
+      "Sí, pero solo si se elimina una de las áreas obligatorias para no aumentar la intensidad horaria.",
+      "No, porque las asignaturas optativas solo existen en la educación superior."
+    ],
+    "answer": "Sí, en virtud de la autonomía escolar, siempre que se respeten las áreas obligatorias y fundamentales y los lineamientos del MEN.",
+    "explanation": "El artículo 77 de la Ley 115 reconoce la autonomía escolar para organizar las áreas fundamentales, introducir asignaturas optativas y adaptarlas a las necesidades regionales, dentro de los lineamientos del MEN. Las áreas obligatorias no se pueden eliminar.",
+    "tags": [
+      "autonomía escolar",
+      "currículo",
+      "ley 115",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mcq-014",
+    "type": "multiple-choice",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Planeación",
+    "difficulty": "hard",
+    "question": "El objetivo de una unidad de grado 10.º es que los estudiantes **escriban textos argumentativos** con tesis y argumentos sólidos. Sin embargo, la única evaluación de la unidad es un cuestionario de selección múltiple sobre definiciones de \"tesis\", \"argumento\" y \"conclusión\". ¿Cuál es el principal problema de esta planeación?",
+    "options": [
+      "El cuestionario es demasiado corto.",
+      "No hay coherencia entre el objetivo y la evaluación: se evalúa el reconocimiento de conceptos, no la producción de textos argumentativos.",
+      "Los estudiantes de 10.º todavía no deberían escribir textos argumentativos.",
+      "La selección múltiple no es un formato permitido por el Decreto 1290."
+    ],
+    "answer": "No hay coherencia entre el objetivo y la evaluación: se evalúa el reconocimiento de conceptos, no la producción de textos argumentativos.",
+    "explanation": "Objetivo, actividades y evaluación deben estar alineados. Si el objetivo es producir textos, la evidencia debe ser un texto producido y valorado, por ejemplo con una rúbrica. Saber definir \"tesis\" no demuestra saber argumentar.",
+    "tags": [
+      "planeación",
+      "alineación",
+      "evaluación",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mr-001",
+    "type": "multiple-response",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Evaluación",
+    "difficulty": "medium",
+    "question": "¿Cuáles son características propias de la **evaluación formativa**? (Seleccione TRES)",
+    "options": [
+      "Se realiza de manera continua durante el proceso de aprendizaje.",
+      "Ofrece retroalimentación oportuna al estudiante sobre cómo mejorar.",
+      "Le sirve al docente para ajustar sus estrategias de enseñanza.",
+      "Se aplica únicamente al final del periodo para asignar la nota definitiva.",
+      "Tiene como fin principal ordenar a los estudiantes del mejor al peor.",
+      "Se basa exclusivamente en exámenes escritos estandarizados."
+    ],
+    "answers": [
+      "Se realiza de manera continua durante el proceso de aprendizaje.",
+      "Ofrece retroalimentación oportuna al estudiante sobre cómo mejorar.",
+      "Le sirve al docente para ajustar sus estrategias de enseñanza."
+    ],
+    "explanation": "La evaluación formativa es continua, retroalimenta y orienta tanto al estudiante como al docente. Aplicarla solo al final para calificar es propio de la evaluación sumativa, y ordenar a los estudiantes, de la evaluación normativa. Admite muchos instrumentos, no solo exámenes.",
+    "tags": [
+      "evaluación",
+      "formativa",
+      "retroalimentación",
+      "mr"
+    ]
+  },
+  {
+    "id": "cnsc-ped-mr-002",
+    "type": "multiple-response",
+    "topic": "Competencias Pedagógicas",
+    "subtopic": "Inclusión",
+    "difficulty": "hard",
+    "question": "Sobre el Plan Individual de Ajustes Razonables (PIAR) y los ajustes razonables del Decreto 1421 de 2017, ¿cuáles afirmaciones son correctas? (Seleccione DOS)",
+    "options": [
+      "El PIAR se elabora para el estudiante con discapacidad a partir de una valoración pedagógica y con participación de docentes, familia y estudiante.",
+      "Los ajustes razonables buscan garantizar que el estudiante participe y aprenda en igualdad de condiciones.",
+      "Los estudiantes con discapacidad deben matricularse en instituciones de educación especial.",
+      "Los ajustes razonables consisten en eximir al estudiante de las evaluaciones.",
+      "El PIAR lo elabora exclusivamente la familia y el docente solo lo archiva."
+    ],
+    "answers": [
+      "El PIAR se elabora para el estudiante con discapacidad a partir de una valoración pedagógica y con participación de docentes, familia y estudiante.",
+      "Los ajustes razonables buscan garantizar que el estudiante participe y aprenda en igualdad de condiciones."
+    ],
+    "explanation": "El PIAR se construye de forma colaborativa: docentes de aula, docente de apoyo, familia y estudiante. Los ajustes razonables son apoyos para que el estudiante acceda al aprendizaje. El Decreto 1421 promueve el aula regular; los ajustes no significan eximir de evaluaciones.",
+    "tags": [
+      "inclusión",
+      "piar",
+      "decreto 1421",
+      "mr"
+    ]
   }
 ]
