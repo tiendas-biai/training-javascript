@@ -1912,5 +1912,90 @@
       "lectura",
       "mcq"
     ]
+  },
+  {
+    "id": "cnsc-est-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Estructura del Concurso",
+    "subtopic": "Pruebas escritas",
+    "difficulty": "easy",
+    "question": "En el Concurso Docente de la CNSC, ¿cuál de las pruebas escritas tiene carácter **eliminatorio** para un docente de aula?",
+    "options": [
+      "La prueba psicotécnica de juicio situacional.",
+      "La prueba de aptitudes y competencias básicas.",
+      "La entrevista.",
+      "La valoración de antecedentes."
+    ],
+    "answer": "La prueba de aptitudes y competencias básicas.",
+    "explanation": "La prueba de aptitudes y competencias básicas es la única eliminatoria (mínimo de referencia 60/100 para docentes de aula). La psicotécnica es clasificatoria: suma puntaje pero no excluye. Antecedentes y entrevista son etapas posteriores.",
+    "tags": [
+      "estructura del concurso",
+      "prueba eliminatoria",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-est-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Estructura del Concurso",
+    "subtopic": "Pruebas escritas",
+    "difficulty": "medium",
+    "question": "Una aspirante a docente de aula de Lengua Castellana tiene maestría y diez años de experiencia, pero obtiene 58/100 en la prueba de aptitudes y competencias básicas. Si el mínimo aprobatorio es 60/100, ¿qué ocurre?",
+    "options": [
+      "Queda excluida del proceso, sin importar sus títulos ni su experiencia.",
+      "Continúa, porque la valoración de antecedentes compensa el puntaje faltante.",
+      "Continúa, pero con una penalización en el puntaje final.",
+      "Puede repetir la prueba en la siguiente jornada del mismo concurso."
+    ],
+    "answer": "Queda excluida del proceso, sin importar sus títulos ni su experiencia.",
+    "explanation": "Al ser eliminatoria, no alcanzar el mínimo excluye del proceso. Los títulos y la experiencia solo se valoran en la etapa de antecedentes, a la que llega quien supera las pruebas escritas.",
+    "tags": [
+      "estructura del concurso",
+      "puntaje mínimo",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-est-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Estructura del Concurso",
+    "subtopic": "Etapas del concurso",
+    "difficulty": "medium",
+    "question": "Un aspirante que ya superó las pruebas escritas pregunta en qué etapa del concurso se tendrán en cuenta sus certificados laborales, su experiencia y sus títulos de posgrado. ¿Cuál es la respuesta correcta?",
+    "options": [
+      "En la prueba psicotécnica.",
+      "En la entrevista.",
+      "En la valoración de antecedentes.",
+      "En la conformación de la lista de elegibles, sin puntaje adicional."
+    ],
+    "answer": "En la valoración de antecedentes.",
+    "explanation": "La valoración de antecedentes puntúa la formación académica y la experiencia acreditadas, después de verificar los requisitos mínimos. La entrevista evalúa competencias comportamentales e idoneidad para el cargo; la psicotécnica mide aptitudes por juicio situacional.",
+    "tags": [
+      "estructura del concurso",
+      "valoración de antecedentes",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-est-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Estructura del Concurso",
+    "subtopic": "Listas de elegibles",
+    "difficulty": "hard",
+    "question": "Un docente superó todas las etapas del concurso en la entidad territorial certificada de Boyacá y quedó en la lista de elegibles. Ahora quiere ser nombrado en una vacante de Bogotá con esa misma lista. ¿Qué es lo correcto?",
+    "options": [
+      "Puede ser nombrado en cualquier entidad territorial del país, porque la lista es nacional.",
+      "No es posible: la lista de elegibles es específica de la entidad territorial para la que concursó y tiene una vigencia limitada (dos años, según convocatorias anteriores).",
+      "Puede ser nombrado en Bogotá solo si repite la entrevista.",
+      "Puede ser nombrado en Bogotá, porque las listas se unifican al vencer su vigencia."
+    ],
+    "answer": "No es posible: la lista de elegibles es específica de la entidad territorial para la que concursó y tiene una vigencia limitada (dos años, según convocatorias anteriores).",
+    "explanation": "Las listas de elegibles se conforman en orden de puntaje para cada entidad territorial certificada y cada cargo, y tienen una vigencia limitada. Por eso es importante elegir bien, al inscribirse en SIMO, la entidad territorial a la que se concursa.",
+    "tags": [
+      "estructura del concurso",
+      "lista de elegibles",
+      "simo",
+      "mcq"
+    ]
   }
 ]

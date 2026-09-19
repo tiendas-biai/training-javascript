@@ -797,7 +797,7 @@
     ]
   },
   "cnsc-norm-mcq-005": {
-    "explanation": "**El problema:** Hay que distinguir quiénes son docentes y quiénes directivos docentes según el Decreto Ley 1278 de 2002, el estatuto que rige a quienes ingresan por el concurso. **Por qué es correcta:** El decreto define como directivos docentes a quienes cumplen funciones de dirección, planeación, coordinación, administración, orientación y programación en las instituciones. Los cargos son **rector** (o **director rural**, en establecimientos rurales de preescolar y básica primaria) y **coordinador**. Cada uno tiene requisitos propios de título y experiencia. **Por qué fallan los distractores:** El docente orientador y el jefe de área desempeñan funciones docentes. El secretario académico y el bibliotecario son personal administrativo. El supervisor pertenece a la secretaría de educación y el personero es un estudiante. **Clave para el examen:** Directivos docentes son rector, director rural y coordinador. En el concurso, su puntaje mínimo en la prueba de aptitudes es mayor (70/100) que el de los docentes de aula (60/100).",
+    "explanation": "**El problema:** Hay que distinguir quiénes son docentes y quiénes directivos docentes según el Decreto Ley 1278 de 2002, el estatuto que rige a quienes ingresan por el concurso. **Por qué es correcta:** El decreto define como directivos docentes a quienes cumplen funciones de dirección, planeación, coordinación, administración, orientación y programación en las instituciones. Los cargos son **rector** (o **director rural**, en establecimientos rurales de preescolar y básica primaria) y **coordinador**. Cada uno tiene requisitos propios de título y experiencia. **Por qué fallan los distractores:** El docente orientador y el jefe de área desempeñan funciones docentes. El secretario académico y el bibliotecario son personal administrativo. El supervisor pertenece a la secretaría de educación y el personero es un estudiante. **Clave para el examen:** Directivos docentes son rector, director rural y coordinador. En el concurso, según las convocatorias de referencia, su puntaje mínimo en la prueba de aptitudes es mayor (70/100) que el de los docentes de aula (60/100).",
     "resources": [
       {
         "label": "Decreto Ley 1278 de 2002 — Estatuto de Profesionalización Docente (Función Pública)",
@@ -1008,6 +1008,63 @@
       {
         "label": "Ley 1620 de 2013 — Sistema Nacional de Convivencia Escolar (Función Pública)",
         "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=52287"
+      }
+    ]
+  },
+  "cnsc-est-mcq-001": {
+    "explanation": "**El problema:** Hay que saber qué prueba \"mata\" el proceso y cuál solo clasifica, para distribuir bien el tiempo de estudio. **Por qué es correcta:** Según las convocatorias anteriores, la **prueba de aptitudes y competencias básicas** es la única **eliminatoria**. Tiene unas 120 preguntas de selección múltiple con única respuesta (4 opciones), casi siempre presentadas como casos de aula, y evalúa cinco frentes: lectura crítica, razonamiento cuantitativo, competencias pedagógicas, conocimiento específico del área y competencias comportamentales. El mínimo aprobatorio de referencia es **60/100 para docentes de aula** (70/100 para directivos). La **prueba psicotécnica** (juicio situacional) se presenta el mismo día, pero es **clasificatoria**: aporta puntaje y no excluye. Ambas las aplica el **ICFES**. **Por qué fallan los distractores:** La psicotécnica es clasificatoria. La entrevista y la valoración de antecedentes son etapas posteriores, a las que solo llega quien supera las pruebas escritas. **Clave para el examen:** Estudie los cinco frentes de la prueba eliminatoria de forma equilibrada y no solo lo disciplinar. **Ojo con los datos:** esta información viene de convocatorias anteriores (referencia: 2022) y de fuentes secundarias recopiladas en septiembre de 2026. Las cifras definitivas serán las del Acuerdo de Convocatoria y el Anexo Técnico que publique la CNSC; verifíquelas en cnsc.gov.co y SIMO.",
+    "example": "Secuencia típica del concurso:\n\n1. Convocatoria e inscripción en SIMO.\n2. Pruebas escritas (ICFES, una jornada dominical de 4 a 5 horas):\n   • aptitudes y competencias básicas (**eliminatoria**)\n   • psicotécnica de juicio situacional (**clasificatoria**)\n3. Verificación de requisitos mínimos.\n4. Valoración de antecedentes.\n5. Entrevista.\n6. Lista de elegibles.\n7. Nombramiento en periodo de prueba.",
+    "resources": [
+      {
+        "label": "CNSC — Comisión Nacional del Servicio Civil (convocatorias docentes)",
+        "url": "https://www.cnsc.gov.co"
+      },
+      {
+        "label": "ICFES — Instituto Colombiano para la Evaluación de la Educación",
+        "url": "https://www.icfes.gov.co"
+      },
+      {
+        "label": "Decreto 3982 de 2006 — Procedimiento del concurso docente (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=22135"
+      }
+    ]
+  },
+  "cnsc-est-mcq-002": {
+    "explanation": "**El problema:** Muchos aspirantes con buen perfil creen que su hoja de vida los salva, pero el orden de las etapas lo impide. **Por qué es correcta:** El carácter **eliminatorio** significa que, si no se alcanza el puntaje mínimo (60/100 de referencia para docentes de aula), el aspirante queda **excluido del proceso**, sin importar sus títulos o su experiencia. La valoración de antecedentes, donde sí cuentan la maestría y los diez años de experiencia, **solo se aplica a quienes superan las pruebas escritas**. **Por qué fallan los distractores:** No hay compensación entre etapas antes de superar la prueba eliminatoria. No existen penalizaciones parciales ni repeticiones de la prueba dentro del mismo concurso. **Clave para el examen:** Esta es la razón práctica para prepararse: la prueba escrita es la puerta de entrada y los méritos acumulados solo cuentan después. **Ojo con los datos:** esta información viene de convocatorias anteriores (referencia: 2022) y de fuentes secundarias recopiladas en septiembre de 2026. Las cifras definitivas serán las del Acuerdo de Convocatoria y el Anexo Técnico que publique la CNSC; verifíquelas en cnsc.gov.co y SIMO.",
+    "resources": [
+      {
+        "label": "CNSC — Comisión Nacional del Servicio Civil (convocatorias docentes)",
+        "url": "https://www.cnsc.gov.co"
+      },
+      {
+        "label": "Decreto 3982 de 2006 — Procedimiento del concurso docente (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=22135"
+      }
+    ]
+  },
+  "cnsc-est-mcq-003": {
+    "explanation": "**El problema:** Hay que conocer qué mide cada etapa para saber dónde pesa cada mérito. **Por qué es correcta:** El Decreto 3982 de 2006, que reglamenta el concurso docente del Decreto Ley 1278, describe el concurso como un proceso que evalúa aptitudes, experiencia, competencias básicas, relaciones interpersonales y condiciones de personalidad. En la **valoración de antecedentes** se puntúan la **formación académica** (títulos adicionales a los del requisito mínimo) y la **experiencia** acreditada (certificados laborales o declaraciones de experiencia independiente). Según las fuentes recopiladas, esta etapa pesa hasta un 30 % de la calificación final. **Por qué fallan los distractores:** La psicotécnica mide aptitudes por juicio situacional. La entrevista (hasta un 10 % según las fuentes) evalúa las competencias comportamentales y la idoneidad para el cargo. La lista de elegibles solo ordena los puntajes consolidados. **Clave para el examen:** Guarde y organice desde ya todos los certificados con fechas y funciones, porque en antecedentes solo cuenta lo que se carga correctamente en SIMO. **Ojo con los datos:** esta información viene de convocatorias anteriores (referencia: 2022) y de fuentes secundarias recopiladas en septiembre de 2026. Las cifras definitivas serán las del Acuerdo de Convocatoria y el Anexo Técnico que publique la CNSC; verifíquelas en cnsc.gov.co y SIMO.",
+    "resources": [
+      {
+        "label": "Decreto 3982 de 2006 — Procedimiento del concurso docente (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=22135"
+      },
+      {
+        "label": "SIMO — Plataforma de inscripción de la CNSC",
+        "url": "https://simo.cnsc.gov.co"
+      }
+    ]
+  },
+  "cnsc-est-mcq-004": {
+    "explanation": "**El problema:** Hay que entender el alcance territorial y temporal de las listas de elegibles, una decisión que se toma desde la inscripción. **Por qué es correcta:** Las **listas de elegibles** ordenan de mayor a menor puntaje consolidado a quienes superaron todas las etapas, y son **específicas de la entidad territorial certificada** (departamento, distrito o municipio certificado) y del cargo para el que se concursó. Según las convocatorias anteriores, su vigencia es de **dos años**. Por eso, quien concursó para Boyacá no puede usar esa lista para ser nombrado en Bogotá. **Por qué fallan los distractores:** No existe una lista nacional única. La entrevista no se repite para cambiar de entidad. Las listas no se unifican al vencer: simplemente pierden vigencia. **Clave para el examen:** Al inscribirse en SIMO, escoja la entidad territorial con estrategia: vacantes disponibles, número de aspirantes (en 2022 hubo unos 10 por plaza) y dónde quiere trabajar realmente. **Ojo con los datos:** esta información viene de convocatorias anteriores (referencia: 2022) y de fuentes secundarias recopiladas en septiembre de 2026. Las cifras definitivas serán las del Acuerdo de Convocatoria y el Anexo Técnico que publique la CNSC; verifíquelas en cnsc.gov.co y SIMO.",
+    "resources": [
+      {
+        "label": "CNSC — Comisión Nacional del Servicio Civil (convocatorias docentes)",
+        "url": "https://www.cnsc.gov.co"
+      },
+      {
+        "label": "SIMO — Plataforma de inscripción de la CNSC",
+        "url": "https://simo.cnsc.gov.co"
       }
     ]
   }
