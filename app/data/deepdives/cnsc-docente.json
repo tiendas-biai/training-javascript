@@ -1,0 +1,168 @@
+{
+  "cnsc-lc-mcq-001": {
+    "explanation": "**El problema:** Hay que reconocer qué nivel de comprensión activa una pregunta. Los Lineamientos Curriculares de Lengua Castellana describen tres niveles: literal, inferencial y crítico-intertextual. **Por qué es correcta:** El nivel literal pide reconocer o recuperar información que está escrita en el texto: personajes, fechas, lugares, secuencias. Aquí el año y la persona que lo recibió aparecen explícitos, así que basta con localizarlos. **Por qué fallan los distractores:** El nivel inferencial exige deducir algo que no está dicho. El crítico-intertextual exige valorar, tomar postura o relacionar con otros textos. \"Metacognitivo\" se refiere a la reflexión del lector sobre su propio proceso de lectura, no a un nivel de comprensión de los Lineamientos. **Clave para el examen:** Si la respuesta se puede señalar con el dedo en el texto, es literal.",
+    "example": "Cómo clasificar preguntas rápido:\n\n• \"¿Quién recibió a Ernesto?\" → **literal** (está escrito).\n• \"¿Por qué Ernesto no quiso quedarse?\" (el texto no lo dice) → **inferencial**.\n• \"¿Fue justa la reacción del pueblo? ¿Se parece a otro relato que conozcas?\" → **crítico-intertextual**.",
+    "resources": [
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana (niveles de lectura)",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      },
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-002": {
+    "explanation": "**El problema:** Muchas preguntas de \"comprensión\" que se hacen en el aula son en realidad literales. En el concurso suelen aparecer casos donde hay que escoger la pregunta que desarrolla un nivel concreto. **Por qué es correcta:** El nivel inferencial pide deducir lo implícito: causas, intenciones, sentimientos o consecuencias que el texto sugiere pero no dice. La pregunta sobre el motivo de la abuela obliga a reunir pistas del relato (\"teniendo en cuenta lo que ocurre antes\") para reconstruir una razón que no aparece escrita. **Por qué fallan los distractores:** El nombre del perro y la copia de la frase final son tareas literales. Preguntar si el estudiante está de acuerdo y pedirle que lo justifique es nivel crítico, porque implica un juicio de valor. **Clave para el examen:** Inferir no es opinar. La respuesta inferencial se apoya en evidencias del texto; la crítica añade la valoración del lector.",
+    "resources": [
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana (niveles de lectura)",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      },
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-003": {
+    "explanation": "**El problema:** En los textos argumentativos hay que separar la tesis (la postura central) de los argumentos que la sostienen y de las concesiones. **Por qué es correcta:** \"Las ciudades deberían ampliar su red de ciclorrutas\" es la afirmación que el autor quiere que el lector acepte. El verbo \"deberían\" marca una postura. Todo lo demás responde a la pregunta \"¿por qué?\". **Por qué fallan los distractores:** Los menos accidentes y la reducción de trayectos en carro son argumentos, y uno de ellos se apoya en una fuente oficial. La inversión alta es una concesión que el propio autor contradice. Que la calidad del aire sea mala no se afirma en el texto: se dice que *mejora*. **Clave para el examen:** Pregúntese \"¿qué quiere que yo crea o haga el autor?\". Esa es la tesis. Suele estar al inicio o al final y a menudo lleva verbos de deber o valoración.",
+    "example": "Esquema del fragmento:\n\n• **Tesis** ampliar ciclorrutas.\n• **Argumento 1** menos trayectos en carro, mejor aire.\n• **Argumento 2 (autoridad)** Secretaría de Movilidad, menos accidentes graves.\n• **Concesión + refutación** \"es cierto que… cuesta; pero se recupera\".",
+    "resources": [
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      },
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-004": {
+    "explanation": "**El problema:** Lectura crítica no solo pregunta *qué* dice el texto, sino *cómo* funciona cada parte en la argumentación. **Por qué es correcta:** La fórmula \"Es cierto que X, pero Y\" es una concesión. El autor se adelanta a una objeción del lector (la inversión es costosa), la admite y enseguida la neutraliza (se recupera en salud). Así muestra que ha considerado los contraargumentos y su postura sale reforzada. **Por qué fallan los distractores:** La tesis ya está en la primera oración. El argumento de autoridad es la mención a la Secretaría de Movilidad. El tema sí se relaciona con la tesis, porque responde a una objeción contra ella. **Clave para el examen:** Estructuras como \"si bien… no obstante\", \"aunque… sin embargo\" o \"es cierto que… pero\" casi siempre anuncian una concesión o una refutación.",
+    "resources": [
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      },
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-005": {
+    "explanation": "**El problema:** Hay que identificar la falacia, es decir, el razonamiento que parece válido pero no lo es. **Por qué es correcta:** El hablante no discute si cuidar el agua es importante. Descalifica el mensaje por la conducta del mensajero. Eso es un *ad hominem*, y en concreto un *tu quoque* (\"tú también lo haces\"). Aunque el profesor fuera incoherente, sus razones sobre el agua podrían seguir siendo verdaderas. **Por qué fallan los distractores:** La generalización apresurada saca una conclusión general de pocos casos. La falsa causa supone que algo causó otra cosa solo porque ocurrió antes. La apelación a la autoridad acepta una idea por el prestigio de quien la dice, que aquí es justo lo contrario. **Clave para el examen:** Si se ataca a la persona en lugar del argumento, es *ad hominem*.",
+    "example": "Falacias frecuentes en simulacros:\n\n• **Ad hominem**: ataca a la persona, no sus razones.\n• **Generalización apresurada**: \"todos / siempre\" a partir de pocos casos.\n• **Falsa causa (post hoc)**: \"pasó después, luego fue causado por\".\n• **Falso dilema**: solo presenta dos opciones cuando hay más.\n• **Apelación a la autoridad**: \"es verdad porque lo dijo alguien famoso\" (sin ser experto en el tema).\n• **Pendiente resbaladiza**: \"si permitimos A, terminaremos en Z\".",
+    "resources": [
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-006": {
+    "explanation": "**El problema:** Se toma un caso particular y se convierte en una regla general. **Por qué es correcta:** Tres estudiantes de un grado no representan a \"los jóvenes de hoy\". Pasar de una muestra pequeña y no representativa a una conclusión universal es una generalización apresurada. Además, perder una materia puede deberse a muchas causas distintas del desinterés. **Por qué fallan los distractores:** No se ataca a nadie (no es *ad hominem*). No se presentan solo dos alternativas (no es falso dilema). No se encadenan consecuencias catastróficas (no es pendiente resbaladiza). **Clave para el examen:** En los casos de sala de profesores o reuniones de padres, busque cuantificadores universales (\"todos\", \"nunca\", \"los jóvenes de hoy\") apoyados en pocos datos.",
+    "resources": [
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-007": {
+    "explanation": "**El problema:** Hay que reconocer la intención comunicativa, es decir, para qué fue escrito el texto. **Por qué es correcta:** El aviso se dirige al lector (\"usted\"), le presenta una consecuencia negativa si no actúa (\"pone en riesgo a todo el salón\") y termina con una instrucción (\"acérquese este sábado\"). Busca mover al lector a hacer algo: es un texto persuasivo o apelativo, con predominio de la función conativa del lenguaje. **Por qué fallan los distractores:** No cuenta una historia (narrar), no detalla cómo es el puesto de salud (describir) y no es neutral, porque toma partido y presiona al lector. **Clave para el examen:** Los verbos en imperativo, el \"usted/tú\" y las consecuencias o beneficios para el lector indican intención persuasiva.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-008": {
+    "explanation": "**El problema:** La ironía exige leer más allá de lo literal. Si se lee al pie de la letra, el texto parece un elogio. **Por qué es correcta:** Existe una contradicción evidente entre lo dicho (\"qué maravilla\", \"sí que saben construir\") y el hecho descrito (un puente que se cae al mes de inaugurado). Esa distancia entre el enunciado y la intención es la ironía. En una columna de opinión funciona como crítica, en este caso a la calidad de la obra y a los contratistas. **Por qué fallan los distractores:** La hipérbole es una exageración, y aquí no se exagera sino que se invierte el sentido. No hay objetividad, porque es una columna con valoraciones. El elogio no es sincero, como muestran los hechos. **Clave para el examen:** Si la valoración positiva choca con un hecho negativo, piense en ironía y pregúntese a quién critica el autor.",
+    "resources": [
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana (niveles de lectura)",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      },
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-009": {
+    "explanation": "**El problema:** En los textos discontinuos (tablas, gráficas, infografías) el error más común es concluir más de lo que muestran los datos. **Por qué es correcta:** Los valores 120, 95, 60 y 40 bajan de forma sostenida de 6.º a 9.º. Eso es exactamente lo que dice la opción. **Por qué fallan los distractores:** \"Visitas\" no equivale a \"libros leídos\": un estudiante puede ir a hacer tareas o leer en casa. El horario no aparece en la tabla. La razón 60/40 es 1,5 y no 2, así que no es \"el doble\". **Clave para el examen:** Antes de elegir, pregúntese qué variable mide la tabla. Descarte toda opción que cambie la variable (visitas → lectura) o que añada información externa.",
+    "example": "Comprobación rápida:\n\n• 6.º → 7.º: 120 → 95 (baja)\n• 7.º → 8.º: 95 → 60 (baja)\n• 8.º → 9.º: 60 → 40 (baja); 60 ÷ 40 = 1,5 (no es el doble)",
+    "resources": [
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-010": {
+    "explanation": "**El problema:** Una pregunta típica de lectura crítica pide qué dato debilita un argumento causal: \"X mejoró Y porque quienes recibieron X tienen mejor Y\". **Por qué es correcta:** Si los participantes ya eran los mejores lectores antes del programa, los grupos no eran comparables. La mejor nota final puede explicarse por esa ventaja inicial (sesgo de selección) y no por la lectura en voz alta. El dato ataca directamente la relación causa-efecto. **Por qué fallan los distractores:** La duración del programa (dos horas semanales) no dice nada sobre si funcionó. Que docentes de Lenguaje diseñaran la prueba es normal y no afecta la comparación. Que los estudiantes disfrutaran el programa no fortalece ni debilita la conclusión sobre la comprensión. **Clave para el examen:** Para debilitar una causalidad, busque una explicación alternativa: otra causa, grupos no comparables o una coincidencia en el tiempo.",
+    "resources": [
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-011": {
+    "explanation": "**El problema:** Hay que reconocer la función de una oración dentro del párrafo (introducir, desarrollar, contrastar, concluir). **Por qué es correcta:** El párrafo avanza así: primero la necesidad (8 a 10 horas de sueño), luego el obstáculo con \"sin embargo\" (las pantallas retrasan la melatonina) y al final la consecuencia práctica con \"por eso\" (apagar los dispositivos). \"Por eso\" es un conector consecutivo, así que la última oración deriva una recomendación de lo anterior. **Por qué fallan los distractores:** No plantea un problema nuevo, porque sigue en el mismo tema. No aporta estadísticas, porque las cifras están en la primera oración. No contradice la primera oración, sino que ayuda a cumplirla. **Clave para el examen:** Los conectores marcan la función: \"sin embargo\" indica contraste, \"por eso\" o \"por lo tanto\" indican consecuencia o conclusión, y \"por ejemplo\" indica ilustración.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-lc-mcq-012": {
+    "explanation": "**El problema:** Hay que distinguir los hechos (verificables) de las opiniones (juicios de valor), una habilidad básica de la lectura crítica. **Por qué es correcta:** \"La mejor decisión\" expresa una valoración subjetiva. No existe un registro que pruebe que algo es \"lo mejor\", y distintas personas pueden valorarlo de forma diferente. **Por qué fallan los distractores:** El número de matriculados, el año de inicio de la jornada única y el porcentaje que almuerza en el comedor se comprueban con documentos o registros. Pueden ser verdaderos o falsos, pero son hechos verificables. **Clave para el examen:** Los adjetivos valorativos y superlativos (\"mejor\", \"excelente\", \"lamentable\") y expresiones como \"creo que\" o \"es evidente que\" señalan opinión.",
+    "resources": [
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      },
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lc-mr-001": {
+    "explanation": "**El problema:** Las pruebas escritas del concurso las aplica el ICFES, y su forma de evaluar la lectura sigue el marco de lectura crítica que usa en Saber 11 y Saber Pro. Conocerlo ayuda a anticipar el tipo de pregunta. **Por qué son correctas:** El marco organiza la lectura en tres competencias que van de lo más local a lo más global. La primera es entender los contenidos locales: qué significa una palabra o una oración en su contexto. La segunda es entender cómo se articulan las partes para formar el sentido global: estructura, relaciones y función de cada parte. La tercera es reflexionar a partir del texto y evaluar su contenido: validez de los argumentos, supuestos, intención y perspectiva. **Por qué fallan los distractores:** Memorizar, corregir la ortografía o traducir no forman parte del marco de lectura crítica. **Clave para el examen:** Si le preguntan \"qué evalúa la lectura crítica\", piense en tres escalones: local, global y reflexivo-evaluativo.",
+    "resources": [
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      },
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana (niveles de lectura)",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      }
+    ]
+  },
+  "cnsc-lc-mr-002": {
+    "explanation": "**El problema:** Es la trampa clásica de la inferencia: confundir lo que el texto *permite* concluir con lo que *afirma* o con lo que el lector *supone*. **Por qué son correctas:** La primera opción se sostiene porque \"aunque reconoce que terminó la temporada de calor\" muestra que la rectora admite una causa alternativa. La segunda se sostiene porque una baja del 15 % en las ventas es, por definición, un efecto económico de la medida. **Por qué fallan los distractores:** El texto no establece que el azúcar cause dolor de cabeza; esa es una suposición del lector. \"Dejaron de comprar\" exagera, porque las ventas bajaron un 15 %, no un 100 %. \"Está demostrado\" contradice la propia duda de la rectora, que ve dos causas posibles. **Clave para el examen:** Desconfíe de las opciones con palabras absolutas (\"demostrado\", \"dejaron de\", \"siempre\") cuando el texto habla con matices.",
+    "resources": [
+      {
+        "label": "ICFES — Pruebas y marcos de referencia (Saber Pro, lectura crítica)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  }
+}

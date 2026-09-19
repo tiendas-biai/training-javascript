@@ -1,0 +1,313 @@
+[
+  {
+    "id": "cnsc-lc-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Niveles de lectura",
+    "difficulty": "easy",
+    "question": "Después de leer un cuento, una docente pregunta: \"¿En qué año llegó Ernesto al pueblo y quién lo recibió?\". Ambos datos aparecen escritos en el texto. ¿Qué nivel de lectura está evaluando?",
+    "options": [
+      "Nivel inferencial",
+      "Nivel literal",
+      "Nivel crítico-intertextual",
+      "Nivel metacognitivo"
+    ],
+    "answer": "Nivel literal",
+    "explanation": "La pregunta pide recuperar información que está explícita en el texto. Eso es el nivel literal: no hay que deducir ni valorar nada.",
+    "tags": [
+      "niveles de lectura",
+      "literal",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Niveles de lectura",
+    "difficulty": "medium",
+    "question": "Un docente de grado 7 quiere diseñar una pregunta que trabaje el **nivel inferencial** a partir de un relato en el que la abuela esconde una carta, sin que el narrador explique por qué. ¿Cuál pregunta es la más adecuada?",
+    "options": [
+      "¿Por qué crees que la abuela escondió la carta, teniendo en cuenta lo que ocurre antes en el relato?",
+      "¿Cómo se llama el perro de la abuela?",
+      "¿Estás de acuerdo con la decisión de la abuela? Justifica tu opinión con argumentos.",
+      "Copia textualmente la última frase del relato."
+    ],
+    "answer": "¿Por qué crees que la abuela escondió la carta, teniendo en cuenta lo que ocurre antes en el relato?",
+    "explanation": "Inferir es deducir información implícita a partir de pistas del texto. La razón no está escrita, así que el lector debe reconstruirla. Valorar la decisión corresponde al nivel crítico; el nombre del perro y la copia textual, al literal.",
+    "tags": [
+      "niveles de lectura",
+      "inferencial",
+      "didáctica",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Tesis y argumentos",
+    "difficulty": "medium",
+    "question": "Lea el fragmento:\n\n\"Las ciudades deberían ampliar su red de ciclorrutas. Cada kilómetro nuevo reduce los trayectos en carro y mejora la calidad del aire; además, según la Secretaría de Movilidad, los barrios con ciclorrutas registran menos accidentes graves. Es cierto que la inversión inicial es alta, pero se recupera con el menor gasto en salud.\"\n\n¿Cuál es la tesis del autor?",
+    "options": [
+      "La inversión inicial en ciclorrutas es alta.",
+      "Los barrios con ciclorrutas registran menos accidentes graves.",
+      "La calidad del aire en las ciudades es mala.",
+      "Las ciudades deberían ampliar su red de ciclorrutas."
+    ],
+    "answer": "Las ciudades deberían ampliar su red de ciclorrutas.",
+    "explanation": "La tesis es la postura que el texto defiende; todo lo demás está a su servicio. Los accidentes y la calidad del aire son argumentos, y la inversión alta es una concesión que el autor refuta.",
+    "tags": [
+      "argumentación",
+      "tesis",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Tesis y argumentos",
+    "difficulty": "hard",
+    "question": "En una columna que defiende ampliar la red de ciclorrutas de la ciudad, el autor escribe: \"Es cierto que la inversión inicial es alta, pero se recupera con el menor gasto en salud\". ¿Qué función cumple esta oración dentro de la argumentación?",
+    "options": [
+      "Presenta la tesis principal del texto.",
+      "Reconoce un posible contraargumento y lo refuta para fortalecer la postura del autor.",
+      "Aporta un argumento de autoridad basado en una entidad oficial.",
+      "Introduce un tema nuevo que no se relaciona con la tesis."
+    ],
+    "answer": "Reconoce un posible contraargumento y lo refuta para fortalecer la postura del autor.",
+    "explanation": "\"Es cierto que… pero…\" es la estructura típica de la concesión: el autor admite una objeción (el costo) y la neutraliza (se recupera). Es una estrategia de refutación, no la tesis ni un argumento de autoridad.",
+    "tags": [
+      "argumentación",
+      "contraargumento",
+      "concesión",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-005",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Falacias",
+    "difficulty": "medium",
+    "question": "En una reunión de padres, alguien afirma: \"No le hagan caso al profesor de Ciencias Sociales cuando habla del cuidado del agua; él mismo se demora media hora en la ducha\". ¿Qué tipo de razonamiento defectuoso contiene esta afirmación?",
+    "options": [
+      "Generalización apresurada",
+      "Falsa causa (post hoc)",
+      "Falacia ad hominem",
+      "Apelación a la autoridad"
+    ],
+    "answer": "Falacia ad hominem",
+    "explanation": "Se descalifica el argumento atacando a la persona que lo formula (su conducta) en lugar de examinar las razones. Es un ad hominem, en su variante *tu quoque* (\"tú también\").",
+    "tags": [
+      "falacias",
+      "ad hominem",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-006",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Falacias",
+    "difficulty": "medium",
+    "question": "Un docente comenta en la sala de profesores: \"Tres estudiantes de noveno perdieron Matemáticas este periodo; es evidente que los jóvenes de hoy no se interesan por el estudio\". ¿Qué falacia comete?",
+    "options": [
+      "Generalización apresurada",
+      "Falacia ad hominem",
+      "Falso dilema",
+      "Pendiente resbaladiza"
+    ],
+    "answer": "Generalización apresurada",
+    "explanation": "Se extrae una conclusión sobre todo un grupo (\"los jóvenes de hoy\") a partir de una muestra mínima y no representativa (tres estudiantes).",
+    "tags": [
+      "falacias",
+      "generalización",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-007",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Intención comunicativa",
+    "difficulty": "easy",
+    "question": "Lea el aviso publicado en la cartelera del colegio:\n\n\"Si usted aún no ha vacunado a su hijo, está poniendo en riesgo a todo el salón. Acérquese este sábado al puesto de salud instalado en el colegio.\"\n\n¿Cuál es la intención comunicativa principal del texto?",
+    "options": [
+      "Narrar un acontecimiento ocurrido en el colegio.",
+      "Describir las instalaciones del puesto de salud.",
+      "Informar de manera neutral sobre las vacunas disponibles.",
+      "Persuadir a los acudientes para que vacunen a sus hijos."
+    ],
+    "answer": "Persuadir a los acudientes para que vacunen a sus hijos.",
+    "explanation": "El aviso apela al lector (\"usted\"), menciona una consecuencia negativa y termina con una invitación a actuar (\"acérquese\"). Tiene intención persuasiva o apelativa.",
+    "tags": [
+      "intención comunicativa",
+      "persuasión",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-008",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Intención comunicativa",
+    "difficulty": "hard",
+    "question": "Una columna de opinión dice:\n\n\"Qué maravilla: otra vez se cayó el puente peatonal que inauguraron hace un mes. Nuestros contratistas sí que saben construir.\"\n\n¿Qué recurso utiliza el autor y con qué propósito?",
+    "options": [
+      "Usa la hipérbole para exagerar la calidad de la obra.",
+      "Usa la ironía para criticar la mala calidad de la obra y la gestión de los contratistas.",
+      "Usa la descripción objetiva para informar sobre el estado del puente.",
+      "Usa el elogio sincero para reconocer el trabajo de los contratistas."
+    ],
+    "answer": "Usa la ironía para criticar la mala calidad de la obra y la gestión de los contratistas.",
+    "explanation": "El texto dice lo contrario de lo que quiere comunicar: \"qué maravilla\" y \"sí que saben construir\" frente a un puente que se cayó al mes. Esa contradicción entre lo dicho y lo intencionado es la ironía, y sirve para criticar.",
+    "tags": [
+      "ironía",
+      "intención comunicativa",
+      "lectura crítica",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-009",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Textos discontinuos",
+    "difficulty": "medium",
+    "question": "La bibliotecaria presenta esta tabla de visitas a la biblioteca durante marzo:\n\nGrado 6.º: 120 visitas\nGrado 7.º: 95 visitas\nGrado 8.º: 60 visitas\nGrado 9.º: 40 visitas\n\n¿Cuál conclusión está respaldada por los datos?",
+    "options": [
+      "Los estudiantes de 9.º leen menos libros que los de 6.º.",
+      "Las visitas a la biblioteca disminuyen a medida que aumenta el grado.",
+      "Los estudiantes de 8.º visitan la biblioteca el doble que los de 9.º.",
+      "La biblioteca atiende a 9.º en un horario más corto."
+    ],
+    "answer": "Las visitas a la biblioteca disminuyen a medida que aumenta el grado.",
+    "explanation": "La tabla solo muestra visitas, que bajan de 120 a 40 al subir de grado. No mide libros leídos ni horarios, y 60 frente a 40 es 1,5 veces, no el doble.",
+    "tags": [
+      "textos discontinuos",
+      "tablas",
+      "inferencia",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-010",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Evaluación de argumentos",
+    "difficulty": "hard",
+    "question": "Un informe institucional afirma: \"El programa de lectura en voz alta mejoró la comprensión lectora: los estudiantes que participaron obtuvieron mejores resultados en la prueba final que quienes no participaron\". ¿Cuál de los siguientes datos **debilita más** esta conclusión?",
+    "options": [
+      "El programa se realizó durante dos horas semanales.",
+      "La prueba final fue diseñada por docentes del área de Lenguaje.",
+      "Los participantes fueron escogidos entre quienes ya tenían los mejores promedios en lenguaje.",
+      "Los estudiantes que participaron manifestaron que disfrutaron el programa."
+    ],
+    "answer": "Los participantes fueron escogidos entre quienes ya tenían los mejores promedios en lenguaje.",
+    "explanation": "Si el grupo que participó ya era mejor antes del programa, la diferencia en la prueba final puede deberse a esa ventaja previa y no al programa. Es un sesgo de selección que invalida la relación causal.",
+    "tags": [
+      "argumentación",
+      "causalidad",
+      "sesgo",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-011",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Estructura del texto",
+    "difficulty": "easy",
+    "question": "Lea el párrafo:\n\n\"Los adolescentes necesitan entre 8 y 10 horas de sueño. Sin embargo, el uso de pantallas antes de dormir retrasa la liberación de melatonina, la hormona que induce el sueño. Por eso, varios especialistas recomiendan apagar los dispositivos una hora antes de acostarse.\"\n\n¿Qué función cumple la última oración dentro del párrafo?",
+    "options": [
+      "Plantea un problema nuevo, distinto del anterior.",
+      "Aporta un dato estadístico que respalda la primera oración.",
+      "Contradice lo afirmado en la primera oración.",
+      "Propone una recomendación que se deriva de lo expuesto antes."
+    ],
+    "answer": "Propone una recomendación que se deriva de lo expuesto antes.",
+    "explanation": "El conector \"por eso\" señala una consecuencia. La oración cierra el párrafo con una recomendación que se apoya en la necesidad de sueño y en el efecto de las pantallas.",
+    "tags": [
+      "estructura textual",
+      "conectores",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mcq-012",
+    "type": "multiple-choice",
+    "topic": "Lectura Crítica",
+    "subtopic": "Hecho y opinión",
+    "difficulty": "easy",
+    "question": "En un boletín institucional aparecen estas afirmaciones. ¿Cuál expresa una **opinión** y no un hecho verificable?",
+    "options": [
+      "La institución tiene 1.200 estudiantes matriculados.",
+      "La jornada única comenzó a aplicarse en 2024.",
+      "La jornada única es la mejor decisión que ha tomado la rectoría.",
+      "El 40 % de los estudiantes almuerza en el comedor escolar."
+    ],
+    "answer": "La jornada única es la mejor decisión que ha tomado la rectoría.",
+    "explanation": "\"La mejor decisión\" es un juicio de valor que no se puede comprobar con datos. Las demás afirmaciones se verifican con matrículas, fechas o registros.",
+    "tags": [
+      "hecho y opinión",
+      "lectura crítica",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mr-001",
+    "type": "multiple-response",
+    "topic": "Lectura Crítica",
+    "subtopic": "Competencias de lectura crítica",
+    "difficulty": "medium",
+    "question": "Según el marco de evaluación de lectura crítica que usa el ICFES, ¿cuáles son las competencias que se evalúan? (Seleccione TRES)",
+    "options": [
+      "Identificar y entender los contenidos locales que conforman un texto.",
+      "Comprender cómo se articulan las partes de un texto para darle un sentido global.",
+      "Reflexionar a partir de un texto y evaluar su contenido.",
+      "Memorizar fechas y nombres propios que aparecen en el texto.",
+      "Corregir la ortografía y la puntuación del texto.",
+      "Traducir el texto a una lengua extranjera."
+    ],
+    "answers": [
+      "Identificar y entender los contenidos locales que conforman un texto.",
+      "Comprender cómo se articulan las partes de un texto para darle un sentido global.",
+      "Reflexionar a partir de un texto y evaluar su contenido."
+    ],
+    "explanation": "Las tres competencias van de lo local (palabras, frases) a lo global (estructura y sentido del texto completo) y a lo crítico (evaluar y valorar). Memorizar, corregir y traducir no forman parte del marco.",
+    "tags": [
+      "icfes",
+      "competencias",
+      "lectura crítica",
+      "mr"
+    ]
+  },
+  {
+    "id": "cnsc-lc-mr-002",
+    "type": "multiple-response",
+    "topic": "Lectura Crítica",
+    "subtopic": "Inferencias válidas",
+    "difficulty": "hard",
+    "question": "Lea el fragmento:\n\n\"Desde que la institución instaló bebederos y retiró las bebidas azucaradas de la tienda escolar, las ventas de la tienda bajaron un 15 % y la enfermería reportó menos consultas por dolor de cabeza. La rectora atribuye este último cambio a una mejor hidratación, aunque reconoce que en el mismo periodo terminó la temporada de calor.\"\n\n¿Cuáles inferencias se pueden sostener a partir del texto? (Seleccione DOS)",
+    "options": [
+      "La rectora considera posible que el clima haya influido en la reducción de consultas.",
+      "Las bebidas azucaradas causan dolor de cabeza.",
+      "La medida tuvo un efecto económico en la tienda escolar.",
+      "Los estudiantes dejaron de comprar en la tienda escolar.",
+      "Está demostrado que la hidratación redujo las consultas en la enfermería."
+    ],
+    "answers": [
+      "La rectora considera posible que el clima haya influido en la reducción de consultas.",
+      "La medida tuvo un efecto económico en la tienda escolar."
+    ],
+    "explanation": "El \"aunque reconoce\" muestra que la rectora admite otra causa posible. La baja del 15 % en ventas es un efecto económico. El texto no afirma que el azúcar cause dolor de cabeza, ni que se dejara de comprar del todo (solo bajaron las ventas), ni que la causa esté demostrada.",
+    "tags": [
+      "inferencia",
+      "causalidad",
+      "lectura crítica",
+      "mr"
+    ]
+  }
+]

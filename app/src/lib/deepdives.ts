@@ -22,6 +22,7 @@ const loaders: Record<string, () => Promise<{ default: DeepDiveMap }>> = {
   kubernetes: () => cast(import('../../data/deepdives/kubernetes.json')),
   regex: () => cast(import('../../data/deepdives/regex.json')),
   karat: () => cast(import('../../data/deepdives/karat.json')),
+  'cnsc-docente': () => cast(import('../../data/deepdives/cnsc-docente.json')),
 };
 
 /** Dynamic-import a subject's deep-dive map. Unknown subjects resolve to {}. */

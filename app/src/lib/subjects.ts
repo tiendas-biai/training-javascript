@@ -140,6 +140,14 @@ export const subjects: Record<string, Subject> = {
     storageKey: 'srs:regex',
     loadData: loader('regex', () => load(import('../../data/regex.json'))),
   },
+  'cnsc-docente': {
+    id: 'cnsc-docente',
+    label: 'Concurso Docente CNSC',
+    icon: '✎',
+    color: '#fcd116',
+    storageKey: 'srs:cnsc-docente',
+    loadData: loader('cnsc-docente', () => load(import('../../data/cnsc-docente.json'))),
+  },
 };
 
 export function getSubject(id: string | undefined): Subject | null {
