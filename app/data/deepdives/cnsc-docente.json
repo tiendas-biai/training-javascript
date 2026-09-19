@@ -507,5 +507,249 @@
         "url": "https://www.mineducacion.gov.co/1780/w3-article-374740.html"
       }
     ]
+  },
+  "cnsc-lcast-mcq-001": {
+    "explanation": "**El problema:** La tilde diacrítica distingue palabras que se escriben igual pero cumplen funciones gramaticales distintas. En los simulacros de Lengua Castellana es un clásico. **Por qué es correcta:** \"Él\" es pronombre personal y \"el\" es artículo. \"Tú\" es pronombre y \"tu\" es posesivo. \"Mí\" es pronombre con preposición (\"para mí\") y \"mi\" es posesivo. En la oración, \"él\" es pronombre (lleva tilde) y \"tu\" y \"mi\" son posesivos (sin tilde). Además, \"está\" (del verbo estar) lleva tilde por regla general, porque es aguda terminada en vocal, y \"esta\" sin tilde es el demostrativo. **Por qué fallan los distractores:** Una opción tilda los posesivos (\"tú libro\", \"mí casa\"). Otra quita la tilde del pronombre \"él\" y del verbo \"está\". La última mezcla ambos errores. **Clave para el examen:** Pruebe a sustituir. Si puede cambiar \"tu\" por \"su\" (\"su libro\"), es posesivo y no lleva tilde. Si puede cambiarlo por \"usted\", es pronombre y lleva tilde.",
+    "example": "Pares diacríticos más preguntados:\n\n• **él** (pronombre) / **el** (artículo)\n• **tú** (pronombre) / **tu** (posesivo)\n• **mí** (pronombre) / **mi** (posesivo o nota musical)\n• **sí** (afirmación o pronombre) / **si** (conjunción condicional)\n• **más** (cantidad) / **mas** (equivale a \"pero\")\n• **sé** (de saber o ser) / **se** (pronombre)\n• **dé** (de dar) / **de** (preposición)\n• **té** (bebida) / **te** (pronombre)",
+    "resources": [
+      {
+        "label": "RAE — Diccionario panhispánico de dudas: tilde (reglas de acentuación y tilde diacrítica)",
+        "url": "https://www.rae.es/dpd/tilde2"
+      },
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-002": {
+    "explanation": "**El problema:** Las reglas generales de acentuación dependen de dos datos: dónde está la sílaba tónica y en qué letra termina la palabra. **Por qué es correcta:** \"Can-**ción**\" es aguda y termina en n, así que lleva tilde. \"**Ár**-bol\" es llana y termina en l, así que lleva tilde. \"**Lá**-piz\" es llana y termina en z, así que lleva tilde. \"E-**xa**-men\" es llana y termina en n, así que **no** lleva tilde. **Por qué fallan los distractores:** Todas las demás opciones tildan \"exámen\" o dejan sin tilde \"canción\", \"árbol\" o \"lápiz\". \"Exámen\" es un error muy común por analogía con el plural \"exámenes\", que sí lleva tilde por ser esdrújula. **Clave para el examen:** Las agudas llevan tilde si terminan en n, s o vocal. Las llanas la llevan si **no** terminan en n, s o vocal. Las esdrújulas y sobresdrújulas la llevan siempre.",
+    "example": "Singular y plural pueden cambiar de clase:\n\n• ex**a**men (llana en n, sin tilde) → ex**á**menes (esdrújula, con tilde)\n• can**ción** (aguda en n, con tilde) → can**cio**nes (llana en s, sin tilde)\n• **jo**ven (llana en n, sin tilde) → **jó**venes (esdrújula, con tilde)",
+    "resources": [
+      {
+        "label": "RAE — Diccionario panhispánico de dudas: tilde (reglas de acentuación y tilde diacrítica)",
+        "url": "https://www.rae.es/dpd/tilde2"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-003": {
+    "explanation": "**El problema:** La *Ortografía* académica de 2010 cambió varias normas que muchos docentes siguen aplicando a la manera antigua, y el examen puede preguntar por la norma vigente. **Por qué es correcta:** Para acentuar, toda secuencia de vocal cerrada átona (i, u) con vocal abierta tónica (a, e, o) se considera diptongo, aunque se pronuncie como hiato. Así, \"guion\", \"truhan\", \"rio\" (pasado de reír), \"fie\" o \"hui\" son monosílabos a efectos ortográficos y, como los monosílabos no llevan tilde salvo la diacrítica, se escriben sin ella. El Diccionario panhispánico de dudas lo explica en la entrada \"guion\". **Por qué fallan los distractores:** Las mayúsculas **sí** se tildan (\"ÁFRICA\", \"Él\"). La \"o\" entre cifras **ya no** lleva tilde desde 2010 (\"3 o 4\"). Los demostrativos (\"este\", \"ese\", \"aquel\") no requieren tilde, ni siquiera como pronombres: la norma la considera innecesaria y nunca obligatoria. **Clave para el examen:** Si le preguntan por la norma \"actual\", piense en los cambios de 2010: guion, la \"o\" entre cifras y los demostrativos, todos sin tilde.",
+    "resources": [
+      {
+        "label": "RAE — Diccionario panhispánico de dudas: guion",
+        "url": "https://www.rae.es/dpd/guion"
+      },
+      {
+        "label": "RAE — Diccionario panhispánico de dudas: tilde (reglas de acentuación y tilde diacrítica)",
+        "url": "https://www.rae.es/dpd/tilde2"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-004": {
+    "explanation": "**El problema:** \"Hubieron\" y \"habían\" en sentido existencial son errores muy extendidos, incluso en textos institucionales. **Por qué es correcta:** Cuando \"haber\" significa \"existir\" o \"estar presente\" es **impersonal**: no tiene sujeto. El sustantivo que lo acompaña (\"inconvenientes\", \"estudiantes\", \"salidas\") es su complemento directo, así que el verbo no concuerda con él y va siempre en tercera persona del singular: hay, hubo, había, habrá, habría. Una prueba útil es sustituir por un pronombre: \"Hubo inconvenientes\" → \"Los hubo\", lo que confirma que es complemento directo. **Por qué fallan los distractores:** \"Hubieron\", \"habían\" y \"habrán\" pluralizan de forma incorrecta un verbo impersonal. Ojo: \"habían llegado\" es correcto, porque ahí \"haber\" es auxiliar de un tiempo compuesto con sujeto plural. **Clave para el examen:** Si \"haber\" va solo, sin participio, y significa \"existir\", debe ir en singular.",
+    "example": "Impersonal y auxiliar:\n\n• ✗ Habían muchos estudiantes → ✓ **Había** muchos estudiantes (existencial)\n• ✓ Los estudiantes **habían** llegado (auxiliar, concuerda con el sujeto \"los estudiantes\")",
+    "resources": [
+      {
+        "label": "RAE — Diccionario panhispánico de dudas: haber",
+        "url": "https://www.rae.es/dpd/haber"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-005": {
+    "explanation": "**El problema:** El dequeísmo (poner un \"de\" que sobra) y el queísmo (quitar un \"de\" necesario) son errores de régimen preposicional. **Por qué es correcta:** El verbo pronominal \"acordarse\" se construye con \"de\" (\"me acuerdo **de** algo\"). Si ese \"algo\" es una oración, el \"de\" se mantiene: \"me acuerdo de que llovía\". **Por qué fallan los distractores:** \"Pensar\" es transitivo (\"pienso algo\"), así que \"pienso de que\" es dequeísmo. \"Es posible algo\", así que \"es posible de que\" también es dequeísmo. \"Estar seguro **de** algo\" exige la preposición, así que \"estoy seguro que\" es queísmo. **Clave para el examen:** Convierta la oración subordinada en \"eso\". \"Pienso eso\" (no \"pienso de eso\"), así que no lleva \"de\". \"Me acuerdo de eso\", así que sí lleva \"de\". \"Estoy seguro de eso\", así que sí lleva \"de\".",
+    "example": "La prueba de \"eso\":\n\n• Pienso **eso** → Pienso que… ✓ (no \"de que\")\n• Me acuerdo **de eso** → Me acuerdo de que… ✓\n• Estoy seguro **de eso** → Estoy seguro de que… ✓\n• Es posible **eso** → Es posible que… ✓",
+    "resources": [
+      {
+        "label": "RAE — Diccionario panhispánico de dudas: dequeísmo",
+        "url": "https://www.rae.es/dpd/deque%C3%ADsmo"
+      },
+      {
+        "label": "RAE — Diccionario panhispánico de dudas: queísmo",
+        "url": "https://www.rae.es/dpd/que%C3%ADsmo"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-006": {
+    "explanation": "**El problema:** Identificar el sujeto se complica cuando va **después** del verbo, algo muy frecuente con verbos como llegar, faltar o gustar. **Por qué es correcta:** El sujeto es el sintagma que concuerda en número y persona con el verbo. \"Llegaron\" es tercera persona del plural y el único sintagma plural sin preposición es \"los nuevos libros de la biblioteca\". Además, si se pasa a singular, el verbo también cambia: \"Llegó el nuevo libro\", lo que confirma la concordancia. **Por qué fallan los distractores:** \"Ayer\" es un complemento circunstancial de tiempo. \"Al colegio\" lleva preposición, y un sujeto nunca va introducido por preposición. No es sujeto tácito, porque el sujeto está expreso en la oración. **Clave para el examen:** Para hallar el sujeto, cambie el número del verbo y vea qué palabra tiene que cambiar con él.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-007": {
+    "explanation": "**El problema:** Cuando se sustituyen a la vez el complemento directo (CD) y el indirecto (CI) por pronombres, \"le\" o \"les\" deben cambiar a \"se\". Es un punto de gramática que suele preguntarse. **Por qué es correcta:** CD: \"las notas\" (femenino plural) → \"las\". CI: \"a los acudientes\" → \"les\". El español no admite la secuencia \"les las\", así que \"les\" se convierte en \"se\": \"se las entregó\". **Por qué fallan los distractores:** \"Les las\" y \"las les\" son secuencias agramaticales. \"Se los\" cambia el género del CD: sería correcto si fueran \"los boletines\", pero \"notas\" es femenino. En algunas variedades americanas se oye \"se **los** entregué\" para marcar que el CI es plural (\"a ellos\"), pero la norma culta recomienda \"se las\". **Clave para el examen:** El CD se sustituye por lo/la/los/las (con el género y número del CD). El CI se sustituye por le/les, que pasa a \"se\" cuando va antes de lo/la/los/las.",
+    "example": "Paso a paso:\n\n1. La profesora entregó [las notas]CD [a los acudientes]CI.\n2. CD → las · CI → les\n3. les + las → **se las**\n4. **La profesora se las entregó.**",
+    "resources": [
+      {
+        "label": "RAE — Diccionario panhispánico de dudas: se (se las / se lo)",
+        "url": "https://www.rae.es/dpd/se"
+      },
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-008": {
+    "explanation": "**El problema:** Hay que clasificar las oraciones compuestas según la relación entre sus proposiciones y el nexo que las une. **Por qué es correcta:** Hay dos verbos conjugados (\"estudié\" y \"aprobé\"), así que la oración es compuesta. Las dos proposiciones tienen sentido completo por separado y están al mismo nivel, lo que las hace coordinadas. El nexo \"pero\" expresa oposición entre lo esperado (estudiar para aprobar) y lo ocurrido, así que es una coordinada **adversativa**. **Por qué fallan los distractores:** La copulativa suma ideas con \"y\", \"e\" o \"ni\". La subordinada causal depende de otra oración y expresa causa (\"porque\", \"ya que\"). No es simple, porque tiene dos verbos conjugados. **Clave para el examen:** Primero cuente los verbos conjugados (si hay dos o más, la oración es compuesta). Luego mire el nexo: pero, sino o aunque (con valor de \"pero\") indican adversativa; y o ni indican copulativa; o indica disyuntiva.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-009": {
+    "explanation": "**El problema:** Hay que distinguir las relaciones semánticas entre palabras: sinonimia, antonimia, homonimia, polisemia e hiperonimia. **Por qué es correcta:** \"Vino\" (bebida) y \"vino\" (tercera persona del pretérito de \"venir\") coinciden en forma, pero son **palabras distintas**, con origen y significado diferentes. Por eso el diccionario las registra en entradas separadas. Eso es homonimia. Como además se escriben igual, son homógrafas; si solo sonaran igual (como \"tubo\" y \"tuvo\"), serían homófonas. **Por qué fallan los distractores:** La sinonimia es igualdad de significado, la antonimia es significado opuesto y la hiperonimia es la relación entre un término general y sus específicos. **Clave para el examen:** Distinga homonimia de polisemia. En la polisemia, una **misma** palabra tiene varios significados relacionados (como \"hoja\" de árbol y de papel). En la homonimia son palabras distintas que coinciden en forma.",
+    "resources": [
+      {
+        "label": "RAE — Diccionario de la lengua española",
+        "url": "https://dle.rae.es/vino"
+      },
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-010": {
+    "explanation": "**El problema:** La cohesión léxica aparece en la escritura y en la comprensión: hay que reconocer cómo un texto retoma lo que ya dijo sin repetir palabras. **Por qué es correcta:** \"Flor\" es un **hiperónimo**, un término de significado general que incluye a los **hipónimos** rosa, clavel y girasol. Al decir \"las flores\", el texto recoge en una palabra a los tres elementos anteriores. Eso le da cohesión (el lector sabe que se habla de lo mismo) y evita la repetición. **Por qué fallan los distractores:** Un hipónimo sería un término más específico. No hay contraste, así que no es antonimia. \"Flor\" no es sinónimo de \"rosa\", porque la incluye. **Clave para el examen:** Los mecanismos de cohesión más preguntados son la referencia con pronombres, la sustitución por sinónimos o hiperónimos, la elipsis y los conectores.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-011": {
+    "explanation": "**El problema:** Hay que diferenciar el significado literal (denotación) de los significados asociados o figurados (connotación), algo clave para leer publicidad, poesía o ironía. **Por qué es correcta:** La **denotación** de \"joya\" es el objeto de adorno hecho de metal o piedras preciosas. En \"Andrés es una joya\" nadie piensa que sea un objeto. El sentido es figurado y valorativo: Andrés es una persona muy valiosa. Ese significado añadido, que depende del contexto y de la cultura, es la **connotación**. **Por qué fallan los distractores:** El uso denotativo sería \"le regaló una joya a su madre\". \"Joya\" no es un tecnicismo académico. No es una impropiedad léxica, porque es un uso figurado aceptado. **Clave para el examen:** Pregúntese si se entiende al pie de la letra. Si no, la palabra se usa en sentido connotativo.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "RAE — Diccionario de la lengua española",
+        "url": "https://dle.rae.es/vino"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-012": {
+    "explanation": "**El problema:** Hay que reconocer las tipologías textuales por su **propósito comunicativo** y su estructura. **Por qué es correcta:** El fragmento define un fenómeno (\"es el proceso mediante el cual…\"), indica dónde ocurre y qué se necesita. Busca que el lector **comprenda** información objetiva, sin opiniones ni historia. Esas son las marcas del texto **expositivo**: definiciones, clasificaciones, causas y efectos, tercera persona y presente atemporal. **Por qué fallan los distractores:** El narrativo relata hechos en el tiempo con personajes. El argumentativo defiende una tesis con argumentos. El instructivo da pasos para hacer algo, con imperativos o infinitivos. **Clave para el examen:** Pregunte \"¿para qué fue escrito?\": para explicar, es expositivo; para convencer, argumentativo; para contar, narrativo; para guiar una acción, instructivo; para mostrar cómo es algo, descriptivo.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-013": {
+    "explanation": "**El problema:** Hay que identificar la función del lenguaje que predomina según el elemento de la comunicación en el que se centra el mensaje (modelo de Roman Jakobson). **Por qué es correcta:** \"¿Me escuchan bien los del fondo?\" no transmite información sobre el mundo. Comprueba que el **canal** funciona, es decir, que el contacto comunicativo está abierto. Esa es la función fática, la misma de \"aló\", \"¿me copias?\" o \"ajá\". **Por qué fallan los distractores:** La referencial se centra en el contexto o referente e informa. La metalingüística se centra en el código (\"¿qué significa «vorágine»?\"). La poética se centra en la forma del mensaje (rima, figuras). **Clave para el examen:** Asocie cada función con su elemento. Emisor → expresiva. Receptor → apelativa o conativa. Contexto → referencial. Canal → fática. Código → metalingüística. Mensaje → poética.",
+    "example": "Las seis funciones de Jakobson con un ejemplo escolar:\n\n• **Referencial**: \"La izada es a las 7:00.\"\n• **Expresiva**: \"¡Qué orgullo me da este grupo!\"\n• **Apelativa**: \"Guarden silencio, por favor.\"\n• **Fática**: \"¿Me escuchan los del fondo?\"\n• **Metalingüística**: \"\"Izar\" se escribe con z.\"\n• **Poética**: \"Bandera al viento, voz de juventud.\"",
+    "resources": [
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-014": {
+    "explanation": "**El problema:** Hay que reconocer las figuras literarias en un texto concreto, una tarea que aparece tanto en preguntas de literatura como de didáctica. **Por qué es correcta:** \"Susurrar\" y \"tener secretos\" son acciones o rasgos humanos, y aquí se atribuyen al viento, que es un ser inanimado. Eso es la **personificación** o prosopopeya. **Por qué fallan los distractores:** La hipérbole exagera (\"te lo he dicho un millón de veces\"). El símil compara con un nexo explícito (\"rápido **como** el viento\"). La anáfora repite una palabra al comienzo de versos u oraciones seguidas. **Clave para el examen:** Si hay \"como\", \"cual\" o \"semejante a\", piense en símil. Si se dice que A **es** B sin nexo, en metáfora. Si algo no humano actúa como humano, en personificación.",
+    "example": "Figuras frecuentes:\n\n• **Metáfora**: \"Tus ojos son dos luceros.\"\n• **Símil**: \"Tus ojos brillan como luceros.\"\n• **Personificación**: \"El viento susurraba secretos.\"\n• **Hipérbole**: \"Lloró ríos de lágrimas.\"\n• **Anáfora**: \"Sin ti no hay luz, sin ti no hay canto.\"",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-015": {
+    "explanation": "**El problema:** Los Estándares incluyen la literatura colombiana y latinoamericana, y el examen puede pedir que se reconozcan obras canónicas por su contexto y sus temas. **Por qué es correcta:** *La vorágine* (1924), de José Eustasio Rivera, cuenta la huida de Arturo Cova hacia los llanos y la selva amazónica y denuncia la explotación inhumana de los trabajadores del caucho. Es la obra central de la llamada \"novela de la selva\" o regionalista, y su final es famoso: \"¡Los devoró la selva!\". **Por qué fallan los distractores:** *María* (1867), de Jorge Isaacs, es la gran novela romántica colombiana, ambientada en el Valle del Cauca. *Cien años de soledad* (1967) es realismo mágico. *La marquesa de Yolombó*, de Tomás Carrasquilla, es costumbrista y se sitúa en Antioquia. **Clave para el examen:** Asocie cada obra con su época y corriente: romanticismo con *María*, regionalismo con *La vorágine*, realismo mágico con García Márquez y costumbrismo con Carrasquilla.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "Biblioteca Virtual Miguel de Cervantes — Portal Jorge Isaacs",
+        "url": "https://www.cervantesvirtual.com/portales/jorge_isaacs/"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-016": {
+    "explanation": "**El problema:** Hay que identificar las corrientes literarias por sus rasgos, no por memorizar fechas. **Por qué es correcta:** El **realismo mágico** presenta lo sobrenatural o extraordinario como parte natural de la realidad, y el narrador y los personajes no se asombran. La lluvia de flores amarillas tras la muerte de José Arcadio Buendía y la ascensión de Remedios, la bella, mientras dobla sábanas son episodios de *Cien años de soledad* (1967), de Gabriel García Márquez, Premio Nobel en 1982. **Por qué fallan los distractores:** El romanticismo exalta los sentimientos, la naturaleza y el amor idealizado. El costumbrismo retrata tradiciones y tipos regionales con realismo. El modernismo, con autores como José Asunción Silva, busca la belleza formal y la musicalidad. **Clave para el examen:** La clave del realismo mágico es que lo maravilloso se narra con naturalidad. Si el texto muestra asombro o miedo ante lo sobrenatural, se acerca más a lo fantástico.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-017": {
+    "explanation": "**El problema:** Hay que clasificar los textos literarios en géneros según su forma de enunciación y su propósito. **Por qué es correcta:** El género **dramático** presenta la historia a través del diálogo directo de los personajes, sin un narrador que la cuente, e incluye acotaciones con indicaciones de escena, gestos y movimientos. Está concebido para ser representado. **Por qué fallan los distractores:** El lírico expresa emociones y la subjetividad de un yo poético, por lo general en verso. El narrativo cuenta hechos mediante un narrador (cuento, novela, fábula). El ensayo es un texto argumentativo en prosa, no dramático. **Clave para el examen:** Acotaciones y diálogo indican género dramático. Narrador y acciones, narrativo. Yo poético y emociones, lírico.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mcq-018": {
+    "explanation": "**El problema:** Hay que conocer cómo están organizados los Estándares Básicos de Competencias del Lenguaje del MEN, que son un referente obligado del conocimiento específico del área. **Por qué es correcta:** Los Estándares organizan las competencias en cinco factores: 1) producción textual; 2) comprensión e interpretación textual; 3) literatura; 4) **medios de comunicación y otros sistemas simbólicos**; y 5) ética de la comunicación, que es transversal. Analizar anuncios de televisión, memes y carteles (lenguajes no verbales o mixtos) para interpretar sus estrategias y estereotipos es propio del cuarto factor. **Por qué fallan los distractores:** La literatura trabaja con obras literarias y la producción textual con la escritura propia de los estudiantes. La ética de la comunicación atiende el respeto, la diversidad y los principios de interacción. Podría tocarse de manera secundaria, pero el centro de la actividad son los medios. **Clave para el examen:** Los estándares se agrupan por conjuntos de grados (1.º a 3.º, 4.º a 5.º, 6.º a 7.º, 8.º a 9.º y 10.º a 11.º) y se organizan en esos cinco factores.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "MEN — Derechos Básicos de Aprendizaje (DBA) de Lenguaje",
+        "url": "https://www.colombiaaprende.edu.co/sites/default/files/files_public/2022-06/DBA_Lenguaje-min.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mr-001": {
+    "explanation": "**El problema:** Los conectores organizan las relaciones lógicas del texto. Usarlos bien es un criterio central al evaluar la escritura y la comprensión. **Por qué son correctas:** \"Sin embargo\", \"no obstante\" y \"en cambio\" introducen una idea que se opone, limita o contrasta con la anterior. Son conectores adversativos o de contraste, igual que \"pero\", \"aunque\" o \"por el contrario\". **Por qué fallan los distractores:** \"Por lo tanto\" introduce una consecuencia (consecutivo). \"Además\" suma información (aditivo). \"Es decir\" reformula o explica lo dicho (explicativo). **Clave para el examen:** Agrupe los conectores por su relación lógica y pruebe a sustituirlos. Si \"sin embargo\" se puede cambiar por \"pero\" sin alterar el sentido, es adversativo.",
+    "example": "Conectores por función:\n\n• **Adición**: además, asimismo, también.\n• **Contraste**: sin embargo, no obstante, en cambio, por el contrario.\n• **Causa**: porque, ya que, debido a que.\n• **Consecuencia**: por lo tanto, por consiguiente, así que.\n• **Explicación**: es decir, o sea, en otras palabras.\n• **Conclusión**: en conclusión, en síntesis, finalmente.",
+    "resources": [
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      }
+    ]
+  },
+  "cnsc-lcast-mr-002": {
+    "explanation": "**El problema:** Los Lineamientos Curriculares y los Estándares del Lenguaje entienden la escritura como un proceso de construcción de sentido con un propósito comunicativo, no como la copia de un producto correcto. **Por qué son correctas:** El enfoque de escritura como proceso tiene fases. Primero se planea: para qué y para quién escribo y qué ideas voy a incluir. Luego se textualiza o redacta un borrador. Después se revisa con la retroalimentación del docente y de los compañeros. Por último se reescribe y se publica o comparte. Planear según el propósito y el destinatario y reescribir los borradores son el núcleo de ese enfoque. **Por qué fallan los distractores:** Calificar solo la ortografía reduce la escritura a su superficie. Copiar un texto dictado no es producir un texto propio. Escribir de una vez y sin borradores elimina la revisión, que es donde más se aprende. **Clave para el examen:** En las preguntas de didáctica del lenguaje, prefiera las opciones con **propósito comunicativo real, borradores y retroalimentación** frente a las centradas en copiar, dictar o calificar solo la forma.",
+    "resources": [
+      {
+        "label": "MEN — Lineamientos Curriculares de Lengua Castellana",
+        "url": "https://www.mineducacion.gov.co/1621/articles-89869_archivo_pdf8.pdf"
+      },
+      {
+        "label": "MEN — Estándares Básicos de Competencias del Lenguaje",
+        "url": "https://www.mineducacion.gov.co/1621/articles-116042_archivo_pdf1.pdf"
+      },
+      {
+        "label": "MEN — Derechos Básicos de Aprendizaje (DBA) de Lenguaje",
+        "url": "https://www.colombiaaprende.edu.co/sites/default/files/files_public/2022-06/DBA_Lenguaje-min.pdf"
+      }
+    ]
   }
 }

@@ -931,5 +931,452 @@
       "decreto 1421",
       "mr"
     ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Ortografía",
+    "difficulty": "easy",
+    "question": "Un docente de 6.º escribe en el tablero cuatro versiones de la misma oración para trabajar la tilde diacrítica. ¿Cuál está escrita correctamente?",
+    "options": [
+      "Él me dijo que tú libro está en mí casa.",
+      "El me dijo que tu libro esta en mi casa.",
+      "Él me dijo que tu libro está en mi casa.",
+      "Él me dijo que tú libro esta en mi casa."
+    ],
+    "answer": "Él me dijo que tu libro está en mi casa.",
+    "explanation": "\"Él\" es pronombre personal (lleva tilde). \"Tu\" y \"mi\" son posesivos (sin tilde). \"Está\" es el verbo estar, palabra aguda terminada en vocal (lleva tilde).",
+    "tags": [
+      "ortografía",
+      "tilde diacrítica",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Ortografía",
+    "difficulty": "medium",
+    "question": "¿En cuál grupo **todas** las palabras están correctamente acentuadas?",
+    "options": [
+      "exámen, cancion, arbol, lapiz",
+      "árbol, cancion, exámen, lápiz",
+      "arbol, canción, examen, lapiz",
+      "árbol, canción, examen, lápiz"
+    ],
+    "answer": "árbol, canción, examen, lápiz",
+    "explanation": "\"Canción\" es aguda terminada en n, así que lleva tilde. \"Árbol\" y \"lápiz\" son llanas terminadas en consonante distinta de n y s, así que llevan tilde. \"Examen\" es llana terminada en n, así que no lleva tilde.",
+    "tags": [
+      "ortografía",
+      "acentuación",
+      "agudas",
+      "llanas",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Ortografía",
+    "difficulty": "hard",
+    "question": "Según la *Ortografía de la lengua española* (RAE-ASALE, 2010), ¿cuál de estas afirmaciones es correcta?",
+    "options": [
+      "Las mayúsculas no se tildan.",
+      "La conjunción \"o\" lleva tilde cuando va entre cifras, como en \"3 ó 4\".",
+      "Palabras como \"guion\", \"truhan\" y \"rio\" (pasado de reír) se escriben sin tilde porque son monosílabas a efectos ortográficos.",
+      "Los demostrativos \"este\", \"ese\" y \"aquel\" deben tildarse siempre que funcionen como pronombres."
+    ],
+    "answer": "Palabras como \"guion\", \"truhan\" y \"rio\" (pasado de reír) se escriben sin tilde porque son monosílabas a efectos ortográficos.",
+    "explanation": "Desde 2010, la combinación de vocal cerrada átona y vocal abierta tónica (\"io\", \"ua\") siempre cuenta como diptongo al acentuar. Por eso \"guion\" o \"rio\" son monosílabos ortográficos y no llevan tilde. Las mayúsculas sí se tildan, la \"o\" entre cifras ya no lleva tilde y los demostrativos no requieren tilde.",
+    "tags": [
+      "ortografía",
+      "rae 2010",
+      "monosílabos",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Gramática",
+    "difficulty": "medium",
+    "question": "Al revisar el informe de una salida pedagógica, un docente encuentra estas oraciones. ¿Cuál es correcta según la norma?",
+    "options": [
+      "Hubieron muchos inconvenientes durante la salida.",
+      "Habían más de cuarenta estudiantes en el bus.",
+      "Hubo muchos inconvenientes durante la salida.",
+      "Habrán nuevas salidas el próximo semestre."
+    ],
+    "answer": "Hubo muchos inconvenientes durante la salida.",
+    "explanation": "Cuando \"haber\" indica existencia es impersonal: no tiene sujeto y se conjuga siempre en singular (hubo, había, habrá). \"Inconvenientes\" es el complemento directo, no el sujeto, así que el verbo no concuerda con él.",
+    "tags": [
+      "gramática",
+      "haber impersonal",
+      "concordancia",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-005",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Gramática",
+    "difficulty": "medium",
+    "question": "¿Cuál oración está libre de dequeísmo y de queísmo?",
+    "options": [
+      "Pienso de que la reunión es mañana.",
+      "Estoy seguro que vendrá a la entrega de boletines.",
+      "Es posible de que llueva durante la izada de bandera.",
+      "Me acuerdo de que ese día llovía."
+    ],
+    "answer": "Me acuerdo de que ese día llovía.",
+    "explanation": "\"Acordarse **de** algo\" exige la preposición, así que \"me acuerdo de que\" es correcto. \"Pienso de que\" y \"es posible de que\" son dequeísmos (sobra el \"de\"). \"Estoy seguro que\" es queísmo, porque falta el \"de\": \"seguro de algo\" → \"seguro de que\".",
+    "tags": [
+      "gramática",
+      "dequeísmo",
+      "queísmo",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-006",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Sintaxis",
+    "difficulty": "easy",
+    "question": "En la oración \"Ayer llegaron al colegio los nuevos libros de la biblioteca\", ¿cuál es el sujeto?",
+    "options": [
+      "Ayer",
+      "Al colegio",
+      "Los nuevos libros de la biblioteca",
+      "Es un sujeto tácito (ellos)"
+    ],
+    "answer": "Los nuevos libros de la biblioteca",
+    "explanation": "El sujeto concuerda en número y persona con el verbo. \"Llegaron\" (plural) concuerda con \"los nuevos libros de la biblioteca\". El sujeto puede ir después del verbo. \"Ayer\" es un complemento circunstancial de tiempo y \"al colegio\", de lugar.",
+    "tags": [
+      "sintaxis",
+      "sujeto",
+      "concordancia",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-007",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Sintaxis",
+    "difficulty": "hard",
+    "question": "En la oración \"La profesora entregó las notas a los acudientes\", se quieren sustituir el complemento directo y el indirecto por pronombres. ¿Cuál es la forma correcta?",
+    "options": [
+      "La profesora les las entregó.",
+      "La profesora se las entregó.",
+      "La profesora las les entregó.",
+      "La profesora se los entregó."
+    ],
+    "answer": "La profesora se las entregó.",
+    "explanation": "CD = \"las notas\" → \"las\". CI = \"a los acudientes\" → \"les\". Cuando \"le/les\" va antes de \"lo/la/los/las\", se convierte en \"se\": \"se las entregó\". \"Se los\" cambia de forma incorrecta el género del CD (notas es femenino).",
+    "tags": [
+      "sintaxis",
+      "complemento directo",
+      "complemento indirecto",
+      "pronombres",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-008",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Sintaxis",
+    "difficulty": "medium",
+    "question": "¿Cómo se clasifica la oración \"Estudié toda la semana, pero no aprobé el examen\"?",
+    "options": [
+      "Oración compuesta coordinada adversativa.",
+      "Oración compuesta coordinada copulativa.",
+      "Oración compuesta subordinada causal.",
+      "Oración simple."
+    ],
+    "answer": "Oración compuesta coordinada adversativa.",
+    "explanation": "Tiene dos verbos conjugados (estudié, aprobé), así que es compuesta. Las proposiciones son independientes y el nexo \"pero\" expresa oposición: coordinada adversativa. La copulativa suma ideas (y, ni) y la causal expresa causa (porque).",
+    "tags": [
+      "sintaxis",
+      "oración compuesta",
+      "coordinación",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-009",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Semántica",
+    "difficulty": "easy",
+    "question": "En las oraciones \"El **vino** de la cena era chileno\" y \"Mi primo **vino** temprano a la reunión\", ¿qué relación semántica hay entre las dos palabras destacadas?",
+    "options": [
+      "Sinonimia",
+      "Antonimia",
+      "Homonimia",
+      "Hiperonimia"
+    ],
+    "answer": "Homonimia",
+    "explanation": "Se escriben y suenan igual, pero son palabras distintas con origen y significado diferentes: un sustantivo (la bebida) y una forma del verbo \"venir\". Eso es homonimia; en concreto, son homógrafas.",
+    "tags": [
+      "semántica",
+      "homonimia",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-010",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Semántica",
+    "difficulty": "medium",
+    "question": "En el texto \"Compramos rosas, claveles y girasoles para la izada de bandera. **Las flores** adornaron la tarima\", ¿qué relación tiene \"flores\" con las palabras anteriores y qué función cumple en el texto?",
+    "options": [
+      "Es un hipónimo que introduce un tema nuevo.",
+      "Es un antónimo que establece un contraste.",
+      "Es un sinónimo exacto de \"rosas\".",
+      "Es un hiperónimo que retoma lo dicho y da cohesión al texto sin repetir palabras."
+    ],
+    "answer": "Es un hiperónimo que retoma lo dicho y da cohesión al texto sin repetir palabras.",
+    "explanation": "\"Flor\" es el hiperónimo (término general) de rosa, clavel y girasol, que son sus hipónimos. Usarlo para retomar el referente es un mecanismo de cohesión léxica: evita la repetición y mantiene el hilo del texto.",
+    "tags": [
+      "semántica",
+      "hiperonimia",
+      "cohesión",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-011",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Semántica",
+    "difficulty": "easy",
+    "question": "En un informe, un docente escribe: \"Andrés es una joya: siempre ayuda a sus compañeros\". ¿Cómo se usa la palabra \"joya\" en este enunciado?",
+    "options": [
+      "Con sentido connotativo, pues sugiere una valoración positiva del estudiante.",
+      "Con sentido denotativo, pues se refiere a un objeto de valor.",
+      "Como tecnicismo del lenguaje académico.",
+      "Como un error de impropiedad léxica."
+    ],
+    "answer": "Con sentido connotativo, pues sugiere una valoración positiva del estudiante.",
+    "explanation": "El sentido denotativo de \"joya\" es un adorno de metal o piedra preciosa. Aquí el sentido es figurado y valorativo: Andrés es una persona valiosa. Ese sentido añadido es la connotación.",
+    "tags": [
+      "semántica",
+      "denotación",
+      "connotación",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-012",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Tipologías textuales",
+    "difficulty": "easy",
+    "question": "Lea el fragmento:\n\n\"La fotosíntesis es el proceso mediante el cual las plantas transforman la energía luminosa en energía química. Se lleva a cabo en los cloroplastos y requiere agua, dióxido de carbono y luz.\"\n\n¿A qué tipología textual pertenece?",
+    "options": [
+      "Narrativa",
+      "Argumentativa",
+      "Expositiva",
+      "Instructiva"
+    ],
+    "answer": "Expositiva",
+    "explanation": "Su propósito es explicar un fenómeno con información objetiva: definición, lugar y condiciones. No cuenta una historia (narrativa), no defiende una postura (argumentativa) y no da pasos para hacer algo (instructiva).",
+    "tags": [
+      "tipologías textuales",
+      "texto expositivo",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-013",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Funciones del lenguaje",
+    "difficulty": "medium",
+    "question": "Al empezar una izada de bandera, la coordinadora toma el micrófono y pregunta: \"¿Me escuchan bien los del fondo? ¿Sí? Listo\". Según las funciones del lenguaje de Jakobson, ¿cuál predomina?",
+    "options": [
+      "Función referencial",
+      "Función fática",
+      "Función metalingüística",
+      "Función poética"
+    ],
+    "answer": "Función fática",
+    "explanation": "La función fática se centra en el canal: abrir, comprobar o mantener la comunicación (\"¿me escuchan?\", \"aló\"). La referencial informa, la metalingüística habla del propio código y la poética se centra en la forma del mensaje.",
+    "tags": [
+      "funciones del lenguaje",
+      "jakobson",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-014",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Literatura",
+    "difficulty": "medium",
+    "question": "En un poema escrito por un estudiante aparece el verso \"El viento susurraba secretos entre los árboles\". ¿Qué figura literaria predomina?",
+    "options": [
+      "Hipérbole",
+      "Símil",
+      "Anáfora",
+      "Personificación (prosopopeya)"
+    ],
+    "answer": "Personificación (prosopopeya)",
+    "explanation": "Se atribuyen acciones humanas (susurrar, tener secretos) a un ser inanimado (el viento). Eso es personificación. No hay exageración (hipérbole), ni comparación con \"como\" (símil), ni repetición al inicio de los versos (anáfora).",
+    "tags": [
+      "literatura",
+      "figuras literarias",
+      "personificación",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-015",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Literatura colombiana",
+    "difficulty": "medium",
+    "question": "Una docente de 9.º propone leer una novela colombiana publicada en 1924, en la que el protagonista, Arturo Cova, se adentra en la selva y denuncia la explotación de los caucheros. ¿Qué obra es?",
+    "options": [
+      "*María*, de Jorge Isaacs.",
+      "*La vorágine*, de José Eustasio Rivera.",
+      "*Cien años de soledad*, de Gabriel García Márquez.",
+      "*La marquesa de Yolombó*, de Tomás Carrasquilla."
+    ],
+    "answer": "*La vorágine*, de José Eustasio Rivera.",
+    "explanation": "*La vorágine* (1924) es la gran novela de la selva y de denuncia social de la literatura colombiana. *María* (1867) es romántica, *Cien años de soledad* (1967) pertenece al realismo mágico y *La marquesa de Yolombó* es costumbrista.",
+    "tags": [
+      "literatura colombiana",
+      "la vorágine",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-016",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Literatura",
+    "difficulty": "medium",
+    "question": "En un relato, una lluvia de flores amarillas cae sobre el pueblo cuando muere un personaje y una joven asciende al cielo mientras tiende sábanas. El narrador cuenta estos hechos con total naturalidad, como parte de la vida cotidiana. ¿A qué corriente corresponde este rasgo?",
+    "options": [
+      "Romanticismo",
+      "Costumbrismo",
+      "Realismo mágico",
+      "Modernismo"
+    ],
+    "answer": "Realismo mágico",
+    "explanation": "El realismo mágico integra lo extraordinario en la realidad cotidiana y lo narra sin asombro. Los hechos descritos aparecen en *Cien años de soledad* de García Márquez, la obra emblemática de esta corriente.",
+    "tags": [
+      "literatura",
+      "realismo mágico",
+      "garcía márquez",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-017",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Literatura",
+    "difficulty": "easy",
+    "question": "Los estudiantes leen un texto compuesto por diálogos entre personajes, con acotaciones entre paréntesis que indican gestos y movimientos, escrito para ser representado ante un público. ¿A qué género literario pertenece?",
+    "options": [
+      "Lírico",
+      "Narrativo",
+      "Dramático",
+      "Ensayístico"
+    ],
+    "answer": "Dramático",
+    "explanation": "El género dramático (teatro) se construye con diálogos y acotaciones y está pensado para representarse. El lírico expresa la subjetividad del yo poético, el narrativo cuenta hechos a través de un narrador y el ensayo argumenta ideas.",
+    "tags": [
+      "literatura",
+      "géneros literarios",
+      "drama",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mcq-018",
+    "type": "multiple-choice",
+    "topic": "Lengua Castellana",
+    "subtopic": "Estándares del Lenguaje",
+    "difficulty": "hard",
+    "question": "Una docente de 9.º planea una unidad en la que sus estudiantes analizan anuncios publicitarios de televisión, memes y carteles para identificar sus estrategias persuasivas y los estereotipos que transmiten. ¿Con cuál factor de organización de los Estándares Básicos de Competencias del Lenguaje se relaciona principalmente?",
+    "options": [
+      "Literatura.",
+      "Producción textual.",
+      "Ética de la comunicación.",
+      "Medios de comunicación y otros sistemas simbólicos."
+    ],
+    "answer": "Medios de comunicación y otros sistemas simbólicos.",
+    "explanation": "Los Estándares del Lenguaje se organizan en cinco factores: producción textual; comprensión e interpretación textual; literatura; medios de comunicación y otros sistemas simbólicos; y ética de la comunicación. Analizar publicidad, memes e imágenes corresponde a medios y sistemas simbólicos.",
+    "tags": [
+      "estándares",
+      "lenguaje",
+      "medios de comunicación",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mr-001",
+    "type": "multiple-response",
+    "topic": "Lengua Castellana",
+    "subtopic": "Cohesión y conectores",
+    "difficulty": "medium",
+    "question": "Un docente quiere enseñar a sus estudiantes a expresar **oposición o contraste** entre ideas en sus ensayos. ¿Cuáles de estos conectores cumplen esa función? (Seleccione TRES)",
+    "options": [
+      "Sin embargo",
+      "No obstante",
+      "En cambio",
+      "Por lo tanto",
+      "Además",
+      "Es decir"
+    ],
+    "answers": [
+      "Sin embargo",
+      "No obstante",
+      "En cambio"
+    ],
+    "explanation": "\"Sin embargo\", \"no obstante\" y \"en cambio\" son adversativos o de contraste. \"Por lo tanto\" es consecutivo (consecuencia), \"además\" es aditivo y \"es decir\" es explicativo (reformulación).",
+    "tags": [
+      "conectores",
+      "cohesión",
+      "escritura",
+      "mr"
+    ]
+  },
+  {
+    "id": "cnsc-lcast-mr-002",
+    "type": "multiple-response",
+    "topic": "Lengua Castellana",
+    "subtopic": "Didáctica del lenguaje",
+    "difficulty": "hard",
+    "question": "Un docente de 8.º quiere trabajar la escritura como un **proceso**, en coherencia con los Lineamientos Curriculares y los Estándares del Lenguaje. ¿Cuáles acciones son coherentes con ese enfoque? (Seleccione DOS)",
+    "options": [
+      "Planear el texto con los estudiantes: propósito, destinatario e ideas antes de redactar.",
+      "Revisar y reescribir borradores a partir de la retroalimentación del docente y de los compañeros.",
+      "Calificar únicamente la ortografía del producto final.",
+      "Dictar un texto modelo para que los estudiantes lo copien sin errores.",
+      "Pedir que el texto se escriba en una sola sesión, sin borradores, para medir la espontaneidad."
+    ],
+    "answers": [
+      "Planear el texto con los estudiantes: propósito, destinatario e ideas antes de redactar.",
+      "Revisar y reescribir borradores a partir de la retroalimentación del docente y de los compañeros."
+    ],
+    "explanation": "Escribir como proceso implica planear, textualizar (redactar), revisar y reescribir. Planear según el propósito y el destinatario y reescribir con retroalimentación son el núcleo del enfoque. Calificar solo la ortografía, copiar un modelo o escribir de una sola vez reducen la escritura a un producto.",
+    "tags": [
+      "didáctica",
+      "escritura como proceso",
+      "lineamientos",
+      "mr"
+    ]
   }
 ]
