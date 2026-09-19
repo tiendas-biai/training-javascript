@@ -751,5 +751,131 @@
         "url": "https://www.colombiaaprende.edu.co/sites/default/files/files_public/2022-06/DBA_Lenguaje-min.pdf"
       }
     ]
+  },
+  "cnsc-norm-mcq-001": {
+    "explanation": "**El problema:** Hay que conocer la estructura del sistema educativo formal que define la Ley 115 de 1994, la Ley General de Educación. **Por qué es correcta:** El artículo 11 organiza la educación formal en tres niveles. Preescolar tiene al menos un grado obligatorio (transición). La educación básica tiene **nueve grados** en dos ciclos: básica primaria, de cinco grados (1.º a 5.º), y básica secundaria, de cuatro grados (6.º a 9.º). La educación media tiene dos grados (10.º y 11.º) y culmina con el título de bachiller. **Por qué fallan los distractores:** Los once grados confunden básica y media. Decir que la secundaria es parte de la media es falso, porque la secundaria es un ciclo de la básica. \"Cuatro de primaria y cinco de secundaria\" invierte las cifras. **Clave para el examen:** La cadena es preescolar → básica (5 + 4) → media (2). En Colombia \"secundaria\" (6.º a 9.º) y \"media\" (10.º y 11.º) son etapas distintas.",
+    "resources": [
+      {
+        "label": "Ley 115 de 1994 — Ley General de Educación (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=292"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-002": {
+    "explanation": "**El problema:** En el concurso suelen confundirse los **órganos del gobierno escolar** con las **instancias de participación**, y el examen ofrece mezclas de ambas. **Por qué es correcta:** La Ley 115 (art. 142) y el Decreto 1860 de 1994, hoy compilado en el Decreto 1075 de 2015, establecen que el gobierno escolar de los establecimientos estatales está conformado por el **rector**, que representa al establecimiento y ejecuta las decisiones del gobierno escolar; el **consejo directivo**, instancia directiva de participación de la comunidad y de orientación académica y administrativa; y el **consejo académico**, instancia superior de la orientación pedagógica. **Por qué fallan los distractores:** El personero, el contralor estudiantil y el consejo de padres son mecanismos de participación. La secretaría de educación es una autoridad externa. El comité escolar de convivencia viene de la Ley 1620 de 2013. **Clave para el examen:** El gobierno escolar son tres: rector, consejo directivo y consejo académico.",
+    "resources": [
+      {
+        "label": "Ley 115 de 1994 — Ley General de Educación (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=292"
+      },
+      {
+        "label": "Decreto 1860 de 1994 — Gobierno escolar y PEI (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=1289"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-003": {
+    "explanation": "**El problema:** Hay que conocer quién ejerce la personería estudiantil y cómo se elige, un tema frecuente en las preguntas de participación y democracia escolar. **Por qué es correcta:** El artículo 94 de la Ley 115 establece que en todos los establecimientos se elegirá como personero a un estudiante del **último grado que ofrezca la institución**. Su función es promover el ejercicio de los derechos y deberes de los estudiantes consagrados en la Constitución, las leyes, los reglamentos y el manual de convivencia. Lo eligen los estudiantes por voto (sistema de mayoría simple, mediante voto secreto, según la reglamentación). **Por qué fallan los distractores:** Un docente o un padre no pueden ser personeros de los estudiantes. El rector no lo designa, porque la elección es democrática. **Clave para el examen:** Personero significa estudiante del último grado elegido por los estudiantes para promover derechos y deberes. No confundirlo con el representante de los estudiantes ante el consejo directivo.",
+    "resources": [
+      {
+        "label": "Ley 115 de 1994 — Ley General de Educación (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=292"
+      },
+      {
+        "label": "Decreto 1860 de 1994 — Gobierno escolar y PEI (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=1289"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-004": {
+    "explanation": "**El problema:** Hay que saber qué áreas debe ofrecer obligatoriamente toda institución en la educación básica. **Por qué es correcta:** El artículo 23 de la Ley 115 enumera las áreas obligatorias y fundamentales que toda institución debe ofrecer según su currículo y PEI: ciencias naturales y educación ambiental; ciencias sociales, historia, geografía, constitución política y democracia; educación artística y cultural; educación ética y en valores humanos; educación física, recreación y deportes; educación religiosa; **humanidades, lengua castellana e idiomas extranjeros**; matemáticas; y tecnología e informática. **Por qué fallan los distractores:** La contabilidad, la programación o la mecánica pueden ofrecerse como optativas o en la media técnica, gracias a la autonomía escolar, pero no son áreas fundamentales de la ley. **Clave para el examen:** El cargo de Lengua Castellana pertenece al área de \"humanidades, lengua castellana e idiomas extranjeros\".",
+    "resources": [
+      {
+        "label": "Ley 115 de 1994 — Ley General de Educación (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=292"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-005": {
+    "explanation": "**El problema:** Hay que distinguir quiénes son docentes y quiénes directivos docentes según el Decreto Ley 1278 de 2002, el estatuto que rige a quienes ingresan por el concurso. **Por qué es correcta:** El decreto define como directivos docentes a quienes cumplen funciones de dirección, planeación, coordinación, administración, orientación y programación en las instituciones. Los cargos son **rector** (o **director rural**, en establecimientos rurales de preescolar y básica primaria) y **coordinador**. Cada uno tiene requisitos propios de título y experiencia. **Por qué fallan los distractores:** El docente orientador y el jefe de área desempeñan funciones docentes. El secretario académico y el bibliotecario son personal administrativo. El supervisor pertenece a la secretaría de educación y el personero es un estudiante. **Clave para el examen:** Directivos docentes son rector, director rural y coordinador. En el concurso, su puntaje mínimo en la prueba de aptitudes es mayor (70/100) que el de los docentes de aula (60/100).",
+    "resources": [
+      {
+        "label": "Decreto Ley 1278 de 2002 — Estatuto de Profesionalización Docente (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=5353"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-006": {
+    "explanation": "**El problema:** El Decreto 1278 abrió la carrera docente a profesionales no licenciados, pero con una condición que suele preguntarse. **Por qué es correcta:** El parágrafo del artículo 12 del Decreto 1278 (reglamentado por el Decreto 2035 de 2005) establece que los profesionales con título diferente al de licenciado en educación deben acreditar, al término del periodo de prueba, que **cursan o han terminado un posgrado en educación**, o que han realizado un **programa de pedagogía** bajo la responsabilidad de una institución de educación superior. **Por qué fallan los distractores:** No se exige experiencia mínima para cumplir esta condición. El 80 % es el puntaje de ascenso en la evaluación de competencias, no un requisito del periodo de prueba. El título profesional por sí solo no basta. **Clave para el examen:** Profesional no licenciado significa formación pedagógica acreditada al terminar el periodo de prueba.",
+    "resources": [
+      {
+        "label": "Decreto Ley 1278 de 2002 — Estatuto de Profesionalización Docente (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=5353"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-007": {
+    "explanation": "**El problema:** Hay que conocer qué pasa después de ganar el concurso: el nombramiento en periodo de prueba y su evaluación. **Por qué es correcta:** Según el Decreto 1278, quien gana el concurso es nombrado en periodo de prueba hasta terminar el año escolar, siempre que haya desempeñado el cargo al menos **cuatro meses** (art. 12). Al final del año se hace la evaluación del periodo de prueba, que abarca desempeño y competencias (art. 31). Con **60 % o más** la calificación es satisfactoria y la persona se inscribe en el Escalafón Docente en el grado que corresponda a sus títulos. Con 72 %, la docente la supera. **Por qué fallan los distractores:** El 80 % corresponde al ascenso, no al periodo de prueba. No hay provisionalidad para quien aprueba. El umbral es 60 % y no 75 %. **Clave para el examen:** En el periodo de prueba hay que servir 4 meses como mínimo y obtener 60 % o más para inscribirse en el escalafón. Por debajo de 60 %, el docente es retirado del servicio.",
+    "resources": [
+      {
+        "label": "Decreto Ley 1278 de 2002 — Estatuto de Profesionalización Docente (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=5353"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-008": {
+    "explanation": "**El problema:** En Colombia conviven dos estatutos docentes: el **Decreto 2277 de 1979** (antiguo) y el **Decreto Ley 1278 de 2002** (nuevo, aplicable a quienes ingresan por concurso). El examen suele usar el antiguo como distractor. **Por qué es correcta:** El artículo 20 del Decreto 1278 dice que el Escalafón Docente está conformado por **tres grados**, establecidos según la formación académica, y que cada grado tiene **cuatro niveles salariales (A, B, C y D)**. El grado 1 es para normalistas superiores, el grado 2 para licenciados o profesionales con formación pedagógica y el grado 3 para licenciados o profesionales con maestría o doctorado. El ascenso y la reubicación salarial dependen de la evaluación de competencias. **Por qué fallan los distractores:** Los 14 grados con ascenso por antigüedad y cursos corresponden al Decreto 2277. Las otras dos opciones no existen en ninguno de los estatutos. **Clave para el examen:** El Decreto 1278 tiene 3 grados × 4 niveles, basados en formación y evaluación. El Decreto 2277 tiene 14 grados, basados en antigüedad y capacitación.",
+    "example": "Comparación rápida:\n\n• **Decreto 2277 de 1979**: 14 grados; se asciende por tiempo de servicio, títulos y cursos de capacitación.\n• **Decreto 1278 de 2002**: 3 grados según formación, con 4 niveles salariales (A a D) en cada grado; se asciende o reubica mediante evaluación de competencias.",
+    "resources": [
+      {
+        "label": "Decreto Ley 1278 de 2002 — Estatuto de Profesionalización Docente (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=5353"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-009": {
+    "explanation": "**El problema:** Hay que conocer las consecuencias de la evaluación anual de desempeño, que es el mecanismo de **permanencia** en la carrera según el Decreto 1278. **Por qué es correcta:** El Decreto 1278 establece evaluaciones de periodo de prueba, de desempeño (anual) y de competencias (para ascenso o reubicación). Dispone expresamente que el docente que obtenga una calificación inferior al 60 %, considerada no satisfactoria, durante **dos años consecutivos** en la evaluación de desempeño, será **excluido del escalafón y, por lo tanto, retirado del servicio**. **Por qué fallan los distractores:** Ni el traslado ni la pérdida de nivel salarial son las consecuencias previstas. Tampoco existe la obligación de volver a concursar. En el caso de los directivos docentes que venían de la docencia estatal, la consecuencia es regresar a la docencia cuando haya vacante. **Clave para el examen:** La permanencia se basa en el desempeño: dos años seguidos por debajo de 60 % llevan al retiro del servicio.",
+    "resources": [
+      {
+        "label": "Decreto Ley 1278 de 2002 — Estatuto de Profesionalización Docente (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=5353"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-010": {
+    "explanation": "**El problema:** Hay que entender qué es el Decreto 1075 de 2015 y cómo se relaciona con las normas que compila. Se cita mucho y a veces se confunde con una ley nueva. **Por qué es correcta:** En 2015 el Gobierno expidió decretos únicos reglamentarios por sector para compilar y racionalizar la normativa. El **Decreto 1075 de 2015** es el Decreto Único Reglamentario del Sector Educación. Reúne en un solo cuerpo, organizado por libros, partes y títulos, las normas reglamentarias vigentes: gobierno escolar y PEI (antes en el Decreto 1860), evaluación de los estudiantes (antes en el Decreto 1290) y reglamentación de concursos, entre otras. Por eso muchas normas se citan hoy \"compiladas en el Decreto 1075\". **Por qué fallan los distractores:** Es un decreto, no una ley, y no reemplaza a la Ley 115. El Decreto 1278 es un decreto ley (con fuerza de ley) y sigue vigente. La CNSC es un órgano constitucional (art. 130 de la Constitución), no la crea este decreto. **Clave para el examen:** El Decreto 1075 compila la reglamentación del sector educación; no crea un régimen nuevo.",
+    "resources": [
+      {
+        "label": "Decreto 1075 de 2015 — Decreto Único Reglamentario del Sector Educación (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=77913"
+      }
+    ]
+  },
+  "cnsc-norm-mcq-011": {
+    "explanation": "**El problema:** Hay que clasificar una situación de convivencia y activar el protocolo correcto. Los casos de convivencia escolar son muy frecuentes en el concurso. **Por qué es correcta:** El Decreto 1965 de 2013, que reglamenta la Ley 1620, clasifica las situaciones en tres tipos. Las situaciones **tipo III** son agresiones escolares que constituyen presuntos delitos, por ejemplo contra la libertad, integridad y formación sexual, o cualquier otro delito de la ley penal. Herir con arma blanca y causar incapacidad es un presunto delito de lesiones personales. El protocolo exige garantizar la atención en salud, informar a los padres o acudientes, informar de inmediato a la **Policía de Infancia y Adolescencia**, convocar al comité escolar de convivencia y reportar el caso en el Sistema de Información Unificado de Convivencia Escolar. **Por qué fallan los distractores:** El tipo I son conflictos esporádicos sin daño al cuerpo o a la salud. El tipo II son agresiones, acoso o ciberacoso que no son delito, pero sí repetidos o con daño al cuerpo o a la salud sin incapacidad. La ruta aplica también en descansos, salidas y entornos escolares. **Clave para el examen:** Si hay un posible delito, es tipo III y hay que informar a la autoridad competente, además de las acciones internas.",
+    "example": "Clasificación rápida (Decreto 1965 de 2013):\n\n• **Tipo I**: conflictos manejados de forma inadecuada o esporádicos, sin daño al cuerpo ni a la salud. Se atienden con mediación en la institución.\n• **Tipo II**: agresión, acoso o ciberacoso que no es delito, pero es repetido o sistemático, o causa daño al cuerpo o a la salud sin incapacidad. Se atienden con el protocolo, se remiten a salud o a protección si hace falta y se informa al comité.\n• **Tipo III**: presuntos delitos. Se informa a la Policía de Infancia y Adolescencia y se activa la ruta externa.",
+    "resources": [
+      {
+        "label": "Ley 1620 de 2013 — Sistema Nacional de Convivencia Escolar (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=52287"
+      },
+      {
+        "label": "Decreto 1965 de 2013 — Reglamenta la Ley 1620: situaciones tipo I, II y III (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=54537"
+      }
+    ]
+  },
+  "cnsc-norm-mr-001": {
+    "explanation": "**El problema:** Hay que conocer la estructura de la Ruta de Atención Integral para la Convivencia Escolar que crea la Ley 1620 de 2013. **Por qué son correctas:** La ruta tiene **cuatro componentes**. **Promoción** fomenta el mejoramiento de la convivencia y el clima escolar (políticas, manual de convivencia, proyectos pedagógicos). **Prevención** interviene de forma oportuna sobre los factores de riesgo que pueden afectar la convivencia. **Atención** asiste de manera inmediata y pertinente cuando ocurre una situación, mediante los protocolos de los tipos I, II y III. **Seguimiento** verifica y evalúa las acciones y reporta en el sistema de información. En esta pregunta solo aparecen los tres primeros, así que seguimiento no está entre las opciones. **Por qué fallan los distractores:** La ley tiene un enfoque formativo, restaurativo y de garantía de derechos. La sanción puede existir en el manual de convivencia, pero no es un componente de la ruta. La expulsión y la judicialización tampoco lo son; la judicialización corresponde a las autoridades externas en los casos tipo III. **Clave para el examen:** Para recordar los componentes sirve la sigla **P-P-A-S**: promoción, prevención, atención y seguimiento.",
+    "resources": [
+      {
+        "label": "Ley 1620 de 2013 — Sistema Nacional de Convivencia Escolar (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=52287"
+      },
+      {
+        "label": "Decreto 1965 de 2013 — Reglamenta la Ley 1620: situaciones tipo I, II y III (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=54537"
+      }
+    ]
   }
 }

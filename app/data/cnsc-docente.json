@@ -1378,5 +1378,273 @@
       "lineamientos",
       "mr"
     ]
+  },
+  {
+    "id": "cnsc-norm-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Ley 115 de 1994",
+    "difficulty": "easy",
+    "question": "Según la Ley 115 de 1994, ¿cómo está organizada la educación básica?",
+    "options": [
+      "Once grados: seis de primaria y cinco de secundaria.",
+      "Nueve grados: cinco de básica primaria y cuatro de básica secundaria.",
+      "Cinco grados de primaria; la secundaria hace parte de la educación media.",
+      "Nueve grados: cuatro de primaria y cinco de secundaria."
+    ],
+    "answer": "Nueve grados: cinco de básica primaria y cuatro de básica secundaria.",
+    "explanation": "La educación formal comprende preescolar (mínimo un grado obligatorio), básica de nueve grados en dos ciclos (primaria de 1.º a 5.º y secundaria de 6.º a 9.º) y media de dos grados (10.º y 11.º).",
+    "tags": [
+      "ley 115",
+      "niveles educativos",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Gobierno escolar",
+    "difficulty": "medium",
+    "question": "En una jornada de inducción, una docente nueva pregunta cuáles son los órganos del gobierno escolar de un establecimiento educativo estatal. ¿Cuál es la respuesta correcta?",
+    "options": [
+      "El personero de los estudiantes, el contralor estudiantil y el consejo de padres.",
+      "La secretaría de educación, el rector y los coordinadores.",
+      "El rector, el consejo directivo y el consejo académico.",
+      "El comité escolar de convivencia, el personero y el rector."
+    ],
+    "answer": "El rector, el consejo directivo y el consejo académico.",
+    "explanation": "La Ley 115 (art. 142) y el Decreto 1860 de 1994 establecen que el gobierno escolar está conformado por el rector, el consejo directivo y el consejo académico. El personero, el consejo de padres y el comité de convivencia son instancias de participación, no órganos del gobierno escolar.",
+    "tags": [
+      "gobierno escolar",
+      "ley 115",
+      "decreto 1860",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Gobierno escolar",
+    "difficulty": "medium",
+    "question": "Un colegio que ofrece hasta grado 11.º organiza la elección del personero de los estudiantes. Según la Ley 115 de 1994, ¿quién puede ser personero?",
+    "options": [
+      "Un docente elegido por el consejo académico.",
+      "Un padre de familia elegido por la asamblea de padres.",
+      "Cualquier estudiante de la institución designado por el rector.",
+      "Un estudiante del último grado que ofrezca la institución, elegido por los estudiantes."
+    ],
+    "answer": "Un estudiante del último grado que ofrezca la institución, elegido por los estudiantes.",
+    "explanation": "El artículo 94 de la Ley 115 dispone que en cada establecimiento se elija a un estudiante del último grado que ofrezca la institución como personero, encargado de promover los derechos y deberes de los estudiantes. Lo eligen los estudiantes, no el rector.",
+    "tags": [
+      "personero",
+      "participación",
+      "ley 115",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Ley 115 de 1994",
+    "difficulty": "easy",
+    "question": "¿Cuál de las siguientes es un área obligatoria y fundamental de la educación básica según el artículo 23 de la Ley 115 de 1994?",
+    "options": [
+      "Contabilidad y finanzas.",
+      "Humanidades, lengua castellana e idiomas extranjeros.",
+      "Programación de computadores.",
+      "Mecánica automotriz."
+    ],
+    "answer": "Humanidades, lengua castellana e idiomas extranjeros.",
+    "explanation": "El artículo 23 fija las áreas obligatorias y fundamentales, entre ellas \"Humanidades, lengua castellana e idiomas extranjeros\", el área del cargo de Lengua Castellana. Las otras opciones pueden existir como optativas o en la media técnica, pero no son áreas fundamentales.",
+    "tags": [
+      "ley 115",
+      "áreas obligatorias",
+      "currículo",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-005",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Decreto 1278 de 2002",
+    "difficulty": "medium",
+    "question": "Según el Estatuto de Profesionalización Docente (Decreto Ley 1278 de 2002), ¿cuáles son cargos de **directivo docente**?",
+    "options": [
+      "Rector, director rural y coordinador.",
+      "Rector, docente orientador y jefe de área.",
+      "Coordinador, secretario académico y bibliotecario.",
+      "Supervisor de la secretaría de educación, rector y personero."
+    ],
+    "answer": "Rector, director rural y coordinador.",
+    "explanation": "El Decreto 1278 distingue docentes de directivos docentes. Los directivos docentes son el rector (o director rural) y el coordinador. El docente orientador y el jefe de área cumplen funciones docentes; el secretario y el bibliotecario son personal administrativo.",
+    "tags": [
+      "decreto 1278",
+      "directivos docentes",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-006",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Decreto 1278 de 2002",
+    "difficulty": "hard",
+    "question": "Un profesional con título distinto al de licenciado en educación gana el concurso y es nombrado en periodo de prueba. Según el Decreto 1278 de 2002, ¿qué debe acreditar al término del periodo de prueba?",
+    "options": [
+      "Que tiene al menos cinco años de experiencia docente certificada.",
+      "Que cursa o ha terminado un posgrado en educación, o que ha realizado un programa de pedagogía en una institución de educación superior.",
+      "Que obtuvo más de 80 % en la prueba de conocimientos del concurso.",
+      "Nada adicional: el título profesional es suficiente para inscribirse en el escalafón."
+    ],
+    "answer": "Que cursa o ha terminado un posgrado en educación, o que ha realizado un programa de pedagogía en una institución de educación superior.",
+    "explanation": "El Decreto 1278 permite el ingreso de profesionales no licenciados, pero exige que al terminar el periodo de prueba acrediten formación pedagógica: un posgrado en educación (en curso o terminado) o un programa de pedagogía de una institución de educación superior.",
+    "tags": [
+      "decreto 1278",
+      "periodo de prueba",
+      "profesionales no licenciados",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-007",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Decreto 1278 de 2002",
+    "difficulty": "medium",
+    "question": "Una docente fue nombrada en periodo de prueba en marzo y en noviembre obtiene 72 % en la evaluación de desempeño y de competencias del periodo de prueba. Según el Decreto 1278 de 2002, ¿qué ocurre?",
+    "options": [
+      "Debe repetir el periodo de prueba el año siguiente, porque no alcanzó el 80 %.",
+      "Queda nombrada en provisionalidad hasta un nuevo concurso.",
+      "Es inscrita en el Escalafón Docente en el grado que corresponda a sus títulos, porque la calificación es satisfactoria (60 % o más).",
+      "Es retirada del servicio, porque la calificación mínima es 75 %."
+    ],
+    "answer": "Es inscrita en el Escalafón Docente en el grado que corresponda a sus títulos, porque la calificación es satisfactoria (60 % o más).",
+    "explanation": "El periodo de prueba dura hasta terminar el año escolar, siempre que se hayan servido al menos 4 meses. Con 60 % o más en la evaluación del periodo de prueba, la calificación es satisfactoria y el docente se inscribe en el escalafón. Por debajo de 60 %, es retirado del servicio.",
+    "tags": [
+      "decreto 1278",
+      "periodo de prueba",
+      "escalafón",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-008",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Decreto 1278 de 2002",
+    "difficulty": "hard",
+    "question": "¿Cuál afirmación describe correctamente el Escalafón Docente del Decreto 1278 de 2002?",
+    "options": [
+      "Tiene catorce grados y se asciende principalmente por antigüedad y cursos de capacitación.",
+      "Tiene tres grados definidos por la formación académica, y cada grado tiene cuatro niveles salariales (A, B, C y D).",
+      "Tiene un único grado y el salario depende solo de los años de servicio.",
+      "Tiene cinco grados definidos por el número de estudiantes a cargo."
+    ],
+    "answer": "Tiene tres grados definidos por la formación académica, y cada grado tiene cuatro niveles salariales (A, B, C y D).",
+    "explanation": "El artículo 20 del Decreto 1278 establece tres grados según la formación (1: normalista superior; 2: licenciado o profesional con formación pedagógica; 3: con maestría o doctorado), con cuatro niveles salariales A-D en cada uno. Los catorce grados por antigüedad corresponden al estatuto anterior (Decreto 2277 de 1979).",
+    "tags": [
+      "decreto 1278",
+      "escalafón",
+      "decreto 2277",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-009",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Decreto 1278 de 2002",
+    "difficulty": "medium",
+    "question": "Según el Decreto 1278 de 2002, ¿qué consecuencia tiene para un docente obtener una calificación inferior al 60 % (no satisfactoria) en la evaluación **anual de desempeño** durante dos años consecutivos?",
+    "options": [
+      "Es trasladado a otra institución de la misma entidad territorial.",
+      "Pierde un nivel salarial, pero conserva el grado en el escalafón.",
+      "Es excluido del escalafón y, por lo tanto, retirado del servicio.",
+      "Debe presentar de nuevo el concurso de méritos para conservar su cargo."
+    ],
+    "answer": "Es excluido del escalafón y, por lo tanto, retirado del servicio.",
+    "explanation": "El decreto dispone que el docente con calificación no satisfactoria (inferior a 60 %) durante dos años consecutivos en la evaluación de desempeño será excluido del escalafón y retirado del servicio. Para los directivos que venían de la docencia estatal, la consecuencia es regresar a la docencia.",
+    "tags": [
+      "decreto 1278",
+      "evaluación de desempeño",
+      "permanencia",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-010",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Decreto 1075 de 2015",
+    "difficulty": "medium",
+    "question": "En los simulacros del concurso se cita con frecuencia el Decreto 1075 de 2015. ¿Qué es este decreto?",
+    "options": [
+      "Una ley que reemplazó a la Ley General de Educación.",
+      "El nuevo estatuto docente que derogó el Decreto 1278 de 2002.",
+      "El Decreto Único Reglamentario del Sector Educación, que compila en un solo cuerpo las normas reglamentarias del sector.",
+      "El decreto que creó la Comisión Nacional del Servicio Civil."
+    ],
+    "answer": "El Decreto Único Reglamentario del Sector Educación, que compila en un solo cuerpo las normas reglamentarias del sector.",
+    "explanation": "El Decreto 1075 de 2015 reúne los decretos reglamentarios del sector educación, como los contenidos del Decreto 1860 de 1994 o del 1290 de 2009. No es una ley, no reemplaza a la Ley 115 y no deroga el Decreto Ley 1278, que tiene fuerza de ley.",
+    "tags": [
+      "decreto 1075",
+      "normativa",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mcq-011",
+    "type": "multiple-choice",
+    "topic": "Normativa Educativa",
+    "subtopic": "Convivencia escolar",
+    "difficulty": "hard",
+    "question": "Durante el descanso, un estudiante de 10.º hiere con un arma blanca a un compañero, que requiere atención médica y queda incapacitado. Según la Ley 1620 de 2013 y el Decreto 1965 de 2013, ¿cómo se clasifica la situación y cuál es la actuación que corresponde?",
+    "options": [
+      "Situación tipo I: el docente de turno media entre los estudiantes y deja constancia en el observador.",
+      "Situación tipo II: se cita a los padres y se aplica una sanción pedagógica sin informar a otras autoridades.",
+      "No es una situación de convivencia escolar, porque ocurrió en el descanso y no en clase.",
+      "Situación tipo III: se garantiza la atención en salud, se informa a la Policía de Infancia y Adolescencia y se activa la ruta con el comité escolar de convivencia."
+    ],
+    "answer": "Situación tipo III: se garantiza la atención en salud, se informa a la Policía de Infancia y Adolescencia y se activa la ruta con el comité escolar de convivencia.",
+    "explanation": "Las situaciones tipo III son agresiones que constituyen presuntos delitos, como lesiones personales con arma. El protocolo exige garantizar la atención en salud, informar a los padres, poner el caso en conocimiento de la Policía de Infancia y Adolescencia y reportarlo en el Sistema de Información Unificado de Convivencia Escolar.",
+    "tags": [
+      "ley 1620",
+      "decreto 1965",
+      "convivencia escolar",
+      "situaciones tipo iii",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-norm-mr-001",
+    "type": "multiple-response",
+    "topic": "Normativa Educativa",
+    "subtopic": "Convivencia escolar",
+    "difficulty": "medium",
+    "question": "La Ley 1620 de 2013 creó la Ruta de Atención Integral para la Convivencia Escolar. ¿Cuáles de los siguientes son componentes de esa ruta? (Seleccione TRES)",
+    "options": [
+      "Promoción",
+      "Prevención",
+      "Atención",
+      "Sanción",
+      "Expulsión",
+      "Judicialización"
+    ],
+    "answers": [
+      "Promoción",
+      "Prevención",
+      "Atención"
+    ],
+    "explanation": "La ruta tiene cuatro componentes: promoción, prevención, atención y seguimiento. En esta pregunta aparecen tres; seguimiento no está entre las opciones. Sanción, expulsión y judicialización no son componentes: el enfoque es formativo y de garantía de derechos.",
+    "tags": [
+      "ley 1620",
+      "ruta de atención integral",
+      "convivencia",
+      "mr"
+    ]
   }
 ]
