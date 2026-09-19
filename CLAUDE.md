@@ -327,7 +327,7 @@ Deploys **only Lambdas + DynamoDB tables**; routes live on the **shared `entorno
 - **Scripts** (`backend/scripts/`, idempotent, jq-based — never a client-side `--query` under CLI auto-pagination): `wire-api.sh` (authorizer + integrations + routes), `set-stage-vars.sh <env>`, `add-cors-origin.sh`, `unwire-api.sh`.
 - **Lambda tests** — `node --test` per function with a mocked `@aws-sdk/client-dynamodb` (`backend/{progress,cards}/test/`). `nodejs22.x`, arm64, `PAY_PER_REQUEST`.
 
-> Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live), **including `VITE_CARDS_FROM_API=true`** — the deployed app (training-javascript-one.vercel.app) serves banks from the cards API, so new/edited cards only appear there after re-running `seed-cards.mjs`. `drill-cards-dev` holds fourteen banks (1244 cards, deep dives merged on each item) — **`cnsc-docente` (90 cards) is not seeded yet**; re-run `seed-cards.mjs` after **every** edit to `app/data/*.json` (the bundled JSON is only the fallback in production, and the default for local dev without the flag).
+> Status: the **dev** stack is deployed and the dev stage wired + seeded; prod is not. Frontend env is set in Vercel (login live), **including `VITE_CARDS_FROM_API=true`** — the deployed app (training-javascript-one.vercel.app) serves banks from the cards API, so new/edited cards only appear there after re-running `seed-cards.mjs`. `drill-cards-dev` holds all fifteen banks (1334 cards, deep dives merged on each item); re-run `seed-cards.mjs` after **every** edit to `app/data/*.json` (the bundled JSON is only the fallback in production, and the default for local dev without the flag).
 
 ---
 
