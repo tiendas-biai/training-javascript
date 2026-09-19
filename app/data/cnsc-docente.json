@@ -309,5 +309,266 @@
       "lectura crítica",
       "mr"
     ]
+  },
+  {
+    "id": "cnsc-rq-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Porcentajes",
+    "difficulty": "easy",
+    "question": "Una institución educativa tiene 480 estudiantes y el 35 % estudia en la jornada de la tarde. ¿Cuántos estudiantes hay en la jornada de la tarde?",
+    "options": [
+      "135",
+      "168",
+      "175",
+      "312"
+    ],
+    "answer": "168",
+    "explanation": "35 % de 480 = 0,35 × 480 = 168. (312 son los de la otra jornada: 480 − 168.)",
+    "tags": [
+      "porcentajes",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Porcentajes",
+    "difficulty": "medium",
+    "question": "La matrícula de un colegio pasó de 800 a 920 estudiantes de un año a otro. ¿Cuál fue el aumento porcentual?",
+    "options": [
+      "12 %",
+      "Aproximadamente 13 %",
+      "15 %",
+      "120 %"
+    ],
+    "answer": "15 %",
+    "explanation": "Aumento = 920 − 800 = 120. Aumento porcentual = 120 ÷ 800 (valor **inicial**) = 0,15 = 15 %. Dividir por 920 da ≈ 13 %, que es el error más común.",
+    "tags": [
+      "porcentajes",
+      "variación porcentual",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Porcentajes",
+    "difficulty": "medium",
+    "question": "El precio de un libro de texto sube un 20 % en enero y en junio baja un 20 % sobre el nuevo precio. Comparado con el precio original, el precio final es:",
+    "options": [
+      "Igual al original.",
+      "4 % menor que el original.",
+      "4 % mayor que el original.",
+      "2 % menor que el original."
+    ],
+    "answer": "4 % menor que el original.",
+    "explanation": "Los porcentajes sucesivos se multiplican: 1,20 × 0,80 = 0,96. El precio final es el 96 % del original, es decir, 4 % menor. No se cancelan porque el 20 % de bajada se aplica sobre una base más grande.",
+    "tags": [
+      "porcentajes",
+      "variaciones sucesivas",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Proporcionalidad",
+    "difficulty": "easy",
+    "question": "Para dotar 3 salones se necesitan 90 cuadernos. Si todos los salones reciben la misma cantidad, ¿cuántos cuadernos se necesitan para 7 salones?",
+    "options": [
+      "180",
+      "240",
+      "210",
+      "270"
+    ],
+    "answer": "210",
+    "explanation": "Proporcionalidad directa: 90 ÷ 3 = 30 cuadernos por salón; 30 × 7 = 210.",
+    "tags": [
+      "proporcionalidad directa",
+      "regla de tres",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-005",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Proporcionalidad",
+    "difficulty": "medium",
+    "question": "Cuatro docentes, trabajando al mismo ritmo, califican las pruebas de un grado en 6 horas. Si fueran 6 docentes con ese mismo ritmo, ¿cuánto tardarían?",
+    "options": [
+      "9 horas",
+      "3 horas",
+      "5 horas",
+      "4 horas"
+    ],
+    "answer": "4 horas",
+    "explanation": "Es proporcionalidad **inversa**: más docentes, menos tiempo. El trabajo total es 4 × 6 = 24 horas-docente; 24 ÷ 6 = 4 horas. 9 horas sale de aplicar por error una regla de tres directa.",
+    "tags": [
+      "proporcionalidad inversa",
+      "regla de tres",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-006",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Estadística descriptiva",
+    "difficulty": "medium",
+    "question": "Las notas de un estudiante en cinco evaluaciones fueron: 3,0 — 4,5 — 3,5 — 4,5 — 2,5. ¿Cuál afirmación es correcta?",
+    "options": [
+      "La media es 3,6 y la mediana es 3,5.",
+      "La media es 3,5 y la mediana es 3,6.",
+      "La moda es 3,5.",
+      "La media y la mediana son iguales."
+    ],
+    "answer": "La media es 3,6 y la mediana es 3,5.",
+    "explanation": "Media = (3,0 + 4,5 + 3,5 + 4,5 + 2,5) ÷ 5 = 18 ÷ 5 = 3,6. Ordenadas: 2,5 — 3,0 — **3,5** — 4,5 — 4,5, así que la mediana es 3,5. La moda es 4,5 (se repite dos veces).",
+    "tags": [
+      "media",
+      "mediana",
+      "moda",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-007",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Estadística descriptiva",
+    "difficulty": "hard",
+    "question": "En una escala de 1,0 a 5,0, una estudiante tiene un promedio de 3,5 en cuatro evaluaciones del periodo. ¿Qué nota necesita en la quinta evaluación (con el mismo peso) para terminar con un promedio de 3,8?",
+    "options": [
+      "3,8",
+      "4,1",
+      "4,5",
+      "5,0"
+    ],
+    "answer": "5,0",
+    "explanation": "Para promediar 3,8 en 5 notas, la suma debe ser 3,8 × 5 = 19. Ya suma 3,5 × 4 = 14. Le faltan 19 − 14 = 5,0, la nota máxima.",
+    "tags": [
+      "promedio",
+      "media",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-008",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Probabilidad",
+    "difficulty": "medium",
+    "question": "Para una dinámica de clase, una bolsa contiene 5 fichas rojas, 3 azules y 2 verdes. Si un estudiante saca una ficha al azar, ¿cuál es la probabilidad de que **no** sea roja?",
+    "options": [
+      "1/5",
+      "3/10",
+      "1/2",
+      "2/3"
+    ],
+    "answer": "1/2",
+    "explanation": "Casos favorables (azules + verdes) = 3 + 2 = 5; casos posibles = 10. P = 5/10 = 1/2. También sale como 1 − P(roja) = 1 − 5/10.",
+    "tags": [
+      "probabilidad",
+      "complemento",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-009",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Conteo",
+    "difficulty": "hard",
+    "question": "Cinco estudiantes se postulan para conformar un comité de dos personas que representará al grado ante el consejo estudiantil. Ambos integrantes tienen el mismo rol. ¿Cuántos comités distintos se pueden formar?",
+    "options": [
+      "5",
+      "10",
+      "20",
+      "25"
+    ],
+    "answer": "10",
+    "explanation": "Como el orden no importa (mismo rol), es una combinación: C(5,2) = (5 × 4) ÷ 2 = 10. Si los roles fueran distintos (p. ej. principal y suplente), serían 5 × 4 = 20.",
+    "tags": [
+      "combinaciones",
+      "conteo",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-010",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Interpretación de datos",
+    "difficulty": "medium",
+    "question": "Al cierre del periodo, los 40 estudiantes de un grado quedaron así según la escala nacional del Decreto 1290:\n\nDesempeño Superior: 6\nDesempeño Alto: 10\nDesempeño Básico: 14\nDesempeño Bajo: 10\n\n¿Qué porcentaje del grado tuvo desempeño Bajo?",
+    "options": [
+      "10 %",
+      "20 %",
+      "25 %",
+      "40 %"
+    ],
+    "answer": "25 %",
+    "explanation": "10 de 40 = 10 ÷ 40 = 0,25 = 25 %. El 10 % sale de confundir la frecuencia absoluta (10 estudiantes) con un porcentaje.",
+    "tags": [
+      "porcentajes",
+      "frecuencias",
+      "interpretación de datos",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mcq-011",
+    "type": "multiple-choice",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Interpretación de datos",
+    "difficulty": "hard",
+    "question": "En el grupo 9A, 12 de 30 estudiantes reprobaron Matemáticas. En el grupo 9B reprobaron 10 de 20. El coordinador afirma que \"a 9A le fue peor porque reprobaron más estudiantes\". ¿Cuál es la evaluación correcta de esta afirmación?",
+    "options": [
+      "Es correcta: 12 reprobados es más que 10.",
+      "Es incorrecta: proporcionalmente reprobó más 9B (50 %) que 9A (40 %).",
+      "Es incorrecta: a ambos grupos les fue igual.",
+      "No se puede evaluar sin conocer las notas individuales."
+    ],
+    "answer": "Es incorrecta: proporcionalmente reprobó más 9B (50 %) que 9A (40 %).",
+    "explanation": "Si los grupos tienen tamaños distintos, se comparan tasas y no cantidades absolutas. 9A: 12/30 = 40 %; 9B: 10/20 = 50 %. A 9B le fue peor, aunque tenga menos reprobados.",
+    "tags": [
+      "proporciones",
+      "comparación de grupos",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-rq-mr-001",
+    "type": "multiple-response",
+    "topic": "Razonamiento Cuantitativo",
+    "subtopic": "Estadística descriptiva",
+    "difficulty": "medium",
+    "question": "Los libros leídos durante el año por cinco estudiantes fueron: 2, 4, 4, 5 y 10. ¿Cuáles afirmaciones son verdaderas? (Seleccione TRES)",
+    "options": [
+      "La media es 5.",
+      "La mediana es 4.",
+      "La moda es 4.",
+      "El rango es 10.",
+      "La media es menor que la mediana.",
+      "La mediana es 5."
+    ],
+    "answers": [
+      "La media es 5.",
+      "La mediana es 4.",
+      "La moda es 4."
+    ],
+    "explanation": "Media = 25 ÷ 5 = 5. Mediana (dato central de 2, 4, **4**, 5, 10) = 4. Moda = 4. El rango es 10 − 2 = 8. La media (5) es **mayor** que la mediana (4) porque el dato atípico 10 la jala hacia arriba.",
+    "tags": [
+      "media",
+      "mediana",
+      "moda",
+      "rango",
+      "mr"
+    ]
   }
 ]

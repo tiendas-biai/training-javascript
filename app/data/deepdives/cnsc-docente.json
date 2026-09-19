@@ -164,5 +164,169 @@
         "url": "https://www.icfes.gov.co/web/guest/saber-pro"
       }
     ]
+  },
+  "cnsc-rq-mcq-001": {
+    "explanation": "**El problema:** Calcular un porcentaje de una cantidad es la operación más frecuente del componente cuantitativo, y aparece en casos de matrícula, asistencia o presupuesto. **Por qué es correcta:** \"El 35 % de 480\" significa 35 de cada 100, o sea 0,35 × 480 = 168. **Por qué fallan los distractores:** 312 es el complemento (65 %), una trampa para quien lee mal qué se pregunta. 135 y 175 son valores cercanos que aparecen por redondeos o multiplicaciones mal hechas. **Clave para el examen:** Sin calculadora, descomponga el porcentaje: 10 % de 480 = 48, así que 30 % = 144 y 5 % = 24; 144 + 24 = 168.",
+    "example": "Cálculo mental por partes:\n\n• 10 % de 480 = 48\n• 30 % = 3 × 48 = 144\n• 5 % = 48 ÷ 2 = 24\n• 35 % = 144 + 24 = **168**",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Problemas de porcentajes",
+        "url": "https://es.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic/cc-6th-percentages/a/percentage-word-problems-1"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-002": {
+    "explanation": "**El problema:** En la variación porcentual (aumento o disminución), el error más común es dividir por el valor final en vez del inicial. **Por qué es correcta:** Variación % = (final − inicial) ÷ inicial × 100 = (920 − 800) ÷ 800 × 100 = 120 ÷ 800 × 100 = 15 %. **Por qué fallan los distractores:** \"≈ 13 %\" resulta de dividir 120 ÷ 920. \"120 %\" confunde el aumento absoluto (120 estudiantes) con el porcentaje. \"12 %\" es un error de cálculo. **Clave para el examen:** El porcentaje de cambio siempre se calcula sobre el punto de partida. Compruébelo: 800 × 1,15 = 920 ✓.",
+    "example": "Fórmula y verificación:\n\nVariación % = (920 − 800) ÷ 800 × 100\n= 120 ÷ 800 × 100\n= **15 %**\n\nComprobación: 800 × 1,15 = 920 ✓",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Problemas de porcentajes",
+        "url": "https://es.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic/cc-6th-percentages/a/percentage-word-problems-1"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-003": {
+    "explanation": "**El problema:** Muchos creen que subir un 20 % y luego bajar un 20 % deja el valor igual, pero no es así. **Por qué es correcta:** Cada porcentaje se aplica sobre un valor distinto. Subir un 20 % es multiplicar por 1,20 y bajar un 20 % es multiplicar por 0,80. El efecto total es 1,20 × 0,80 = 0,96, así que el precio final es el 96 % del original: un 4 % menos. **Por qué fallan los distractores:** \"Igual\" supone que los porcentajes se restan (20 − 20 = 0). \"4 % mayor\" invierte el signo. \"2 % menor\" es un cálculo erróneo. **Clave para el examen:** Para cambios sucesivos, multiplique los factores. Con un precio de ejemplo de 100 se ve de inmediato.",
+    "example": "Con un precio de ejemplo de $100.000:\n\n• Sube 20 %: 100.000 × 1,20 = $120.000\n• Baja 20 %: 120.000 × 0,80 = $96.000\n• Resultado: $4.000 menos, es decir, **4 % menor**",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Problemas de porcentajes",
+        "url": "https://es.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic/cc-6th-percentages/a/percentage-word-problems-1"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-004": {
+    "explanation": "**El problema:** Es un caso de proporcionalidad directa: si se duplican los salones, se duplican los cuadernos. **Por qué es correcta:** La constante de proporcionalidad es 90 ÷ 3 = 30 cuadernos por salón. Para 7 salones: 30 × 7 = 210. Con regla de tres: 3 → 90, 7 → x, x = 90 × 7 ÷ 3 = 210. **Por qué fallan los distractores:** 180 y 240 corresponden a 6 y 8 salones, y 270 a 9 salones. Son los resultados de errores al contar o multiplicar. **Clave para el examen:** Reducir primero a la unidad (cuánto por salón) evita errores y es más rápido que plantear la regla de tres.",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Razones, tasas y proporciones",
+        "url": "https://es.khanacademy.org/math/pre-algebra/pre-algebra-ratios-rates"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-005": {
+    "explanation": "**El problema:** Hay que distinguir la proporcionalidad inversa de la directa. Si aumentan los trabajadores, el tiempo *disminuye*. **Por qué es correcta:** El trabajo total es constante: 4 docentes × 6 horas = 24 horas-docente. Repartido entre 6 docentes: 24 ÷ 6 = 4 horas. **Por qué fallan los distractores:** 9 horas sale de una regla de tres directa (4 → 6, 6 → x = 9), que no tiene sentido: con más personas no se tarda más. 3 horas sería con 8 docentes, y 5 horas es un cálculo aproximado sin fundamento. **Clave para el examen:** Antes de calcular, pregúntese si al aumentar una magnitud la otra aumenta o disminuye. Si disminuye, el producto de las dos se mantiene constante.",
+    "example": "Proporcionalidad inversa (el producto es constante):\n\n4 docentes × 6 h = 24\n6 docentes × x h = 24\nx = 24 ÷ 6 = **4 horas**",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Razones, tasas y proporciones",
+        "url": "https://es.khanacademy.org/math/pre-algebra/pre-algebra-ratios-rates"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-006": {
+    "explanation": "**El problema:** Hay que diferenciar las tres medidas de tendencia central, que en el aula se usan todo el tiempo para leer las notas. **Por qué es correcta:** La media (promedio) es la suma dividida por la cantidad: 18 ÷ 5 = 3,6. La mediana es el dato del centro con los datos ordenados: 2,5; 3,0; **3,5**; 4,5; 4,5 → 3,5. La moda es el valor que más se repite: 4,5. **Por qué fallan los distractores:** La segunda opción invierte media y mediana. La moda no es 3,5, porque 3,5 aparece una sola vez. La media (3,6) y la mediana (3,5) no coinciden. **Clave para el examen:** Para la mediana, **ordene siempre** los datos primero. Si hay una cantidad par de datos, promedie los dos centrales.",
+    "example": "Paso a paso:\n\n1) Ordenar: 2,5 — 3,0 — 3,5 — 4,5 — 4,5\n2) Media: 18 ÷ 5 = **3,6**\n3) Mediana (posición 3 de 5): **3,5**\n4) Moda (más repetido): **4,5**",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Estadística y probabilidad",
+        "url": "https://es.khanacademy.org/math/statistics-probability"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-007": {
+    "explanation": "**El problema:** Es la pregunta típica de \"cuánto necesito sacar\", y se resuelve pensando en sumas, no en promedios. **Por qué es correcta:** Un promedio de 3,8 en 5 notas exige una suma total de 3,8 × 5 = 19. Las cuatro notas actuales suman 3,5 × 4 = 14. La quinta debe ser 19 − 14 = 5,0. **Por qué fallan los distractores:** 3,8 supone que basta con sacar el promedio deseado. 4,1 sale de sumar 3,8 + (3,8 − 3,5). 4,5 es una intuición sin cálculo. **Clave para el examen:** Promedio deseado × total de notas − suma actual = nota que falta. Si el resultado pasa de la escala (5,0), la meta es imposible.",
+    "example": "Suma requerida: 3,8 × 5 = 19,0\nSuma actual: 3,5 × 4 = 14,0\nNota necesaria: 19,0 − 14,0 = **5,0**",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Estadística y probabilidad",
+        "url": "https://es.khanacademy.org/math/statistics-probability"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-008": {
+    "explanation": "**El problema:** Es la probabilidad clásica (regla de Laplace) combinada con el evento complementario. **Por qué es correcta:** P(evento) = casos favorables ÷ casos posibles. \"No roja\" significa azul o verde: 3 + 2 = 5 fichas de 10, así que P = 5/10 = 1/2. Por complemento: P(no roja) = 1 − P(roja) = 1 − 5/10 = 1/2. **Por qué fallan los distractores:** 3/10 es P(azul) y 1/5 es P(verde); cada una cuenta solo uno de los colores. 2/3 no puede salir de ningún conteo: con 10 fichas, toda probabilidad es algo/10 (o su simplificación). **Clave para el examen:** Cuando aparezca \"no\", \"al menos uno\" o \"ninguno\", pruebe primero con el complemento: suele ser más corto.",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Probabilidad y combinatoria",
+        "url": "https://es.khanacademy.org/math/probability"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-009": {
+    "explanation": "**El problema:** Hay que decidir si el orden importa. Esa es la diferencia entre combinación y permutación, y es donde se equivoca la mayoría. **Por qué es correcta:** Los dos integrantes tienen el mismo rol, así que el comité {Ana, Luis} es el mismo que {Luis, Ana}. Es una combinación: C(5,2) = 5! ÷ (2! · 3!) = (5 × 4) ÷ 2 = 10. **Por qué fallan los distractores:** 20 = 5 × 4 cuenta los pares ordenados, lo que sería correcto si hubiera \"principal\" y \"suplente\". 25 = 5 × 5 permite escoger dos veces a la misma persona. 5 confunde la respuesta con el número de candidatos. **Clave para el examen:** Si hay roles distintos o el orden importa, use permutación (n × (n−1)…). Si solo se forma un grupo, use combinación y divida por las repeticiones.",
+    "example": "Candidatos A, B, C, D, E. Comités posibles (sin orden):\n\nAB, AC, AD, AE, BC, BD, BE, CD, CE, DE → **10**\n\nCon roles distintos cada par cuenta dos veces (AB y BA) → 20.",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Probabilidad y combinatoria",
+        "url": "https://es.khanacademy.org/math/probability"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-010": {
+    "explanation": "**El problema:** Hay que leer una distribución de frecuencias (en este caso con la escala de valoración nacional del Decreto 1290) y convertir una frecuencia absoluta en relativa. **Por qué es correcta:** Frecuencia relativa = casos ÷ total = 10 ÷ 40 = 0,25 → 25 %. Conviene verificar el total: 6 + 10 + 14 + 10 = 40 ✓. **Por qué fallan los distractores:** 10 % confunde los 10 estudiantes con un porcentaje. 20 % sería 8 estudiantes. 40 % confunde el total de estudiantes con un porcentaje. **Clave para el examen:** Con un total de 40, cada estudiante vale 2,5 %. Con un total de 20, cada uno vale 5 %. Tener este \"valor unitario\" acelera las preguntas de gráficas.",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Estadística y probabilidad",
+        "url": "https://es.khanacademy.org/math/statistics-probability"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mcq-011": {
+    "explanation": "**El problema:** Comparar grupos de distinto tamaño con cantidades absolutas es un error de razonamiento muy frecuente, y el examen lo presenta como una afirmación de un directivo que hay que evaluar. **Por qué es correcta:** Hay que comparar tasas. En 9A, 12 ÷ 30 = 0,40 = 40 %. En 9B, 10 ÷ 20 = 0,50 = 50 %. Proporcionalmente le fue peor a 9B, así que la afirmación del coordinador es incorrecta. **Por qué fallan los distractores:** \"Es correcta\" usa cantidades absolutas en grupos desiguales. \"Les fue igual\" es falso (40 % frente a 50 %). \"No se puede evaluar\" también es falso, porque los datos bastan para comparar la proporción de reprobados. **Clave para el examen:** Si los totales son distintos, convierta a porcentajes o fracciones antes de comparar.",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Razones, tasas y proporciones",
+        "url": "https://es.khanacademy.org/math/pre-algebra/pre-algebra-ratios-rates"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
+  },
+  "cnsc-rq-mr-001": {
+    "explanation": "**El problema:** Hay que calcular las medidas de tendencia central y de dispersión, y entender cómo un dato atípico afecta a cada una. **Por qué son correctas:** La media es (2 + 4 + 4 + 5 + 10) ÷ 5 = 25 ÷ 5 = 5. La mediana es el dato central de 2, 4, 4, 5, 10, que es 4. La moda es 4, porque aparece dos veces. **Por qué fallan los distractores:** El rango es máximo − mínimo = 10 − 2 = 8, no 10. La media (5) es **mayor** que la mediana (4), no menor. La mediana es 4 y no 5. **Clave para el examen:** Un valor extremo (el estudiante que leyó 10 libros) arrastra la media, pero no mueve la mediana. Por eso la mediana representa mejor a un grupo típico cuando hay datos atípicos.",
+    "example": "Datos ordenados: 2, 4, 4, 5, 10\n\n• Media = 25 ÷ 5 = **5**\n• Mediana (3.er dato) = **4**\n• Moda = **4**\n• Rango = 10 − 2 = **8**\n\nSin el 10, la media bajaría a 15 ÷ 4 = 3,75: así de sensible es la media a un dato atípico.",
+    "resources": [
+      {
+        "label": "Khan Academy (español) — Estadística y probabilidad",
+        "url": "https://es.khanacademy.org/math/statistics-probability"
+      },
+      {
+        "label": "ICFES — Saber Pro (módulo de razonamiento cuantitativo)",
+        "url": "https://www.icfes.gov.co/web/guest/saber-pro"
+      }
+    ]
   }
 }
