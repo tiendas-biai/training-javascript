@@ -221,8 +221,20 @@ carry a runnable ` ```js ` example (the 7 format/strategy cards are prose-only);
 Companion practice material lives in `features/karat/` (code-review snippets 01–07, exercises 12–15,
 PLANNING.md + STUDY_GUIDE.md).
 
-**No remaining subjects** — all thirteen banks (javascript, react, node, typescript, graphql, springboot,
-java, python, docker, aws, kubernetes, regex, karat) are 100% covered.
+**Concurso Docente CNSC — DONE: all 90 cards / 8 topics** (Spanish-language bank) — Lectura Crítica (14),
+Razonamiento Cuantitativo (12), Competencias Pedagógicas (16), Lengua Castellana (20), Normativa Educativa (12),
+Competencias Comportamentales (6), Juicio Situacional (6), Estructura del Concurso (4). Authored per topic batch
+with Spanish colon-ending labels (`**El problema:**`, `**Por qué es correcta:**`, `**Por qué fallan los
+distractores:**`, `**Clave para el examen:**`). No code, so no verifier: `example` (on 27 cards) is prose — worked
+calculations, pattern lists — using plain lines and `•` bullets because `RichText` renders neither markdown tables
+nor blockquotes. Legal facts (Ley 115 arts. 11/23/94/142, Decreto 1278 arts. 12/20/31 + the 60 %/80 % thresholds,
+Decreto 1965 tipo I/II/III, Guía 31's seven comportamentales) were checked against the official texts; every
+resource URL was fetched (RAE pages via a real browser, since rae.es blocks curl). Concurso figures (60/100,
+antecedentes/entrevista weights, 2-year lists) come from the EB-736 research doc and are flagged in the deep
+dives as provisional until the CNSC publishes the Acuerdo de Convocatoria.
+
+**No remaining subjects** — all fifteen banks (javascript, react, react-concepts, node, typescript, graphql,
+springboot, java, python, docker, aws, kubernetes, regex, karat, cnsc-docente) are 100% covered.
 
 **Docker verifier** — `verify-docker-examples.mjs <subject>`: routes each `example` by fence language —
 ` ```yaml `/` ```yml ` parsed with the `yaml` package (added as a devDependency, like `graphql`), ` ```bash `/
