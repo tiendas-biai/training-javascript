@@ -1780,5 +1780,137 @@
       "escucha activa",
       "mr"
     ]
+  },
+  {
+    "id": "cnsc-pjs-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Juicio Situacional",
+    "subtopic": "Protección de derechos",
+    "difficulty": "medium",
+    "question": "Al final de la clase, una estudiante de 7.º le cuenta en privado que en su casa la golpean con frecuencia y le pide que no le diga a nadie. ¿Cuál es la **mejor** actuación?",
+    "options": [
+      "Prometerle guardar el secreto para no perder su confianza.",
+      "Llamar a sus padres esa misma tarde para confrontarlos.",
+      "Escucharla con calma, creerle, explicarle que para protegerla debe informar a quien corresponda y reportar de inmediato a orientación o rectoría para activar la ruta de protección.",
+      "Pedirle que escriba un relato detallado de lo ocurrido para verificar si dice la verdad."
+    ],
+    "answer": "Escucharla con calma, creerle, explicarle que para protegerla debe informar a quien corresponda y reportar de inmediato a orientación o rectoría para activar la ruta de protección.",
+    "explanation": "Ante una posible vulneración de derechos, el docente no puede guardar el secreto ni investigar por su cuenta. Debe escuchar sin revictimizar y activar la ruta institucional, que remite a las autoridades de protección.",
+    "tags": [
+      "juicio situacional",
+      "protección",
+      "ruta de atención",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-pjs-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Juicio Situacional",
+    "subtopic": "Convivencia",
+    "difficulty": "medium",
+    "question": "Un estudiante le muestra capturas de un grupo de WhatsApp del curso en el que, desde hace semanas, varios compañeros publican burlas y memes sobre una estudiante. ¿Cuál es la **mejor** actuación?",
+    "options": [
+      "Ignorarlo, porque ocurre fuera del colegio y fuera del horario escolar.",
+      "Leer las capturas en voz alta frente al curso para que los agresores sientan vergüenza.",
+      "Recomendarle a la estudiante afectada que se salga del grupo y bloquee a los compañeros.",
+      "Proteger a la estudiante afectada, conservar las evidencias y reportar la situación según el protocolo del manual de convivencia para que se atienda como ciberacoso."
+    ],
+    "answer": "Proteger a la estudiante afectada, conservar las evidencias y reportar la situación según el protocolo del manual de convivencia para que se atienda como ciberacoso.",
+    "explanation": "Las burlas repetidas en redes son ciberacoso, una situación tipo II del Decreto 1965 que la institución debe atender aunque ocurra fuera del aula. Exhibir a los agresores revictimiza, y \"salirse del grupo\" deja el problema sin atender.",
+    "tags": [
+      "juicio situacional",
+      "ciberacoso",
+      "convivencia",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-pjs-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Juicio Situacional",
+    "subtopic": "Ética profesional",
+    "difficulty": "hard",
+    "question": "Al pasar por un salón, usted ve que un colega grita y ridiculiza a un estudiante frente a todo el grupo por no haber hecho la tarea. ¿Cuál es la **mejor** actuación?",
+    "options": [
+      "No intervenir, porque cada docente es autónomo en su salón.",
+      "Intervenir con calma para detener la situación y proteger al estudiante, luego conversar en privado con el colega y, según la gravedad, informar a coordinación.",
+      "Regañar al colega delante de los estudiantes para dejar claro que su conducta es inaceptable.",
+      "Publicar lo ocurrido en el grupo de docentes para que todos estén alertas."
+    ],
+    "answer": "Intervenir con calma para detener la situación y proteger al estudiante, luego conversar en privado con el colega y, según la gravedad, informar a coordinación.",
+    "explanation": "Prima la protección del estudiante frente al trato humillante, pero con respeto hacia el colega: se interviene sin confrontarlo en público, se dialoga en privado y se usan los canales institucionales.",
+    "tags": [
+      "juicio situacional",
+      "ética",
+      "relación con colegas",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-pjs-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Juicio Situacional",
+    "subtopic": "Acompañamiento al estudiante",
+    "difficulty": "easy",
+    "question": "Un estudiante de 10.º que siempre tenía buen desempeño empieza a dormirse en clase, deja de entregar trabajos y se aísla de sus compañeros. ¿Cuál es la **mejor** actuación inicial?",
+    "options": [
+      "Conversar en privado con el estudiante para conocer qué le pasa y, según lo que encuentre, articular con orientación escolar y la familia.",
+      "Registrar las fallas en el observador y bajarle la nota de comportamiento.",
+      "Sacarlo del salón cada vez que se duerma, para que no afecte a los demás.",
+      "Esperar al final del periodo para ver si mejora por sí solo."
+    ],
+    "answer": "Conversar en privado con el estudiante para conocer qué le pasa y, según lo que encuentre, articular con orientación escolar y la familia.",
+    "explanation": "Un cambio brusco de conducta es una señal de alerta. Lo primero es acercarse al estudiante e indagar las causas, y luego articular con orientación y la familia. Sancionar, excluir o esperar ignoran la posible situación de fondo.",
+    "tags": [
+      "juicio situacional",
+      "acompañamiento",
+      "señales de alerta",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-pjs-mcq-005",
+    "type": "multiple-choice",
+    "topic": "Juicio Situacional",
+    "subtopic": "Ética profesional",
+    "difficulty": "easy",
+    "question": "Un acudiente le ofrece hacer una donación de libros para la biblioteca \"si le ayuda\" a su hijo a aprobar Lengua Castellana, que va perdiendo. ¿Cuál es la **mejor** respuesta?",
+    "options": [
+      "Aceptar, porque la donación beneficia a toda la institución.",
+      "Aceptar la donación, pero subir la nota solo unas décimas.",
+      "Rechazar la propuesta con respeto, explicar que la valoración depende de los criterios del SIEE y ofrecer un plan de apoyo para que el estudiante pueda superar sus dificultades.",
+      "Responder con indignación y cortar toda comunicación con esa familia."
+    ],
+    "answer": "Rechazar la propuesta con respeto, explicar que la valoración depende de los criterios del SIEE y ofrecer un plan de apoyo para que el estudiante pueda superar sus dificultades.",
+    "explanation": "La evaluación debe ser objetiva y regirse por el SIEE. Condicionarla a un beneficio es una falta ética. La mejor respuesta es firme pero respetuosa y reorienta la conversación hacia el aprendizaje del estudiante.",
+    "tags": [
+      "juicio situacional",
+      "ética",
+      "evaluación",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-pjs-mcq-006",
+    "type": "multiple-choice",
+    "topic": "Juicio Situacional",
+    "subtopic": "Gestión de aula",
+    "difficulty": "medium",
+    "question": "Durante las sesiones de lectura en voz alta, un grupo de 8.º se muestra disperso, conversa y se burla de quienes leen con dificultad. ¿Cuál es la **mejor** actuación del docente?",
+    "options": [
+      "Imponer un castigo colectivo: todo el grupo copia una página del libro.",
+      "Suspender la lectura en clase y dejarla solo como tarea para la casa.",
+      "Enviar a coordinación a los estudiantes que más conversan.",
+      "Construir con el grupo acuerdos de respeto para la lectura y ajustar la estrategia (lectura por parejas o en pequeños grupos, textos cercanos a sus intereses, roles durante la lectura)."
+    ],
+    "answer": "Construir con el grupo acuerdos de respeto para la lectura y ajustar la estrategia (lectura por parejas o en pequeños grupos, textos cercanos a sus intereses, roles durante la lectura).",
+    "explanation": "La mejor respuesta atiende a la vez la convivencia (acuerdos construidos con el grupo y respeto por quienes leen con dificultad) y lo pedagógico (una estrategia más participativa). Castigar, renunciar a la lectura o remitir a coordinación no resuelven la causa.",
+    "tags": [
+      "juicio situacional",
+      "gestión de aula",
+      "lectura",
+      "mcq"
+    ]
   }
 ]

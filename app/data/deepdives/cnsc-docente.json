@@ -936,5 +936,79 @@
         "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
       }
     ]
+  },
+  "cnsc-pjs-mcq-001": {
+    "explanation": "**El problema:** La prueba psicotécnica usa **Juicio Situacional (PJS)**: plantea dilemas reales de aula y pide escoger la **mejor** respuesta, no simplemente una aceptable. En los casos de posible vulneración de derechos, casi siempre gana la que protege y activa la ruta. **Por qué es correcta:** Frente a una revelación de maltrato, el docente debe **escuchar sin juzgar**, **creer** al estudiante, **no revictimizarlo** (no pedirle que repita o \"pruebe\" los hechos) y **no prometer confidencialidad**, porque tiene el deber de informar. Se le explica con honestidad que se contará a quien pueda protegerla y se reporta de inmediato a orientación o rectoría. Desde ahí se activa la ruta institucional, que incluye la remisión a las autoridades de protección como el ICBF o la comisaría de familia. **Por qué fallan los distractores:** Guardar el secreto la deja en riesgo. Confrontar a los padres puede aumentar el peligro para la niña. Pedirle un relato para \"verificar\" la revictimiza, y el docente no es investigador. **Clave para el examen:** En los casos de derechos vulnerados, la secuencia es escuchar, proteger, reportar y activar la ruta. Nunca \"guardar el secreto\" ni \"investigar por cuenta propia\".",
+    "resources": [
+      {
+        "label": "Ley 1620 de 2013 — Sistema Nacional de Convivencia Escolar (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=52287"
+      },
+      {
+        "label": "Decreto 1965 de 2013 — Protocolos de atención tipo I, II y III (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=54537"
+      }
+    ]
+  },
+  "cnsc-pjs-mcq-002": {
+    "explanation": "**El problema:** Hay que decidir si el colegio debe actuar ante hechos en redes sociales fuera del horario escolar y cómo hacerlo sin revictimizar. **Por qué es correcta:** La Ley 1620 y el Decreto 1965 de 2013 incluyen el **ciberacoso** en la convivencia escolar. Las burlas repetidas durante semanas encajan en una **situación tipo II** (acoso o ciberacoso que no es delito, pero es repetido o sistemático). Lo correcto es proteger a la afectada, conservar las evidencias (las capturas) y activar el protocolo del manual de convivencia, que incluye informar a las familias, tomar medidas restaurativas y reportar al comité escolar de convivencia. **Por qué fallan los distractores:** \"Fuera del colegio\" no exime a la institución, porque afecta la convivencia entre sus estudiantes. Exhibir públicamente el caso revictimiza a la estudiante y expone datos. Pedirle que se salga del grupo traslada la solución a la víctima. **Clave para el examen:** En acoso y ciberacoso, primero la víctima, luego las evidencias y después el protocolo. Descarte \"ignorar\", \"exhibir\" y \"que la víctima se retire\".",
+    "resources": [
+      {
+        "label": "Ley 1620 de 2013 — Sistema Nacional de Convivencia Escolar (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=52287"
+      },
+      {
+        "label": "Decreto 1965 de 2013 — Protocolos de atención tipo I, II y III (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=54537"
+      }
+    ]
+  },
+  "cnsc-pjs-mcq-003": {
+    "explanation": "**El problema:** Es un dilema ético entre la lealtad con un colega y la protección de un estudiante. El PJS mide si se sabe priorizar sin romper las relaciones profesionales. **Por qué es correcta:** El trato humillante vulnera la dignidad del estudiante, así que **no intervenir no es opción**. Sin embargo, la mejor respuesta lo hace **con calma y sin desautorizar al colega en público**: detiene la situación (por ejemplo, pidiendo hablar con el docente o acompañando al estudiante), luego **dialoga en privado** y, según la gravedad o si la conducta se repite, **usa el conducto regular** (coordinación). Protege al estudiante y preserva el respeto entre pares. **Por qué fallan los distractores:** La autonomía de cátedra no ampara el maltrato. Regañar al colega en público reproduce la humillación y genera otro conflicto. Publicarlo en el grupo de docentes expone al colega sin seguir el debido proceso. **Clave para el examen:** Proteja primero al estudiante, dialogue después en privado y siga el conducto regular.",
+    "resources": [
+      {
+        "label": "MEN — Guía 31: competencias comportamentales del docente",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      },
+      {
+        "label": "Ley 1620 de 2013 — Sistema Nacional de Convivencia Escolar (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=52287"
+      }
+    ]
+  },
+  "cnsc-pjs-mcq-004": {
+    "explanation": "**El problema:** Hay que reconocer las **señales de alerta** y escoger la primera acción adecuada, no la última. **Por qué es correcta:** Un cambio brusco en un estudiante con buen desempeño (somnolencia, incumplimiento, aislamiento) puede tener causas muy diversas: problemas familiares, salud, consumo de sustancias, acoso, trabajo o duelo. La primera actuación es **acercarse al estudiante** con una conversación privada y empática para comprender. Según lo que aparezca, se **articula** con orientación escolar y con la familia, y si hay indicios de vulneración de derechos, se activa la ruta. **Por qué fallan los distractores:** Registrar y bajar la nota sanciona el síntoma sin atender la causa. Sacarlo del salón lo excluye justo cuando más necesita apoyo. Esperar hasta el final del periodo pierde un tiempo valioso. **Clave para el examen:** En el PJS, cuando se pregunta por la actuación **inicial**, suele ser dialogar con el estudiante antes de sancionar o remitir.",
+    "resources": [
+      {
+        "label": "MEN — Guía 31: competencias comportamentales del docente",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      }
+    ]
+  },
+  "cnsc-pjs-mcq-005": {
+    "explanation": "**El problema:** Es un dilema de integridad en el que el beneficio aparente (libros para la biblioteca) disfraza una falta ética. **Por qué es correcta:** La evaluación del aprendizaje debe ser objetiva y seguir los criterios del **SIEE** que la institución adoptó en virtud del Decreto 1290. Cambiar una valoración a cambio de un beneficio, aunque sea para la institución, compromete la transparencia y podría configurar una falta disciplinaria. La mejor respuesta **rechaza con firmeza y respeto**, **explica** el fundamento (criterios y evidencias) y **reorienta** hacia lo que sí ayuda al estudiante: las estrategias de apoyo y superación que el propio SIEE debe prever. Si la presión continúa, se informa a la coordinación. **Por qué fallan los distractores:** Aceptar, aunque sea \"unas décimas\", compromete la integridad de la evaluación. Responder con indignación y cortar la comunicación rompe la relación con la familia, que sigue siendo necesaria para el estudiante. **Clave para el examen:** En los dilemas éticos, la mejor respuesta combina un \"no\" claro con respeto y una alternativa pedagógica.",
+    "resources": [
+      {
+        "label": "Decreto 1290 de 2009 — Evaluación del aprendizaje y SIEE (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=35954"
+      },
+      {
+        "label": "MEN — Guía 31: competencias comportamentales del docente",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      }
+    ]
+  },
+  "cnsc-pjs-mcq-006": {
+    "explanation": "**El problema:** Hay que combinar la gestión de la convivencia con la mejora pedagógica en un problema de aula. **Por qué es correcta:** La indisciplina y las burlas durante la lectura en voz alta tienen dos frentes. En la **convivencia**, hay estudiantes expuestos a burlas por leer con dificultad, lo que afecta su autoestima y su motivación lectora. En lo **pedagógico**, la lectura en voz alta ante todo el grupo puede ser poco participativa y generar ansiedad. Construir **acuerdos con el grupo** da legitimidad a las normas, y ajustar la estrategia (lectura por parejas, grupos pequeños, textos cercanos a sus intereses, roles) aumenta la participación y reduce la exposición. **Por qué fallan los distractores:** El castigo colectivo castiga también a quienes no participaron y asocia la lectura con un castigo. Renunciar a la lectura en clase abandona un objetivo pedagógico. Remitir a coordinación delega un problema que el docente puede y debe gestionar primero. **Clave para el examen:** La \"mejor\" respuesta en el PJS suele atender **la causa** y ser **formativa y participativa**, no punitiva.",
+    "resources": [
+      {
+        "label": "MEN — Guía 31: competencias comportamentales del docente",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      },
+      {
+        "label": "Ley 1620 de 2013 — Sistema Nacional de Convivencia Escolar (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=52287"
+      }
+    ]
   }
 }
