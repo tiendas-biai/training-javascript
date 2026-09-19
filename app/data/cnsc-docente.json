@@ -1646,5 +1646,139 @@
       "convivencia",
       "mr"
     ]
+  },
+  {
+    "id": "cnsc-comp-mcq-001",
+    "type": "multiple-choice",
+    "topic": "Competencias Comportamentales",
+    "subtopic": "Orientación al logro",
+    "difficulty": "medium",
+    "question": "Los resultados de las pruebas Saber muestran que los estudiantes de 9.º de su institución tienen un desempeño bajo en comprensión inferencial. Como docente de Lengua Castellana, ¿qué actuación refleja mejor la **orientación al logro**?",
+    "options": [
+      "Explicar en la reunión de área que los resultados se deben al bajo nivel con el que llegan los estudiantes de primaria.",
+      "Esperar a que la secretaría de educación envíe un plan de mejoramiento para aplicarlo.",
+      "Fijar con el área metas concretas de mejora, diseñar estrategias de lectura inferencial, hacer seguimiento periódico al avance y ajustar según los resultados.",
+      "Mantener la planeación del año anterior, porque ya fue aprobada por el consejo académico."
+    ],
+    "answer": "Fijar con el área metas concretas de mejora, diseñar estrategias de lectura inferencial, hacer seguimiento periódico al avance y ajustar según los resultados.",
+    "explanation": "La orientación al logro consiste en fijarse metas retadoras y medibles, actuar para alcanzarlas y hacer seguimiento a los resultados. Culpar a otros, esperar instrucciones o no cambiar nada son actitudes contrarias.",
+    "tags": [
+      "comportamentales",
+      "orientación al logro",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-comp-mcq-002",
+    "type": "multiple-choice",
+    "topic": "Competencias Comportamentales",
+    "subtopic": "Trabajo en equipo",
+    "difficulty": "easy",
+    "question": "En el área de Humanidades, dos docentes no se ponen de acuerdo sobre cómo organizar el plan lector de la institución, y el trabajo lleva semanas detenido. ¿Cuál actuación demuestra mejor la competencia de **trabajo en equipo**?",
+    "options": [
+      "Proponer una reunión para escuchar las dos propuestas, identificar puntos en común y construir un plan con criterios acordados por el área.",
+      "Elaborar el plan por su cuenta y presentarlo terminado para evitar más discusiones.",
+      "Pedirle al rector que decida quién tiene la razón.",
+      "Desentenderse del plan lector, ya que no es responsabilidad exclusiva suya."
+    ],
+    "answer": "Proponer una reunión para escuchar las dos propuestas, identificar puntos en común y construir un plan con criterios acordados por el área.",
+    "explanation": "Trabajar en equipo es cooperar, valorar los aportes de otros y construir acuerdos para una meta común. Imponer, delegar el conflicto hacia arriba o retirarse rompen la colaboración.",
+    "tags": [
+      "comportamentales",
+      "trabajo en equipo",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-comp-mcq-003",
+    "type": "multiple-choice",
+    "topic": "Competencias Comportamentales",
+    "subtopic": "Comunicación y relaciones interpersonales",
+    "difficulty": "medium",
+    "question": "Un padre de familia llega molesto a su salón y reclama en voz alta porque su hija perdió Lengua Castellana en el periodo. ¿Cuál es la respuesta más **asertiva**?",
+    "options": [
+      "Cambiar la nota para evitar un conflicto con la familia.",
+      "Responderle en el mismo tono y exigirle que salga del salón.",
+      "Decirle que no tiene tiempo y que hable directamente con el rector.",
+      "Escucharlo con calma, reconocer su preocupación, mostrarle las evidencias y los criterios de evaluación del SIEE y acordar un plan de apoyo para la estudiante."
+    ],
+    "answer": "Escucharlo con calma, reconocer su preocupación, mostrarle las evidencias y los criterios de evaluación del SIEE y acordar un plan de apoyo para la estudiante.",
+    "explanation": "La asertividad consiste en expresar con claridad y respeto la propia posición (la nota se sustenta en criterios y evidencias) sin ceder de forma pasiva ni responder con agresividad. Termina en un acuerdo orientado al aprendizaje.",
+    "tags": [
+      "comportamentales",
+      "comunicación asertiva",
+      "familias",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-comp-mcq-004",
+    "type": "multiple-choice",
+    "topic": "Competencias Comportamentales",
+    "subtopic": "Compromiso social e institucional",
+    "difficulty": "medium",
+    "question": "El consejo académico aprueba un proyecto de lectura transversal en el que todas las áreas dedicarán 20 minutos semanales a la lectura. Algunos docentes lo consideran \"responsabilidad solo de Lenguaje\". Como docente de Lengua Castellana, ¿qué actuación refleja mejor el **compromiso institucional**?",
+    "options": [
+      "Asumir sola toda la carga del proyecto para que las demás áreas no se molesten.",
+      "Apoyar la implementación: compartir estrategias de lectura con las otras áreas, proponer textos por disciplina y participar en el seguimiento del proyecto.",
+      "Negarse a participar hasta que se asignen más horas al área de Lenguaje.",
+      "Aplicar el proyecto solo en sus propios grupos, sin coordinarse con nadie."
+    ],
+    "answer": "Apoyar la implementación: compartir estrategias de lectura con las otras áreas, proponer textos por disciplina y participar en el seguimiento del proyecto.",
+    "explanation": "El compromiso social e institucional implica alinear el propio trabajo con el PEI y las metas institucionales y aportar a su logro colectivo. Aislarse, condicionar la participación o cargar con todo sin articulación no lo reflejan.",
+    "tags": [
+      "comportamentales",
+      "compromiso institucional",
+      "pei",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-comp-mcq-005",
+    "type": "multiple-choice",
+    "topic": "Competencias Comportamentales",
+    "subtopic": "Iniciativa",
+    "difficulty": "easy",
+    "question": "La institución adopta una plataforma virtual para publicar actividades y notas. Un docente con poca experiencia en tecnología nota que le cuesta usarla. ¿Cuál actuación refleja mejor la competencia de **iniciativa**?",
+    "options": [
+      "Seguir usando solo el cuaderno y el tablero hasta que la plataforma sea obligatoria.",
+      "Pedir que un compañero publique sus actividades por él.",
+      "Buscar tutoriales, pedir orientación a colegas y empezar a usarla con un grupo piloto para aprender sobre la marcha.",
+      "Quejarse en la reunión de profesores de que el cambio no fue consultado."
+    ],
+    "answer": "Buscar tutoriales, pedir orientación a colegas y empezar a usarla con un grupo piloto para aprender sobre la marcha.",
+    "explanation": "La iniciativa es anticiparse y actuar por cuenta propia para resolver una necesidad o mejorar, sin esperar instrucciones. Aquí el docente se autoforma, pide apoyo y prueba. Postergar, delegar o solo quejarse son lo contrario.",
+    "tags": [
+      "comportamentales",
+      "iniciativa",
+      "adaptación al cambio",
+      "mcq"
+    ]
+  },
+  {
+    "id": "cnsc-comp-mr-001",
+    "type": "multiple-response",
+    "topic": "Competencias Comportamentales",
+    "subtopic": "Comunicación y relaciones interpersonales",
+    "difficulty": "medium",
+    "question": "En una reunión de área, usted no está de acuerdo con la propuesta de un colega para evaluar la lectura. ¿Cuáles conductas son propias de una **comunicación asertiva**? (Seleccione DOS)",
+    "options": [
+      "Escuchar la propuesta completa y hacer preguntas para comprenderla antes de responder.",
+      "Expresar su desacuerdo con respeto, argumentos y una alternativa concreta.",
+      "Guardar silencio y aceptar la propuesta para evitar un conflicto.",
+      "Descalificar la propuesta del colega elevando la voz.",
+      "Criticar la propuesta después, en privado, con otros docentes."
+    ],
+    "answers": [
+      "Escuchar la propuesta completa y hacer preguntas para comprenderla antes de responder.",
+      "Expresar su desacuerdo con respeto, argumentos y una alternativa concreta."
+    ],
+    "explanation": "La asertividad combina la escucha activa con la expresión clara y respetuosa de la propia postura. Callar es pasivo, gritar es agresivo y criticar a escondidas es pasivo-agresivo.",
+    "tags": [
+      "comportamentales",
+      "asertividad",
+      "escucha activa",
+      "mr"
+    ]
   }
 ]

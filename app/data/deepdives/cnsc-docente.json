@@ -877,5 +877,64 @@
         "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=54537"
       }
     ]
+  },
+  "cnsc-comp-mcq-001": {
+    "explanation": "**El problema:** Las competencias comportamentales se evalúan con casos en los que todas las opciones parecen razonables. Gana la que muestra la conducta que define la competencia. **Por qué es correcta:** La Guía 31 del MEN, que regula la evaluación de desempeño del Decreto 1278, incluye la **orientación al logro** entre las competencias comportamentales: realizar las funciones con calidad y cumplir compromisos y metas con eficacia y eficiencia. La respuesta correcta tiene los tres rasgos de la competencia: **metas concretas**, **acción planificada** (estrategias de lectura inferencial) y **seguimiento con ajuste**. Además, trabaja con el área, lo que suma trabajo en equipo. **Por qué fallan los distractores:** Culpar a primaria es externalizar la responsabilidad. Esperar a la secretaría es pasividad. Repetir la planeación anterior ignora la evidencia. **Clave para el examen:** Ante resultados bajos, la mejor respuesta es la que **usa los datos para fijar metas y actuar**, no la que busca culpables.",
+    "example": "Las siete competencias comportamentales de la Guía 31 (el evaluado concerta 3 cada año):\n\n• Liderazgo\n• Comunicación y relaciones interpersonales\n• Trabajo en equipo\n• Negociación y mediación\n• Compromiso social e institucional\n• Iniciativa\n• Orientación al logro",
+    "resources": [
+      {
+        "label": "MEN — Guía 31: Evaluación anual de desempeño laboral (Decreto 1278), glosario de competencias",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      },
+      {
+        "label": "Decreto Ley 1278 de 2002 — Estatuto de Profesionalización Docente (Función Pública)",
+        "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=5353"
+      }
+    ]
+  },
+  "cnsc-comp-mcq-002": {
+    "explanation": "**El problema:** Hay que reconocer la conducta que expresa el trabajo en equipo en un conflicto entre colegas, un caso muy típico del componente comportamental. **Por qué es correcta:** Trabajar en equipo es **trabajar de manera cooperativa** con otros para alcanzar metas comunes: aportar, valorar las ideas de los demás y construir acuerdos. Proponer una reunión, escuchar ambas propuestas, buscar puntos comunes y acordar criterios desbloquea el trabajo y fortalece al área. **Por qué fallan los distractores:** Hacerlo solo resuelve la tarea pero excluye a los demás e impone la propia visión. Llevar el conflicto al rector renuncia a resolverlo entre pares, aunque sería válido solo si el diálogo fracasa. Desentenderse abandona la meta común. **Clave para el examen:** En los casos de conflicto entre colegas, prefiera la opción que **convoca, escucha e integra** antes que la que impone, escala o evade.",
+    "resources": [
+      {
+        "label": "MEN — Guía 31: Evaluación anual de desempeño laboral (Decreto 1278), glosario de competencias",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      }
+    ]
+  },
+  "cnsc-comp-mcq-003": {
+    "explanation": "**El problema:** Atender a familias molestas es una de las situaciones más frecuentes del componente comportamental. Hay que distinguir la respuesta asertiva de la pasiva y de la agresiva. **Por qué es correcta:** La competencia de **comunicación y relaciones interpersonales** implica escuchar, expresar ideas con claridad y mantener relaciones respetuosas con la comunidad educativa. La respuesta asertiva **valida la emoción** (\"entiendo su preocupación\"), **sostiene la posición con argumentos** (evidencias y criterios del SIEE, que la institución adoptó y publicó) y **orienta a una solución** (un plan de apoyo). **Por qué fallan los distractores:** Cambiar la nota es pasivo y además vulnera el debido proceso evaluativo. Responder en el mismo tono es agresivo. Mandarlo al rector es evasivo, porque el docente es el primer responsable de explicar su evaluación. **Clave para el examen:** La fórmula asertiva es escuchar, explicar con evidencias y acordar.",
+    "resources": [
+      {
+        "label": "MEN — Guía 31: Evaluación anual de desempeño laboral (Decreto 1278), glosario de competencias",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      }
+    ]
+  },
+  "cnsc-comp-mcq-004": {
+    "explanation": "**El problema:** Hay que reconocer el compromiso institucional frente a un proyecto transversal que algunos colegas ven como tarea de otra área. **Por qué es correcta:** El **compromiso social e institucional** consiste en alinear el propio trabajo con los objetivos y el PEI de la institución y contribuir activamente a los proyectos colectivos. El docente de Lenguaje tiene un saber experto que puede **poner al servicio** de las demás áreas (estrategias de lectura, selección de textos por disciplina) y además participa en el seguimiento. **Por qué fallan los distractores:** Asumir sola toda la carga desarticula el proyecto y no lo hace sostenible. Condicionar la participación a obtener más horas antepone un interés particular. Trabajar aislada en sus grupos incumple el carácter transversal que aprobó el consejo académico. **Clave para el examen:** Si la opción pone el saber propio al servicio de la meta institucional, suele ser la correcta.",
+    "resources": [
+      {
+        "label": "MEN — Guía 31: Evaluación anual de desempeño laboral (Decreto 1278), glosario de competencias",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      }
+    ]
+  },
+  "cnsc-comp-mcq-005": {
+    "explanation": "**El problema:** Hay que reconocer la **iniciativa** ante un cambio institucional que exige aprender algo nuevo. **Por qué es correcta:** La Guía 31 describe la iniciativa como la capacidad de anticiparse a los problemas y proponer o emprender acciones para mejorar, sin esperar a que se lo pidan. El docente se autoforma con tutoriales, busca apoyo de colegas y prueba de forma gradual con un grupo piloto. Así convierte una dificultad en aprendizaje. **Por qué fallan los distractores:** Seguir con el cuaderno \"hasta que sea obligatorio\" es resistencia pasiva. Delegar en un compañero no desarrolla la competencia y le traslada la carga. Quejarse sin proponer nada no resuelve el problema. **Clave para el examen:** En los cambios institucionales (plataformas, currículos, jornada única), la mejor respuesta combina aprender, pedir apoyo y probar.",
+    "resources": [
+      {
+        "label": "MEN — Guía 31: Evaluación anual de desempeño laboral (Decreto 1278), glosario de competencias",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      }
+    ]
+  },
+  "cnsc-comp-mr-001": {
+    "explanation": "**El problema:** Hay que distinguir los estilos comunicativos (asertivo, pasivo, agresivo y pasivo-agresivo) en una discusión profesional. **Por qué son correctas:** La **escucha activa** (escuchar completo, preguntar para comprender) y la **expresión respetuosa y argumentada del desacuerdo**, con una alternativa concreta, son los dos pilares de la asertividad: se respetan los derechos del otro y los propios. **Por qué fallan los distractores:** Callar y aceptar para evitar el conflicto es un estilo **pasivo**, que sacrifica la propia opinión y priva al área de un aporte. Descalificar elevando la voz es un estilo **agresivo**. Criticar después en privado es **pasivo-agresivo** y daña la confianza del equipo. **Clave para el examen:** Asertivo significa \"digo lo que pienso, con respeto, y escucho lo que piensas\". Descarte las opciones con silencio, gritos o críticas a escondidas.",
+    "resources": [
+      {
+        "label": "MEN — Guía 31: Evaluación anual de desempeño laboral (Decreto 1278), glosario de competencias",
+        "url": "https://www.mineducacion.gov.co/1621/articles-169241_archivo_pdf.pdf"
+      }
+    ]
   }
 }
